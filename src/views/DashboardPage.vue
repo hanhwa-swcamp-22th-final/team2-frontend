@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { Chart, LineController, LineElement, PointElement, CategoryScale, LinearScale, Filler, Tooltip } from 'chart.js'
-import BaseCard from '@/components/BaseCard.vue'
+import BaseCard from '@/components/common/BaseCard.vue'
 import { chartPoints, kpiCards, tableRows } from '@/data/mock'
 
 Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearScale, Filler, Tooltip)

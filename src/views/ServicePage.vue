@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import BaseCard from '@/components/BaseCard.vue'
+import BaseCard from '@/components/common/BaseCard.vue'
 
 const route = useRoute()
 
