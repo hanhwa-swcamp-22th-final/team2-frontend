@@ -1,0 +1,103 @@
+import { createRouter, createWebHistory } from 'vue-router'
+import AppLayout from '@/layouts/AppLayout.vue'
+import DashboardPage from '@/views/DashboardPage.vue'
+import ServicePage from '@/views/ServicePage.vue'
+
+const routes = [
+  {
+    path: '/',
+    component: AppLayout,
+    children: [
+      {
+        path: '',
+        name: 'dashboard',
+        component: DashboardPage,
+        meta: {
+          title: 'Dashboard',
+          serviceName: '공통 대시보드',
+        },
+      },
+      {
+        path: 'auth',
+        name: 'auth',
+        component: ServicePage,
+        meta: {
+          title: 'Auth',
+          serviceName: '권한/사용자 화면',
+          description: '로그인, 사용자, 역할, 권한 매트릭스 설계용',
+        },
+      },
+      {
+        path: 'master',
+        name: 'master',
+        component: ServicePage,
+        meta: {
+          title: 'Master',
+          serviceName: '기준정보 화면',
+          description: '품목, 거래처, 조직, 코드성 데이터 관리',
+        },
+      },
+      {
+        path: 'order',
+        name: 'order',
+        component: ServicePage,
+        meta: {
+          title: 'Order',
+          serviceName: '주문 화면',
+          description: '주문 등록, 상태 전이, 출고 연계 화면',
+        },
+      },
+      {
+        path: 'document',
+        name: 'document',
+        component: ServicePage,
+        meta: {
+          title: 'Document',
+          serviceName: '문서 화면',
+          description: '전자문서 목록, 상세, 승인 흐름 설계용',
+        },
+      },
+      {
+        path: 'sales',
+        name: 'sales',
+        component: ServicePage,
+        meta: {
+          title: 'Sales',
+          serviceName: '매출 화면',
+          description: '매출 현황, 추이 분석, KPI 차트 설계용',
+        },
+      },
+      {
+        path: 'pdf',
+        name: 'pdf',
+        component: ServicePage,
+        meta: {
+          title: 'PDF',
+          serviceName: 'PDF 센터',
+          description: '템플릿 관리, 생성 이력, 미리보기 화면',
+        },
+      },
+      {
+        path: 'notification',
+        name: 'notification',
+        component: ServicePage,
+        meta: {
+          title: 'Notification',
+          serviceName: '알림 화면',
+          description: '메일, 알림 이력, 발송 정책 설계용',
+        },
+      },
+    ],
+  },
+]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+})
+
+router.afterEach((to) => {
+  document.title = `${to.meta.title ?? 'Screen Design'} | Team2`
+})
+
+export default router
