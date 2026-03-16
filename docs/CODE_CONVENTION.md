@@ -72,9 +72,9 @@ src/components/common/BaseTable.vue
 - 컴포넌트 파일명: `PascalCase`
 - 페이지 컴포넌트: `도메인 + 기능 + Page.vue`
 - 일반 컴포넌트: `역할명.vue`
-- Store 파일: `useXxxStore`를 export 하고 파일명은 `xxx.ts`
-- API 파일: `도메인명.ts` 또는 `기능명.ts`
-- 타입 파일: `도메인명.ts`
+- Store 파일: `useXxxStore`를 export 하고 파일명은 `xxx.js`
+- API 파일: `도메인명.js` 또는 `기능명.js`
+- 타입 파일은 현재 기준에서 별도 운영하지 않는다.
 - 상수 파일: `UPPER_SNAKE_CASE` 대신 의미 있는 `camelCase` export 사용
 
 예시:
@@ -82,13 +82,13 @@ src/components/common/BaseTable.vue
 - `UserListPage.vue`
 - `RoleMatrixPage.vue`
 - `BaseButton.vue`
-- `auth.ts`
-- `order.ts`
+- `auth.js`
+- `order.js`
 
 ## 6. Vue 컴포넌트 작성 규칙
 
-- `script setup lang="ts"`를 기본으로 사용한다.
-- Props는 `defineProps`로 선언하고 타입을 명시한다.
+- `script setup`를 기본으로 사용한다.
+- Props는 `defineProps`로 선언하고 필요한 기본값과 제약을 명시한다.
 - Emits는 `defineEmits`로 선언한다.
 - 라우트 메타에 의존하는 값은 `computed`로 파생한다.
 - 템플릿에서 복잡한 조건식은 직접 쓰지 말고 `computed` 또는 함수로 분리한다.
@@ -113,9 +113,9 @@ src/components/common/BaseTable.vue
 
 예시:
 
-- `ui.ts`: 사이드바, 토스트, 공통 로딩
-- `auth.ts`: 로그인 사용자, 권한, 메뉴 접근
-- `order.ts`: 주문 검색 조건, 선택된 주문, 목록 캐시
+- `ui.js`: 사이드바, 토스트, 공통 로딩
+- `auth.js`: 로그인 사용자, 권한, 메뉴 접근
+- `order.js`: 주문 검색 조건, 선택된 주문, 목록 캐시
 
 금지:
 
@@ -134,7 +134,7 @@ src/components/common/BaseTable.vue
 
 예시:
 
-```ts
+```js
 meta: {
   title: '사용자 목록',
   serviceName: 'Auth',
@@ -149,21 +149,15 @@ meta: {
 
 - 모든 API 호출은 `src/api` 아래에서 관리한다.
 - 컴포넌트에서 직접 `axios`를 호출하지 않는다.
-- 공통 인스턴스는 `src/lib/api.ts`를 사용한다.
-- 요청/응답 타입을 명시한다.
+- 공통 인스턴스는 `src/lib/api.js`를 사용한다.
+- 데이터 구조는 mock 또는 API 응답 형식과 일관되게 유지한다.
 - 화면용 데이터 가공은 가능하면 API 함수가 아니라 컴포저블 또는 페이지에서 처리한다.
 
 예시:
 
-```ts
-export interface OrderListItem {
-  id: number
-  orderCode: string
-  status: string
-}
-
-export async function fetchOrders(params: OrderSearchParams) {
-  const { data } = await api.get<OrderListResponse>('/orders', { params })
+```js
+export async function fetchOrders(params) {
+  const { data } = await api.get('/orders', { params })
   return data
 }
 ```
@@ -290,10 +284,9 @@ export async function fetchOrders(params: OrderSearchParams) {
 
 ## 20. 초기 적용 우선순위
 
-1. `tsconfig.json` 경로 설정 정리
+1. import alias 및 Vite 경로 설정 정리
 2. `router/modules` 분리
 3. `views` 서비스별 폴더 분리
 4. `api`, `stores`, `types` 서비스 단위 분리
 5. `BaseButton`, `BaseInput`, `BaseTable`, `StatusBadge` 공통화
 6. 라우트 메타 표준화
-
