@@ -3,12 +3,30 @@ description: "코드 개선이나 리팩토링이 필요할 때 사용합니다.
 title: "[Refactor] "
 labels: ["refactor"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 리팩토링
+        개선하려는 코드와 이유를 작성해주세요.
+
   - type: textarea
     id: description
     attributes:
       label: 리팩토링 대상
       description: 어떤 코드를 왜 개선하려는지 설명해주세요.
-      placeholder: "ex) PartnerService의 조회 로직이 중복되어 공통 메서드로 추출합니다."
+      placeholder: "ex) 거래처 목록/상세 페이지에서 API 호출 로직이 중복되어 커스텀 훅으로 추출합니다."
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: 현재 문제점
+      description: 현재 코드의 어떤 점이 문제인가요?
+      placeholder: |
+        - 동일한 fetch 로직이 3개 컴포넌트에 중복
+        - 에러 처리가 일관적이지 않음
+        - 컴포넌트가 너무 비대함
     validations:
       required: true
 
@@ -18,8 +36,9 @@ body:
       label: 작업 목록
       description: 세부 작업 항목을 체크리스트로 작성해주세요.
       placeholder: |
-        - [ ] 중복 로직 추출
-        - [ ] 테스트 코드 수정
+        - [ ] 커스텀 훅 추출
+        - [ ] 컴포넌트 분리
+        - [ ] 기존 테스트 수정
         - [ ] 동작 확인
     validations:
       required: true
@@ -29,11 +48,10 @@ body:
     attributes:
       label: 도메인
       options:
-        - Auth
-        - Master
-        - Document
-        - Activity
-        - Frontend
-        - Infra
+        - "domain:auth - 인증"
+        - "domain:master - 기준정보"
+        - "domain:document - 문서"
+        - "domain:activity - 활동"
+        - "domain:common - 공통 컴포넌트"
     validations:
       required: true
