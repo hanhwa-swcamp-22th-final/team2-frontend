@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from '@/layouts/AppLayout.vue'
+import CommonComponentsPage from '@/views/CommonComponentsPage.vue'
 import DashboardPage from '@/views/DashboardPage.vue'
 import ServicePage from '@/views/ServicePage.vue'
 
@@ -15,6 +16,16 @@ const routes = [
         meta: {
           title: 'Dashboard',
           serviceName: '공통 대시보드',
+        },
+      },
+      {
+        path: 'common-preview',
+        name: 'common-preview',
+        component: CommonComponentsPage,
+        meta: {
+          title: 'Common Preview',
+          serviceName: '공통 컴포넌트 프리뷰',
+          description: '1차 구현한 공통 컴포넌트의 동작 검증용 화면',
         },
       },
       {

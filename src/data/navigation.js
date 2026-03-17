@@ -1,5 +1,6 @@
 export const navigationItems = [
   { label: 'Dashboard', path: '/', caption: '공통' },
+  { label: 'Common Preview', path: '/common-preview', caption: '공통 UI 테스트' },
   { label: 'Auth', path: '/auth', caption: '인증/권한' },
   { label: 'Master', path: '/master', caption: '기준정보' },
   { label: 'Order', path: '/order', caption: '주문/출고' },
