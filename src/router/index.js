@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from '@/layouts/AppLayout.vue'
 import CommonComponentsPage from '@/views/CommonComponentsPage.vue'
 import DashboardPage from '@/views/DashboardPage.vue'
+import DomainComponentsPage from '@/views/DomainComponentsPage.vue'
 import ServicePage from '@/views/ServicePage.vue'
 
 const routes = [
@@ -26,6 +27,16 @@ const routes = [
           title: 'Common Preview',
           serviceName: '공통 컴포넌트 프리뷰',
           description: '1차 구현한 공통 컴포넌트의 동작 검증용 화면',
+        },
+      },
+      {
+        path: 'domain-preview',
+        name: 'domain-preview',
+        component: DomainComponentsPage,
+        meta: {
+          title: 'Domain Preview',
+          serviceName: '도메인 공통 컴포넌트 프리뷰',
+          description: '2차 구현한 문서/활동 도메인 공통 컴포넌트 검증용 화면',
         },
       },
       {

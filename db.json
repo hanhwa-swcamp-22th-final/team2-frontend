@@ -2,13 +2,14 @@
   "navigationItems": [
     { "id": 1, "label": "Dashboard", "path": "/", "caption": "공통" },
     { "id": 2, "label": "Common Preview", "path": "/common-preview", "caption": "공통 UI 테스트" },
-    { "id": 3, "label": "Auth", "path": "/auth", "caption": "인증/권한" },
-    { "id": 4, "label": "Master", "path": "/master", "caption": "기준정보" },
-    { "id": 5, "label": "Order", "path": "/order", "caption": "주문/출고" },
-    { "id": 6, "label": "Document", "path": "/document", "caption": "문서관리" },
-    { "id": 7, "label": "Sales", "path": "/sales", "caption": "매출분석" },
-    { "id": 8, "label": "PDF", "path": "/pdf", "caption": "문서출력" },
-    { "id": 9, "label": "Notification", "path": "/notification", "caption": "메일/알림" }
+    { "id": 3, "label": "Domain Preview", "path": "/domain-preview", "caption": "도메인 UI 테스트" },
+    { "id": 4, "label": "Auth", "path": "/auth", "caption": "인증/권한" },
+    { "id": 5, "label": "Master", "path": "/master", "caption": "기준정보" },
+    { "id": 6, "label": "Order", "path": "/order", "caption": "주문/출고" },
+    { "id": 7, "label": "Document", "path": "/document", "caption": "문서관리" },
+    { "id": 8, "label": "Sales", "path": "/sales", "caption": "매출분석" },
+    { "id": 9, "label": "PDF", "path": "/pdf", "caption": "문서출력" },
+    { "id": 10, "label": "Notification", "path": "/notification", "caption": "메일/알림" }
   ],
   "dashboardKpis": [
     { "id": 1, "title": "진행 화면", "value": "24", "change": "+6" },
