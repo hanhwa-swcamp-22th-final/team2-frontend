@@ -1,19 +1,27 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { Chart, LineController, LineElement, PointElement, CategoryScale, LinearScale, Filler, Tooltip } from 'chart.js'
+import { fetchDashboardData } from '@/api/dashboard'
 import BaseCard from '@/components/common/BaseCard.vue'
-import { chartPoints, kpiCards, tableRows } from '@/data/mock'
 
 Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearScale, Filler, Tooltip)
 
 const chartRef = ref(null)
+const chartInstance = ref(null)
+const kpiCards = ref([])
+const tableRows = ref([])
+const isLoading = ref(true)
 
-onMounted(() => {
+function renderChart(chartPoints) {
   if (!chartRef.value) {
     return
   }
 
-  new Chart(chartRef.value, {
+  if (chartInstance.value) {
+    chartInstance.value.destroy()
+  }
+
+  chartInstance.value = new Chart(chartRef.value, {
     type: 'line',
     data: {
       labels: ['월', '화', '수', '목', '금', '토', '일'],
@@ -40,6 +48,25 @@ onMounted(() => {
       },
     },
   })
+}
+
+onMounted(async () => {
+  try {
+    const dashboardData = await fetchDashboardData()
+    kpiCards.value = dashboardData.kpiCards
+    tableRows.value = dashboardData.tableRows
+    renderChart(dashboardData.chartPoints)
+  } catch (error) {
+    console.error('Failed to fetch dashboard data:', error)
+  } finally {
+    isLoading.value = false
+  }
+})
+
+onBeforeUnmount(() => {
+  if (chartInstance.value) {
+    chartInstance.value.destroy()
+  }
 })
 </script>
 
@@ -85,6 +112,12 @@ onMounted(() => {
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 bg-white">
+            <tr v-if="isLoading">
+              <td colspan="3" class="px-4 py-6 text-center text-slate-400">데이터를 불러오는 중입니다.</td>
+            </tr>
+            <tr v-else-if="tableRows.length === 0">
+              <td colspan="3" class="px-4 py-6 text-center text-slate-400">표시할 데이터가 없습니다.</td>
+            </tr>
             <tr v-for="row in tableRows" :key="row.name">
               <td class="px-4 py-3 font-medium text-ink">{{ row.name }}</td>
               <td class="px-4 py-3">{{ row.owner }}</td>
