@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { navigationItems } from '@/data/navigation'
 import { useUiStore } from '@/stores/ui'
 
