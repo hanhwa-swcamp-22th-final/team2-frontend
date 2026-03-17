@@ -173,3 +173,95 @@ src/components/
 ## 12. 한 줄 정리
 
 - 이번 작업은 공통 컴포넌트를 많이 만드는 작업이 아니라, 공통 컴포넌트를 만들 수 있는 구조를 프로젝트 안에 안정적으로 심는 작업이었다.
+
+---
+
+## 13. 후속 작업: JavaScript 기준 통일
+
+구조 정리 이후 실제 프로젝트 설정을 다시 점검하면서, 팀 기준이 JavaScript 기반이라는 점에 맞춰 아래 작업을 추가로 진행했다.
+
+### 13-1. 적용 이유
+
+- 프로젝트 소개 문서와 실제 파일 구성이 일치하지 않았다.
+- 일부 파일과 설정이 TypeScript 기준으로 남아 있어 이후 공통 컴포넌트 구현 시 기준이 섞일 위험이 있었다.
+
+### 13-2. 수행 내용
+
+- `main.ts` -> `main.js`
+- `stores/ui.ts` -> `stores/ui.js`
+- `router/index.ts` -> `router/index.js`
+- `lib/api.ts` -> `lib/api.js`
+- `data/mock.ts` -> `data/mock.js`
+- `data/navigation.ts` -> `data/navigation.js`
+- `vite.config.ts` -> `vite.config.js`
+- `env.d.ts`, `tsconfig.json` 제거
+- `package.json`에서 `typescript`, `vue-tsc`, `@types/node` 제거
+- `.vue` 파일의 `script setup lang="ts"` 제거
+
+### 13-3. 검증 결과
+
+- `npm run build` 정상 통과
+- 현재 프로젝트는 JavaScript 기준으로 동작하는 상태로 정리되었다.
+
+## 14. 후속 작업: 공통 컴포넌트 1차 구현
+
+구조만 만들어둔 상태에서 끝내지 않고, 실제 화면에 바로 붙일 수 있는 1차 공통 컴포넌트 세트를 구현했다.
+
+### 14-1. 구현한 컴포넌트
+
+`src/components/common`
+
+- `BaseButton.vue`
+- `BaseTextField.vue`
+- `BaseSelect.vue`
+- `BaseTextarea.vue`
+- `SearchInput.vue`
+- `StatusBadge.vue`
+- `InfoField.vue`
+- `BaseTable.vue`
+- `BaseModal.vue`
+
+`src/components/layout`
+
+- `PageTitleBar.vue`
+
+### 14-2. 구현 목적
+
+- 화면설계서에서 반복되는 기본 UI를 실제 공통 컴포넌트로 고정하기 위함
+- 이후 목록, 상세, 등록/수정 화면을 조립 방식으로 빠르게 구현하기 위함
+- 버튼, 입력, 상태 표시, 테이블, 모달의 기준을 코드 수준에서 통일하기 위함
+
+### 14-3. 검증용 프리뷰 페이지 추가
+
+- `src/views/CommonComponentsPage.vue` 추가
+- `/common-preview` 라우트 추가
+- 사이드바 메뉴에 `Common Preview` 항목 추가
+
+이 페이지에서 1차 공통 컴포넌트의 기본 동작을 한 화면에서 직접 확인할 수 있게 했다.
+
+### 14-4. 확인 가능한 항목
+
+- 버튼 variant / size / disabled / block
+- 텍스트 입력 / 셀렉트 / textarea / 검색 입력
+- 상태 배지 색상
+- 상세 정보 표시 형식
+- 테이블 기본 렌더링 및 슬롯 셀
+- 모달 열기 / 닫기 / footer slot
+- 페이지 타이틀 바 액션 영역
+
+### 14-5. 검증 결과
+
+- `npm run build` 정상 통과
+- 공통 컴포넌트 1차 세트가 최소 동작 가능한 상태로 반영되었다.
+
+## 15. 현재 기준 다음 단계
+
+현재는 공통 컴포넌트 1차 세트와 프리뷰 페이지까지 준비된 상태다.
+다음 작업은 테스트 페이지가 아니라 실제 대표 화면에 공통 컴포넌트를 적용하는 단계로 넘어가면 된다.
+
+우선 적용 추천:
+
+1. 거래처 목록
+2. 사용자 목록
+3. PI 상세
+4. 활동 기록 등록

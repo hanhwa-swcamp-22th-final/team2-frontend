@@ -1,8 +1,18 @@
 <script setup>
-import { navigationItems } from '@/data/navigation'
+import { onMounted, ref } from 'vue'
+import { fetchNavigationItems } from '@/api/navigation'
 import { useUiStore } from '@/stores/ui'
 
 const uiStore = useUiStore()
+const navigationItems = ref([])
+
+onMounted(async () => {
+  try {
+    navigationItems.value = await fetchNavigationItems()
+  } catch (error) {
+    console.error('Failed to fetch navigation items:', error)
+  }
+})
 </script>
 
 <template>
@@ -23,7 +33,7 @@ const uiStore = useUiStore()
     <nav class="space-y-2">
       <RouterLink
         v-for="item in navigationItems"
-        :key="item.path"
+        :key="item.id ?? item.path"
         :to="item.path"
         class="block rounded-2xl px-4 py-3 transition hover:bg-white/10"
         active-class="bg-white/15"
