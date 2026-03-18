@@ -9,6 +9,7 @@ import ActivityListPage from '@/views/activity/ActivityListPage.vue'
 import ActivityCreatePage from '@/views/activity/ActivityCreatePage.vue'
 import ContactListPage from '@/views/contacts/ContactListPage.vue'
 import EmailListPage from '@/views/emails/EmailListPage.vue'
+import ActivityPackagePage from '@/views/package/ActivityPackagePage.vue'
 
 const routes = [
   {
@@ -221,7 +222,7 @@ const routes = [
       {
         path: 'package',
         name: 'package',
-        component: ServicePage,
+        component: ActivityPackagePage,
         meta: {
           title: 'Package',
           serviceName: '활동기록 패키지',
