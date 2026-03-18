@@ -2,6 +2,8 @@
 import { reactive, ref } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
+import BaseTabs from '@/components/common/BaseTabs.vue'
+import FormField from '@/components/common/FormField.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
@@ -11,6 +13,7 @@ import InfoField from '@/components/common/InfoField.vue'
 import SearchInput from '@/components/common/SearchInput.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import PageTitleBar from '@/components/layout/PageTitleBar.vue'
+import { useToast } from '@/composables/useToast'
 
 const form = reactive({
   name: '김영업',
@@ -21,6 +24,16 @@ const form = reactive({
 })
 
 const isModalOpen = ref(false)
+const activeTab = ref('users')
+const fieldErrors = reactive({
+  name: '',
+  email: '이메일 형식을 확인해주세요.',
+})
+const tabs = [
+  { key: 'users', label: '사용자 목록' },
+  { key: 'company', label: '자사 정보' },
+]
+const toast = useToast()
 
 const departmentOptions = [
   { label: '영업1팀', value: 'sales' },
@@ -71,6 +84,14 @@ const badgeGroups = [
 
 function handleSearch(value) {
   form.search = value
+}
+
+function showSuccessToast() {
+  toast.success('저장되었습니다.')
+}
+
+function showErrorToast() {
+  toast.error('로그인에 실패했습니다.')
 }
 </script>
 
@@ -125,48 +146,56 @@ function handleSearch(value) {
     </section>
 
     <section class="grid gap-6 xl:grid-cols-2">
-      <BaseCard title="Input" subtitle="텍스트, 셀렉트, 텍스트에어리어, 검색 입력 테스트">
+      <BaseCard title="FormField" subtitle="라벨, 필수 표시, 힌트, 에러 메시지 래퍼 테스트">
         <div class="space-y-4">
-          <div class="space-y-2">
-            <p class="text-sm font-medium text-slate-600">이름</p>
-            <BaseTextField v-model="form.name" placeholder="이름을 입력하세요" />
-          </div>
-          <div class="space-y-2">
-            <p class="text-sm font-medium text-slate-600">이메일</p>
-            <BaseTextField v-model="form.email" type="email" placeholder="이메일을 입력하세요" />
-          </div>
-          <div class="space-y-2">
-            <p class="text-sm font-medium text-slate-600">부서</p>
-            <BaseSelect v-model="form.department" :options="departmentOptions" placeholder="부서를 선택하세요" />
-          </div>
-          <div class="space-y-2">
-            <p class="text-sm font-medium text-slate-600">비고</p>
-            <BaseTextarea v-model="form.note" placeholder="비고를 입력하세요" />
-          </div>
-          <div class="space-y-2">
-            <p class="text-sm font-medium text-slate-600">검색</p>
+          <FormField label="이름" required :error="fieldErrors.name" hint="한글 또는 영문으로 입력하세요." for-id="preview-name">
+            <BaseTextField id="preview-name" v-model="form.name" placeholder="이름을 입력하세요" />
+          </FormField>
+          <FormField label="이메일" required :error="fieldErrors.email" for-id="preview-email">
+            <BaseTextField id="preview-email" v-model="form.email" type="email" placeholder="이메일을 입력하세요" />
+          </FormField>
+          <FormField label="부서" required hint="담당 부서를 선택하세요." for-id="preview-department">
+            <BaseSelect id="preview-department" v-model="form.department" :options="departmentOptions" placeholder="부서를 선택하세요" />
+          </FormField>
+          <FormField label="비고" hint="메모나 특이사항을 입력할 수 있습니다." for-id="preview-note">
+            <BaseTextarea id="preview-note" v-model="form.note" placeholder="비고를 입력하세요" />
+          </FormField>
+          <FormField label="검색" hint="입력 후 엔터 또는 검색 버튼으로 실행합니다.">
             <SearchInput
               v-model="form.search"
               placeholder="검색어를 입력하세요"
               @search="handleSearch"
             />
-          </div>
+          </FormField>
         </div>
       </BaseCard>
 
-      <BaseCard title="InfoField" subtitle="상세 페이지에서 쓰는 라벨 + 값 표시 형식">
-        <div class="space-y-4">
-          <InfoField label="거래처" value="COOLSAY SDN BHD" />
-          <InfoField label="통화" value="USD" />
-          <InfoField label="담당자" value="김영업" />
-          <InfoField label="상태">
-            <StatusBadge value="확정" />
-          </InfoField>
-          <InfoField label="비고" stacked>
-            <p class="leading-6 text-slate-600">
-              초도 미팅 이후 바이어 요청 사항을 정리해 다음 견적에 반영합니다.
-            </p>
-          </InfoField>
+      <BaseCard title="BaseTabs / Toast" subtitle="탭 전환과 전역 토스트 알림 테스트">
+        <div class="space-y-5">
+          <BaseTabs v-model="activeTab" :tabs="tabs" />
+
+          <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+            현재 활성 탭: <span class="font-semibold text-slate-800">{{ activeTab }}</span>
+          </div>
+
+          <div class="flex flex-wrap gap-3">
+            <BaseButton @click="showSuccessToast">성공 토스트</BaseButton>
+            <BaseButton variant="secondary" @click="showErrorToast">실패 토스트</BaseButton>
+          </div>
+
+          <div class="space-y-4">
+            <InfoField label="거래처" value="COOLSAY SDN BHD" />
+            <InfoField label="통화" value="USD" />
+            <InfoField label="담당자" value="김영업" />
+            <InfoField label="상태">
+              <StatusBadge value="확정" />
+            </InfoField>
+            <InfoField label="비고" stacked>
+              <p class="leading-6 text-slate-600">
+                초도 미팅 이후 바이어 요청 사항을 정리해 다음 견적에 반영합니다.
+              </p>
+            </InfoField>
+          </div>
         </div>
       </BaseCard>
     </section>
