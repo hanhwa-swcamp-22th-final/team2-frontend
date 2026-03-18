@@ -72,12 +72,6 @@ const routes = [
           title: 'Clients',
           serviceName: '거래처 관리',
           description: '거래처 조회 및 관리 화면',
-        path: 'auth',
-        name: 'auth',
-        component: () => import('@/views/auth/UserManagementPage.vue'),
-        meta: {
-          title: 'Auth',
-          serviceName: '사용자 관리',
         },
       },
       {
@@ -213,11 +207,10 @@ const routes = [
       {
         path: 'users',
         name: 'users',
-        component: ServicePage,
+        component: () => import('@/views/auth/UserManagementPage.vue'),
         meta: {
           title: 'Users',
           serviceName: '사용자 관리',
-          description: '사용자 및 자사 정보 화면',
         },
       },
     ],
