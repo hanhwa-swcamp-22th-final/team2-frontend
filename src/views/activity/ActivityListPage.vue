@@ -2,8 +2,10 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ActivityDetailModal from '@/components/domain/activity/ActivityDetailModal.vue'
+import ActivityEditModal from '@/components/domain/activity/ActivityEditModal.vue'
 import ActivityTypeBadge from '@/components/domain/activity/ActivityTypeBadge.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
+import BaseModal from '@/components/common/BaseModal.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import DateRangeField from '@/components/common/DateRangeField.vue'
@@ -156,6 +158,34 @@ function closeDetail() {
   selectedActivity.value = null
 }
 
+// ── 수정 모달 ──────────────────────────────────────────────
+const editActivity = ref(null)
+const isEditOpen = ref(false)
+
+function openEdit(activity) {
+  editActivity.value = activity
+  isEditOpen.value = true
+}
+
+function closeEdit() {
+  isEditOpen.value = false
+  editActivity.value = null
+}
+
+// ── 삭제 확인 모달 ─────────────────────────────────────────
+const deleteTarget = ref(null)
+const isDeleteOpen = ref(false)
+
+function openDelete(activity) {
+  deleteTarget.value = activity
+  isDeleteOpen.value = true
+}
+
+function closeDelete() {
+  isDeleteOpen.value = false
+  deleteTarget.value = null
+}
+
 // ── 테이블 컬럼 ────────────────────────────────────────────
 const columns = [
   { key: 'checkbox', label: '', width: '48px', align: 'center' },
@@ -303,12 +333,20 @@ const columns = [
         </template>
 
         <!-- 작업 버튼 -->
-        <template #cell-actions>
+        <template #cell-actions="{ row }">
           <div class="flex items-center justify-center gap-3">
-            <button type="button" class="text-xs text-brand-500 transition hover:text-brand-700">
+            <button
+              type="button"
+              class="text-xs text-brand-500 transition hover:text-brand-700"
+              @click="openEdit(row)"
+            >
               수정
             </button>
-            <button type="button" class="text-xs text-slate-400 transition hover:text-red-500">
+            <button
+              type="button"
+              class="text-xs text-slate-400 transition hover:text-red-500"
+              @click="openDelete(row)"
+            >
               삭제
             </button>
           </div>
@@ -330,5 +368,32 @@ const columns = [
       :activity="selectedActivity ?? {}"
       @close="closeDetail"
     />
+
+    <!-- 수정 모달 -->
+    <ActivityEditModal
+      :open="isEditOpen"
+      :activity="editActivity ?? {}"
+      @close="closeEdit"
+    />
+
+    <!-- 삭제 확인 모달 -->
+    <BaseModal
+      :open="isDeleteOpen"
+      title="기록 삭제"
+      width="max-w-sm"
+      @close="closeDelete"
+    >
+      <div class="space-y-2">
+        <p class="text-sm text-slate-700">아래 기록을 삭제하시겠습니까?</p>
+        <p class="rounded-lg bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900">
+          {{ deleteTarget?.title }}
+        </p>
+        <p class="text-xs text-slate-400">삭제된 기록은 복구할 수 없습니다.</p>
+      </div>
+      <template #footer>
+        <BaseButton variant="secondary" @click="closeDelete">취소</BaseButton>
+        <BaseButton variant="danger" @click="closeDelete">삭제</BaseButton>
+      </template>
+    </BaseModal>
   </div>
 </template>
