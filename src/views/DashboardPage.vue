@@ -147,7 +147,7 @@ onMounted(async () => {
 
 <template>
   <div class="fade-in space-y-6">
-    <section class="grid gap-4 xl:grid-cols-3">
+    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <RouterLink
         v-for="card in summaryCards"
         :key="card.id"
@@ -161,7 +161,7 @@ onMounted(async () => {
           />
         </div>
         <div>
-          <div class="text-lg font-bold text-slate-800">{{ card.count }}</div>
+          <div class="text-lg font-bold text-slate-800 sm:text-xl">{{ card.count }}</div>
           <div class="text-xs text-slate-500">{{ card.title }}</div>
         </div>
         <i class="fas fa-chevron-right ml-auto text-xs text-slate-300" />
@@ -181,9 +181,9 @@ onMounted(async () => {
       <div
         v-for="item in requestItems"
         :key="item.id"
-        class="flex cursor-pointer items-center justify-between px-5 py-3.5 transition hover:bg-slate-50/50"
+        class="flex cursor-pointer flex-col items-start gap-3 px-5 py-3.5 transition hover:bg-slate-50/50 sm:flex-row sm:items-center sm:justify-between"
       >
-        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3">
           <div
             class="flex h-9 w-9 items-center justify-center rounded-lg"
             :class="item.actionLabel === '삭제' ? 'bg-red-50' : 'bg-blue-50'"
@@ -202,7 +202,7 @@ onMounted(async () => {
             </div>
           </div>
         </div>
-        <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 self-end sm:self-auto">
           <span
             v-if="item.urgent"
             class="rounded px-1.5 py-0.5 text-[10px] font-bold text-red-600 bg-red-50"
@@ -228,7 +228,7 @@ onMounted(async () => {
         <div
           v-for="item in recentActivities"
           :key="item.id"
-          class="group flex cursor-pointer items-start gap-3 text-sm"
+            class="group flex cursor-pointer items-start gap-3 text-sm"
         >
           <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-xs text-slate-500">
             <i class="fas" :class="item.icon" />
@@ -259,7 +259,7 @@ onMounted(async () => {
               <div class="font-semibold text-slate-800">{{ item.shipmentNo }}</div>
               <div class="mt-0.5 text-xs text-slate-400">{{ item.company }}</div>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="ml-4 flex shrink-0 items-center gap-2">
               <StatusBadge :value="item.status" />
             </div>
           </div>
