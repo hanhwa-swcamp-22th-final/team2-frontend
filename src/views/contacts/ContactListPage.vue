@@ -2,11 +2,11 @@
 import { computed, ref } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
+import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import InfoField from '@/components/common/InfoField.vue'
 import PageTitleBar from '@/components/layout/PageTitleBar.vue'
-import SearchInput from '@/components/common/SearchInput.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 
 // ── 더미 데이터 ────────────────────────────────────────────
@@ -27,19 +27,20 @@ const contacts = ref([
 ])
 
 // ── 검색 ───────────────────────────────────────────────────
-const searchKeyword = ref('')
+const searchInput = ref('')    // 입력 중인 값 (버튼 클릭 전까지 화면에 반영 안 됨)
+const searchKeyword = ref('')  // 실제 적용된 필터 값
+
+const clientSearchOptions = computed(() =>
+  clients.value.map((c) => ({ label: `${c.name} (${c.nameKr})`, value: c.id })),
+)
+
+function applySearch() {
+  searchKeyword.value = searchInput.value
+}
 
 const filteredClients = computed(() => {
-  const q = searchKeyword.value.trim().toLowerCase()
-  if (!q) return clients.value
-
-  return clients.value.filter((client) => {
-    const clientMatch = client.name.toLowerCase().includes(q) || client.nameKr.includes(q)
-    const contactMatch = getContactsByClient(client.id).some(
-      (c) => c.name.toLowerCase().includes(q) || c.position.toLowerCase().includes(q) || c.email.toLowerCase().includes(q),
-    )
-    return clientMatch || contactMatch
-  })
+  if (!searchKeyword.value) return clients.value
+  return clients.value.filter((c) => c.id === searchKeyword.value)
 })
 
 function getContactsByClient(clientId) {
@@ -67,19 +68,36 @@ function getClientName(clientId) {
   return client ? `${client.name} (${client.nameKr})` : '-'
 }
 
-// ── 수정 모달 ──────────────────────────────────────────────
+// ── 등록/수정 모달 ─────────────────────────────────────────
 const isFormOpen = ref(false)
+const isEditMode = ref(false)
 const formClientId = ref('')
 const formName = ref('')
 const formPosition = ref('')
 const formEmail = ref('')
 const formTel = ref('')
 
+const positionOptions = [
+  { label: 'Team Leader', value: 'Team Leader' },
+  { label: 'Team Member', value: 'Team Member' },
+]
+
 const clientOptions = computed(() =>
   clients.value.map((c) => ({ label: `${c.name} (${c.nameKr})`, value: c.id })),
 )
 
+function openCreate() {
+  isEditMode.value = false
+  formClientId.value = ''
+  formName.value = ''
+  formPosition.value = ''
+  formEmail.value = ''
+  formTel.value = ''
+  isFormOpen.value = true
+}
+
 function openEdit(contact) {
+  isEditMode.value = true
   formClientId.value = contact.clientId
   formName.value = contact.name
   formPosition.value = contact.position
@@ -112,14 +130,33 @@ function closeDelete() {
 <template>
   <div class="space-y-6">
     <!-- 페이지 타이틀 -->
-    <PageTitleBar title="컨택 리스트" description="거래처별 담당자 연락처를 조회하고 관리합니다." />
-
-    <!-- 검색 -->
-    <SearchInput
-      v-model="searchKeyword"
-      placeholder="거래처명, 이름, 직위, 이메일 검색..."
-      @search="(v) => (searchKeyword = v)"
-    />
+    <PageTitleBar title="컨택 리스트" description="거래처별 담당자 연락처를 조회하고 관리합니다.">
+      <template #actions>
+        <div class="w-64">
+          <SearchableCombobox
+            v-model="searchInput"
+            :options="clientSearchOptions"
+            placeholder="거래처 검색..."
+          />
+        </div>
+        <BaseButton variant="ghost" @click="applySearch">
+          <template #leading>
+            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 3.473 9.766l3.63 3.63a.75.75 0 1 0 1.06-1.06l-3.63-3.63A5.5 5.5 0 0 0 9 3.5ZM5 9a4 4 0 1 1 8 0 4 4 0 0 1-8 0Z" clip-rule="evenodd" />
+            </svg>
+          </template>
+          검색
+        </BaseButton>
+        <BaseButton @click="openCreate">
+          <template #leading>
+            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+            </svg>
+          </template>
+          연락처 등록
+        </BaseButton>
+      </template>
+    </PageTitleBar>
 
     <!-- 거래처별 카드 그룹 -->
     <div
@@ -205,10 +242,10 @@ function closeDelete() {
       </template>
     </BaseModal>
 
-    <!-- 수정 모달 -->
+    <!-- 등록/수정 모달 -->
     <BaseModal
       :open="isFormOpen"
-      title="연락처 수정"
+      :title="isEditMode ? '연락처 수정' : '연락처 등록'"
       width="max-w-lg"
       @close="closeForm"
     >
@@ -234,7 +271,7 @@ function closeDelete() {
         <div class="grid grid-cols-2 gap-4">
           <div class="space-y-1.5">
             <p class="text-sm font-semibold text-slate-700">직위</p>
-            <BaseTextField v-model="formPosition" placeholder="직위" />
+            <BaseSelect v-model="formPosition" :options="positionOptions" placeholder="직위 선택" />
           </div>
           <div class="space-y-1.5">
             <p class="text-sm font-semibold text-slate-700">
@@ -250,7 +287,7 @@ function closeDelete() {
       </div>
       <template #footer>
         <BaseButton variant="secondary" @click="closeForm">취소</BaseButton>
-        <BaseButton @click="closeForm">수정</BaseButton>
+        <BaseButton @click="closeForm">{{ isEditMode ? '수정' : '등록' }}</BaseButton>
       </template>
     </BaseModal>
 
