@@ -1,10 +1,44 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { fetchNavigationItems } from '@/api/navigation'
+import { useRoute } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 
 const uiStore = useUiStore()
+const route = useRoute()
 const navigationItems = ref([])
+
+const sectionOrder = ['basic', 'sales', 'orders', 'status', 'activity', 'admin']
+
+const groupedNavigationItems = computed(() => {
+  const sectionMap = new Map()
+
+  navigationItems.value.forEach((item) => {
+    const sectionKey = item.section || 'service'
+
+    if (!sectionMap.has(sectionKey)) {
+      sectionMap.set(sectionKey, {
+        key: sectionKey,
+        label: item.sectionLabel || sectionKey,
+        items: [],
+      })
+    }
+
+    sectionMap.get(sectionKey).items.push(item)
+  })
+
+  return [...sectionMap.values()].sort((a, b) => {
+    return sectionOrder.indexOf(a.key) - sectionOrder.indexOf(b.key)
+  })
+})
+
+function isActive(path) {
+  if (path === '/') {
+    return route.path === '/'
+  }
+
+  return route.path.startsWith(path)
+}
 
 onMounted(async () => {
   try {
@@ -37,18 +71,33 @@ onMounted(async () => {
       </div>
     </div>
 
-    <nav class="flex-1 space-y-1 px-3 py-4">
-      <RouterLink
-        v-for="item in navigationItems"
-        :key="item.id ?? item.path"
-        :to="item.path"
-        class="block rounded-lg px-3 py-2.5 transition hover:bg-slate-50"
-        active-class="bg-slate-50"
-        @click="uiStore.closeSidebar"
+    <nav class="flex-1 space-y-5 overflow-y-auto px-3 py-4">
+      <section
+        v-for="section in groupedNavigationItems"
+        :key="section.key"
+        class="space-y-1.5"
       >
-        <p class="text-sm font-semibold text-slate-800">{{ item.label }}</p>
-        <p class="mt-1 text-xs text-slate-400">{{ item.caption }}</p>
-      </RouterLink>
+        <div class="px-2">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+            {{ section.label }}
+          </p>
+        </div>
+
+        <RouterLink
+          v-for="item in section.items"
+          :key="item.id ?? item.path"
+          :to="item.path"
+          class="mx-1 flex items-center gap-3 rounded-lg px-4 py-2.5 text-[12.5px] transition"
+          :class="isActive(item.path) ? 'bg-slate-50 text-slate-900' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+          @click="uiStore.closeSidebar"
+        >
+          <i
+            class="fas w-4 flex-shrink-0 text-center text-[13px]"
+            :class="[item.icon, isActive(item.path) ? 'text-brand' : 'text-slate-400']"
+          />
+          <span class="font-medium">{{ item.label }}</span>
+        </RouterLink>
+      </section>
     </nav>
 
     <div class="border-t border-slate-100 px-4 py-3">
