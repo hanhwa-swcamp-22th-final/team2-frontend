@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { fetchDashboardKpis } from '@/api/dashboard'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 
@@ -10,6 +11,7 @@ const summaryCards = ref([
     count: '3',
     status: '확정',
     helper: '진행중',
+    to: '/pi',
   },
   {
     id: 'po',
@@ -17,6 +19,7 @@ const summaryCards = ref([
     count: '3',
     status: '생산중',
     helper: '진행중',
+    to: '/po',
   },
   {
     id: 'cipl',
@@ -24,6 +27,7 @@ const summaryCards = ref([
     count: '1',
     status: '출하완료',
     helper: '완료',
+    to: '/ci',
   },
 ])
 const isLoading = ref(true)
@@ -143,10 +147,10 @@ onMounted(async () => {
 <template>
   <div class="space-y-6">
     <section class="grid gap-4 xl:grid-cols-3">
-      <button
+      <RouterLink
         v-for="card in summaryCards"
         :key="card.id"
-        type="button"
+        :to="card.to"
         class="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 text-left transition hover:border-slate-300 hover:shadow-sm"
       >
         <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-50">
@@ -160,7 +164,7 @@ onMounted(async () => {
           <div class="text-xs text-slate-500">{{ card.title }}</div>
         </div>
         <i class="fas fa-chevron-right ml-auto text-xs text-slate-300" />
-      </button>
+      </RouterLink>
     </section>
 
     <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -214,9 +218,9 @@ onMounted(async () => {
       <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div class="mb-4 flex items-center justify-between">
           <h3 class="font-bold text-slate-800">최근 활동</h3>
-          <button type="button" class="text-xs font-medium text-brand-500 hover:text-brand-700">
-            전체보기 <i class="fas fa-chevron-right ml-0.5 text-[9px]" />
-          </button>
+        <RouterLink to="/activities" class="text-xs font-medium text-brand-500 hover:text-brand-700">
+          전체보기 <i class="fas fa-chevron-right ml-0.5 text-[9px]" />
+        </RouterLink>
         </div>
         <div class="space-y-3">
           <div
@@ -238,9 +242,9 @@ onMounted(async () => {
       <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div class="mb-4 flex items-center justify-between">
           <h3 class="font-bold text-slate-800">출하 현황</h3>
-          <button type="button" class="text-xs font-medium text-brand-500 hover:text-brand-700">
-            전체보기 <i class="fas fa-chevron-right ml-0.5 text-[9px]" />
-          </button>
+        <RouterLink to="/shipments" class="text-xs font-medium text-brand-500 hover:text-brand-700">
+          전체보기 <i class="fas fa-chevron-right ml-0.5 text-[9px]" />
+        </RouterLink>
         </div>
         <div class="space-y-3">
           <div
