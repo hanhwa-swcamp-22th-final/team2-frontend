@@ -197,14 +197,15 @@ onBeforeUnmount(() => {
           </td>
         </tr>
       </tbody>
+      <tfoot v-if="$slots.footer" class="bg-slate-50">
+        <slot name="footer" />
+      </tfoot>
     </table>
     <div
-      v-if="$slots.footer || footerText"
+      v-if="!$slots.footer && footerText"
       class="border-t border-slate-100 bg-slate-50 px-4 py-3 text-xs font-medium text-slate-500"
     >
-      <slot name="footer">
-        {{ footerText }}
-      </slot>
+      {{ footerText }}
     </div>
   </div>
 </template>

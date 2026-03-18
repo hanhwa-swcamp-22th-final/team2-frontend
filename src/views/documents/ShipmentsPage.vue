@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import BaseTextField from '@/components/common/BaseTextField.vue'
 import DateField from '@/components/common/DateField.vue'
 import FormField from '@/components/common/FormField.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
@@ -13,6 +14,7 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 const isAdvancedOpen = ref(true)
 
 const filters = ref({
+  keyword: '',
   requestFrom: '',
   requestTo: '',
   clientName: '',
@@ -79,6 +81,7 @@ const completedCount = computed(() => rows.filter((row) => row.status === '출�
 
 function resetFilters() {
   filters.value = {
+    keyword: '',
     requestFrom: '',
     requestTo: '',
     clientName: '',
@@ -103,6 +106,30 @@ function openClientSearch() {}
         출하 현황
       </h2>
     </section>
+
+    <BaseCard body-class="flex flex-wrap items-center justify-between gap-3">
+      <div class="relative w-full sm:max-w-[320px]">
+        <i class="fas fa-search absolute left-3 top-2.5 text-xs text-slate-400" aria-hidden="true"></i>
+        <BaseTextField
+          v-model="filters.keyword"
+          placeholder="검색어 입력..."
+          class="pl-9"
+        />
+      </div>
+
+      <BaseButton
+        variant="secondary"
+        size="sm"
+        class="shrink-0"
+        :class="isAdvancedOpen ? 'border-brand-200 bg-slate-50 text-brand-600' : ''"
+        @click="isAdvancedOpen = !isAdvancedOpen"
+      >
+        <template #leading>
+          <i class="fas fa-sliders-h text-xs" aria-hidden="true"></i>
+        </template>
+        상세검색
+      </BaseButton>
+    </BaseCard>
 
     <BaseCard body-class="overflow-hidden p-0">
       <button
