@@ -146,13 +146,13 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="fade-in space-y-6">
     <section class="grid gap-4 xl:grid-cols-3">
       <RouterLink
         v-for="card in summaryCards"
         :key="card.id"
         :to="card.to"
-        class="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 text-left transition hover:border-slate-300 hover:shadow-sm"
+        class="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md"
       >
         <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-50">
           <i
@@ -168,7 +168,7 @@ onMounted(async () => {
       </RouterLink>
     </section>
 
-    <BaseCard body-class="-mx-5 -mb-5 divide-y divide-slate-100">
+    <BaseCard body-class="-mx-5 -mb-5 max-h-[400px] divide-y divide-slate-100 overflow-y-auto">
       <template #title>
         <h3 class="flex items-center gap-2 font-bold text-slate-800">
           <i class="fas fa-stamp text-brand-500" />
@@ -181,7 +181,7 @@ onMounted(async () => {
       <div
         v-for="item in requestItems"
         :key="item.id"
-        class="flex items-center justify-between px-5 py-3.5 transition hover:bg-slate-50/50"
+        class="flex cursor-pointer items-center justify-between px-5 py-3.5 transition hover:bg-slate-50/50"
       >
         <div class="flex items-center gap-3">
           <div
