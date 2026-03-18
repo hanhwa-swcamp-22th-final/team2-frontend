@@ -4,6 +4,14 @@ import AuthLayout from '@/layouts/AuthLayout.vue'
 import CommonComponentsPage from '@/views/CommonComponentsPage.vue'
 import DashboardPage from '@/views/DashboardPage.vue'
 import DomainComponentsPage from '@/views/DomainComponentsPage.vue'
+import CIPage from '@/views/documents/CIPage.vue'
+import CollectionsPage from '@/views/documents/CollectionsPage.vue'
+import PIPage from '@/views/documents/PIPage.vue'
+import PLPage from '@/views/documents/PLPage.vue'
+import POPage from '@/views/documents/POPage.vue'
+import ProductionOrderPage from '@/views/documents/ProductionOrderPage.vue'
+import ShipmentsPage from '@/views/documents/ShipmentsPage.vue'
+import ShipmentOrderPage from '@/views/documents/ShipmentOrderPage.vue'
 import ServicePage from '@/views/ServicePage.vue'
 import ActivityListPage from '@/views/activity/ActivityListPage.vue'
 import ActivityCreatePage from '@/views/activity/ActivityCreatePage.vue'
@@ -121,7 +129,7 @@ const routes = [
       {
         path: 'pi',
         name: 'pi',
-        component: ServicePage,
+        component: PIPage,
         meta: {
           title: 'PI',
           serviceName: 'PI 관리',
@@ -131,7 +139,7 @@ const routes = [
       {
         path: 'po',
         name: 'po',
-        component: ServicePage,
+        component: POPage,
         meta: {
           title: 'PO',
           serviceName: 'PO 관리',
@@ -141,7 +149,7 @@ const routes = [
       {
         path: 'ci',
         name: 'ci',
-        component: ServicePage,
+        component: CIPage,
         meta: {
           title: 'CI',
           serviceName: 'CI 관리',
@@ -151,7 +159,7 @@ const routes = [
       {
         path: 'pl',
         name: 'pl',
-        component: ServicePage,
+        component: PLPage,
         meta: {
           title: 'PL',
           serviceName: 'PL 관리',
@@ -161,7 +169,7 @@ const routes = [
       {
         path: 'production',
         name: 'production',
-        component: ServicePage,
+        component: ProductionOrderPage,
         meta: {
           title: 'Production',
           serviceName: '생산 관리',
@@ -171,7 +179,7 @@ const routes = [
       {
         path: 'shipment-orders',
         name: 'shipment-orders',
-        component: ServicePage,
+        component: ShipmentOrderPage,
         meta: {
           title: 'Shipment Orders',
           serviceName: '출하 관리',
@@ -181,7 +189,7 @@ const routes = [
       {
         path: 'collections',
         name: 'collections',
-        component: ServicePage,
+        component: CollectionsPage,
         meta: {
           title: 'Collections',
           serviceName: '매출·수금 현황',
@@ -191,7 +199,7 @@ const routes = [
       {
         path: 'shipments',
         name: 'shipments',
-        component: ServicePage,
+        component: ShipmentsPage,
         meta: {
           title: 'Shipments',
           serviceName: '출하현황',

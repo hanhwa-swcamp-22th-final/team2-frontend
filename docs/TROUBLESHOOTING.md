@@ -160,3 +160,65 @@ curl http://127.0.0.1:3000/api/navigationItems
 4. `npm run build`
 5. 에러 발생 시 슬롯 구조와 프록시 연결 상태를 우선 확인
 
+---
+
+## 4. 상세검색 드롭다운 목록 잘림
+
+### 증상
+
+문서/현황 화면 상세검색에서 `영업담당자`, `상태`, `국가` 같은 드롭다운을 열었을 때
+목록이 아래로 펼쳐지지 않고 잘려 보일 수 있습니다.
+
+대표 위치:
+
+- `src/views/documents/CollectionsPage.vue`
+- `src/views/documents/ShipmentsPage.vue`
+- `CollapsibleFilterCard`를 사용하는 상세검색 영역 전반
+
+### 원인
+
+드롭다운 컴포넌트 자체 문제가 아니라, 상세검색 카드 래퍼에 `overflow-hidden`이 걸려 있으면
+아래로 펼쳐지는 목록이 부모 영역에 의해 잘립니다.
+
+이번 케이스에서는 아래 공통 컴포넌트가 원인이었습니다.
+
+- `src/components/common/CollapsibleFilterCard.vue`
+
+기존:
+
+```vue
+<BaseCard body-class="overflow-hidden p-0">
+```
+
+이 구조 때문에 `SearchableCombobox`의 옵션 목록이 카드 밖으로 나가지 못했습니다.
+
+### 확인 방법
+
+1. 드롭다운이 들어 있는 부모 컴포넌트에 `overflow-hidden`이 있는지 확인
+2. 특히 `BaseCard`, `CollapsibleFilterCard`, `BaseModal` 같은 래퍼 컴포넌트의 `bodyClass`를 확인
+
+```bash
+rg -n "overflow-hidden" src/components src/views -S
+```
+
+### 해결 방법
+
+드롭다운이 열리는 영역에서는 부모 래퍼의 `overflow-hidden`을 제거합니다.
+
+수정 예:
+
+```vue
+<BaseCard body-class="p-0">
+```
+
+즉, 목록이 밖으로 펼쳐져야 하는 영역에서는 `overflow-hidden`을 기본으로 두면 안 됩니다.
+
+### 재확인
+
+1. 상세검색 열기
+2. `영업담당자`, `상태`, `국가` 드롭다운 열기
+3. 목록이 잘리지 않고 아래로 정상 표시되는지 확인
+
+```bash
+npm run build
+```

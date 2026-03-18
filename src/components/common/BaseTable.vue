@@ -18,6 +18,10 @@ const props = defineProps({
     type: String,
     default: '데이터가 없습니다.',
   },
+  footerText: {
+    type: String,
+    default: '',
+  },
 })
 
 const resizeWidths = ref({})
@@ -57,14 +61,6 @@ function getAlignmentClass(align) {
 }
 
 function getHeaderAlignmentClass(align) {
-  if (align === 'right') {
-    return 'text-right'
-  }
-
-  if (align === 'left') {
-    return 'text-left'
-  }
-
   return 'text-center'
 }
 
@@ -150,59 +146,66 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white/90 shadow-panel backdrop-blur">
-    <div class="overflow-x-auto">
-      <table class="min-w-full border-collapse">
-        <thead class="bg-slate-50">
-          <tr>
-            <th
-              v-for="column in normalizedColumns"
-              :key="column.key"
-              scope="col"
-              class="relative select-none border-b border-r border-slate-200 px-5 py-4 text-sm font-bold text-slate-700 last:border-r-0"
-              :class="getHeaderAlignmentClass(column.align)"
-              :style="getColumnStyle(column)"
-            >
-              {{ column.label }}
-              <button
-                type="button"
-                class="absolute right-0 top-0 h-full w-2 cursor-col-resize border-0 bg-transparent p-0 transition hover:bg-brand/20 focus-visible:bg-brand/20 focus-visible:outline-none"
-                :aria-label="`${column.label} 너비 조절`"
-                @mousedown.prevent.stop="startResize($event, column)"
-              />
-            </th>
-          </tr>
-        </thead>
-        <tbody class="bg-white">
-          <tr v-if="rows.length === 0">
-            <td :colspan="normalizedColumns.length || 1" class="border-b border-slate-200 px-5 py-10 text-center text-sm text-slate-400">
-              {{ emptyText }}
-            </td>
-          </tr>
-          <tr
-            v-for="row in rows"
-            v-else
-            :key="row?.[rowKey] ?? JSON.stringify(row)"
-            class="transition hover:bg-slate-50/70"
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="min-w-full border-collapse">
+      <thead class="bg-slate-50">
+        <tr>
+          <th
+            v-for="column in normalizedColumns"
+            :key="column.key"
+            scope="col"
+            class="relative select-none border-b border-r border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 last:border-r-0"
+            :class="getHeaderAlignmentClass(column.align)"
+            :style="getColumnStyle(column)"
           >
-            <td
-              v-for="column in normalizedColumns"
-              :key="column.key"
-              class="border-b border-r border-slate-200 px-5 py-4 text-sm text-slate-700 last:border-r-0"
-              :class="getAlignmentClass(column.align)"
-              :style="getColumnStyle(column)"
+            {{ column.label }}
+            <button
+              type="button"
+              class="absolute right-0 top-0 h-full w-2 cursor-col-resize border-0 bg-transparent p-0 transition hover:bg-brand/20 focus-visible:bg-brand/20 focus-visible:outline-none"
+              :aria-label="`${column.label} 너비 조절`"
+              @mousedown.prevent.stop="startResize($event, column)"
+            />
+          </th>
+        </tr>
+      </thead>
+      <tbody class="bg-white">
+        <tr v-if="rows.length === 0">
+          <td :colspan="normalizedColumns.length || 1" class="border-b border-slate-200 px-4 py-12 text-center text-sm text-slate-400">
+            {{ emptyText }}
+          </td>
+        </tr>
+        <tr
+          v-for="row in rows"
+          v-else
+          :key="row?.[rowKey] ?? JSON.stringify(row)"
+          class="transition hover:bg-slate-50/70"
+        >
+          <td
+            v-for="column in normalizedColumns"
+            :key="column.key"
+            class="border-b border-r border-slate-200 px-4 py-3 text-sm text-slate-700 last:border-r-0"
+            :class="getAlignmentClass(column.align)"
+            :style="getColumnStyle(column)"
+          >
+            <slot
+              :name="`cell-${column.key}`"
+              :row="row"
+              :value="getCellValue(row, column.key)"
             >
-              <slot
-                :name="`cell-${column.key}`"
-                :row="row"
-                :value="getCellValue(row, column.key)"
-              >
-                {{ getCellValue(row, column.key) ?? '-' }}
-              </slot>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              {{ getCellValue(row, column.key) ?? '-' }}
+            </slot>
+          </td>
+        </tr>
+      </tbody>
+      <tfoot v-if="$slots.footer" class="bg-slate-50">
+        <slot name="footer" />
+      </tfoot>
+    </table>
+    <div
+      v-if="!$slots.footer && footerText"
+      class="border-t border-slate-100 bg-slate-50 px-4 py-3 text-xs font-medium text-slate-500"
+    >
+      {{ footerText }}
     </div>
   </div>
 </template>
