@@ -1,15 +1,20 @@
 {
   "navigationItems": [
-    { "id": 1, "label": "Dashboard", "path": "/", "caption": "공통" },
-    { "id": 2, "label": "Common Preview", "path": "/common-preview", "caption": "공통 UI 테스트" },
-    { "id": 3, "label": "Domain Preview", "path": "/domain-preview", "caption": "도메인 UI 테스트" },
-    { "id": 4, "label": "Auth", "path": "/auth", "caption": "인증/권한" },
-    { "id": 5, "label": "Master", "path": "/master", "caption": "기준정보" },
-    { "id": 6, "label": "Order", "path": "/order", "caption": "주문/출고" },
-    { "id": 7, "label": "Document", "path": "/document", "caption": "문서관리" },
-    { "id": 8, "label": "Sales", "path": "/sales", "caption": "매출분석" },
-    { "id": 9, "label": "PDF", "path": "/pdf", "caption": "문서출력" },
-    { "id": 10, "label": "Notification", "path": "/notification", "caption": "메일/알림" }
+    { "id": 1, "section": "basic", "sectionLabel": "기초정보", "label": "거래처 관리", "path": "/clients", "icon": "fa-building" },
+    { "id": 2, "section": "basic", "sectionLabel": "기초정보", "label": "품목 관리", "path": "/products", "icon": "fa-box" },
+    { "id": 3, "section": "sales", "sectionLabel": "영업 관리", "label": "PI 관리", "path": "/pi", "icon": "fa-file-invoice" },
+    { "id": 4, "section": "sales", "sectionLabel": "영업 관리", "label": "PO 관리", "path": "/po", "icon": "fa-file-contract" },
+    { "id": 5, "section": "sales", "sectionLabel": "영업 관리", "label": "CI 관리", "path": "/ci", "icon": "fa-file-invoice-dollar" },
+    { "id": 6, "section": "sales", "sectionLabel": "영업 관리", "label": "PL 관리", "path": "/pl", "icon": "fa-box-open" },
+    { "id": 7, "section": "orders", "sectionLabel": "지시서", "label": "생산 관리", "path": "/production", "icon": "fa-industry" },
+    { "id": 8, "section": "orders", "sectionLabel": "지시서", "label": "출하 관리", "path": "/shipment-orders", "icon": "fa-truck-loading" },
+    { "id": 9, "section": "status", "sectionLabel": "현황", "label": "매출·수금 현황", "path": "/collections", "icon": "fa-coins" },
+    { "id": 10, "section": "status", "sectionLabel": "현황", "label": "출하현황", "path": "/shipments", "icon": "fa-truck" },
+    { "id": 11, "section": "activity", "sectionLabel": "활동기록", "label": "기록 관리", "path": "/activities", "icon": "fa-list-check" },
+    { "id": 12, "section": "activity", "sectionLabel": "활동기록", "label": "컨택 리스트", "path": "/contacts", "icon": "fa-address-book" },
+    { "id": 13, "section": "activity", "sectionLabel": "활동기록", "label": "메일 이력", "path": "/emails", "icon": "fa-envelope" },
+    { "id": 14, "section": "activity", "sectionLabel": "활동기록", "label": "활동기록 패키지", "path": "/package", "icon": "fa-cube" },
+    { "id": 15, "section": "admin", "sectionLabel": "관리", "label": "사용자 관리", "path": "/users", "icon": "fa-users-cog" }
   ],
   "dashboardKpis": [
     { "id": 1, "title": "진행 화면", "value": "24", "change": "+6" },
@@ -31,5 +36,27 @@
     { "id": 2, "name": "거래처 상세", "owner": "Master", "status": "Ready" },
     { "id": 3, "name": "주문 등록", "owner": "Order", "status": "Review" },
     { "id": 4, "name": "문서 상세", "owner": "Document", "status": "Ready" }
+  ],
+  "positions": [
+    { "id": 1, "name": "팀장", "level": 1 },
+    { "id": 2, "name": "팀원", "level": 2 }
+  ],
+  "departments": [
+    { "id": 1, "name": "영업1팀" },
+    { "id": 2, "name": "영업2팀" },
+    { "id": 3, "name": "생산팀" },
+    { "id": 4, "name": "출하팀" },
+    { "id": 5, "name": "경영지원" }
+  ],
+  "users": [
+    { "id": 1, "employeeNo": "25061501", "name": "김영업", "email": "kim@salesboost.com", "role": "sales", "departmentId": 1, "positionId": 1, "status": "재직", "pw": "1234" },
+    { "id": 2, "employeeNo": "25061502", "name": "이생산", "email": "lee@salesboost.com", "role": "production", "departmentId": 3, "positionId": 1, "status": "재직", "pw": "1234" },
+    { "id": 3, "employeeNo": "25061503", "name": "박출하", "email": "park@salesboost.com", "role": "shipping", "departmentId": 4, "positionId": 1, "status": "재직", "pw": "1234" },
+    { "id": 4, "employeeNo": "25061504", "name": "최관리", "email": "admin@salesboost.com", "role": "admin", "departmentId": 5, "positionId": 1, "status": "재직", "pw": "1234" },
+    { "id": 5, "employeeNo": "25080101", "name": "정영업", "email": "jung@salesboost.com", "role": "sales", "departmentId": 2, "positionId": 2, "status": "재직", "pw": "1234" },
+    { "id": 6, "employeeNo": "25062001", "name": "한퇴사", "email": "han@salesboost.com", "role": "sales", "departmentId": 1, "positionId": 2, "status": "퇴직", "pw": "1234" }
+  ],
+  "company": [
+    { "id": 1, "nameEn": "HANWHA SYSTEMS Co., Ltd.", "nameKr": "한화시스템(주)", "addressEn": "188, Pangyoyeok-ro, Bundang-gu, Seongnam-si, Gyeonggi-do, Korea", "tel": "+82-31-8000-0000", "fax": "+82-31-8000-0001", "email": "export@hanwhasystems.com", "sealImageUrl": null }
   ]
 }
