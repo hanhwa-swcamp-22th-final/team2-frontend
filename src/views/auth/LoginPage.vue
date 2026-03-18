@@ -44,7 +44,7 @@ function handleLogin() {
               v-model="email"
               type="email"
               placeholder="name@company.com"
-              class="[&_input]:pl-9"
+              class="pl-9"
               autocomplete="email"
             />
           </div>
@@ -62,7 +62,7 @@ function handleLogin() {
               v-model="password"
               type="password"
               placeholder="비밀번호를 입력하세요"
-              class="[&_input]:pl-9"
+              class="pl-9"
               autocomplete="current-password"
             />
           </div>

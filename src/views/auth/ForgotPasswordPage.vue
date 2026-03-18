@@ -5,10 +5,14 @@ import BaseTextField from '@/components/common/BaseTextField.vue'
 import FormField from '@/components/common/FormField.vue'
 import { useToast } from '@/composables/useToast'
 
-const { success } = useToast()
+const { success, warning } = useToast()
 const email = ref('')
 
 function handleSubmit() {
+  if (!email.value) {
+    warning('이메일을 입력해주세요.')
+    return
+  }
   success('재설정 링크가 발송되었습니다.')
 }
 </script>
@@ -51,7 +55,7 @@ function handleSubmit() {
               v-model="email"
               type="email"
               placeholder="name@company.com"
-              class="[&_input]:pl-9"
+              class="pl-9"
               autocomplete="email"
             />
           </div>

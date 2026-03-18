@@ -4,10 +4,7 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import SearchInput from '@/components/common/SearchInput.vue'
 import DepartmentAccordion from '@/components/domain/auth/DepartmentAccordion.vue'
-import PasswordChangeModal from '@/components/domain/auth/PasswordChangeModal.vue'
 import UserFormModal from '@/components/domain/auth/UserFormModal.vue'
-
-const emit = defineEmits(['open-create-modal'])
 
 // Mock 데이터
 const positions = [
@@ -45,7 +42,7 @@ const expandedDepts = ref(new Set([1]))
 const showFormModal = ref(false)
 const formMode = ref('create')
 const selectedUser = ref(null)
-const showPasswordModal = ref(false)
+
 
 // 부서별 그룹핑 + 필터
 const groupedByDepartment = computed(() => {
@@ -155,9 +152,5 @@ defineExpose({ openCreateModal })
       @close="showFormModal = false"
     />
 
-    <PasswordChangeModal
-      :open="showPasswordModal"
-      @close="showPasswordModal = false"
-    />
   </div>
 </template>

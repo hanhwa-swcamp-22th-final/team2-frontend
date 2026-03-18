@@ -35,6 +35,7 @@ const statusOptions = [
 
 function getInitialForm() {
   return {
+    employeeNo: '',
     name: '',
     email: '',
     positionId: '',
@@ -50,6 +51,7 @@ function getInitialForm() {
 watch(() => props.open, (isOpen) => {
   if (isOpen && props.mode === 'edit' && props.user) {
     form.value = {
+      employeeNo: props.user.employeeNo ?? '',
       name: props.user.name ?? '',
       email: props.user.email ?? '',
       positionId: props.user.positionId ?? '',
@@ -92,6 +94,10 @@ function getCurrentDepartmentName() {
     <form class="space-y-6" @submit.prevent="handleSave">
       <!-- 기본 정보: 2열 그리드 -->
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <FormField label="사번" required>
+          <BaseTextField v-model="form.employeeNo" placeholder="사번을 입력하세요" :readonly="mode === 'edit'" />
+        </FormField>
+
         <FormField label="이름" required>
           <BaseTextField v-model="form.name" placeholder="이름을 입력하세요" />
         </FormField>
