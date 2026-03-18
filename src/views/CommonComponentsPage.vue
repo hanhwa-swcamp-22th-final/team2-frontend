@@ -2,6 +2,7 @@
 import { reactive, ref } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import BaseTabs from '@/components/common/BaseTabs.vue'
 import FormField from '@/components/common/FormField.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
@@ -24,6 +25,7 @@ const form = reactive({
 })
 
 const isModalOpen = ref(false)
+const isConfirmModalOpen = ref(false)
 const activeTab = ref('users')
 const fieldErrors = reactive({
   name: '',
@@ -181,6 +183,7 @@ function showErrorToast() {
           <div class="flex flex-wrap gap-3">
             <BaseButton @click="showSuccessToast">성공 토스트</BaseButton>
             <BaseButton variant="secondary" @click="showErrorToast">실패 토스트</BaseButton>
+            <BaseButton variant="danger" @click="isConfirmModalOpen = true">삭제 확인 모달</BaseButton>
           </div>
 
           <div class="space-y-4">
@@ -230,5 +233,16 @@ function showErrorToast() {
         <BaseButton @click="isModalOpen = false">확인</BaseButton>
       </template>
     </BaseModal>
+
+    <ConfirmModal
+      :open="isConfirmModalOpen"
+      title="기록 삭제"
+      message="아래 기록을 삭제하시겠습니까?"
+      detail="포장 규격 변경 요청"
+      confirm-label="삭제"
+      confirm-variant="danger"
+      @cancel="isConfirmModalOpen = false"
+      @confirm="isConfirmModalOpen = false"
+    />
   </div>
 </template>
