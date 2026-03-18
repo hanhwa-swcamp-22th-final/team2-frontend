@@ -8,6 +8,7 @@ import ServicePage from '@/views/ServicePage.vue'
 import ActivityListPage from '@/views/activity/ActivityListPage.vue'
 import ActivityCreatePage from '@/views/activity/ActivityCreatePage.vue'
 import ContactListPage from '@/views/contacts/ContactListPage.vue'
+import EmailListPage from '@/views/emails/EmailListPage.vue'
 
 const routes = [
   {
@@ -210,7 +211,7 @@ const routes = [
       {
         path: 'emails',
         name: 'emails',
-        component: ServicePage,
+        component: EmailListPage,
         meta: {
           title: 'Emails',
           serviceName: '메일 이력',
