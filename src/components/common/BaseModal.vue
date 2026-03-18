@@ -43,10 +43,10 @@ function handleBackdropClick() {
       @click.self="handleBackdropClick"
     >
       <div
-        class="w-full max-h-[90vh] overflow-hidden rounded-lg bg-white shadow-2xl"
+        class="flex max-h-[90vh] w-full flex-col overflow-hidden rounded-lg bg-white shadow-2xl"
         :class="width"
       >
-        <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-4">
+        <div class="flex flex-shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-6 py-4">
           <div>
             <h2 class="text-lg font-bold text-ink">{{ title }}</h2>
             <p v-if="description" class="mt-1 text-sm text-slate-500">{{ description }}</p>
@@ -67,11 +67,11 @@ function handleBackdropClick() {
           </button>
         </div>
 
-        <div class="overflow-y-auto px-6 py-5">
+        <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5">
           <slot />
         </div>
 
-        <div v-if="$slots.footer" class="flex justify-end gap-3 border-t border-slate-100 bg-slate-50/50 px-6 py-4">
+        <div v-if="$slots.footer" class="flex flex-shrink-0 justify-end gap-3 border-t border-slate-100 bg-slate-50/50 px-6 py-4">
           <slot name="footer" />
         </div>
       </div>
