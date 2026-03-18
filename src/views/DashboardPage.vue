@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { fetchDashboardKpis } from '@/api/dashboard'
+import BaseCard from '@/components/common/BaseCard.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 
 const summaryCards = ref([
@@ -167,85 +168,87 @@ onMounted(async () => {
       </RouterLink>
     </section>
 
-    <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+    <BaseCard body-class="-mx-5 -mb-5 divide-y divide-slate-100">
+      <template #title>
         <h3 class="flex items-center gap-2 font-bold text-slate-800">
           <i class="fas fa-stamp text-brand-500" />
           결재란
         </h3>
+      </template>
+      <template #header-actions>
         <span class="text-xs font-medium text-slate-400">{{ requestItems.length }}건</span>
-      </div>
-      <div class="divide-y divide-slate-100">
-        <div
-          v-for="item in requestItems"
-          :key="item.id"
-          class="flex items-center justify-between px-5 py-3.5 transition hover:bg-slate-50/50"
-        >
-          <div class="flex items-center gap-3">
-            <div
-              class="flex h-9 w-9 items-center justify-center rounded-lg"
-              :class="item.actionLabel === '삭제' ? 'bg-red-50' : 'bg-blue-50'"
-            >
-              <i
-                class="fas text-xs"
-                :class="item.actionLabel === '삭제' ? 'fa-trash text-red-400' : 'fa-edit text-blue-400'"
-              />
-            </div>
-            <div>
-              <div class="text-sm font-medium text-slate-800">
-                {{ item.docType }} {{ item.docId }} — {{ item.actionLabel }} 결재
-              </div>
-              <div class="text-xs text-slate-400">
-                {{ item.company }} · 요청: {{ item.requester }} → 결재: {{ item.approver }}
-              </div>
-            </div>
+      </template>
+      <div
+        v-for="item in requestItems"
+        :key="item.id"
+        class="flex items-center justify-between px-5 py-3.5 transition hover:bg-slate-50/50"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="flex h-9 w-9 items-center justify-center rounded-lg"
+            :class="item.actionLabel === '삭제' ? 'bg-red-50' : 'bg-blue-50'"
+          >
+            <i
+              class="fas text-xs"
+              :class="item.actionLabel === '삭제' ? 'fa-trash text-red-400' : 'fa-edit text-blue-400'"
+            />
           </div>
-          <div class="flex items-center gap-2">
-            <span
-              v-if="item.urgent"
-              class="rounded px-1.5 py-0.5 text-[10px] font-bold text-red-600 bg-red-50"
-            >
-              긴급
-            </span>
-            <StatusBadge :value="item.status" />
-            <i class="fas fa-chevron-right text-xs text-slate-300" />
+          <div>
+            <div class="text-sm font-medium text-slate-800">
+              {{ item.docType }} {{ item.docId }} — {{ item.actionLabel }} 결재
+            </div>
+            <div class="text-xs text-slate-400">
+              {{ item.company }} · 요청: {{ item.requester }} → 결재: {{ item.approver }}
+            </div>
           </div>
         </div>
+        <div class="flex items-center gap-2">
+          <span
+            v-if="item.urgent"
+            class="rounded px-1.5 py-0.5 text-[10px] font-bold text-red-600 bg-red-50"
+          >
+            긴급
+          </span>
+          <StatusBadge :value="item.status" />
+          <i class="fas fa-chevron-right text-xs text-slate-300" />
+        </div>
       </div>
-    </section>
+    </BaseCard>
 
     <section class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div class="mb-4 flex items-center justify-between">
+      <BaseCard>
+        <template #title>
           <h3 class="font-bold text-slate-800">최근 활동</h3>
-        <RouterLink to="/activities" class="text-xs font-medium text-brand-500 hover:text-brand-700">
-          전체보기 <i class="fas fa-chevron-right ml-0.5 text-[9px]" />
-        </RouterLink>
-        </div>
-        <div class="space-y-3">
-          <div
-            v-for="item in recentActivities"
-            :key="item.id"
-            class="group flex cursor-pointer items-start gap-3 text-sm"
-          >
-            <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-xs text-slate-500">
-              <i class="fas" :class="item.icon" />
-            </div>
-            <div class="min-w-0 flex-1">
-              <div class="truncate font-medium text-slate-800 transition group-hover:text-brand-600">{{ item.title }}</div>
-              <div class="text-xs text-slate-400">{{ item.company }} · {{ item.date }}</div>
-            </div>
+        </template>
+        <template #header-actions>
+          <RouterLink to="/activities" class="text-xs font-medium text-brand-500 hover:text-brand-700">
+            전체보기 <i class="fas fa-chevron-right ml-0.5 text-[9px]" />
+          </RouterLink>
+        </template>
+        <div
+          v-for="item in recentActivities"
+          :key="item.id"
+          class="group flex cursor-pointer items-start gap-3 text-sm"
+        >
+          <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-xs text-slate-500">
+            <i class="fas" :class="item.icon" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="truncate font-medium text-slate-800 transition group-hover:text-brand-600">{{ item.title }}</div>
+            <div class="text-xs text-slate-400">{{ item.company }} · {{ item.date }}</div>
           </div>
         </div>
-      </div>
+      </BaseCard>
 
-      <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div class="mb-4 flex items-center justify-between">
+      <BaseCard>
+        <template #title>
           <h3 class="font-bold text-slate-800">출하 현황</h3>
-        <RouterLink to="/shipments" class="text-xs font-medium text-brand-500 hover:text-brand-700">
-          전체보기 <i class="fas fa-chevron-right ml-0.5 text-[9px]" />
-        </RouterLink>
-        </div>
+        </template>
+        <template #header-actions>
+          <RouterLink to="/shipments" class="text-xs font-medium text-brand-500 hover:text-brand-700">
+            전체보기 <i class="fas fa-chevron-right ml-0.5 text-[9px]" />
+          </RouterLink>
+        </template>
         <div class="space-y-3">
           <div
             v-for="item in shipmentItems"
@@ -261,7 +264,7 @@ onMounted(async () => {
             </div>
           </div>
         </div>
-      </div>
+      </BaseCard>
     </section>
   </div>
 </template>
