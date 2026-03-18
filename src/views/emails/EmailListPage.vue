@@ -1,6 +1,9 @@
 <script setup>
 import { ref } from 'vue'
+import BaseButton from '@/components/common/BaseButton.vue'
+import BaseModal from '@/components/common/BaseModal.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import InfoField from '@/components/common/InfoField.vue'
 import PageTitleBar from '@/components/layout/PageTitleBar.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 
@@ -104,6 +107,20 @@ const emails = ref([
   },
 ])
 
+// ── 상세 모달 ──────────────────────────────────────────────
+const selectedEmail = ref(null)
+const isDetailOpen = ref(false)
+
+function openDetail(email) {
+  selectedEmail.value = email
+  isDetailOpen.value = true
+}
+
+function closeDetail() {
+  isDetailOpen.value = false
+  selectedEmail.value = null
+}
+
 // ── 테이블 컬럼 ────────────────────────────────────────────
 const columns = [
   { key: 'index',     label: '항목',   width: '64px',  align: 'center' },
@@ -152,19 +169,17 @@ const columns = [
 
       <!-- 첨부 -->
       <template #cell-attachment="{ row }">
-        <svg
+        <button
           v-if="row.hasAttachment"
-          class="mx-auto h-4 w-4 text-slate-400"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          aria-hidden="true"
+          type="button"
+          class="mx-auto flex items-center justify-center text-slate-400 transition hover:text-brand-500"
+          @click="openDetail(row)"
         >
-          <path
-            fill-rule="evenodd"
-            d="M15.621 4.379a3 3 0 0 0-4.242 0l-7 7a1.5 1.5 0 0 0 2.122 2.122L14 6.243a.25.25 0 0 1 .354.354l-3.13 3.132a3.5 3.5 0 0 1-4.95-4.95l4-4a5 5 0 0 1 7.071 7.07L10.5 15.5a7 7 0 0 1-9.9-9.9l4.743-4.742a.75.75 0 0 1 1.061 1.061l-4.743 4.742a5.5 5.5 0 0 0 7.779 7.779l6.843-6.843A3.5 3.5 0 0 0 11.5 2.5L5 9a2 2 0 0 0 2.829 2.828l5.5-5.5a.5.5 0 0 0-.707-.707L7 11.121A.5.5 0 1 1 6.293 10.414l5.5-5.5a2 2 0 0 1 2.829 2.829l-6.5 6.5a3.5 3.5 0 0 1-4.95-4.95l6.5-6.5a5 5 0 0 1 7.07 7.071l-6.84 6.843A7 7 0 0 1 .5 10a7 7 0 0 1 2.05-4.95l4.743-4.742a.75.75 0 0 1 1.06 1.06Z"
-            clip-rule="evenodd"
-          />
-        </svg>
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path d="M9.25 13.25a.75.75 0 0 0 1.5 0V4.636l2.955 3.129a.75.75 0 0 0 1.09-1.03l-4.25-4.5a.75.75 0 0 0-1.09 0l-4.25 4.5a.75.75 0 1 0 1.09 1.03L9.25 4.636v8.614Z" />
+            <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
+          </svg>
+        </button>
         <span v-else class="text-slate-300">—</span>
       </template>
 
@@ -179,5 +194,34 @@ const columns = [
     <div class="px-1 text-xs text-slate-500">
       총 {{ emails.length }}건
     </div>
+
+    <!-- 메일 상세 모달 -->
+    <BaseModal
+      :open="isDetailOpen"
+      title="메일 상세"
+      width="max-w-md"
+      @close="closeDetail"
+    >
+      <div class="space-y-3">
+        <InfoField label="거래처"  :value="selectedEmail?.client" />
+        <InfoField label="발송자"  :value="selectedEmail?.sender" />
+        <InfoField label="수신자"  :value="selectedEmail?.recipient || '-'" />
+        <InfoField label="발송일시" :value="selectedEmail?.sentAt" />
+        <InfoField label="제목"    :value="selectedEmail?.title" />
+        <InfoField label="유형"    :value="selectedEmail?.type" />
+        <InfoField label="첨부파일">
+          <div class="flex items-center gap-1.5 text-sm text-brand-600">
+            <svg class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path d="M9.25 13.25a.75.75 0 0 0 1.5 0V4.636l2.955 3.129a.75.75 0 0 0 1.09-1.03l-4.25-4.5a.75.75 0 0 0-1.09 0l-4.25 4.5a.75.75 0 1 0 1.09 1.03L9.25 4.636v8.614Z" />
+              <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
+            </svg>
+            <span>{{ selectedEmail?.title?.replace('[SalesBoost] ', '') }}.pdf</span>
+          </div>
+        </InfoField>
+      </div>
+      <template #footer>
+        <BaseButton variant="secondary" @click="closeDetail">닫기</BaseButton>
+      </template>
+    </BaseModal>
   </div>
 </template>
