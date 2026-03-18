@@ -140,12 +140,12 @@ onBeforeUnmount(() => {
         v-model="inputValue"
         :placeholder="placeholder"
         :disabled="disabled"
-        class="h-11 w-full rounded-2xl border border-white/70 bg-white/90 px-4 pr-10 text-sm text-ink shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-10 text-sm text-ink transition duration-200 placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
         @focus="openList"
         @input="openList"
         @keydown="onKeydown"
       />
-      <span class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
+      <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
         <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
           <path
             fill-rule="evenodd"
@@ -158,13 +158,13 @@ onBeforeUnmount(() => {
 
     <div
       v-if="isOpen"
-      class="absolute z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-white/70 bg-white p-2 shadow-panel"
+      class="absolute z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 shadow-lg"
     >
       <button
         v-for="(option, index) in filteredOptions"
         :key="option.value"
         type="button"
-        class="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition"
+        class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition"
         :class="index === highlightedIndex ? 'bg-brand/10 text-brand' : 'hover:bg-slate-50 text-slate-700'"
         @click="selectOption(option)"
       >

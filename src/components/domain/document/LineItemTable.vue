@@ -17,8 +17,8 @@ const props = defineProps({
 })
 
 const columns = [
-  { key: 'description', label: '품목' },
-  { key: 'qty', label: '수량', align: 'right', width: '90px' },
+  { key: 'description', label: '품목', align: 'center' },
+  { key: 'qty', label: '수량', align: 'center', width: '90px' },
   { key: 'unitPrice', label: '단가', align: 'right', width: '120px' },
   { key: 'amount', label: props.amountLabel, align: 'right', width: '140px' },
 ]

@@ -30,10 +30,10 @@ const departmentOptions = [
 ]
 
 const tableColumns = [
-  { key: 'name', label: '화면' },
-  { key: 'owner', label: '담당' },
-  { key: 'status', label: '상태' },
-  { key: 'action', label: '작업', align: 'right' },
+  { key: 'name', label: '화면', align: 'center' },
+  { key: 'owner', label: '담당', align: 'center' },
+  { key: 'status', label: '상태', align: 'center' },
+  { key: 'action', label: '작업', align: 'center' },
 ]
 
 const tableRows = [
@@ -143,7 +143,7 @@ function handleSearch(value) {
           <StatusBadge :value="value" />
         </template>
         <template #cell-action>
-          <div class="flex justify-end gap-2">
+          <div class="flex justify-center gap-2">
             <BaseButton size="sm" variant="ghost">보기</BaseButton>
             <BaseButton size="sm" variant="secondary">수정</BaseButton>
           </div>

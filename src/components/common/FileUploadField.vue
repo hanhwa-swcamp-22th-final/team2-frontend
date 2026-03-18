@@ -47,7 +47,7 @@ function removeFile() {
 </script>
 
 <template>
-  <div class="rounded-3xl border border-dashed border-slate-300 bg-white/80 p-5">
+  <div class="rounded-xl border border-dashed border-slate-300 bg-white p-5">
     <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
       <div>
         <p class="text-sm font-semibold text-ink">{{ label }}</p>
@@ -57,7 +57,7 @@ function removeFile() {
       <div class="flex flex-wrap gap-2">
         <label class="inline-flex cursor-pointer">
           <input type="file" class="hidden" :accept="accept" @change="handleChange" />
-          <span class="inline-flex h-11 items-center justify-center rounded-2xl border border-brand bg-brand px-4 text-sm font-medium text-white transition hover:bg-teal-700">
+          <span class="inline-flex items-center justify-center rounded-lg border border-slate-500 bg-slate-500 px-4 py-2 text-sm font-medium text-white transition hover:border-brand-600 hover:bg-brand-600">
             파일 선택
           </span>
         </label>
