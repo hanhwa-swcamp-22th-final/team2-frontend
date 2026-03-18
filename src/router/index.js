@@ -1,11 +1,36 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from '@/layouts/AppLayout.vue'
+import AuthLayout from '@/layouts/AuthLayout.vue'
 import CommonComponentsPage from '@/views/CommonComponentsPage.vue'
 import DashboardPage from '@/views/DashboardPage.vue'
 import DomainComponentsPage from '@/views/DomainComponentsPage.vue'
 import ServicePage from '@/views/ServicePage.vue'
 
 const routes = [
+  {
+    path: '/login',
+    component: AuthLayout,
+    children: [
+      {
+        path: '',
+        name: 'login',
+        component: () => import('@/views/auth/LoginPage.vue'),
+        meta: { title: '로그인' },
+      },
+    ],
+  },
+  {
+    path: '/forgot-password',
+    component: AuthLayout,
+    children: [
+      {
+        path: '',
+        name: 'forgot-password',
+        component: () => import('@/views/auth/ForgotPasswordPage.vue'),
+        meta: { title: '비밀번호 찾기' },
+      },
+    ],
+  },
   {
     path: '/',
     component: AppLayout,
@@ -47,6 +72,12 @@ const routes = [
           title: 'Clients',
           serviceName: '거래처 관리',
           description: '거래처 조회 및 관리 화면',
+        path: 'auth',
+        name: 'auth',
+        component: () => import('@/views/auth/UserManagementPage.vue'),
+        meta: {
+          title: 'Auth',
+          serviceName: '사용자 관리',
         },
       },
       {
