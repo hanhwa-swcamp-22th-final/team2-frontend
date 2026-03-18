@@ -4,6 +4,7 @@ import AuthLayout from '@/layouts/AuthLayout.vue'
 import CommonComponentsPage from '@/views/CommonComponentsPage.vue'
 import DashboardPage from '@/views/DashboardPage.vue'
 import DomainComponentsPage from '@/views/DomainComponentsPage.vue'
+import PIPage from '@/views/documents/PIPage.vue'
 import ServicePage from '@/views/ServicePage.vue'
 
 const routes = [
@@ -87,7 +88,7 @@ const routes = [
       {
         path: 'pi',
         name: 'pi',
-        component: ServicePage,
+        component: PIPage,
         meta: {
           title: 'PI',
           serviceName: 'PI 관리',
