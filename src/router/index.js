@@ -5,6 +5,7 @@ import DashboardPage from '@/views/DashboardPage.vue'
 import DomainComponentsPage from '@/views/DomainComponentsPage.vue'
 import ServicePage from '@/views/ServicePage.vue'
 import ActivityListPage from '@/views/activity/ActivityListPage.vue'
+import ActivityCreatePage from '@/views/activity/ActivityCreatePage.vue'
 
 const routes = [
   {
@@ -48,6 +49,16 @@ const routes = [
           title: 'Activities',
           serviceName: '기록 관리',
           description: '활동 기록을 조회하고 관리합니다.',
+        },
+      },
+      {
+        path: 'activities/manage',
+        name: 'activities-create',
+        component: ActivityCreatePage,
+        meta: {
+          title: 'Activities - 등록',
+          serviceName: '기록 등록',
+          description: '새로운 활동 기록을 등록합니다.',
         },
       },
       {
