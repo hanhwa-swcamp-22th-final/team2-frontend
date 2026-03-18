@@ -9,6 +9,7 @@ import PIPage from '@/views/documents/PIPage.vue'
 import PLPage from '@/views/documents/PLPage.vue'
 import POPage from '@/views/documents/POPage.vue'
 import ProductionOrderPage from '@/views/documents/ProductionOrderPage.vue'
+import ShipmentsPage from '@/views/documents/ShipmentsPage.vue'
 import ShipmentOrderPage from '@/views/documents/ShipmentOrderPage.vue'
 import ServicePage from '@/views/ServicePage.vue'
 
@@ -163,7 +164,7 @@ const routes = [
       {
         path: 'shipments',
         name: 'shipments',
-        component: ServicePage,
+        component: ShipmentsPage,
         meta: {
           title: 'Shipments',
           serviceName: '출하현황',
