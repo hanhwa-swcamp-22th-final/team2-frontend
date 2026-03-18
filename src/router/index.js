@@ -6,6 +6,7 @@ import DashboardPage from '@/views/DashboardPage.vue'
 import DomainComponentsPage from '@/views/DomainComponentsPage.vue'
 import CIPage from '@/views/documents/CIPage.vue'
 import PIPage from '@/views/documents/PIPage.vue'
+import PLPage from '@/views/documents/PLPage.vue'
 import POPage from '@/views/documents/POPage.vue'
 import ServicePage from '@/views/ServicePage.vue'
 
@@ -120,7 +121,7 @@ const routes = [
       {
         path: 'pl',
         name: 'pl',
-        component: ServicePage,
+        component: PLPage,
         meta: {
           title: 'PL',
           serviceName: 'PL 관리',
