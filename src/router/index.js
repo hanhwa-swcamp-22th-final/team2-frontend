@@ -7,6 +7,7 @@ import DomainComponentsPage from '@/views/DomainComponentsPage.vue'
 import ServicePage from '@/views/ServicePage.vue'
 import ActivityListPage from '@/views/activity/ActivityListPage.vue'
 import ActivityCreatePage from '@/views/activity/ActivityCreatePage.vue'
+import ContactListPage from '@/views/contacts/ContactListPage.vue'
 
 const routes = [
   {
@@ -189,7 +190,7 @@ const routes = [
       {
         path: 'contacts',
         name: 'contacts',
-        component: ServicePage,
+        component: ContactListPage,
         meta: {
           title: 'Contacts',
           serviceName: '컨택 리스트',
