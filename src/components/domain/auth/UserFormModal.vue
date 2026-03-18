@@ -88,7 +88,7 @@ function getCurrentDepartmentName() {
   <BaseModal
     :open="open"
     :title="mode === 'create' ? '사용자 등록' : `사용자 정보 수정 – ${user?.name ?? ''}`"
-    width="max-w-2xl"
+    width="max-w-3xl"
     @close="emit('close')"
   >
     <form class="space-y-6" @submit.prevent="handleSave">
@@ -114,16 +114,16 @@ function getCurrentDepartmentName() {
           />
         </FormField>
 
-        <FormField label="역할" required>
-          <BaseSelect v-model="form.role" :options="roleOptions" placeholder="역할을 선택하세요" />
+        <FormField label="부서" required>
+          <BaseSelect v-model="form.role" :options="roleOptions" placeholder="부서를 선택하세요" />
         </FormField>
 
         <template v-if="mode === 'create'">
-          <FormField label="부서" required>
+          <FormField label="팀" required>
             <BaseSelect
               v-model="form.departmentId"
               :options="departments.map((d) => ({ label: d.name, value: d.id }))"
-              placeholder="부서를 선택하세요"
+              placeholder="팀을 선택하세요"
             />
           </FormField>
 
@@ -140,19 +140,19 @@ function getCurrentDepartmentName() {
           <BaseSelect v-model="form.status" :options="statusOptions" />
         </FormField>
 
-        <!-- 부서 이동 -->
+        <!-- 팀 이동 -->
         <div class="space-y-3 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
           <div class="flex items-center gap-2">
             <svg class="h-4 w-4 text-slate-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 0 1-9.201 2.466l-.312-.311h2.433a.75.75 0 0 0 0-1.5H4.28a.75.75 0 0 0-.75.75v3.952a.75.75 0 0 0 1.5 0v-2.146l.312.311a7 7 0 0 0 11.712-3.138.75.75 0 0 0-1.449-.384Zm.39-3.44a.75.75 0 0 0 .326-1.275 7 7 0 0 0-11.712 3.138.75.75 0 0 0 1.449.384 5.5 5.5 0 0 1 9.201-2.466l.312.311H13.28a.75.75 0 0 0 0 1.5h3.952a.75.75 0 0 0 .75-.75V5.384a.75.75 0 0 0-1.5 0v2.146l-.312-.311a.747.747 0 0 0-.468-.235Z" clip-rule="evenodd" />
             </svg>
-            <h3 class="text-sm font-bold text-ink">부서 이동</h3>
+            <h3 class="text-sm font-bold text-ink">팀 이동</h3>
           </div>
           <p class="text-xs text-slate-500">
-            현재 부서: <span class="font-medium text-ink">{{ getCurrentDepartmentName() }}</span> → 이동할 부서
+            현재 팀: <span class="font-medium text-ink">{{ getCurrentDepartmentName() }}</span> → 이동할 팀
           </p>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <FormField label="이동할 부서">
+            <FormField label="이동할 팀">
               <BaseSelect
                 v-model="form.transferDepartmentId"
                 :options="[{ label: '변경안함', value: '' }, ...departments.map((d) => ({ label: d.name, value: d.id }))]"
