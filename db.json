@@ -1,7 +1,7 @@
 {
   "navigationItems": [
-    { "id": 1, "section": "basic", "sectionLabel": "기초정보", "label": "거래처 관리", "path": "/clients", "icon": "fa-building" },
-    { "id": 2, "section": "basic", "sectionLabel": "기초정보", "label": "품목 관리", "path": "/products", "icon": "fa-box" },
+    { "id": 1, "section": "basic", "sectionLabel": "기초정보", "label": "거래처 관리", "path": "/master/clients", "icon": "fa-building" },
+    { "id": 2, "section": "basic", "sectionLabel": "기초정보", "label": "품목 관리", "path": "/master/items", "icon": "fa-box" },
     { "id": 3, "section": "sales", "sectionLabel": "영업 관리", "label": "PI 관리", "path": "/pi", "icon": "fa-file-invoice" },
     { "id": 4, "section": "sales", "sectionLabel": "영업 관리", "label": "PO 관리", "path": "/po", "icon": "fa-file-contract" },
     { "id": 5, "section": "sales", "sectionLabel": "영업 관리", "label": "CI 관리", "path": "/ci", "icon": "fa-file-invoice-dollar" },
