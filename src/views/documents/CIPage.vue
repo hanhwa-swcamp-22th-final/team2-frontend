@@ -38,7 +38,7 @@ const countryOptions = [
 ]
 
 const columns = [
-  { key: 'id', label: '문서번호', align: 'center', width: '150px' },
+  { key: 'id', label: 'CI번호', align: 'center', width: '150px' },
   { key: 'invoiceDate', label: '발행일', align: 'center', width: '130px' },
   { key: 'clientName', label: '거래처', align: 'center', width: '220px' },
   { key: 'country', label: '국가', align: 'center', width: '120px' },
@@ -146,7 +146,7 @@ function openProductSearch() {}
 
     <BaseCard v-if="isAdvancedOpen" body-class="space-y-4">
       <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-4">
-        <FormField label="등록일" class="col-span-2">
+        <FormField label="발행일" class="col-span-2">
           <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-1">
             <DateField v-model="filters.registeredFrom" />
             <span class="pb-2 text-sm text-slate-400">~</span>
@@ -154,7 +154,7 @@ function openProductSearch() {}
           </div>
         </FormField>
 
-        <FormField label="담당자">
+        <FormField label="영업담당자">
           <SearchableCombobox
             v-model="filters.manager"
             :options="managerOptions"
@@ -171,11 +171,11 @@ function openProductSearch() {}
           />
         </FormField>
 
-        <FormField label="코드">
+        <FormField label="CI번호">
           <SearchTriggerField
             v-model="filters.code"
-            placeholder="문서번호"
-            title="코드 검색"
+            placeholder="CI번호"
+            title="CI번호 검색"
             @trigger="openCodeSearch"
           />
         </FormField>

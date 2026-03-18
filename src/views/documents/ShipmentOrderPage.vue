@@ -50,11 +50,11 @@ const statusOptions = [
 const columns = [
   { key: 'id', label: '지시서번호', align: 'center', width: '150px' },
   { key: 'issueDate', label: '출하지시일', align: 'center', width: '130px' },
-  { key: 'poId', label: '원천PO', align: 'center', width: '140px' },
+  { key: 'poId', label: 'PO', align: 'center', width: '140px' },
   { key: 'clientName', label: '거래처', align: 'center', width: '220px' },
   { key: 'country', label: '국가', align: 'center', width: '120px' },
   { key: 'itemName', label: '품목명', align: 'center', width: '220px' },
-  { key: 'manager', label: '담당자', align: 'center', width: '120px' },
+  { key: 'manager', label: '영업담당자', align: 'center', width: '120px' },
   { key: 'status', label: '상태', align: 'center', width: '120px' },
   { key: 'dueDate', label: '납기일', align: 'center', width: '130px' },
   { key: 'actions', label: '', align: 'center', width: '120px' },
@@ -171,7 +171,7 @@ function openProductSearch() {}
 
     <BaseCard v-if="isAdvancedOpen" body-class="space-y-4">
       <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-4">
-        <FormField label="등록일" class="col-span-2">
+        <FormField label="출하지시일" class="col-span-2">
           <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-1">
             <DateField v-model="filters.registeredFrom" />
             <span class="pb-2 text-sm text-slate-400">~</span>
@@ -179,7 +179,7 @@ function openProductSearch() {}
           </div>
         </FormField>
 
-        <FormField label="담당자">
+        <FormField label="영업담당자">
           <SearchableCombobox
             v-model="filters.manager"
             :options="managerOptions"
@@ -196,11 +196,11 @@ function openProductSearch() {}
           />
         </FormField>
 
-        <FormField label="코드">
+        <FormField label="지시서번호">
           <SearchTriggerField
             v-model="filters.code"
-            placeholder="문서번호"
-            title="코드 검색"
+            placeholder="지시서번호"
+            title="지시서번호 검색"
             @trigger="openCodeSearch"
           />
         </FormField>
