@@ -5,6 +5,8 @@ import CommonComponentsPage from '@/views/CommonComponentsPage.vue'
 import DashboardPage from '@/views/DashboardPage.vue'
 import DomainComponentsPage from '@/views/DomainComponentsPage.vue'
 import ServicePage from '@/views/ServicePage.vue'
+import ActivityListPage from '@/views/activity/ActivityListPage.vue'
+import ActivityCreatePage from '@/views/activity/ActivityCreatePage.vue'
 
 const routes = [
   {
@@ -62,6 +64,26 @@ const routes = [
           title: 'Domain Preview',
           serviceName: '도메인 공통 컴포넌트 프리뷰',
           description: '2차 구현한 문서/활동 도메인 공통 컴포넌트 검증용 화면',
+        },
+      },
+      {
+        path: 'activities',
+        name: 'activities',
+        component: ActivityListPage,
+        meta: {
+          title: 'Activities',
+          serviceName: '기록 관리',
+          description: '활동 기록을 조회하고 관리합니다.',
+        },
+      },
+      {
+        path: 'activities/manage',
+        name: 'activities-create',
+        component: ActivityCreatePage,
+        meta: {
+          title: 'Activities - 등록',
+          serviceName: '기록 등록',
+          description: '새로운 활동 기록을 등록합니다.',
         },
       },
       {
@@ -162,16 +184,6 @@ const routes = [
           title: 'Shipments',
           serviceName: '출하현황',
           description: '출하 진행 현황 화면',
-        },
-      },
-      {
-        path: 'activities',
-        name: 'activities',
-        component: ServicePage,
-        meta: {
-          title: 'Activities',
-          serviceName: '기록 관리',
-          description: '활동기록 조회 및 관리 화면',
         },
       },
       {
