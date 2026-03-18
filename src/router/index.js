@@ -4,6 +4,7 @@ import CommonComponentsPage from '@/views/CommonComponentsPage.vue'
 import DashboardPage from '@/views/DashboardPage.vue'
 import DomainComponentsPage from '@/views/DomainComponentsPage.vue'
 import ServicePage from '@/views/ServicePage.vue'
+import ActivityListPage from '@/views/activity/ActivityListPage.vue'
 
 const routes = [
   {
@@ -37,6 +38,16 @@ const routes = [
           title: 'Domain Preview',
           serviceName: '도메인 공통 컴포넌트 프리뷰',
           description: '2차 구현한 문서/활동 도메인 공통 컴포넌트 검증용 화면',
+        },
+      },
+      {
+        path: 'activities',
+        name: 'activities',
+        component: ActivityListPage,
+        meta: {
+          title: 'Activities',
+          serviceName: '기록 관리',
+          description: '활동 기록을 조회하고 관리합니다.',
         },
       },
       {
