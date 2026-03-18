@@ -49,6 +49,7 @@ const columns = [
   { key: 'unitPrice', label: '단가 (KRW)', width: '140px', align: 'right' },
   { key: 'weight', label: '중량 (kg)', width: '110px', align: 'right' },
   { key: 'hsCode', label: '관세코드', width: '100px', align: 'center' },
+  { key: 'actions', label: '액션', width: '120px', align: 'center' },
 ]
 
 const filteredItems = computed(() => {
@@ -74,8 +75,24 @@ function openCreateModal() {
   showFormModal.value = true
 }
 
-function goToDetail(id) {
-  router.push({ name: 'item-detail', params: { id } })
+function openEditModal(item) {
+  selectedItem.value = item
+  formMode.value = 'edit'
+  showFormModal.value = true
+}
+
+function handleDelete(item) {
+  items.value = items.value.filter((i) => i.id !== item.id)
+  success(`${item.name} 품목이 삭제되었습니다.`)
+}
+
+function handleRowClick(event) {
+  const tr = event.target.closest('tbody tr')
+  if (!tr) return
+  const rows = Array.from(tr.parentElement.children)
+  const index = rows.indexOf(tr)
+  if (index < 0 || index >= filteredItems.value.length) return
+  router.push({ name: 'item-detail', params: { id: filteredItems.value[index].id } })
 }
 </script>
 
@@ -96,7 +113,9 @@ function goToDetail(id) {
       </div>
     </div>
 
-    <BaseTable :columns="columns" :rows="filteredItems" row-key="id" clickable @row-click="(row) => goToDetail(row.id)">
+    <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
+    <div class="cursor-pointer" @click="handleRowClick">
+    <BaseTable :columns="columns" :rows="filteredItems" row-key="id">
       <template #cell-code="{ row }">
         <span class="font-semibold text-brand">{{ row.code }}</span>
       </template>
@@ -115,7 +134,15 @@ function goToDetail(id) {
       <template #cell-weight="{ row }">
         {{ row.weight.toLocaleString() }}
       </template>
+
+      <template #cell-actions="{ row }">
+        <div class="flex items-center justify-center gap-1">
+          <BaseButton variant="ghost" size="sm" @click.stop="openEditModal(row)">수정</BaseButton>
+          <BaseButton variant="ghost" size="sm" @click.stop="handleDelete(row)">삭제</BaseButton>
+        </div>
+      </template>
     </BaseTable>
+    </div>
 
     <div class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
       <span>총 {{ filteredItems.length }}건</span>

@@ -34,8 +34,8 @@ const infoFields = computed(() => {
     { label: '규격', value: item.value.spec },
     { label: '단위', value: item.value.unit },
     { label: '포장단위', value: item.value.packUnit },
-    { label: '단가 (KRW)', value: item.value.unitPrice.toLocaleString() },
-    { label: '중량 (kg)', value: item.value.weight.toLocaleString() },
+    { label: '단가 (KRW)', value: item.value.unitPrice?.toLocaleString() ?? '-' },
+    { label: '중량 (kg)', value: item.value.weight?.toLocaleString() ?? '-' },
     { label: 'HS Code', value: item.value.hsCode },
   ]
 })
@@ -53,7 +53,9 @@ function openEditModal() {
 }
 
 function handleDelete() {
-  success(`${item.value.name} 품목이 삭제되었습니다.`)
+  const name = item.value.name
+  items.value = items.value.filter((i) => i.id !== Number(route.params.id))
+  success(`${name} 품목이 삭제되었습니다.`)
   router.push({ name: 'item-list' })
 }
 

@@ -85,8 +85,13 @@ function handleDelete(client) {
   success(`${client.name} 거래처가 삭제되었습니다.`)
 }
 
-function goToDetail(id) {
-  router.push({ name: 'client-detail', params: { id } })
+function handleRowClick(event) {
+  const tr = event.target.closest('tbody tr')
+  if (!tr) return
+  const rows = Array.from(tr.parentElement.children)
+  const index = rows.indexOf(tr)
+  if (index < 0 || index >= filteredClients.value.length) return
+  router.push({ name: 'client-detail', params: { id: filteredClients.value[index].id } })
 }
 </script>
 
@@ -107,7 +112,9 @@ function goToDetail(id) {
       </div>
     </div>
 
-    <BaseTable :columns="columns" :rows="filteredClients" row-key="id" clickable @row-click="(row) => goToDetail(row.id)">
+    <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
+    <div class="cursor-pointer" @click="handleRowClick">
+    <BaseTable :columns="columns" :rows="filteredClients" row-key="id">
       <template #cell-code="{ row }">
         <span class="font-semibold text-brand">{{ row.code }}</span>
       </template>
@@ -134,6 +141,7 @@ function goToDetail(id) {
         </div>
       </template>
     </BaseTable>
+    </div>
 
     <div class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
       <span>총 {{ filteredClients.length }}건</span>

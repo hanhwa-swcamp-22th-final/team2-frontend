@@ -67,7 +67,9 @@ function openEditModal() {
 }
 
 function handleDelete() {
-  success(`${client.value.name} 거래처가 삭제되었습니다.`)
+  const name = client.value.name
+  clients.value = clients.value.filter((c) => c.id !== Number(route.params.id))
+  success(`${name} 거래처가 삭제되었습니다.`)
   router.push({ name: 'client-list' })
 }
 
