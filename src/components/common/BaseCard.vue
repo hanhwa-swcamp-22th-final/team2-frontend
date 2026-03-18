@@ -1,22 +1,44 @@
 <script setup>
-defineProps({
+import { computed, useSlots } from 'vue'
+
+const props = defineProps({
   title: {
     type: String,
-    required: true,
+    default: '',
   },
   subtitle: {
     type: String,
     default: '',
   },
+  bodyClass: {
+    type: String,
+    default: '',
+  },
 })
+
+const slots = useSlots()
+
+const hasHeader = computed(() => (
+  Boolean(props.title)
+  || Boolean(props.subtitle)
+  || Boolean(slots.title)
+  || Boolean(slots['header-actions'])
+))
 </script>
 
 <template>
   <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-    <div class="mb-4">
-      <p class="text-sm font-semibold text-slate-800">{{ title }}</p>
-      <p v-if="subtitle" class="mt-1 text-sm text-slate-500">{{ subtitle }}</p>
+    <div v-if="hasHeader" class="mb-4 flex items-start justify-between gap-4">
+      <div class="min-w-0">
+        <slot name="title">
+          <p v-if="title" class="text-sm font-semibold text-slate-800">{{ title }}</p>
+        </slot>
+        <p v-if="subtitle" class="mt-1 text-sm text-slate-500">{{ subtitle }}</p>
+      </div>
+      <slot name="header-actions" />
     </div>
-    <slot />
+    <div :class="bodyClass">
+      <slot />
+    </div>
   </section>
 </template>
