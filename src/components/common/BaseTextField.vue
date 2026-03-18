@@ -54,6 +54,6 @@ const fieldValue = computed({
     :disabled="disabled"
     :readonly="readonly"
     :autocomplete="autocomplete"
-    class="h-11 w-full rounded-2xl border border-white/70 bg-white/90 px-4 text-sm text-ink shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink transition duration-200 placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
   />
 </template>

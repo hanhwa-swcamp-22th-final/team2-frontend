@@ -57,7 +57,7 @@ function normalizeOption(option) {
       v-model="fieldValue"
       :name="name"
       :disabled="disabled"
-      class="h-11 w-full appearance-none rounded-2xl border border-white/70 bg-white/90 px-4 pr-10 text-sm text-ink shadow-sm transition duration-200 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+      class="w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 py-2 pr-10 text-sm text-ink transition duration-200 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
     >
       <option value="" disabled>{{ placeholder }}</option>
       <option
@@ -68,7 +68,7 @@ function normalizeOption(option) {
         {{ normalizeOption(option).label }}
       </option>
     </select>
-    <span class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
+    <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
       <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path
           fill-rule="evenodd"

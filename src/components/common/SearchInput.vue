@@ -38,7 +38,7 @@ function clearInput() {
 </script>
 
 <template>
-  <div class="flex items-center gap-2 rounded-2xl border border-white/70 bg-white/90 px-4 shadow-sm transition duration-200 focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/15">
+  <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 transition duration-200 focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/15">
     <svg class="h-4 w-4 shrink-0 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
       <path
         fill-rule="evenodd"
@@ -50,7 +50,7 @@ function clearInput() {
       v-model="fieldValue"
       :placeholder="placeholder"
       :disabled="disabled"
-      class="h-11 min-w-0 flex-1 bg-transparent text-sm text-ink placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:text-slate-400"
+      class="min-w-0 flex-1 bg-transparent py-2 text-sm text-ink placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:text-slate-400"
       @keydown.enter.prevent="handleSearch"
     />
     <button

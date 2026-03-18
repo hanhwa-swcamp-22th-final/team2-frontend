@@ -39,21 +39,21 @@ function handleBackdropClick() {
   <teleport to="body">
     <div
       v-if="open"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-8 backdrop-blur-sm"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-8"
       @click.self="handleBackdropClick"
     >
       <div
-        class="w-full rounded-[28px] border border-white/70 bg-white p-6 shadow-panel"
+        class="w-full max-h-[90vh] overflow-hidden rounded-lg bg-white shadow-2xl"
         :class="width"
       >
-        <div class="flex items-start justify-between gap-4">
+        <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-4">
           <div>
-            <h2 class="text-xl font-semibold text-ink">{{ title }}</h2>
+            <h2 class="text-lg font-bold text-ink">{{ title }}</h2>
             <p v-if="description" class="mt-1 text-sm text-slate-500">{{ description }}</p>
           </div>
           <button
             type="button"
-            class="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            class="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
             @click="closeModal"
           >
             <span class="sr-only">닫기</span>
@@ -67,11 +67,11 @@ function handleBackdropClick() {
           </button>
         </div>
 
-        <div class="mt-6">
+        <div class="overflow-y-auto px-6 py-5">
           <slot />
         </div>
 
-        <div v-if="$slots.footer" class="mt-6 flex justify-end gap-3">
+        <div v-if="$slots.footer" class="flex justify-end gap-3 border-t border-slate-100 bg-slate-50/50 px-6 py-4">
           <slot name="footer" />
         </div>
       </div>

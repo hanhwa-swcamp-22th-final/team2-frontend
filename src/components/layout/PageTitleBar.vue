@@ -12,9 +12,9 @@ defineProps({
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 rounded-[28px] border border-white/70 bg-white/85 p-5 shadow-panel backdrop-blur md:flex-row md:items-center md:justify-between">
+  <div class="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
     <div>
-      <h1 class="text-2xl font-semibold tracking-tight text-ink">{{ title }}</h1>
+      <h1 class="text-2xl font-bold tracking-tight text-ink">{{ title }}</h1>
       <p v-if="description" class="mt-1 text-sm text-slate-500">{{ description }}</p>
     </div>
 
