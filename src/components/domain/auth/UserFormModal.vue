@@ -88,7 +88,7 @@ function getCurrentDepartmentName() {
   <BaseModal
     :open="open"
     :title="mode === 'create' ? '사용자 등록' : `사용자 정보 수정 – ${user?.name ?? ''}`"
-    width="max-w-3xl"
+    width="max-w-2xl"
     @close="emit('close')"
   >
     <form class="space-y-6" @submit.prevent="handleSave">
