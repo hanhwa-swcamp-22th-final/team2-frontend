@@ -3,6 +3,10 @@ import { ref } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import FileUploadField from '@/components/common/FileUploadField.vue'
+import FormField from '@/components/common/FormField.vue'
+import { useToast } from '@/composables/useToast'
+
+const { success } = useToast()
 
 const form = ref({
   nameEn: 'HANWHA SYSTEMS Co., Ltd.',
@@ -15,7 +19,7 @@ const form = ref({
 })
 
 function handleSave() {
-  window.alert('자사 정보가 저장되었습니다.')
+  success('자사 정보가 저장되었습니다.')
 }
 </script>
 
@@ -32,45 +36,33 @@ function handleSave() {
     <form class="space-y-4" @submit.prevent="handleSave">
       <!-- 2열: 회사명 -->
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-        <div class="space-y-1.5">
-          <label class="text-sm font-medium text-slate-700">영문 회사명 <span class="text-red-500">*</span></label>
+        <FormField label="영문 회사명" required>
           <BaseTextField v-model="form.nameEn" placeholder="영문 회사명" />
-        </div>
-        <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-        <div class="space-y-1.5">
-          <label class="text-sm font-medium text-slate-700">한글 회사명</label>
+        </FormField>
+        <FormField label="한글 회사명">
           <BaseTextField v-model="form.nameKr" placeholder="한글 회사명" />
-        </div>
+        </FormField>
       </div>
 
       <!-- 1열: 주소 -->
-      <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-      <div class="space-y-1.5">
-        <label class="text-sm font-medium text-slate-700">영문 주소</label>
+      <FormField label="영문 주소">
         <BaseTextField v-model="form.addressEn" placeholder="영문 주소를 입력하세요" />
-      </div>
+      </FormField>
 
       <!-- 2열: TEL / FAX -->
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-        <div class="space-y-1.5">
-          <label class="text-sm font-medium text-slate-700">TEL</label>
+        <FormField label="TEL">
           <BaseTextField v-model="form.tel" placeholder="전화번호" />
-        </div>
-        <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-        <div class="space-y-1.5">
-          <label class="text-sm font-medium text-slate-700">FAX</label>
+        </FormField>
+        <FormField label="FAX">
           <BaseTextField v-model="form.fax" placeholder="팩스번호" />
-        </div>
+        </FormField>
       </div>
 
       <!-- 1열: Email -->
-      <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-      <div class="space-y-1.5">
-        <label class="text-sm font-medium text-slate-700">Email</label>
+      <FormField label="Email">
         <BaseTextField v-model="form.email" type="email" placeholder="이메일 주소" />
-      </div>
+      </FormField>
 
       <!-- 회사 도장 이미지 -->
       <div class="space-y-3">

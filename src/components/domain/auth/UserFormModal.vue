@@ -5,6 +5,8 @@ import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import FileUploadField from '@/components/common/FileUploadField.vue'
+import FormField from '@/components/common/FormField.vue'
+import { useToast } from '@/composables/useToast'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -15,6 +17,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'save', 'reset-password'])
+const { success } = useToast()
 
 const form = ref(getInitialForm())
 
@@ -63,13 +66,13 @@ watch(() => props.open, (isOpen) => {
 })
 
 function handleSave() {
-  window.alert(props.mode === 'create' ? '사용자가 등록되었습니다.' : '사용자 정보가 수정되었습니다.')
+  success(props.mode === 'create' ? '사용자가 등록되었습니다.' : '사용자 정보가 수정되었습니다.')
   emit('save', { ...form.value })
   emit('close')
 }
 
 function handleResetPassword() {
-  window.alert('비밀번호가 1234로 초기화되었습니다.')
+  success('비밀번호가 1234로 초기화되었습니다.')
   emit('reset-password', props.user?.id)
 }
 
@@ -89,61 +92,47 @@ function getCurrentDepartmentName() {
     <form class="space-y-6" @submit.prevent="handleSave">
       <!-- 기본 정보: 2열 그리드 -->
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-        <div class="space-y-1.5">
-          <label class="text-sm font-medium text-slate-700">이름 <span class="text-red-500">*</span></label>
+        <FormField label="이름" required>
           <BaseTextField v-model="form.name" placeholder="이름을 입력하세요" />
-        </div>
+        </FormField>
 
-        <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-        <div class="space-y-1.5">
-          <label class="text-sm font-medium text-slate-700">이메일 <span class="text-red-500">*</span></label>
+        <FormField label="이메일" required>
           <BaseTextField v-model="form.email" type="email" placeholder="이메일을 입력하세요" />
-        </div>
+        </FormField>
 
-        <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-        <div class="space-y-1.5">
-          <label class="text-sm font-medium text-slate-700">직급 <span class="text-red-500">*</span></label>
+        <FormField label="직급" required>
           <BaseSelect
             v-model="form.positionId"
             :options="positions.map((p) => ({ label: p.name, value: p.id }))"
             placeholder="직급을 선택하세요"
           />
-        </div>
+        </FormField>
 
-        <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-        <div class="space-y-1.5">
-          <label class="text-sm font-medium text-slate-700">역할 <span class="text-red-500">*</span></label>
+        <FormField label="역할" required>
           <BaseSelect v-model="form.role" :options="roleOptions" placeholder="역할을 선택하세요" />
-        </div>
+        </FormField>
 
         <template v-if="mode === 'create'">
-          <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-          <div class="space-y-1.5">
-            <label class="text-sm font-medium text-slate-700">부서 <span class="text-red-500">*</span></label>
+          <FormField label="부서" required>
             <BaseSelect
               v-model="form.departmentId"
               :options="departments.map((d) => ({ label: d.name, value: d.id }))"
               placeholder="부서를 선택하세요"
             />
-          </div>
+          </FormField>
 
-          <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-          <div class="space-y-1.5">
-            <label class="text-sm font-medium text-slate-700">초기 비밀번호</label>
+          <FormField label="초기 비밀번호">
             <BaseTextField model-value="1234" readonly />
-          </div>
+          </FormField>
         </template>
       </div>
 
       <!-- 수정 모드 전용 -->
       <template v-if="mode === 'edit'">
         <!-- 상태 -->
-        <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-        <div class="space-y-1.5">
-          <label class="text-sm font-medium text-slate-700">상태</label>
+        <FormField label="상태">
           <BaseSelect v-model="form.status" :options="statusOptions" />
-        </div>
+        </FormField>
 
         <!-- 부서 이동 -->
         <div class="space-y-3 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
@@ -157,19 +146,15 @@ function getCurrentDepartmentName() {
             현재 부서: <span class="font-medium text-ink">{{ getCurrentDepartmentName() }}</span> → 이동할 부서
           </p>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-            <div class="space-y-1.5">
-              <label class="text-sm font-medium text-slate-700">이동할 부서</label>
+            <FormField label="이동할 부서">
               <BaseSelect
                 v-model="form.transferDepartmentId"
                 :options="[{ label: '변경안함', value: '' }, ...departments.map((d) => ({ label: d.name, value: d.id }))]"
               />
-            </div>
-            <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-            <div class="space-y-1.5">
-              <label class="text-sm font-medium text-slate-700">이동 사유</label>
+            </FormField>
+            <FormField label="이동 사유">
               <BaseTextField v-model="form.transferReason" placeholder="이동 사유를 입력하세요" />
-            </div>
+            </FormField>
           </div>
         </div>
       </template>

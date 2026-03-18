@@ -2,11 +2,14 @@
 import { ref } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
+import FormField from '@/components/common/FormField.vue'
+import { useToast } from '@/composables/useToast'
 
+const { success } = useToast()
 const email = ref('')
 
 function handleSubmit() {
-  window.alert('재설정 링크가 발송되었습니다.')
+  success('재설정 링크가 발송되었습니다.')
 }
 </script>
 
@@ -24,7 +27,6 @@ function handleSubmit() {
     <!-- 비밀번호 찾기 카드 -->
     <div class="w-full rounded-[28px] bg-white p-8 shadow-panel">
       <div class="mb-6 flex flex-col items-center gap-3 text-center">
-        <!-- 방패 아이콘 -->
         <div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-500">
           <svg class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path fill-rule="evenodd" d="M9.661 2.237a.531.531 0 0 1 .678 0 11.947 11.947 0 0 0 7.078 2.749.5.5 0 0 1 .479.425c.069.52.104 1.05.104 1.59 0 5.162-3.26 9.563-7.834 11.256a.48.48 0 0 1-.332 0C5.26 16.564 2 12.163 2 7c0-.538.035-1.069.104-1.589a.5.5 0 0 1 .48-.425 11.947 11.947 0 0 0 7.077-2.75Z" clip-rule="evenodd" />
@@ -37,10 +39,7 @@ function handleSubmit() {
       </div>
 
       <form class="space-y-5" @submit.prevent="handleSubmit">
-        <!-- 이메일 -->
-        <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-        <div class="space-y-1.5">
-          <label class="text-sm font-medium text-slate-700">이메일</label>
+        <FormField label="이메일">
           <div class="relative">
             <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -56,13 +55,11 @@ function handleSubmit() {
               autocomplete="email"
             />
           </div>
-        </div>
+        </FormField>
 
-        <!-- 발송 버튼 -->
         <BaseButton variant="primary" type="submit" block size="lg">재설정 링크 발송</BaseButton>
       </form>
 
-      <!-- 로그인 링크 -->
       <div class="mt-4 text-center">
         <RouterLink to="/login" class="text-sm text-slate-500 transition hover:text-brand">
           ← 로그인으로 돌아가기

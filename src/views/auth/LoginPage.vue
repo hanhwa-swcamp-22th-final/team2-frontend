@@ -3,13 +3,16 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
+import FormField from '@/components/common/FormField.vue'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
+const { info } = useToast()
 const email = ref('')
 const password = ref('')
 
 function handleLogin() {
-  window.alert('로그인 기능은 추후 구현됩니다.')
+  info('로그인 기능은 추후 구현됩니다.')
   router.push('/')
 }
 </script>
@@ -29,9 +32,7 @@ function handleLogin() {
     <div class="w-full rounded-[28px] bg-white p-8 shadow-panel">
       <form class="space-y-5" @submit.prevent="handleLogin">
         <!-- 이메일 -->
-        <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-        <div class="space-y-1.5">
-          <label class="text-sm font-medium text-slate-700">이메일</label>
+        <FormField label="이메일">
           <div class="relative">
             <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -47,12 +48,10 @@ function handleLogin() {
               autocomplete="email"
             />
           </div>
-        </div>
+        </FormField>
 
         <!-- 비밀번호 -->
-        <!-- TODO: 공통 FormField 컴포넌트 교체 예정 (#28) -->
-        <div class="space-y-1.5">
-          <label class="text-sm font-medium text-slate-700">비밀번호</label>
+        <FormField label="비밀번호">
           <div class="relative">
             <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -67,7 +66,7 @@ function handleLogin() {
               autocomplete="current-password"
             />
           </div>
-        </div>
+        </FormField>
 
         <!-- 로그인 버튼 -->
         <BaseButton variant="primary" type="submit" block size="lg">로그인</BaseButton>

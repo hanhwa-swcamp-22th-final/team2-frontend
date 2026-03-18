@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
+import BaseTabs from '@/components/common/BaseTabs.vue'
 import PageTitleBar from '@/components/layout/PageTitleBar.vue'
 import CompanyInfoTab from '@/components/domain/auth/CompanyInfoTab.vue'
 import UserListTab from '@/components/domain/auth/UserListTab.vue'
@@ -35,23 +36,7 @@ function handleCreateUser() {
       </template>
     </PageTitleBar>
 
-    <!-- TODO: 공통 BaseTabs 컴포넌트 교체 예정 (#28) -->
-    <div class="border-b border-slate-200">
-      <nav class="-mb-px flex gap-6">
-        <button
-          v-for="tab in tabs"
-          :key="tab.key"
-          type="button"
-          class="whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium transition"
-          :class="activeTab === tab.key
-            ? 'border-brand text-brand'
-            : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'"
-          @click="activeTab = tab.key"
-        >
-          {{ tab.label }}
-        </button>
-      </nav>
-    </div>
+    <BaseTabs v-model="activeTab" :tabs="tabs" />
 
     <!-- 탭 내용 -->
     <UserListTab v-if="activeTab === 'users'" ref="userListRef" />
