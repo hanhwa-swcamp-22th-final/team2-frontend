@@ -18,9 +18,7 @@ function handleLogin() {
   <div class="flex w-full max-w-md flex-col items-center gap-6 px-4">
     <!-- 로고 + 타이틀 -->
     <div class="flex flex-col items-center gap-3">
-      <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-blue-500 text-xl font-bold text-white">
-        SB
-      </div>
+      <img src="/salesboost.svg" alt="SalesBoost" class="h-14 w-14" />
       <div class="text-center">
         <h1 class="text-2xl font-bold text-ink">SalesBoost</h1>
         <p class="mt-1 text-sm text-slate-500">해외 B2B 영업관리 시스템</p>
