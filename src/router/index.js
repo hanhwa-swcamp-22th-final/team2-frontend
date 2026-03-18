@@ -8,6 +8,7 @@ import CIPage from '@/views/documents/CIPage.vue'
 import PIPage from '@/views/documents/PIPage.vue'
 import PLPage from '@/views/documents/PLPage.vue'
 import POPage from '@/views/documents/POPage.vue'
+import ShipmentOrderPage from '@/views/documents/ShipmentOrderPage.vue'
 import ServicePage from '@/views/ServicePage.vue'
 
 const routes = [
@@ -141,7 +142,7 @@ const routes = [
       {
         path: 'shipment-orders',
         name: 'shipment-orders',
-        component: ServicePage,
+        component: ShipmentOrderPage,
         meta: {
           title: 'Shipment Orders',
           serviceName: '출하 관리',
