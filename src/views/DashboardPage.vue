@@ -210,25 +210,51 @@ onMounted(async () => {
       </div>
     </section>
 
-    <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div class="mb-4 flex items-center justify-between">
-        <h3 class="font-bold text-slate-800">최근 활동</h3>
-        <button type="button" class="text-xs font-medium text-brand-500 hover:text-brand-700">
-          전체보기 <i class="fas fa-chevron-right ml-0.5 text-[9px]" />
-        </button>
-      </div>
-      <div class="space-y-3">
-        <div
-          v-for="item in recentActivities"
-          :key="item.id"
-          class="group flex cursor-pointer items-start gap-3 text-sm"
-        >
-          <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-xs text-slate-500">
-            <i class="fas" :class="item.icon" />
+    <section class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="mb-4 flex items-center justify-between">
+          <h3 class="font-bold text-slate-800">최근 활동</h3>
+          <button type="button" class="text-xs font-medium text-brand-500 hover:text-brand-700">
+            전체보기 <i class="fas fa-chevron-right ml-0.5 text-[9px]" />
+          </button>
+        </div>
+        <div class="space-y-3">
+          <div
+            v-for="item in recentActivities"
+            :key="item.id"
+            class="group flex cursor-pointer items-start gap-3 text-sm"
+          >
+            <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-xs text-slate-500">
+              <i class="fas" :class="item.icon" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="truncate font-medium text-slate-800 transition group-hover:text-brand-600">{{ item.title }}</div>
+              <div class="text-xs text-slate-400">{{ item.company }} · {{ item.date }}</div>
+            </div>
           </div>
-          <div class="min-w-0 flex-1">
-            <div class="truncate font-medium text-slate-800 transition group-hover:text-brand-600">{{ item.title }}</div>
-            <div class="text-xs text-slate-400">{{ item.company }} · {{ item.date }}</div>
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="mb-4 flex items-center justify-between">
+          <h3 class="font-bold text-slate-800">출하 현황</h3>
+          <button type="button" class="text-xs font-medium text-brand-500 hover:text-brand-700">
+            전체보기 <i class="fas fa-chevron-right ml-0.5 text-[9px]" />
+          </button>
+        </div>
+        <div class="space-y-3">
+          <div
+            v-for="item in shipmentItems"
+            :key="item.id"
+            class="flex cursor-pointer items-center justify-between rounded-xl border border-slate-100 bg-slate-50/80 p-3.5 text-sm transition hover:border-slate-200"
+          >
+            <div>
+              <div class="font-semibold text-slate-800">{{ item.shipmentNo }}</div>
+              <div class="mt-0.5 text-xs text-slate-400">{{ item.company }}</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <StatusBadge :value="item.status" />
+            </div>
           </div>
         </div>
       </div>
