@@ -139,13 +139,11 @@ function openProductSearch() {}
     <FilterToolbarCard
       v-model="filters.keyword"
       :advanced-open="isAdvancedOpen"
-      class="mb-4"
       @toggle-advanced="isAdvancedOpen = !isAdvancedOpen"
     />
 
     <CollapsibleFilterCard
       :open="isAdvancedOpen"
-      class="mb-4"
       @toggle="isAdvancedOpen = !isAdvancedOpen"
     >
       <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-4">

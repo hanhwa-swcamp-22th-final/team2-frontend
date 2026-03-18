@@ -55,7 +55,6 @@ const columns = [
   { key: 'clientName', label: '거래처', align: 'center', width: '220px' },
   { key: 'country', label: '국가', align: 'center', width: '120px' },
   { key: 'manager', label: '영업담당자', align: 'center', width: '120px' },
-  // 통화와 금액을 분리 — ERP 기준 다통화 합계를 위해 별도 컬럼으로 운영
   { key: 'currency', label: '통화', align: 'center', width: '80px' },
   { key: 'salesAmount', label: '매출액', align: 'right', width: '150px' },
   { key: 'issueDate', label: '발행일', align: 'center', width: '130px' },
@@ -63,16 +62,14 @@ const columns = [
   { key: 'status', label: '상태', align: 'center', width: '120px' },
 ]
 
-// 원본 데이터: 통화(currency)와 금액(salesAmount)을 분리하여 저장
-// → 다통화 환경에서 정확한 합계 계산을 위한 필수 구조
 const rows = [
   {
     poId: 'PO26001',
     clientName: 'COOLSAY SDN BHD',
     country: '말레이시아',
     manager: '김영업',
-    currency: 'USD',       // 통화 코드 (별도 컬럼)
-    salesAmount: 42400,    // 순수 숫자 금액 (통화 기호 제거)
+    currency: 'USD',
+    salesAmount: 42400,
     issueDate: '2026/02/10',
     collectionDate: '2026/03/10',
     status: '수금완료',
@@ -141,24 +138,14 @@ function resetFilters() {
 
 function openClientSearch() {}
 
-// ── 필터링된 행 (Filtered Rows) ──
-// 상세검색 필터 조건에 따라 표시할 데이터를 동적으로 필터링
-// → 합계 계산의 기준이 되는 데이터셋
 const filteredRows = computed(() => {
   return rows.filter((row) => {
-    // 통화 필터: 선택된 통화와 일치하는 행만 표시
     if (filters.value.currency && row.currency !== filters.value.currency) return false
-    // 국가 필터
     if (filters.value.country && row.country !== filters.value.country) return false
-    // 영업담당자 필터
     if (filters.value.manager && row.manager !== filters.value.manager) return false
-    // 상태 필터
     if (filters.value.status && row.status !== filters.value.status) return false
-    // PO 번호 필터 (부분 일치)
     if (filters.value.poId && !row.poId.includes(filters.value.poId)) return false
-    // 거래처 필터 (부분 일치, 대소문자 무시)
     if (filters.value.clientName && !row.clientName.toLowerCase().includes(filters.value.clientName.toLowerCase())) return false
-    // 키워드 통합 검색 (PO번호, 거래처명에서 부분 일치)
     if (filters.value.keyword) {
       const kw = filters.value.keyword.toLowerCase()
       const matchesKeyword = row.poId.toLowerCase().includes(kw)
@@ -170,13 +157,8 @@ const filteredRows = computed(() => {
   })
 })
 
-// ── 통화별 합계 행 (Summary Rows) ──
-// ERP 핵심 로직: 필터 조건에 따라 합계 행을 동적으로 생성
-// ① 통화 필터 적용 → 단일 통화 합계 1행
-// ② 통화 필터 미적용 → 통화별 분리 합계 (USD, JPY 각각 별도 행)
 const summaryRows = computed(() => {
-  // filteredRows에서 통화별로 그룹핑하여 합산
-  const currencyMap = {}  // { 'USD': { count: 3, total: 142900 }, 'JPY': { ... } }
+  const currencyMap = {}
 
   filteredRows.value.forEach((row) => {
     if (!currencyMap[row.currency]) {
@@ -186,18 +168,16 @@ const summaryRows = computed(() => {
     currencyMap[row.currency].total += row.salesAmount
   })
 
-  // 통화 코드 기준 정렬 후 합계 행 배열로 변환
   return Object.entries(currencyMap)
-    .sort(([a], [b]) => a.localeCompare(b))  // 알파벳순 정렬 (JPY → USD)
+    .sort(([a], [b]) => a.localeCompare(b))
     .map(([currency, data]) => ({
-      currency,                                      // 통화 코드
-      count: data.count,                             // 해당 통화의 건수
-      total: data.total,                             // 해당 통화의 합산 금액
-      totalFormatted: data.total.toLocaleString(),   // 콤마 포맷 (예: 142,900)
+      currency,
+      count: data.count,
+      total: data.total,
+      totalFormatted: data.total.toLocaleString(),
     }))
 })
 
-// 통화 코드 → 기호 매핑 (매출액 셀에 기호를 표시하기 위함)
 const currencySymbols = {
   USD: '$',
   JPY: '¥',
@@ -205,8 +185,6 @@ const currencySymbols = {
   GBP: '£',
 }
 
-// 금액을 "통화기호 + 콤마 포맷 숫자" 문자열로 변환하는 헬퍼 함수
-// 예: formatAmount(42400, 'USD') → '$42,400'
 function formatAmount(value, currency) {
   const symbol = currencySymbols[currency] || ''
   if (typeof value === 'number') return `${symbol}${value.toLocaleString()}`

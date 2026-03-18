@@ -194,25 +194,19 @@ function openProductSearch() {}
     <FilterToolbarCard
       v-model="filters.keyword"
       :advanced-open="isAdvancedOpen"
-      class="mb-4"
       @toggle-advanced="isAdvancedOpen = !isAdvancedOpen"
     />
 
     <CollapsibleFilterCard
       :open="isAdvancedOpen"
-      class="mb-4"
       @toggle="isAdvancedOpen = !isAdvancedOpen"
     >
       <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-4">
         <FormField label="발행일" class="col-span-2">
           <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-1">
-            <div>
-              <DateField v-model="filters.registeredFrom" />
-            </div>
+            <DateField v-model="filters.registeredFrom" />
             <span class="pb-2 text-sm text-slate-400">~</span>
-            <div>
-              <DateField v-model="filters.registeredTo" />
-            </div>
+            <DateField v-model="filters.registeredTo" />
           </div>
         </FormField>
 
