@@ -87,8 +87,6 @@ const routes = [
         },
       },
       {
-        path: 'auth',
-        name: 'auth',
         path: 'clients',
         name: 'clients',
         component: ServicePage,
@@ -186,16 +184,6 @@ const routes = [
           title: 'Shipments',
           serviceName: '출하현황',
           description: '출하 진행 현황 화면',
-        },
-      },
-      {
-        path: 'activities',
-        name: 'activities',
-        component: ServicePage,
-        meta: {
-          title: 'Activities',
-          serviceName: '기록 관리',
-          description: '활동기록 조회 및 관리 화면',
         },
       },
       {
