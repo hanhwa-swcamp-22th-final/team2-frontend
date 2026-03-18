@@ -5,7 +5,29 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 
-const kpiCards = ref([])
+const summaryCards = ref([
+  {
+    id: 'pi',
+    title: 'PI 문서',
+    count: '3',
+    status: '확정',
+    helper: '진행중',
+  },
+  {
+    id: 'po',
+    title: 'PO 문서',
+    count: '3',
+    status: '생산중',
+    helper: '진행중',
+  },
+  {
+    id: 'cipl',
+    title: 'CI/PL 문서',
+    count: '1',
+    status: '출하완료',
+    helper: '완료',
+  },
+])
 const isLoading = ref(true)
 
 const requestItems = [
@@ -61,7 +83,7 @@ const shipmentItems = [
 
 onMounted(async () => {
   try {
-    kpiCards.value = await fetchDashboardKpis()
+    await fetchDashboardKpis()
   } catch (error) {
     console.error('Failed to fetch dashboard kpi data:', error)
   } finally {
@@ -72,22 +94,28 @@ onMounted(async () => {
 
 <template>
   <div class="space-y-6">
-    <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       <BaseCard
-        v-for="card in kpiCards"
-        :key="card.id ?? card.title"
+        v-for="card in summaryCards"
+        :key="card.id"
         :title="card.title"
+        subtitle="문서 현황 요약"
       >
-        <div class="flex items-end justify-between gap-4">
-          <p class="text-3xl font-bold text-slate-900">{{ card.value }}</p>
-          <span class="rounded-full bg-brand-100 px-3 py-1 text-xs font-semibold text-brand-700">
-            {{ card.change }}
-          </span>
+        <div class="space-y-4">
+          <div class="flex items-end justify-between gap-4">
+            <p class="text-4xl font-bold tracking-tight text-slate-900">{{ card.count }}</p>
+            <StatusBadge :value="card.status" />
+          </div>
+
+          <div class="flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
+            <span class="text-slate-400">현재 상태</span>
+            <span class="font-semibold text-slate-600">{{ card.helper }}</span>
+          </div>
         </div>
       </BaseCard>
 
       <BaseCard
-        v-if="!isLoading && kpiCards.length === 0"
+        v-if="!isLoading && summaryCards.length === 0"
         title="요약 카드"
         subtitle="표시할 현황 데이터가 없습니다."
       >
