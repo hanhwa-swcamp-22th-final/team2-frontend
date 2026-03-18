@@ -65,24 +65,34 @@ const routes = [
         },
       },
       {
-        path: 'clients',
-        name: 'clients',
-        component: ServicePage,
-        meta: {
-          title: 'Clients',
-          serviceName: '거래처 관리',
-          description: '거래처 조회 및 관리 화면',
-        },
-      },
-      {
-        path: 'products',
-        name: 'products',
-        component: ServicePage,
-        meta: {
-          title: 'Products',
-          serviceName: '품목 관리',
-          description: '품목 조회 및 관리 화면',
-        },
+        path: 'master',
+        children: [
+          { path: '', redirect: { name: 'client-list' } },
+          {
+            path: 'clients',
+            name: 'client-list',
+            component: () => import('@/views/master/ClientListPage.vue'),
+            meta: { title: 'Master', serviceName: '거래처 관리' },
+          },
+          {
+            path: 'clients/:id',
+            name: 'client-detail',
+            component: () => import('@/views/master/ClientDetailPage.vue'),
+            meta: { title: 'Master', serviceName: '거래처 상세' },
+          },
+          {
+            path: 'items',
+            name: 'item-list',
+            component: () => import('@/views/master/ItemListPage.vue'),
+            meta: { title: 'Master', serviceName: '품목 관리' },
+          },
+          {
+            path: 'items/:id',
+            name: 'item-detail',
+            component: () => import('@/views/master/ItemDetailPage.vue'),
+            meta: { title: 'Master', serviceName: '품목 상세' },
+          },
+        ],
       },
       {
         path: 'pi',
