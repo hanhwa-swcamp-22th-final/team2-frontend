@@ -1,12 +1,14 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import PasswordChangeModal from '@/components/domain/auth/PasswordChangeModal.vue'
 import { useUiStore } from '@/stores/ui'
 
 const uiStore = useUiStore()
 const route = useRoute()
 const pageTitle = computed(() => String(route.meta.serviceName ?? '공통 대시보드'))
 const isNotificationOpen = ref(false)
+const isPasswordModalOpen = ref(false)
 
 const notifications = [
   {
@@ -43,6 +45,14 @@ const unreadCount = computed(() => notifications.filter((item) => item.unread).l
 
 function toggleNotifications() {
   isNotificationOpen.value = !isNotificationOpen.value
+}
+
+function openPasswordModal() {
+  isPasswordModalOpen.value = true
+}
+
+function closePasswordModal() {
+  isPasswordModalOpen.value = false
 }
 </script>
 
@@ -115,7 +125,12 @@ function toggleNotifications() {
         </div>
       </div>
 
-      <button type="button" class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-xs text-slate-400 transition hover:bg-slate-50 hover:text-slate-700" title="비밀번호 변경">
+      <button
+        type="button"
+        class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-xs text-slate-400 transition hover:bg-slate-50 hover:text-slate-700"
+        title="비밀번호 변경"
+        @click="openPasswordModal"
+      >
         <i class="fas fa-key text-xs" aria-hidden="true"></i>
       </button>
 
@@ -124,4 +139,6 @@ function toggleNotifications() {
       </button>
     </div>
   </header>
+
+  <PasswordChangeModal :open="isPasswordModalOpen" @close="closePasswordModal" @save="closePasswordModal" />
 </template>
