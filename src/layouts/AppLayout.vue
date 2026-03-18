@@ -4,12 +4,12 @@ import AppSidebar from '@/components/layout/AppSidebar.vue'
 </script>
 
 <template>
-  <div class="min-h-screen">
+  <div class="min-h-screen bg-sand p-3">
     <AppSidebar />
 
-    <div class="px-4 pb-8 pt-4 lg:ml-[20rem] lg:px-8">
+    <div class="flex h-[calc(100vh-1.5rem)] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm lg:ml-[232px]">
       <AppHeader />
-      <main class="mt-6">
+      <main class="flex-1 overflow-y-auto p-6">
         <RouterView />
       </main>
     </div>

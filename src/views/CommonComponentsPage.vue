@@ -55,6 +55,33 @@ const tableRows = [
   { id: 3, name: '사용자 관리', owner: '관리', status: '비활성' },
 ]
 
+const badgeGroups = [
+  {
+    title: '사용자 상태',
+    values: ['활성', '비활성', '재직', '휴직', '퇴직'],
+  },
+  {
+    title: '문서 상태',
+    values: ['초안', '발송', '확정', '취소', '접수', '생산중', '출하완료'],
+  },
+  {
+    title: '진행 상태',
+    values: ['준비중', '준비완료', '대기', '진행중', '완료'],
+  },
+  {
+    title: '수금 상태',
+    values: ['완납', '미수금'],
+  },
+  {
+    title: '출하 지연 상태',
+    values: ['정상', '지연위험', '지연'],
+  },
+  {
+    title: '메일/임시 상태',
+    values: ['발송완료', '임시저장', '실패'],
+  },
+]
+
 function handleSearch(value) {
   form.search = value
 }
@@ -99,15 +126,21 @@ function showErrorToast() {
       </BaseCard>
 
       <BaseCard title="StatusBadge" subtitle="상태값별 색상 매핑 확인">
-        <div class="flex flex-wrap gap-3">
-          <StatusBadge value="활성" />
-          <StatusBadge value="비활성" />
-          <StatusBadge value="확정" />
-          <StatusBadge value="발송" />
-          <StatusBadge value="생산중" />
-          <StatusBadge value="완납" />
-          <StatusBadge value="미수금" />
-          <StatusBadge value="완료" />
+        <div class="space-y-4">
+          <div
+            v-for="group in badgeGroups"
+            :key="group.title"
+            class="space-y-2"
+          >
+            <p class="text-xs font-semibold text-slate-500">{{ group.title }}</p>
+            <div class="flex flex-wrap gap-3">
+              <StatusBadge
+                v-for="value in group.values"
+                :key="value"
+                :value="value"
+              />
+            </div>
+          </div>
         </div>
       </BaseCard>
     </section>
