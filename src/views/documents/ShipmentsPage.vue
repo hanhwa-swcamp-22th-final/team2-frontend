@@ -4,8 +4,9 @@ import { computed, ref } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
-import BaseTextField from '@/components/common/BaseTextField.vue'
+import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
+import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
@@ -107,48 +108,16 @@ function openClientSearch() {}
       </h2>
     </section>
 
-    <BaseCard body-class="flex flex-wrap items-center justify-between gap-3">
-      <div class="relative w-full sm:max-w-[320px]">
-        <i class="fas fa-search absolute left-3 top-2.5 text-xs text-slate-400" aria-hidden="true"></i>
-        <BaseTextField
-          v-model="filters.keyword"
-          placeholder="검색어 입력..."
-          class="pl-9"
-        />
-      </div>
+    <FilterToolbarCard
+      v-model="filters.keyword"
+      :advanced-open="isAdvancedOpen"
+      @toggle-advanced="isAdvancedOpen = !isAdvancedOpen"
+    />
 
-      <BaseButton
-        variant="secondary"
-        size="sm"
-        class="shrink-0"
-        :class="isAdvancedOpen ? 'border-brand-200 bg-slate-50 text-brand-600' : ''"
-        @click="isAdvancedOpen = !isAdvancedOpen"
-      >
-        <template #leading>
-          <i class="fas fa-sliders-h text-xs" aria-hidden="true"></i>
-        </template>
-        상세검색
-      </BaseButton>
-    </BaseCard>
-
-    <BaseCard body-class="overflow-hidden p-0">
-      <button
-        type="button"
-        class="flex w-full items-center justify-between px-5 py-3 text-left transition hover:bg-slate-50"
-        @click="isAdvancedOpen = !isAdvancedOpen"
-      >
-        <span class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-          <i class="fas fa-filter text-xs text-brand-500" aria-hidden="true"></i>
-          상세검색
-        </span>
-        <i
-          class="fas fa-chevron-up text-xs text-slate-400 transition-transform"
-          :class="isAdvancedOpen ? '' : 'rotate-180'"
-          aria-hidden="true"
-        ></i>
-      </button>
-
-      <div v-if="isAdvancedOpen" class="border-t border-slate-100 px-5 pb-4 pt-3">
+    <CollapsibleFilterCard
+      :open="isAdvancedOpen"
+      @toggle="isAdvancedOpen = !isAdvancedOpen"
+    >
         <div class="grid grid-cols-2 gap-x-4 gap-y-3 md:grid-cols-4">
           <FormField label="출하요청일" class="col-span-2">
             <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
@@ -214,8 +183,7 @@ function openClientSearch() {}
             검색
           </BaseButton>
         </div>
-      </div>
-    </BaseCard>
+    </CollapsibleFilterCard>
 
     <section class="grid grid-cols-2 gap-4">
       <BaseCard body-class="p-5 text-center">

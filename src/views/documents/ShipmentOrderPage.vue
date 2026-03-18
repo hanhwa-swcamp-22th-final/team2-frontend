@@ -4,8 +4,9 @@ import { ref } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
-import BaseTextField from '@/components/common/BaseTextField.vue'
+import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
+import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
@@ -145,31 +146,16 @@ function openProductSearch() {}
       </div>
     </section>
 
-    <BaseCard body-class="flex flex-wrap items-center justify-between gap-3">
-      <div class="relative w-full sm:max-w-[320px]">
-        <i class="fas fa-search absolute left-3 top-2.5 text-xs text-slate-400" aria-hidden="true"></i>
-        <BaseTextField
-          v-model="filters.keyword"
-          placeholder="검색어 입력..."
-          class="pl-9"
-        />
-      </div>
+    <FilterToolbarCard
+      v-model="filters.keyword"
+      :advanced-open="isAdvancedOpen"
+      @toggle-advanced="isAdvancedOpen = !isAdvancedOpen"
+    />
 
-      <BaseButton
-        variant="secondary"
-        size="sm"
-        class="shrink-0"
-        :class="isAdvancedOpen ? 'border-brand-200 bg-slate-50 text-brand-600' : ''"
-        @click="isAdvancedOpen = !isAdvancedOpen"
-      >
-        <template #leading>
-          <i class="fas fa-sliders-h text-xs" aria-hidden="true"></i>
-        </template>
-        상세검색
-      </BaseButton>
-    </BaseCard>
-
-    <BaseCard v-if="isAdvancedOpen" body-class="space-y-4">
+    <CollapsibleFilterCard
+      :open="isAdvancedOpen"
+      @toggle="isAdvancedOpen = !isAdvancedOpen"
+    >
       <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-4">
         <FormField label="출하지시일" class="col-span-2">
           <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-1">
@@ -253,7 +239,7 @@ function openProductSearch() {}
           검색
         </BaseButton>
       </div>
-    </BaseCard>
+    </CollapsibleFilterCard>
 
     <BaseTable
       :columns="columns"
