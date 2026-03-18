@@ -1,13 +1,14 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import ActivityTypeBadge from '@/components/domain/activity/ActivityTypeBadge.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
-import BaseTabs from '@/components/common/BaseTabs.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import DateRangeField from '@/components/common/DateRangeField.vue'
 import PageTitleBar from '@/components/layout/PageTitleBar.vue'
+import SearchModal from '@/components/common/SearchModal.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 
 const router = useRouter()
 
@@ -22,6 +23,42 @@ const activities = ref([
   { id: 'ACT-007', type: '이슈',      title: '품질 클레임 접수',      date: '2025-02-25', author: '홍길동' },
   { id: 'ACT-008', type: '메모/노트', title: '현지 시장 조사 메모',   date: '2025-02-20', author: '김영희' },
 ])
+
+// ── PO 더미 데이터 ─────────────────────────────────────────
+const poList = [
+  { id: 'PO-2025-001', client: 'GlobalTech',  amount: '$120,000', deliveryDate: '2025-04-30', status: '확정' },
+  { id: 'PO-2025-002', client: 'EuroSupply',  amount: '$85,000',  deliveryDate: '2025-05-15', status: '확정' },
+  { id: 'PO-2025-003', client: 'AsiaConnect', amount: '$200,000', deliveryDate: '2025-06-01', status: '생산중' },
+  { id: 'PO-2025-004', client: 'GlobalTech',  amount: '$60,000',  deliveryDate: '2025-04-10', status: '출하완료' },
+  { id: 'PO-2025-005', client: 'EuroSupply',  amount: '$95,000',  deliveryDate: '2025-07-20', status: '접수' },
+]
+
+const poColumns = [
+  { key: 'id',           label: 'PO번호'   },
+  { key: 'client',       label: '거래처'   },
+  { key: 'amount',       label: '총액'     },
+  { key: 'deliveryDate', label: '납기일'   },
+  { key: 'status',       label: '상태'     },
+]
+
+// ── PO 검색 모달 ───────────────────────────────────────────
+const isPoModalOpen = ref(false)
+const poSearchKeyword = ref('')
+const filteredPoList = ref([...poList])
+
+watch(poSearchKeyword, (keyword) => {
+  const q = keyword.trim().toLowerCase()
+  filteredPoList.value = q
+    ? poList.filter((p) => p.id.toLowerCase().includes(q) || p.client.toLowerCase().includes(q))
+    : [...poList]
+})
+
+function selectPo(po) {
+  poDisplay.value = `${po.id} - ${po.client}`
+  isPoModalOpen.value = false
+  poSearchKeyword.value = ''
+  filteredPoList.value = [...poList]
+}
 
 // ── 패키지 생성 폼 상태 ────────────────────────────────────
 const keyword     = ref('')
@@ -152,7 +189,7 @@ const summaryText = computed(() => {
                   :readonly="true"
                   class="flex-1"
                 />
-                <BaseButton variant="ghost">
+                <BaseButton variant="ghost" @click="isPoModalOpen = true">
                   <template #leading>
                     <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                       <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 3.473 9.766l3.63 3.63a.75.75 0 1 0 1.06-1.06l-3.63-3.63A5.5 5.5 0 0 0 9 3.5ZM5 9a4 4 0 1 1 8 0 4 4 0 0 1-8 0Z" clip-rule="evenodd" />
@@ -241,11 +278,21 @@ const summaryText = computed(() => {
           </div>
 
           <!-- 유형 필터 탭 -->
-          <div class="mb-3">
-            <BaseTabs
-              v-model="activeTypeTab"
-              :tabs="typeTabs"
-            />
+          <div class="mb-3 border-b border-slate-200">
+            <div class="flex items-center gap-1 overflow-x-auto">
+              <button
+                v-for="tab in typeTabs"
+                :key="tab.key"
+                type="button"
+                class="border-b-2 px-3 py-2 text-xs font-semibold transition whitespace-nowrap"
+                :class="activeTypeTab === tab.key
+                  ? 'border-brand text-brand'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'"
+                @click="activeTypeTab = tab.key"
+              >
+                {{ tab.label }}
+              </button>
+            </div>
           </div>
 
           <!-- 활동기록 목록 -->
@@ -285,5 +332,22 @@ const summaryText = computed(() => {
       </div>
 
     </div>
+    <!-- PO 검색 모달 -->
+    <SearchModal
+      :open="isPoModalOpen"
+      title="수주건 (PO) 검색"
+      :columns="poColumns"
+      :rows="filteredPoList"
+      :search-keyword="poSearchKeyword"
+      empty-text="검색된 PO가 없습니다."
+      @close="isPoModalOpen = false"
+      @update:search-keyword="poSearchKeyword = $event"
+      @select="selectPo"
+    >
+      <template #cell-status="{ row }">
+        <StatusBadge :value="row.status" />
+      </template>
+    </SearchModal>
+
   </div>
 </template>
