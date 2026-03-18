@@ -63,7 +63,7 @@ function clearInput() {
     </button>
     <button
       type="button"
-      class="rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+      class="rounded-lg bg-slate-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-slate-300"
       :disabled="disabled"
       @click="handleSearch"
     >

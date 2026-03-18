@@ -1,5 +1,7 @@
 <script setup>
-defineProps({
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+
+const props = defineProps({
   columns: {
     type: Array,
     default: () => [],
@@ -17,6 +19,9 @@ defineProps({
     default: '데이터가 없습니다.',
   },
 })
+
+const resizeWidths = ref({})
+let activeResize = null
 
 function normalizeColumn(column) {
   if (typeof column === 'string') {
@@ -38,29 +43,139 @@ function normalizeColumn(column) {
 function getCellValue(row, key) {
   return row?.[key]
 }
+
+function getAlignmentClass(align) {
+  if (align === 'right') {
+    return 'text-right'
+  }
+
+  if (align === 'center') {
+    return 'text-center'
+  }
+
+  return 'text-left'
+}
+
+function getHeaderAlignmentClass(align) {
+  if (align === 'right') {
+    return 'text-right'
+  }
+
+  if (align === 'left') {
+    return 'text-left'
+  }
+
+  return 'text-center'
+}
+
+const normalizedColumns = computed(() => props.columns.map(normalizeColumn))
+
+watch(normalizedColumns, (columns) => {
+  const nextWidths = {}
+
+  columns.forEach((column) => {
+    if (resizeWidths.value[column.key]) {
+      nextWidths[column.key] = resizeWidths.value[column.key]
+      return
+    }
+
+    if (column.width) {
+      nextWidths[column.key] = column.width
+    }
+  })
+
+  resizeWidths.value = nextWidths
+}, { immediate: true })
+
+function getColumnStyle(column) {
+  const width = resizeWidths.value[column.key] || column.width
+
+  if (!width) {
+    return {}
+  }
+
+  return {
+    width,
+    minWidth: width,
+  }
+}
+
+function handleResizeMove(event) {
+  if (!activeResize) {
+    return
+  }
+
+  const nextWidth = Math.max(120, activeResize.startWidth + (event.clientX - activeResize.startX))
+
+  resizeWidths.value = {
+    ...resizeWidths.value,
+    [activeResize.key]: `${nextWidth}px`,
+  }
+}
+
+function stopResize() {
+  if (!activeResize) {
+    return
+  }
+
+  activeResize = null
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
+  window.removeEventListener('mousemove', handleResizeMove)
+  window.removeEventListener('mouseup', stopResize)
+}
+
+function startResize(event, column) {
+  const headerCell = event.currentTarget?.parentElement
+
+  if (!headerCell) {
+    return
+  }
+
+  activeResize = {
+    key: column.key,
+    startX: event.clientX,
+    startWidth: headerCell.offsetWidth,
+  }
+
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+  window.addEventListener('mousemove', handleResizeMove)
+  window.addEventListener('mouseup', stopResize)
+}
+
+onBeforeUnmount(() => {
+  stopResize()
+})
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-3xl border border-white/70 bg-white/85 shadow-panel backdrop-blur">
+  <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white/90 shadow-panel backdrop-blur">
     <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-slate-100">
-        <thead class="bg-slate-50/80">
+      <table class="min-w-full border-collapse">
+        <thead class="bg-slate-50">
           <tr>
             <th
-              v-for="column in columns"
-              :key="normalizeColumn(column).key"
+              v-for="column in normalizedColumns"
+              :key="column.key"
               scope="col"
-              class="px-5 py-4 text-sm font-semibold text-slate-600"
-              :class="normalizeColumn(column).align === 'right' ? 'text-right' : 'text-left'"
-              :style="{ width: normalizeColumn(column).width }"
+              class="relative select-none border-b border-r border-slate-200 px-5 py-4 text-sm font-bold text-slate-700 last:border-r-0"
+              :class="getHeaderAlignmentClass(column.align)"
+              :style="getColumnStyle(column)"
             >
-              {{ normalizeColumn(column).label }}
+              {{ column.label }}
+              <button
+                type="button"
+                class="absolute right-0 top-0 h-full w-2 cursor-col-resize border-0 bg-transparent p-0 transition hover:bg-brand/20 focus-visible:bg-brand/20 focus-visible:outline-none"
+                :aria-label="`${column.label} 너비 조절`"
+                @mousedown.prevent.stop="startResize($event, column)"
+              />
             </th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100 bg-white">
+        <tbody class="bg-white">
           <tr v-if="rows.length === 0">
-            <td :colspan="columns.length || 1" class="px-5 py-10 text-center text-sm text-slate-400">
+            <td :colspan="normalizedColumns.length || 1" class="border-b border-slate-200 px-5 py-10 text-center text-sm text-slate-400">
               {{ emptyText }}
             </td>
           </tr>
@@ -71,17 +186,18 @@ function getCellValue(row, key) {
             class="transition hover:bg-slate-50/70"
           >
             <td
-              v-for="column in columns"
-              :key="normalizeColumn(column).key"
-              class="px-5 py-4 text-sm text-slate-700"
-              :class="normalizeColumn(column).align === 'right' ? 'text-right' : 'text-left'"
+              v-for="column in normalizedColumns"
+              :key="column.key"
+              class="border-b border-r border-slate-200 px-5 py-4 text-sm text-slate-700 last:border-r-0"
+              :class="getAlignmentClass(column.align)"
+              :style="getColumnStyle(column)"
             >
               <slot
-                :name="`cell-${normalizeColumn(column).key}`"
+                :name="`cell-${column.key}`"
                 :row="row"
-                :value="getCellValue(row, normalizeColumn(column).key)"
+                :value="getCellValue(row, column.key)"
               >
-                {{ getCellValue(row, normalizeColumn(column).key) ?? '-' }}
+                {{ getCellValue(row, column.key) ?? '-' }}
               </slot>
             </td>
           </tr>
