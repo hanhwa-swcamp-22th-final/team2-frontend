@@ -198,6 +198,36 @@ const routes = [
         },
       },
       {
+        path: 'contacts',
+        name: 'contacts',
+        component: ContactListPage,
+        meta: {
+          title: 'Contacts',
+          serviceName: '컨택 리스트',
+          description: '거래처 연락처 관리 화면',
+        },
+      },
+      {
+        path: 'emails',
+        name: 'emails',
+        component: ServicePage,
+        meta: {
+          title: 'Emails',
+          serviceName: '메일 이력',
+          description: '메일 발송 이력 화면',
+        },
+      },
+      {
+        path: 'package',
+        name: 'package',
+        component: ServicePage,
+        meta: {
+          title: 'Package',
+          serviceName: '활동기록 패키지',
+          description: '활동기록 패키지 화면',
+        },
+      },
+      {
         path: 'users',
         name: 'users',
         component: () => import('@/views/auth/UserManagementPage.vue'),
