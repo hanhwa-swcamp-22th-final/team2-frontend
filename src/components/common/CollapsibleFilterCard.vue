@@ -16,7 +16,7 @@ const emit = defineEmits(['toggle'])
 </script>
 
 <template>
-  <BaseCard body-class="overflow-hidden p-0">
+  <BaseCard body-class="p-0">
     <button
       type="button"
       class="flex w-full items-center justify-between px-5 py-3 text-left transition hover:bg-slate-50"
@@ -33,7 +33,7 @@ const emit = defineEmits(['toggle'])
       ></i>
     </button>
 
-    <div v-if="open" class="border-t border-slate-100 px-5 pb-4 pt-3">
+    <div v-if="open" class="border-t border-slate-100 px-5 pb-3 pt-3">
       <slot />
     </div>
   </BaseCard>

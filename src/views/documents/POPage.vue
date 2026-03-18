@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
-import BaseCard from '@/components/common/BaseCard.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
+import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
@@ -120,22 +120,17 @@ function openProductSearch() {}
 </script>
 
 <template>
-  <div class="fade-in space-y-4">
-    <section class="flex items-center justify-between">
-      <h2 class="flex items-center gap-2.5 text-xl font-bold text-slate-900">
-        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50">
-          <i class="fas fa-file-contract text-sm text-brand-600" aria-hidden="true"></i>
-        </div>
-        PO 관리
-      </h2>
-
+  <div class="fade-in space-y-5">
+    <DocumentPageHeader title="PO 관리" icon-class="fas fa-file-contract">
+      <template #actions>
       <BaseButton>
         <template #leading>
           <i class="fas fa-plus text-xs" aria-hidden="true"></i>
         </template>
         PO 작성
       </BaseButton>
-    </section>
+      </template>
+    </DocumentPageHeader>
 
     <FilterToolbarCard
       v-model="filters.keyword"
@@ -218,7 +213,7 @@ function openProductSearch() {}
         </FormField>
       </div>
 
-      <div class="mt-3 flex justify-end gap-2">
+      <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
         <BaseButton variant="secondary" size="sm" @click="resetFilters">
           <template #leading>
             <i class="fas fa-undo text-xs" aria-hidden="true"></i>

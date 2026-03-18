@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
-import BaseCard from '@/components/common/BaseCard.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
+import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
@@ -63,7 +63,7 @@ const columns = [
 
 const rows = [
   {
-    id: 'SO-2026-001',
+    id: 'SO2026001',
     issueDate: '2026/02/24',
     poId: 'PO26001',
     clientName: 'COOLSAY SDN BHD',
@@ -74,7 +74,7 @@ const rows = [
     dueDate: '2026/04/20',
   },
   {
-    id: 'SO-2026-002',
+    id: 'SO2026002',
     issueDate: '2026/03/03',
     poId: 'PO26002',
     clientName: 'TechBridge GmbH',
@@ -85,7 +85,7 @@ const rows = [
     dueDate: '2026/05/25',
   },
   {
-    id: 'SO-2026-003',
+    id: 'SO2026003',
     issueDate: '2026/03/14',
     poId: 'PO26003',
     clientName: 'Pacific Trading Inc.',
@@ -121,30 +121,23 @@ function openProductSearch() {}
 </script>
 
 <template>
-  <div class="fade-in space-y-4">
-    <section class="flex items-center justify-between">
-      <h2 class="flex items-center gap-2.5 text-xl font-bold text-slate-900">
-        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50">
-          <i class="fas fa-truck-loading text-sm text-brand-600" aria-hidden="true"></i>
-        </div>
-        출하지시서
-      </h2>
-
-      <div class="flex items-center gap-2">
-        <BaseButton variant="secondary">
+  <div class="fade-in space-y-5">
+    <DocumentPageHeader title="출하지시서" icon-class="fas fa-truck-loading">
+      <template #actions>
+        <BaseButton variant="secondary" size="sm">
           <template #leading>
             <i class="fas fa-print text-xs" aria-hidden="true"></i>
           </template>
           인쇄
         </BaseButton>
-        <BaseButton>
+        <BaseButton size="sm">
           <template #leading>
             <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
           </template>
           PDF 다운로드
         </BaseButton>
-      </div>
-    </section>
+      </template>
+    </DocumentPageHeader>
 
     <FilterToolbarCard
       v-model="filters.keyword"
@@ -225,7 +218,7 @@ function openProductSearch() {}
         </FormField>
       </div>
 
-      <div class="mt-3 flex justify-end gap-2">
+      <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
         <BaseButton variant="secondary" size="sm" @click="resetFilters">
           <template #leading>
             <i class="fas fa-undo text-xs" aria-hidden="true"></i>

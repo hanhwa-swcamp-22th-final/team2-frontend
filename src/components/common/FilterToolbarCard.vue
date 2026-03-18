@@ -36,7 +36,7 @@ const emit = defineEmits(['update:modelValue', 'toggleAdvanced'])
     <BaseButton
       variant="secondary"
       size="sm"
-      class="shrink-0"
+      class="w-full shrink-0 sm:w-auto"
       :class="advancedOpen ? 'border-brand-200 bg-slate-50 text-brand-600' : ''"
       @click="emit('toggleAdvanced')"
     >

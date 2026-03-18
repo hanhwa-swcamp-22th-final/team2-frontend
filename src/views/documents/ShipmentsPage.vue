@@ -6,6 +6,7 @@ import BaseCard from '@/components/common/BaseCard.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
+import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
@@ -99,14 +100,7 @@ function openClientSearch() {}
 
 <template>
   <div class="fade-in space-y-6">
-    <section class="flex items-center justify-between">
-      <h2 class="flex items-center gap-2.5 text-xl font-bold text-slate-900">
-        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50">
-          <i class="fas fa-truck text-sm text-brand-600" aria-hidden="true"></i>
-        </div>
-        출하 현황
-      </h2>
-    </section>
+    <DocumentPageHeader title="출하 현황" icon-class="fas fa-truck" />
 
     <FilterToolbarCard
       v-model="filters.keyword"
@@ -169,7 +163,7 @@ function openClientSearch() {}
           </FormField>
         </div>
 
-        <div class="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+        <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
           <BaseButton variant="secondary" size="sm" @click="resetFilters">
             <template #leading>
               <i class="fas fa-undo text-[10px]" aria-hidden="true"></i>
@@ -185,7 +179,7 @@ function openClientSearch() {}
         </div>
     </CollapsibleFilterCard>
 
-    <section class="grid grid-cols-2 gap-4">
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <BaseCard body-class="p-5 text-center">
         <div class="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50">
           <i class="fas fa-box-open text-slate-500" aria-hidden="true"></i>
