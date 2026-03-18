@@ -5,6 +5,7 @@ import CommonComponentsPage from '@/views/CommonComponentsPage.vue'
 import DashboardPage from '@/views/DashboardPage.vue'
 import DomainComponentsPage from '@/views/DomainComponentsPage.vue'
 import PIPage from '@/views/documents/PIPage.vue'
+import POPage from '@/views/documents/POPage.vue'
 import ServicePage from '@/views/ServicePage.vue'
 
 const routes = [
@@ -98,7 +99,7 @@ const routes = [
       {
         path: 'po',
         name: 'po',
-        component: ServicePage,
+        component: POPage,
         meta: {
           title: 'PO',
           serviceName: 'PO 관리',
