@@ -5,6 +5,7 @@ import CommonComponentsPage from '@/views/CommonComponentsPage.vue'
 import DashboardPage from '@/views/DashboardPage.vue'
 import DomainComponentsPage from '@/views/DomainComponentsPage.vue'
 import CIPage from '@/views/documents/CIPage.vue'
+import CollectionsPage from '@/views/documents/CollectionsPage.vue'
 import PIPage from '@/views/documents/PIPage.vue'
 import PLPage from '@/views/documents/PLPage.vue'
 import POPage from '@/views/documents/POPage.vue'
@@ -154,7 +155,7 @@ const routes = [
       {
         path: 'collections',
         name: 'collections',
-        component: ServicePage,
+        component: CollectionsPage,
         meta: {
           title: 'Collections',
           serviceName: '매출·수금 현황',
