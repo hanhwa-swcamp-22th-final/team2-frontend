@@ -5,8 +5,8 @@ import ActivityDetailModal from '@/components/domain/activity/ActivityDetailModa
 import ActivityEditModal from '@/components/domain/activity/ActivityEditModal.vue'
 import ActivityTypeBadge from '@/components/domain/activity/ActivityTypeBadge.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
-import BaseModal from '@/components/common/BaseModal.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import DateRangeField from '@/components/common/DateRangeField.vue'
 import PageTitleBar from '@/components/layout/PageTitleBar.vue'
@@ -377,23 +377,15 @@ const columns = [
     />
 
     <!-- 삭제 확인 모달 -->
-    <BaseModal
+    <ConfirmModal
       :open="isDeleteOpen"
       title="기록 삭제"
-      width="max-w-sm"
-      @close="closeDelete"
-    >
-      <div class="space-y-2">
-        <p class="text-sm text-slate-700">아래 기록을 삭제하시겠습니까?</p>
-        <p class="rounded-lg bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900">
-          {{ deleteTarget?.title }}
-        </p>
-        <p class="text-xs text-slate-400">삭제된 기록은 복구할 수 없습니다.</p>
-      </div>
-      <template #footer>
-        <BaseButton variant="secondary" @click="closeDelete">취소</BaseButton>
-        <BaseButton variant="danger" @click="closeDelete">삭제</BaseButton>
-      </template>
-    </BaseModal>
+      message="아래 기록을 삭제하시겠습니까?"
+      :detail="deleteTarget?.title"
+      confirm-label="삭제"
+      confirm-variant="danger"
+      @confirm="closeDelete"
+      @cancel="closeDelete"
+    />
   </div>
 </template>
