@@ -20,6 +20,7 @@ const filters = ref({
   manager: '',
   clientName: '',
   code: '',
+  productName: '',
   country: '',
   status: '',
   deliveryFrom: '',
@@ -102,6 +103,7 @@ function resetFilters() {
     manager: '',
     clientName: '',
     code: '',
+    productName: '',
     country: '',
     status: '',
     deliveryFrom: '',
@@ -112,6 +114,8 @@ function resetFilters() {
 function openClientSearch() {}
 
 function openCodeSearch() {}
+
+function openProductSearch() {}
 </script>
 
 <template>
@@ -193,6 +197,15 @@ function openCodeSearch() {}
             placeholder="문서번호"
             title="코드 검색"
             @trigger="openCodeSearch"
+          />
+        </FormField>
+
+        <FormField label="품목명">
+          <SearchTriggerField
+            v-model="filters.productName"
+            placeholder="품목명 검색..."
+            title="품목명 검색"
+            @trigger="openProductSearch"
           />
         </FormField>
 
