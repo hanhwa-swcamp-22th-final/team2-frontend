@@ -58,5 +58,76 @@
   ],
   "company": [
     { "id": 1, "nameEn": "HANWHA SYSTEMS Co., Ltd.", "nameKr": "한화시스템(주)", "addressEn": "188, Pangyoyeok-ro, Bundang-gu, Seongnam-si, Gyeonggi-do, Korea", "tel": "+82-31-8000-0000", "fax": "+82-31-8000-0001", "email": "export@hanwhasystems.com", "sealImageUrl": null }
+  ],
+  "countries": [
+    { "id": 1, "code": "US", "name": "United States", "nameKr": "미국" },
+    { "id": 2, "code": "DE", "name": "Germany", "nameKr": "독일" },
+    { "id": 3, "code": "JP", "name": "Japan", "nameKr": "일본" },
+    { "id": 4, "code": "CN", "name": "China", "nameKr": "중국" },
+    { "id": 5, "code": "GB", "name": "United Kingdom", "nameKr": "영국" },
+    { "id": 6, "code": "FR", "name": "France", "nameKr": "프랑스" },
+    { "id": 7, "code": "IN", "name": "India", "nameKr": "인도" },
+    { "id": 8, "code": "BR", "name": "Brazil", "nameKr": "브라질" },
+    { "id": 9, "code": "SG", "name": "Singapore", "nameKr": "싱가포르" },
+    { "id": 10, "code": "VN", "name": "Vietnam", "nameKr": "베트남" },
+    { "id": 11, "code": "NL", "name": "Netherlands", "nameKr": "네덜란드" },
+    { "id": 12, "code": "AU", "name": "Australia", "nameKr": "호주" },
+    { "id": 13, "code": "CA", "name": "Canada", "nameKr": "캐나다" }
+  ],
+  "ports": [
+    { "id": 1, "code": "KRPUS", "name": "Busan", "countryId": 9 },
+    { "id": 2, "code": "CNSHA", "name": "Shanghai", "countryId": 4 },
+    { "id": 3, "code": "USLAX", "name": "Los Angeles", "countryId": 1 },
+    { "id": 4, "code": "DEHAM", "name": "Hamburg", "countryId": 2 },
+    { "id": 5, "code": "NLRTM", "name": "Rotterdam", "countryId": 11 },
+    { "id": 6, "code": "JPTYO", "name": "Tokyo", "countryId": 3 },
+    { "id": 7, "code": "SGSIN", "name": "Singapore", "countryId": 9 },
+    { "id": 8, "code": "INBOM", "name": "Mumbai", "countryId": 7 },
+    { "id": 9, "code": "VNSGN", "name": "Ho Chi Minh", "countryId": 10 },
+    { "id": 10, "code": "BRSSZ", "name": "Santos", "countryId": 8 },
+    { "id": 11, "code": "GBFXT", "name": "Felixstowe", "countryId": 5 },
+    { "id": 12, "code": "FRMRS", "name": "Marseille", "countryId": 6 },
+    { "id": 13, "code": "USHOU", "name": "Houston", "countryId": 1 },
+    { "id": 14, "code": "AUPOL", "name": "Port of Melbourne", "countryId": 12 },
+    { "id": 15, "code": "CAVAN", "name": "Vancouver", "countryId": 13 },
+    { "id": 16, "code": "JPOSA", "name": "Osaka", "countryId": 3 }
+  ],
+  "currencies": [
+    { "id": 1, "code": "USD", "name": "US Dollar", "symbol": "$" },
+    { "id": 2, "code": "EUR", "name": "Euro", "symbol": "€" },
+    { "id": 3, "code": "JPY", "name": "Japanese Yen", "symbol": "¥" },
+    { "id": 4, "code": "CNY", "name": "Chinese Yuan", "symbol": "¥" },
+    { "id": 5, "code": "KRW", "name": "Korean Won", "symbol": "₩" }
+  ],
+  "paymentTerms": [
+    { "id": 1, "code": "T/T", "name": "Telegraphic Transfer", "description": "전신환 송금" },
+    { "id": 2, "code": "L/C", "name": "Letter of Credit", "description": "신용장" },
+    { "id": 3, "code": "D/P", "name": "Documents against Payment", "description": "지급인도조건" },
+    { "id": 4, "code": "D/A", "name": "Documents against Acceptance", "description": "인수인도조건" },
+    { "id": 5, "code": "CAD", "name": "Cash against Documents", "description": "서류상환불" }
+  ],
+  "clients": [
+    { "id": 1, "code": "CL-001", "name": "Global Steel Corp.", "nameKr": "글로벌 스틸", "countryId": 1, "city": "Houston", "portId": 3, "address": "1234 Industrial Blvd, Houston, TX", "tel": "+1-713-555-0101", "email": "contact@globalsteel.com", "paymentTermsId": 1, "currencyId": 1, "manager": "John Smith", "status": "활성", "regDate": "2025-01-15" },
+    { "id": 2, "code": "CL-002", "name": "Hamburg Metal GmbH", "nameKr": "함부르크 메탈", "countryId": 2, "city": "Hamburg", "portId": 4, "address": "Hafenstr. 42, Hamburg", "tel": "+49-40-555-0202", "email": "info@hamburgmetal.de", "paymentTermsId": 2, "currencyId": 2, "manager": "Hans Mueller", "status": "활성", "regDate": "2025-02-10" },
+    { "id": 3, "code": "CL-003", "name": "Tokyo Trading Co.", "nameKr": "도쿄 트레이딩", "countryId": 3, "city": "Tokyo", "portId": 6, "address": "2-1 Marunouchi, Chiyoda-ku, Tokyo", "tel": "+81-3-555-0303", "email": "trade@tokyotrading.jp", "paymentTermsId": 1, "currencyId": 3, "manager": "Tanaka Yuki", "status": "활성", "regDate": "2025-03-05" },
+    { "id": 4, "code": "CL-004", "name": "Shanghai Import Ltd.", "nameKr": "상해 임포트", "countryId": 4, "city": "Shanghai", "portId": 2, "address": "88 Pudong Ave, Shanghai", "tel": "+86-21-555-0404", "email": "import@shanghaiimport.cn", "paymentTermsId": 3, "currencyId": 4, "manager": "Wang Lei", "status": "활성", "regDate": "2025-03-20" },
+    { "id": 5, "code": "CL-005", "name": "London Metals Plc", "nameKr": "런던 메탈", "countryId": 5, "city": "London", "portId": 11, "address": "10 Canary Wharf, London", "tel": "+44-20-555-0505", "email": "metals@londonmetals.co.uk", "paymentTermsId": 2, "currencyId": 1, "manager": "James Brown", "status": "비활성", "regDate": "2025-04-01" },
+    { "id": 6, "code": "CL-006", "name": "Paris Acier SA", "nameKr": "파리 아시에", "countryId": 6, "city": "Paris", "portId": 12, "address": "15 Rue de Rivoli, Paris", "tel": "+33-1-555-0606", "email": "acier@parisacier.fr", "paymentTermsId": 4, "currencyId": 2, "manager": "Pierre Dupont", "status": "활성", "regDate": "2025-04-15" },
+    { "id": 7, "code": "CL-007", "name": "Mumbai Steel Works", "nameKr": "뭄바이 스틸웍스", "countryId": 7, "city": "Mumbai", "portId": 8, "address": "Andheri East, Mumbai", "tel": "+91-22-555-0707", "email": "works@mumbaisteel.in", "paymentTermsId": 1, "currencyId": 1, "manager": "Raj Patel", "status": "활성", "regDate": "2025-05-01" },
+    { "id": 8, "code": "CL-008", "name": "São Paulo Metals", "nameKr": "상파울루 메탈", "countryId": 8, "city": "São Paulo", "portId": 10, "address": "Av. Paulista 1000, São Paulo", "tel": "+55-11-555-0808", "email": "metals@spmetals.br", "paymentTermsId": 5, "currencyId": 1, "manager": "Carlos Silva", "status": "활성", "regDate": "2025-05-20" },
+    { "id": 9, "code": "CL-009", "name": "Singapore Pipe Pte", "nameKr": "싱가포르 파이프", "countryId": 9, "city": "Singapore", "portId": 7, "address": "1 Raffles Place, Singapore", "tel": "+65-555-0909", "email": "pipe@sgpipe.sg", "paymentTermsId": 1, "currencyId": 1, "manager": "Lim Wei", "status": "비활성", "regDate": "2025-06-10" },
+    { "id": 10, "code": "CL-010", "name": "Hanoi Industries", "nameKr": "하노이 인더스트리", "countryId": 10, "city": "Ho Chi Minh", "portId": 9, "address": "District 1, Ho Chi Minh City", "tel": "+84-28-555-1010", "email": "ind@hanoiindustries.vn", "paymentTermsId": 1, "currencyId": 1, "manager": "Nguyen Van", "status": "활성", "regDate": "2025-06-25" }
+  ],
+  "items": [
+    { "id": 1, "code": "ITM-001", "name": "Hot Rolled Steel Coil", "nameKr": "열연 강판 코일", "spec": "1200 × 2400 × 3 mm", "unit": "MT", "packUnit": "BUNDLE", "unitPrice": 850000, "weight": 5000, "hsCode": "7208.51", "category": "Steel", "status": "활성", "regDate": "2025-01-10" },
+    { "id": 2, "code": "ITM-002", "name": "Cold Rolled Steel Sheet", "nameKr": "냉연 강판", "spec": "1000 × 2000 × 1.5 mm", "unit": "MT", "packUnit": "PALLET", "unitPrice": 920000, "weight": 3000, "hsCode": "7209.16", "category": "Steel", "status": "활성", "regDate": "2025-01-15" },
+    { "id": 3, "code": "ITM-003", "name": "Seamless Steel Pipe", "nameKr": "무봉강관", "spec": "114 × 6000 × 8 mm", "unit": "EA", "packUnit": "BUNDLE", "unitPrice": 125000, "weight": 120, "hsCode": "7304.19", "category": "Pipe", "status": "활성", "regDate": "2025-02-01" },
+    { "id": 4, "code": "ITM-004", "name": "Welded Steel Pipe", "nameKr": "용접강관", "spec": "219 × 12000 × 6 mm", "unit": "EA", "packUnit": "BUNDLE", "unitPrice": 98000, "weight": 200, "hsCode": "7306.30", "category": "Pipe", "status": "활성", "regDate": "2025-02-10" },
+    { "id": 5, "code": "ITM-005", "name": "Lubricant Oil #32", "nameKr": "윤활유 #32", "spec": "200 × 200 × 500 mm", "unit": "EA", "packUnit": "CASE", "unitPrice": 45000, "weight": 18, "hsCode": "2710.19", "category": "Oil", "status": "활성", "regDate": "2025-02-20" },
+    { "id": 6, "code": "ITM-006", "name": "Hydraulic Press Machine", "nameKr": "유압 프레스", "spec": "2500 × 1800 × 3200 mm", "unit": "SET", "packUnit": "LOOSE", "unitPrice": 75000000, "weight": 8500, "hsCode": "8462.10", "category": "Machinery", "status": "활성", "regDate": "2025-03-01" },
+    { "id": 7, "code": "ITM-007", "name": "Stainless Steel Bar", "nameKr": "스테인리스 봉강", "spec": "50 × 50 × 6000 mm", "unit": "KG", "packUnit": "BUNDLE", "unitPrice": 4500, "weight": 117, "hsCode": "7222.11", "category": "Steel", "status": "활성", "regDate": "2025-03-15" },
+    { "id": 8, "code": "ITM-008", "name": "ERW Pipe", "nameKr": "ERW 강관", "spec": "76 × 6000 × 3 mm", "unit": "EA", "packUnit": "PALLET", "unitPrice": 67000, "weight": 32, "hsCode": "7306.30", "category": "Pipe", "status": "활성", "regDate": "2025-04-01" },
+    { "id": 9, "code": "ITM-009", "name": "Cutting Oil", "nameKr": "절삭유", "spec": "150 × 150 × 300 mm", "unit": "EA", "packUnit": "CASE", "unitPrice": 32000, "weight": 5, "hsCode": "3403.19", "category": "Oil", "status": "비활성", "regDate": "2025-04-10" },
+    { "id": 10, "code": "ITM-010", "name": "CNC Lathe", "nameKr": "CNC 선반", "spec": "3000 × 1500 × 1800 mm", "unit": "SET", "packUnit": "LOOSE", "unitPrice": 120000000, "weight": 4200, "hsCode": "8458.11", "category": "Machinery", "status": "활성", "regDate": "2025-04-20" }
   ]
 }
