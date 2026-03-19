@@ -16,9 +16,9 @@ const props = defineProps({
     type: String,
     default: 'max-w-2xl',
   },
-  zIndexClass: {
-    type: String,
-    default: 'z-50',
+  zIndex: {
+    type: Number,
+    default: 50,
   },
   closeOnBackdrop: {
     type: Boolean,
@@ -44,7 +44,7 @@ function handleBackdropClick() {
     <div
       v-if="open"
       class="fixed inset-0 flex items-center justify-center bg-slate-900/50 px-4 py-8"
-      :class="zIndexClass"
+      :style="{ zIndex: props.zIndex }"
       @click.self="handleBackdropClick"
     >
       <div

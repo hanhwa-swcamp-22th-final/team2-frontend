@@ -1,30 +1,25 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
-import SearchModal from '@/components/common/SearchModal.vue'
 import { useToast } from '@/composables/useToast'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
   mode: { type: String, default: 'create' },
   document: { type: Object, default: null },
+  selectedClient: { type: Object, default: null },
 })
 
-const emit = defineEmits(['close', 'save'])
-const { info, success } = useToast()
+const emit = defineEmits(['close', 'save', 'open-client-search'])
+const { success } = useToast()
 
 const currencyOptions = ['USD', 'EUR', 'JPY', 'GBP', 'AUD', 'CAD', 'SGD', 'AED', 'CNY', 'MYR', 'THB', 'VND', 'IDR', 'INR', 'SAR', 'BRL', 'SEK', 'CHF']
 const incotermsOptions = ['EXW', 'FCA', 'FAS', 'FOB', 'CFR', 'CIF', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP']
 const buyerOptions = [
   'Mr. Ahmad Razak (Purchasing Manager)',
   'Ms. Siti Nurhaliza (Director)',
-]
-const clients = [
-  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아', buyers: ['Mr. Ahmad Razak (Purchasing Manager)', 'Ms. Siti Nurhaliza (Director)'] },
-  { id: 'CL002', name: 'TechBridge GmbH', country: '독일', buyers: ['Ms. Hanna Schneider (Procurement Lead)'] },
-  { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국', buyers: ['Mr. Jacob Miller (Import Manager)'] },
 ]
 const approverOptions = [
   '최관리 (경영지원 · 관리자)',
@@ -58,18 +53,6 @@ function createInitialForm() {
 }
 
 const form = ref(createInitialForm())
-const clientSearchOpen = ref(false)
-const clientSearchKeyword = ref('')
-
-const clientRows = computed(() => {
-  const keyword = clientSearchKeyword.value.trim().toLowerCase()
-
-  if (!keyword) return clients
-
-  return clients.filter((client) => (
-    [client.id, client.name, client.country].some((value) => value.toLowerCase().includes(keyword))
-  ))
-})
 
 watch(
   () => props.open,
@@ -103,7 +86,7 @@ watch(
 )
 
 function openClientSearch() {
-  clientSearchOpen.value = true
+  emit('open-client-search')
 }
 
 function addItem() {
@@ -126,12 +109,14 @@ function handleSave() {
   emit('close')
 }
 
-function selectClient(client) {
-  form.value.clientName = client.name
-  form.value.buyerName = client.buyers[0] ?? ''
-  clientSearchOpen.value = false
-  clientSearchKeyword.value = ''
-}
+watch(
+  () => props.selectedClient,
+  (client) => {
+    if (!client) return
+    form.value.clientName = client.name
+    form.value.buyerName = client.buyers?.[0] ?? ''
+  },
+)
 </script>
 
 <template>
@@ -355,19 +340,4 @@ function selectClient(client) {
       <BaseButton @click="handleSave">저장</BaseButton>
     </template>
   </BaseModal>
-
-  <SearchModal
-    :open="clientSearchOpen"
-    title="거래처 검색"
-    :columns="[
-      { key: 'id', label: '코드' },
-      { key: 'name', label: '거래처명' },
-      { key: 'country', label: '국가' },
-    ]"
-    :rows="clientRows"
-    :search-keyword="clientSearchKeyword"
-    @update:search-keyword="clientSearchKeyword = $event"
-    @close="clientSearchOpen = false"
-    @select="selectClient"
-  />
 </template>

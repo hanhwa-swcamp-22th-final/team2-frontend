@@ -3,15 +3,23 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
+import SearchModal from '@/components/common/SearchModal.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
+import PIFormModal from '@/components/domain/document/PIFormModal.vue'
 import { useToast } from '@/composables/useToast'
 
 const route = useRoute()
 const router = useRouter()
-const { info } = useToast()
+const { info, success } = useToast()
 
 const previewOpen = ref(false)
+const formOpen = ref(false)
+const deleteOpen = ref(false)
+const clientSearchOpen = ref(false)
+const clientSearchKeyword = ref('')
+const selectedClient = ref(null)
 
 const detailMap = {
   PI26001: {
@@ -76,6 +84,18 @@ const detailMap = {
 
 const detail = computed(() => detailMap[route.params.id] ?? null)
 
+const clientRowsSource = [
+  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아', buyers: ['Mr. Ahmad Razak (Purchasing Manager)', 'Ms. Siti Nurhaliza (Director)'] },
+  { id: 'CL002', name: 'TechBridge GmbH', country: '독일', buyers: ['Ms. Hanna Schneider (Procurement Lead)'] },
+  { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국', buyers: ['Mr. Jacob Miller (Import Manager)'] },
+]
+
+const clientRows = computed(() => {
+  const keyword = clientSearchKeyword.value.trim().toLowerCase()
+  if (!keyword) return clientRowsSource
+  return clientRowsSource.filter((client) => [client.id, client.name, client.country].some((value) => value.toLowerCase().includes(keyword)))
+})
+
 const previewFields = computed(() => {
   if (!detail.value) return []
 
@@ -98,11 +118,11 @@ function openPreview() {
 }
 
 function handleEdit() {
-  info('PI 수정 폼은 다음 단계에서 연결됩니다.')
+  formOpen.value = true
 }
 
 function handleDelete() {
-  info('PI 삭제 확인 흐름은 다음 단계에서 연결됩니다.')
+  deleteOpen.value = true
 }
 
 function handlePrint() {
@@ -111,6 +131,27 @@ function handlePrint() {
 
 function handlePdfDownload() {
   info('PI PDF 다운로드 기능은 다음 단계에서 연결됩니다.')
+}
+
+function handleSave() {
+  formOpen.value = false
+  success(`${detail.value?.id} 수정 폼이 연결되었습니다.`)
+}
+
+function openClientSearch() {
+  clientSearchOpen.value = true
+}
+
+function handleClientSelect(client) {
+  selectedClient.value = client
+  clientSearchOpen.value = false
+  clientSearchKeyword.value = ''
+}
+
+function confirmDelete() {
+  deleteOpen.value = false
+  success(`${detail.value?.id} 삭제 확인이 연결되었습니다.`)
+  router.push({ name: 'pi' })
 }
 </script>
 
@@ -280,6 +321,54 @@ function handlePdfDownload() {
       :document-title="detail.id"
       :fields="previewFields"
       @close="previewOpen = false"
+    />
+
+    <PIFormModal
+      :open="formOpen"
+      mode="edit"
+      :document="{
+        id: detail.id,
+        clientName: detail.clientName,
+        currency: detail.currency,
+        incoterms: detail.incoterms,
+        deliveryDate: detail.deliveryDate,
+        items: detail.items.map((item) => ({
+          name: item.name,
+          qty: item.quantity,
+          unitPrice: item.unitPrice.replace(/[^0-9.]/g, ''),
+          amount: item.amount,
+        })),
+      }"
+      :selected-client="selectedClient"
+      @open-client-search="openClientSearch"
+      @close="formOpen = false"
+      @save="handleSave"
+    />
+
+    <ConfirmModal
+      :open="deleteOpen"
+      title="PI 삭제"
+      message="아래 PI를 삭제하시겠습니까?"
+      :detail="detail.id"
+      confirm-label="삭제"
+      confirm-variant="danger"
+      @confirm="confirmDelete"
+      @cancel="deleteOpen = false"
+    />
+
+    <SearchModal
+      :open="clientSearchOpen"
+      title="거래처 검색"
+      :columns="[
+        { key: 'id', label: '코드' },
+        { key: 'name', label: '거래처명' },
+        { key: 'country', label: '국가' },
+      ]"
+      :rows="clientRows"
+      :search-keyword="clientSearchKeyword"
+      @update:search-keyword="clientSearchKeyword = $event"
+      @close="clientSearchOpen = false"
+      @select="handleClientSelect"
     />
   </div>
 

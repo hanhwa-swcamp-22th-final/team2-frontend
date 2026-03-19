@@ -3,29 +3,18 @@ import { computed, ref, watch } from 'vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
-import SearchModal from '@/components/common/SearchModal.vue'
 import { useToast } from '@/composables/useToast'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
   mode: { type: String, default: 'create' },
   document: { type: Object, default: null },
+  selectedPi: { type: Object, default: null },
+  selectedClient: { type: Object, default: null },
 })
 
-const emit = defineEmits(['close', 'save'])
+const emit = defineEmits(['close', 'save', 'open-pi-search', 'open-client-search'])
 const { success } = useToast()
-
-const piRowsSource = [
-  { id: 'PI26001', clientName: 'COOLSAY SDN BHD', currency: 'USD', deliveryDate: '2026/04/15' },
-  { id: 'PI26002', clientName: 'TechBridge GmbH', currency: 'EUR', deliveryDate: '2026/05/20' },
-  { id: 'PI26003', clientName: 'Pacific Trading Inc.', currency: 'USD', deliveryDate: '2026/06/01' },
-]
-
-const clientRowsSource = [
-  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
-  { id: 'CL002', name: 'TechBridge GmbH', country: '독일' },
-  { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국' },
-]
 
 function createInitialForm() {
   return {
@@ -37,26 +26,6 @@ function createInitialForm() {
 }
 
 const form = ref(createInitialForm())
-const piSearchOpen = ref(false)
-const piSearchKeyword = ref('')
-const clientSearchOpen = ref(false)
-const clientSearchKeyword = ref('')
-
-const piRows = computed(() => {
-  const keyword = piSearchKeyword.value.trim().toLowerCase()
-  if (!keyword) return piRowsSource
-  return piRowsSource.filter((row) => (
-    [row.id, row.clientName, row.currency, row.deliveryDate].some((value) => value.toLowerCase().includes(keyword))
-  ))
-})
-
-const clientRows = computed(() => {
-  const keyword = clientSearchKeyword.value.trim().toLowerCase()
-  if (!keyword) return clientRowsSource
-  return clientRowsSource.filter((row) => (
-    [row.id, row.name, row.country].some((value) => value.toLowerCase().includes(keyword))
-  ))
-})
 
 watch(
   () => props.open,
@@ -79,11 +48,11 @@ watch(
 )
 
 function openPiSearch() {
-  piSearchOpen.value = true
+  emit('open-pi-search')
 }
 
 function openClientSearch() {
-  clientSearchOpen.value = true
+  emit('open-client-search')
 }
 
 function clearLinkedPi() {
@@ -97,20 +66,24 @@ function handleSave() {
   emit('close')
 }
 
-function selectPi(pi) {
-  form.value.linkedPiId = pi.id
-  form.value.linkedPiDisplay = pi.id
-  form.value.clientName = pi.clientName
-  form.value.deliveryDate = pi.deliveryDate.replaceAll('/', '-')
-  piSearchOpen.value = false
-  piSearchKeyword.value = ''
-}
+watch(
+  () => props.selectedPi,
+  (pi) => {
+    if (!pi) return
+    form.value.linkedPiId = pi.id
+    form.value.linkedPiDisplay = pi.id
+    form.value.clientName = pi.clientName
+    form.value.deliveryDate = pi.deliveryDate.replaceAll('/', '-')
+  },
+)
 
-function selectClient(client) {
-  form.value.clientName = client.name
-  clientSearchOpen.value = false
-  clientSearchKeyword.value = ''
-}
+watch(
+  () => props.selectedClient,
+  (client) => {
+    if (!client) return
+    form.value.clientName = client.name
+  },
+)
 </script>
 
 <template>
@@ -191,35 +164,4 @@ function selectClient(client) {
       <BaseButton @click="handleSave">저장</BaseButton>
     </template>
   </BaseModal>
-
-  <SearchModal
-    :open="piSearchOpen"
-    title="PI 검색"
-    :columns="[
-      { key: 'id', label: 'PI번호' },
-      { key: 'clientName', label: '거래처명' },
-      { key: 'currency', label: '통화' },
-      { key: 'deliveryDate', label: '납기일' },
-    ]"
-    :rows="piRows"
-    :search-keyword="piSearchKeyword"
-    @update:search-keyword="piSearchKeyword = $event"
-    @close="piSearchOpen = false"
-    @select="selectPi"
-  />
-
-  <SearchModal
-    :open="clientSearchOpen"
-    title="거래처 검색"
-    :columns="[
-      { key: 'id', label: '코드' },
-      { key: 'name', label: '거래처명' },
-      { key: 'country', label: '국가' },
-    ]"
-    :rows="clientRows"
-    :search-keyword="clientSearchKeyword"
-    @update:search-keyword="clientSearchKeyword = $event"
-    @close="clientSearchOpen = false"
-    @select="selectClient"
-  />
 </template>
