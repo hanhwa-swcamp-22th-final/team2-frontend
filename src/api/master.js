@@ -14,6 +14,10 @@ export const createItem = (item) => api.post('/items', item).then((r) => r.data)
 export const updateItem = (id, item) => api.put(`/items/${id}`, item).then((r) => r.data)
 export const deleteItem = (id) => api.delete(`/items/${id}`).then((r) => r.data)
 
+// Buyers
+export const fetchBuyersByClient = (clientId) =>
+  api.get('/buyers', { params: { clientId } }).then((r) => r.data)
+
 // Reference data
 export const fetchCountries = () => api.get('/countries').then((r) => r.data)
 export const fetchPorts = () => api.get('/ports').then((r) => r.data)

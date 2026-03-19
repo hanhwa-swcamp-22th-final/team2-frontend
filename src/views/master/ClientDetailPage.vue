@@ -4,12 +4,13 @@ import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
-import StatusBadge from '@/components/common/StatusBadge.vue'
+import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
 import ClientBuyerCard from '@/components/domain/master/ClientBuyerCard.vue'
 import ClientFormModal from '@/components/domain/master/ClientFormModal.vue'
 import LinkedDocumentList from '@/components/domain/document/LinkedDocumentList.vue'
 import {
   deleteClient,
+  fetchBuyersByClient,
   fetchClient,
   fetchCountries,
   fetchCurrencies,
@@ -54,24 +55,9 @@ function getCurrencyCode(currencyId) {
   return found ? `${found.code} (${found.symbol})` : '-'
 }
 
-const buyers = computed(() => {
-  if (!client.value) return []
-  return [
-    {
-      name: client.value.manager,
-      position: 'Sales Manager',
-      email: client.value.email,
-      phone: client.value.tel,
-    },
-  ]
-})
+const buyers = ref([])
 
-// TODO: API로 해당 거래처의 연결 문서 조회
-const linkedDocuments = [
-  { code: 'PI-2025-001', label: 'Proforma Invoice #001', status: '확정' },
-  { code: 'PI-2025-003', label: 'Proforma Invoice #003', status: '초안' },
-  { code: 'PO-2025-002', label: 'Purchase Order #002', status: '발송' },
-]
+const linkedDocuments = ref([])
 
 const infoFields = computed(() => {
   if (!client.value) return []
@@ -99,19 +85,26 @@ async function loadData() {
   }
   loading.value = true
   try {
-    const [clientData, countriesData, portsData, currenciesData, paymentTermsData] =
+    const [clientData, countriesData, portsData, currenciesData, paymentTermsData, buyersData] =
       await Promise.all([
         fetchClient(route.params.id),
         fetchCountries(),
         fetchPorts(),
         fetchCurrencies(),
         fetchPaymentTerms(),
+        fetchBuyersByClient(route.params.id),
       ])
     client.value = clientData
     countries.value = countriesData
     ports.value = portsData
     currencies.value = currenciesData
     paymentTerms.value = paymentTermsData
+    buyers.value = buyersData.map((b) => ({
+      name: b.name,
+      position: b.position,
+      email: b.email,
+      phone: b.tel,
+    }))
   } catch {
     error('데이터를 불러오는 중 오류가 발생했습니다.')
   } finally {
@@ -179,24 +172,14 @@ function handleDocumentSelect(doc) {
   </div>
 
   <div v-else-if="client" class="space-y-6">
-    <!-- 헤더 -->
-    <div class="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
-      <div class="flex items-center gap-3">
-        <button type="button" class="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600" @click="goBack">
-          <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path fill-rule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clip-rule="evenodd" />
-          </svg>
-        </button>
-        <h1 class="text-2xl font-bold tracking-tight text-ink">{{ client.name }}</h1>
-        <StatusBadge :value="client.status" />
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
+    <DetailPageHeader :title="client.name" :status="client.status" @back="goBack">
+      <template #actions>
         <BaseButton variant="secondary" size="sm" @click="openEditModal">수정</BaseButton>
         <BaseButton variant="ghost" size="sm" @click="showConfirmModal = true">삭제</BaseButton>
         <BaseButton variant="ghost" size="sm" :disabled="true" title="준비 중">인쇄</BaseButton>
         <BaseButton variant="ghost" size="sm" :disabled="true" title="준비 중">PDF</BaseButton>
-      </div>
-    </div>
+      </template>
+    </DetailPageHeader>
 
     <!-- 2열 레이아웃 -->
     <div class="grid gap-6 xl:grid-cols-[1fr_360px]">
@@ -215,8 +198,11 @@ function handleDocumentSelect(doc) {
         </BaseCard>
 
         <BaseCard title="바이어 / 담당자" subtitle="거래처 담당자 정보입니다.">
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div v-if="buyers.length" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <ClientBuyerCard v-for="buyer in buyers" :key="buyer.name" :buyer="buyer" />
+          </div>
+          <div v-else class="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-400">
+            등록된 바이어가 없습니다.
           </div>
         </BaseCard>
 
@@ -253,7 +239,6 @@ function handleDocumentSelect(doc) {
 
       <!-- 우측 -->
       <div>
-        <!-- 플레이스홀더 데이터 — TODO: API로 해당 거래처의 연결 문서 조회 -->
         <LinkedDocumentList :documents="linkedDocuments" @select="handleDocumentSelect" />
       </div>
     </div>

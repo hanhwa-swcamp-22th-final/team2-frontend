@@ -8,7 +8,7 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import SearchInput from '@/components/common/SearchInput.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
-import PageTitleBar from '@/components/layout/PageTitleBar.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import ClientFormModal from '@/components/domain/master/ClientFormModal.vue'
 import {
   createClient,
@@ -197,11 +197,11 @@ function goToDetail(row) {
 
 <template>
   <div class="space-y-6">
-    <PageTitleBar title="거래처 관리">
+    <PageHeader title="거래처 관리" icon-class="fas fa-building">
       <template #actions>
         <BaseButton variant="primary" @click="openCreateModal">신규등록</BaseButton>
       </template>
-    </PageTitleBar>
+    </PageHeader>
 
     <div class="flex flex-wrap items-center gap-3">
       <div class="min-w-0 flex-1">
