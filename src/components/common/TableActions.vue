@@ -35,7 +35,7 @@ defineEmits(['edit', 'delete'])
         ? 'cursor-not-allowed text-slate-300'
         : 'text-brand-500 hover:text-brand-700'"
       :disabled="disabled"
-      @click.stop="$emit('edit')"
+      @click.stop="!disabled && $emit('edit')"
     >
       {{ editLabel }}
     </button>
@@ -48,7 +48,7 @@ defineEmits(['edit', 'delete'])
         ? 'cursor-not-allowed text-slate-300'
         : 'text-slate-400 hover:text-red-500'"
       :disabled="disabled"
-      @click.stop="$emit('delete')"
+      @click.stop="!disabled && $emit('delete')"
     >
       {{ deleteLabel }}
     </button>
