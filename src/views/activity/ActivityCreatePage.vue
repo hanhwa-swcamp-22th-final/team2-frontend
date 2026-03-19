@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { createActivity, fetchActivityClients, fetchPOsByClient } from '@/api/activity'
 import { useAuthStore } from '@/stores/auth'
@@ -30,6 +30,12 @@ const formTitle = ref('')
 const formContent = ref('')
 const formAuthor = ref('')
 const errors = ref({})
+
+watch(formClient, (val) => { if (val) errors.value.client = undefined })
+watch(formType,   (val) => { if (val) errors.value.type   = undefined })
+watch(formDate,   (val) => { if (val) errors.value.date   = undefined })
+watch(formTitle,  (val) => { if (val.trim()) errors.value.title  = undefined })
+watch(formAuthor, (val) => { if (val.trim()) errors.value.author = undefined })
 
 // ── options ────────────────────────────────────────────────
 const clientOptions = ref([])
@@ -90,6 +96,7 @@ async function openPoSearch() {
     isPoSearchOpen.value = true
   } catch (e) {
     console.error('PO 목록 로드 실패', e)
+    error('PO 목록을 불러오지 못했습니다. 다시 시도해주세요.')
   }
 }
 

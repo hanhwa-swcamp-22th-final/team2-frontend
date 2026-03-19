@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useToast } from '@/composables/useToast'
 import { fetchBuyers, createBuyer, updateBuyer, deleteBuyer } from '@/api/contacts'
 import { fetchActivityClients } from '@/api/activity'
@@ -83,6 +83,10 @@ const formEmail = ref('')
 const formTel = ref('')
 const formErrors = ref({})
 
+watch(formClientId, (val) => { if (val) formErrors.value.clientId = undefined })
+watch(formName,     (val) => { if (val.trim()) formErrors.value.name = undefined })
+watch(formEmail,    (val) => { if (val.trim()) formErrors.value.email = undefined })
+
 const positionOptions = [
   { label: 'Team Leader', value: 'Team Leader' },
   { label: 'Team Member', value: 'Team Member' },
@@ -117,13 +121,17 @@ function openEdit(contact) {
   isFormOpen.value = true
 }
 
-async function handleFormSubmit() {
+function validate() {
   const e = {}
-  if (!formClientId.value)    e.clientId = '거래처 값이 누락되었습니다.'
-  if (!formName.value.trim()) e.name     = '이름 값이 누락되었습니다.'
-  if (!formEmail.value.trim()) e.email   = '이메일 값이 누락되었습니다.'
+  if (!formClientId.value)     e.clientId = '거래처 값이 누락되었습니다.'
+  if (!formName.value.trim())  e.name     = '이름 값이 누락되었습니다.'
+  if (!formEmail.value.trim()) e.email    = '이메일 값이 누락되었습니다.'
   formErrors.value = e
-  if (Object.keys(e).length > 0) {
+  return Object.keys(e).length === 0
+}
+
+async function handleFormSubmit() {
+  if (!validate()) {
     warning('입력 내용을 확인해주세요.')
     return
   }
