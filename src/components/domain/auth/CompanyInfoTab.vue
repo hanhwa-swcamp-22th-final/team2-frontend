@@ -7,7 +7,7 @@ import FormField from '@/components/common/FormField.vue'
 import { useToast } from '@/composables/useToast'
 import { fetchCompany, updateCompany } from '@/api/auth'
 
-const { success, error } = useToast()
+const { success, error, warning } = useToast()
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
