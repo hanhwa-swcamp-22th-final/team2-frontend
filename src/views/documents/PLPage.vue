@@ -7,10 +7,12 @@ import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue
 import DateField from '@/components/common/DateField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
+import PLDocumentTemplate from '@/components/domain/document/PLDocumentTemplate.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
+import { openDocumentOutputByType } from '@/utils/documentOutput'
 
 const isAdvancedOpen = ref(true)
 const previewTarget = ref(null)
@@ -109,19 +111,49 @@ const filteredRows = computed(() => {
   })
 })
 
-const previewFields = computed(() => {
-  if (!previewTarget.value) {
-    return []
+/**
+ * 목록 row 데이터를 PL 문서 템플릿이 필요로 하는 구조로 변환합니다.
+ * CI와 동일한 헤더 구조이지만, 품목 컬럼이 중량/용적 기준입니다.
+ */
+const previewDoc = computed(() => {
+  if (!previewTarget.value) return null
+  const row = previewTarget.value
+  return {
+    id: row.id,
+    issueDate: row.invoiceDate,
+    clientName: row.clientName,
+    buyer: '',
+    country: row.country,
+    incoterms: 'FOB BUSAN',
+    deliveryDate: '',
+    portOfDischarge: '',
+    carrier: '',
+    bookingNo: '',
+    totalQuantity: '-',
+    totalNetWeight: '-',
+    totalGrossWeight: row.grossWeight || '-',
+    totalMeasurement: '-',
+    items: [
+      {
+        name: row.itemName,
+        quantity: '-',
+        netWeight: '-',
+        grossWeight: row.grossWeight || '-',
+        measurement: '-',
+      },
+    ],
   }
-
-  return [
-    { label: '발행일', value: previewTarget.value.invoiceDate },
-    { label: '거래처', value: previewTarget.value.clientName },
-    { label: '국가', value: previewTarget.value.country },
-    { label: '품목명', value: previewTarget.value.itemName },
-    { label: '총중량(kg)', value: previewTarget.value.grossWeight },
-  ]
 })
+
+/**
+ * 미리보기 모달에서 인쇄 버튼 클릭 시 호출.
+ * documentOutput.js의 PL 빌더를 사용하여 새 창에 양식을 띄우고 인쇄합니다.
+ */
+function handlePrint() {
+  if (previewDoc.value) {
+    openDocumentOutputByType('PL', previewDoc.value, true)
+  }
+}
 
 function resetFilters() {
   filters.value = {
@@ -271,12 +303,15 @@ function closePreview() {
       </template>
     </BaseTable>
 
+    <!-- PL 문서 양식 미리보기 모달 (slot 모드) -->
     <DocumentPreviewModal
       :open="Boolean(previewTarget)"
       title="PL 미리보기"
-      :document-title="previewTarget?.id"
-      :fields="previewFields"
+      preview-background="white"
       @close="closePreview"
-    />
+      @print="handlePrint"
+    >
+      <PLDocumentTemplate v-if="previewDoc" :document="previewDoc" />
+    </DocumentPreviewModal>
   </div>
 </template>

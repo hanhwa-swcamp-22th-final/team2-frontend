@@ -7,8 +7,10 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
+import PIDocumentTemplate from '@/components/domain/document/PIDocumentTemplate.vue'
 import PIFormModal from '@/components/domain/document/PIFormModal.vue'
 import { useToast } from '@/composables/useToast'
+import { openDocumentOutputByType } from '@/utils/documentOutput'
 
 const route = useRoute()
 const router = useRouter()
@@ -126,11 +128,21 @@ function handleDelete() {
 }
 
 function handlePrint() {
-  info('PI 인쇄 기능은 다음 단계에서 연결됩니다.')
+  if (!detail.value) return
+  openDocumentOutputByType('PI', detail.value, true)
 }
 
 function handlePdfDownload() {
-  info('PI PDF 다운로드 기능은 다음 단계에서 연결됩니다.')
+  if (!detail.value) return
+  const opened = openDocumentOutputByType('PI', detail.value, true)
+  if (opened) {
+    info('브라우저 인쇄 창에서 "PDF로 저장"을 선택하세요.', 'PDF')
+  }
+}
+
+function handlePreviewPrint() {
+  previewOpen.value = false
+  handlePrint()
 }
 
 function handleSave() {
@@ -321,7 +333,10 @@ function confirmDelete() {
       :document-title="detail.id"
       :fields="previewFields"
       @close="previewOpen = false"
-    />
+      @print="handlePreviewPrint"
+    >
+      <PIDocumentTemplate :document="detail" />
+    </DocumentPreviewModal>
 
     <PIFormModal
       :open="formOpen"
