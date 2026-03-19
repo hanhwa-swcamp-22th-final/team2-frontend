@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
@@ -9,14 +10,23 @@ import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
+import SearchModal from '@/components/common/SearchModal.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useToast } from '@/composables/useToast'
+import { openDocumentOutput } from '@/utils/documentOutput'
 
+const router = useRouter()
 const isAdvancedOpen = ref(true)
 const previewTarget = ref(null)
 const toast = useToast()
+const clientSearchOpen = ref(false)
+const clientSearchKeyword = ref('')
+const codeSearchOpen = ref(false)
+const codeSearchKeyword = ref('')
+const productSearchOpen = ref(false)
+const productSearchKeyword = ref('')
 
 const filters = ref({
   keyword: '',
@@ -105,6 +115,12 @@ const rows = [
   },
 ]
 
+const clientRowsSource = [
+  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
+  { id: 'CL002', name: 'TechBridge GmbH', country: '독일' },
+  { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국' },
+]
+
 function normalizeDate(value) {
   return String(value ?? '').replaceAll('/', '-')
 }
@@ -165,6 +181,28 @@ const previewFields = computed(() => {
   ]
 })
 
+const clientRows = computed(() => {
+  const keyword = clientSearchKeyword.value.trim().toLowerCase()
+  if (!keyword) return clientRowsSource
+  return clientRowsSource.filter((row) => [row.id, row.name, row.country].some((value) => String(value).toLowerCase().includes(keyword)))
+})
+
+const codeRows = computed(() => {
+  const keyword = codeSearchKeyword.value.trim().toLowerCase()
+  const source = rows.map((row) => ({ id: row.id, issueDate: row.issueDate, clientName: row.clientName }))
+  if (!keyword) return source
+  return source.filter((row) => [row.id, row.issueDate, row.clientName].some((value) => String(value).toLowerCase().includes(keyword)))
+})
+
+const productRows = computed(() => {
+  const keyword = productSearchKeyword.value.trim().toLowerCase()
+  const source = [...new Map(rows.map((row) => [row.itemName, { name: row.itemName, country: row.country, manager: row.manager }])).values()]
+  if (!keyword) return source
+  return source.filter((row) => [row.name, row.country, row.manager].some((value) => String(value).toLowerCase().includes(keyword)))
+})
+
+const currentOutputTarget = computed(() => previewTarget.value ?? filteredRows.value[0] ?? null)
+
 function resetFilters() {
   filters.value = {
     keyword: '',
@@ -185,11 +223,17 @@ function resetFilters() {
   }
 }
 
-function openClientSearch() {}
+function openClientSearch() {
+  clientSearchOpen.value = true
+}
 
-function openCodeSearch() {}
+function openCodeSearch() {
+  codeSearchOpen.value = true
+}
 
-function openProductSearch() {}
+function openProductSearch() {
+  productSearchOpen.value = true
+}
 
 function searchRows() {
   appliedFilters.value = {
@@ -205,12 +249,71 @@ function closePreview() {
   previewTarget.value = null
 }
 
+function goToDetail(id) {
+  router.push({ name: 'shipment-order-detail', params: { id } })
+}
+
+function handleClientSelect(client) {
+  filters.value.clientName = client.name
+  clientSearchOpen.value = false
+  clientSearchKeyword.value = ''
+}
+
+function handleCodeSelect(code) {
+  filters.value.code = code.id
+  codeSearchOpen.value = false
+  codeSearchKeyword.value = ''
+}
+
+function handleProductSelect(product) {
+  filters.value.productName = product.name
+  productSearchOpen.value = false
+  productSearchKeyword.value = ''
+}
+
 function printDocument(row) {
-  toast.info(`${row.id} 인쇄 기능은 다음 단계에서 연결됩니다.`, '인쇄')
+  openDocumentOutput({
+    title: '출하지시서',
+    documentId: row.id,
+    fields: [
+      { label: '출하지시일', value: row.issueDate },
+      { label: 'PO', value: row.poId },
+      { label: '거래처', value: row.clientName },
+      { label: '국가', value: row.country },
+      { label: '품목명', value: row.itemName },
+      { label: '영업담당자', value: row.manager },
+      { label: '상태', value: row.status },
+      { label: '납기일', value: row.dueDate },
+    ],
+    lineItems: [
+      { name: row.itemName, quantity: '-', unitPrice: '-', amount: '-' },
+    ],
+    autoPrint: true,
+  })
 }
 
 function downloadPdf(row) {
-  toast.info(`${row.id} PDF 다운로드 기능은 다음 단계에서 연결됩니다.`, 'PDF')
+  const opened = openDocumentOutput({
+    title: '출하지시서',
+    documentId: row.id,
+    fields: [
+      { label: '출하지시일', value: row.issueDate },
+      { label: 'PO', value: row.poId },
+      { label: '거래처', value: row.clientName },
+      { label: '국가', value: row.country },
+      { label: '품목명', value: row.itemName },
+      { label: '영업담당자', value: row.manager },
+      { label: '상태', value: row.status },
+      { label: '납기일', value: row.dueDate },
+    ],
+    lineItems: [
+      { name: row.itemName, quantity: '-', unitPrice: '-', amount: '-' },
+    ],
+    autoPrint: true,
+  })
+  if (opened) {
+    toast.info('브라우저 인쇄 창에서 PDF로 저장할 수 있습니다.', 'PDF')
+  }
 }
 </script>
 
@@ -218,13 +321,13 @@ function downloadPdf(row) {
   <div class="fade-in space-y-5">
     <DocumentPageHeader title="출하지시서" icon-class="fas fa-truck-loading">
       <template #actions>
-        <BaseButton variant="secondary" size="sm" @click="toast.info('출하지시서 인쇄 기능은 다음 단계에서 연결됩니다.', '인쇄')">
+        <BaseButton variant="secondary" size="sm" @click="currentOutputTarget ? printDocument(currentOutputTarget) : toast.info('출력할 출하지시서가 없습니다.', '인쇄')">
           <template #leading>
             <i class="fas fa-print text-xs" aria-hidden="true"></i>
           </template>
           인쇄
         </BaseButton>
-        <BaseButton size="sm" @click="toast.info('출하지시서 PDF 다운로드 기능은 다음 단계에서 연결됩니다.', 'PDF')">
+        <BaseButton size="sm" @click="currentOutputTarget ? downloadPdf(currentOutputTarget) : toast.info('출력할 출하지시서가 없습니다.', 'PDF')">
           <template #leading>
             <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
           </template>
@@ -328,11 +431,15 @@ function downloadPdf(row) {
     <BaseTable
       :columns="columns"
       :rows="filteredRows"
+      clickable-rows
       empty-text="데이터가 없습니다."
       :footer-text="`총 ${filteredRows.length}건`"
+      @row-click="goToDetail($event.id)"
     >
       <template #cell-id="{ value }">
-        <span class="font-mono text-xs font-semibold text-brand-600">{{ value }}</span>
+        <button type="button" class="font-mono text-xs font-semibold text-brand-600 hover:underline" @click.stop="goToDetail(value)">
+          {{ value }}
+        </button>
       </template>
 
       <template #cell-poId="{ value }">
@@ -349,7 +456,7 @@ function downloadPdf(row) {
             type="button"
             class="text-xs text-brand-500 transition hover:underline"
             :title="`${row.id} 미리보기`"
-            @click="openPreview(row)"
+            @click.stop="openPreview(row)"
           >
             <i class="fas fa-eye" aria-hidden="true"></i>
           </button>
@@ -357,7 +464,7 @@ function downloadPdf(row) {
             type="button"
             class="text-xs text-slate-400 transition hover:text-slate-700"
             :title="`${row.id} 인쇄`"
-            @click="printDocument(row)"
+            @click.stop="printDocument(row)"
           >
             <i class="fas fa-print" aria-hidden="true"></i>
           </button>
@@ -365,7 +472,7 @@ function downloadPdf(row) {
             type="button"
             class="text-xs text-slate-400 transition hover:text-slate-700"
             :title="`${row.id} PDF 다운로드`"
-            @click="downloadPdf(row)"
+            @click.stop="downloadPdf(row)"
           >
             <i class="fas fa-file-pdf" aria-hidden="true"></i>
           </button>
@@ -379,6 +486,51 @@ function downloadPdf(row) {
       :document-title="previewTarget?.id"
       :fields="previewFields"
       @close="closePreview"
+    />
+
+    <SearchModal
+      :open="clientSearchOpen"
+      title="거래처 검색"
+      :columns="[
+        { key: 'id', label: '코드' },
+        { key: 'name', label: '거래처명' },
+        { key: 'country', label: '국가' },
+      ]"
+      :rows="clientRows"
+      :search-keyword="clientSearchKeyword"
+      @update:search-keyword="clientSearchKeyword = $event"
+      @close="clientSearchOpen = false"
+      @select="handleClientSelect"
+    />
+
+    <SearchModal
+      :open="codeSearchOpen"
+      title="지시서번호 검색"
+      :columns="[
+        { key: 'id', label: '지시서번호' },
+        { key: 'issueDate', label: '출하지시일' },
+        { key: 'clientName', label: '거래처명' },
+      ]"
+      :rows="codeRows"
+      :search-keyword="codeSearchKeyword"
+      @update:search-keyword="codeSearchKeyword = $event"
+      @close="codeSearchOpen = false"
+      @select="handleCodeSelect"
+    />
+
+    <SearchModal
+      :open="productSearchOpen"
+      title="품목명 검색"
+      :columns="[
+        { key: 'name', label: '품목명' },
+        { key: 'country', label: '국가' },
+        { key: 'manager', label: '영업담당자' },
+      ]"
+      :rows="productRows"
+      :search-keyword="productSearchKeyword"
+      @update:search-keyword="productSearchKeyword = $event"
+      @close="productSearchOpen = false"
+      @select="handleProductSelect"
     />
   </div>
 </template>
