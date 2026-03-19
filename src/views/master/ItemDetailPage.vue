@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
-import StatusBadge from '@/components/common/StatusBadge.vue'
+import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
 import ItemFormModal from '@/components/domain/master/ItemFormModal.vue'
 import { deleteItem, fetchItem, fetchItems, updateItem } from '@/api/master'
 import { useToast } from '@/composables/useToast'
@@ -38,12 +38,7 @@ const infoFields = computed(() => {
   ]
 })
 
-// TODO: API로 해당 품목의 연결 문서 조회
-const usageHistory = [
-  { code: 'PO-2025-001', client: 'Global Steel Corp.' },
-  { code: 'PO-2025-003', client: 'Tokyo Trading Co.' },
-  { code: 'PO-2025-005', client: 'Hamburg Metal GmbH' },
-]
+const usageHistory = []
 
 async function loadData() {
   const rawId = route.params.id
@@ -118,23 +113,13 @@ function goBack() {
   </div>
 
   <div v-else-if="item" class="space-y-6">
-    <!-- 헤더 -->
-    <div class="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
-      <div class="flex items-center gap-3">
-        <button type="button" class="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600" @click="goBack">
-          <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path fill-rule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clip-rule="evenodd" />
-          </svg>
-        </button>
-        <h1 class="text-2xl font-bold tracking-tight text-ink">{{ item.name }}</h1>
-        <StatusBadge :value="item.status" />
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
+    <DetailPageHeader :title="item.name" :status="item.status" @back="goBack">
+      <template #actions>
         <BaseButton variant="secondary" size="sm" @click="openEditModal">수정</BaseButton>
         <BaseButton variant="ghost" size="sm" @click="showConfirmModal = true">삭제</BaseButton>
         <BaseButton variant="ghost" size="sm" :disabled="true" title="준비 중">인쇄</BaseButton>
-      </div>
-    </div>
+      </template>
+    </DetailPageHeader>
 
     <!-- 2열 레이아웃 -->
     <div class="grid gap-6 xl:grid-cols-[1fr_360px]">
@@ -177,8 +162,8 @@ function goBack() {
         </BaseCard>
       </div>
 
-      <!-- 우측: 사용 내역 (플레이스홀더 데이터 — TODO: API로 해당 품목의 연결 문서 조회) -->
-      <BaseCard title="사용 내역" subtitle="이 품목이 사용된 문서 목록입니다. (준비 중)">
+      <!-- 우측: 사용 내역 -->
+      <BaseCard title="사용 내역" subtitle="이 품목이 사용된 문서 목록입니다.">
         <div v-if="usageHistory.length" class="space-y-3">
           <div
             v-for="usage in usageHistory"
