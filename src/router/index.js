@@ -7,8 +7,10 @@ import DomainComponentsPage from '@/views/DomainComponentsPage.vue'
 import CIPage from '@/views/documents/CIPage.vue'
 import CollectionsPage from '@/views/documents/CollectionsPage.vue'
 import PIPage from '@/views/documents/PIPage.vue'
+import PIDetailPage from '@/views/documents/PIDetailPage.vue'
 import PLPage from '@/views/documents/PLPage.vue'
 import POPage from '@/views/documents/POPage.vue'
+import PODetailPage from '@/views/documents/PODetailPage.vue'
 import ProductionOrderPage from '@/views/documents/ProductionOrderPage.vue'
 import ShipmentsPage from '@/views/documents/ShipmentsPage.vue'
 import ShipmentOrderPage from '@/views/documents/ShipmentOrderPage.vue'
@@ -138,6 +140,16 @@ const routes = [
         },
       },
       {
+        path: 'pi/:id',
+        name: 'pi-detail',
+        component: PIDetailPage,
+        meta: {
+          title: 'PI Detail',
+          serviceName: 'PI 상세',
+          description: 'PI 상세 화면',
+        },
+      },
+      {
         path: 'po',
         name: 'po',
         component: POPage,
@@ -145,6 +157,16 @@ const routes = [
           title: 'PO',
           serviceName: 'PO 관리',
           description: 'PO 조회 및 상세 화면',
+        },
+      },
+      {
+        path: 'po/:id',
+        name: 'po-detail',
+        component: PODetailPage,
+        meta: {
+          title: 'PO Detail',
+          serviceName: 'PO 상세',
+          description: 'PO 상세 화면',
         },
       },
       {
