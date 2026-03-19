@@ -236,7 +236,7 @@ function handleRowClick(event) {
       :empty-text="searchKeyword || statusFilter ? '검색 결과가 없습니다.' : '등록된 거래처가 없습니다.'"
     >
       <template #cell-code="{ row }">
-        <span class="font-semibold text-brand">{{ row.code }}</span>
+        <span class="font-mono text-xs font-semibold text-brand-600">{{ row.code }}</span>
       </template>
 
       <template #cell-name="{ row }">
