@@ -27,6 +27,10 @@ const filters = ref({
   status: '',
 })
 
+const appliedFilters = ref({
+  ...filters.value,
+})
+
 const countryOptions = [
   { value: '말레이시아', label: '말레이시아' },
   { value: '일본', label: '일본' },
@@ -134,25 +138,45 @@ function resetFilters() {
     manager: '',
     status: '',
   }
+
+  appliedFilters.value = {
+    ...filters.value,
+  }
 }
 
 function openClientSearch() {}
 
+function normalizeDate(value) {
+  return String(value ?? '').replaceAll('/', '-')
+}
+
 const filteredRows = computed(() => {
   return rows.filter((row) => {
-    if (filters.value.currency && row.currency !== filters.value.currency) return false
-    if (filters.value.country && row.country !== filters.value.country) return false
-    if (filters.value.manager && row.manager !== filters.value.manager) return false
-    if (filters.value.status && row.status !== filters.value.status) return false
-    if (filters.value.poId && !row.poId.includes(filters.value.poId)) return false
-    if (filters.value.clientName && !row.clientName.toLowerCase().includes(filters.value.clientName.toLowerCase())) return false
-    if (filters.value.keyword) {
-      const kw = filters.value.keyword.toLowerCase()
+    if (appliedFilters.value.currency && row.currency !== appliedFilters.value.currency) return false
+    if (appliedFilters.value.country && row.country !== appliedFilters.value.country) return false
+    if (appliedFilters.value.manager && row.manager !== appliedFilters.value.manager) return false
+    if (appliedFilters.value.status && row.status !== appliedFilters.value.status) return false
+    if (appliedFilters.value.poId && !row.poId.toLowerCase().includes(appliedFilters.value.poId.toLowerCase())) return false
+    if (appliedFilters.value.clientName && !row.clientName.toLowerCase().includes(appliedFilters.value.clientName.toLowerCase())) return false
+
+    if (appliedFilters.value.keyword) {
+      const kw = appliedFilters.value.keyword.toLowerCase()
       const matchesKeyword = row.poId.toLowerCase().includes(kw)
         || row.clientName.toLowerCase().includes(kw)
-        || row.manager.includes(kw)
+        || row.manager.toLowerCase().includes(kw)
+        || row.country.toLowerCase().includes(kw)
+        || row.currency.toLowerCase().includes(kw)
       if (!matchesKeyword) return false
     }
+
+    const issueDate = normalizeDate(row.issueDate)
+    const collectionDate = normalizeDate(row.collectionDate)
+
+    if (appliedFilters.value.issueFrom && issueDate < appliedFilters.value.issueFrom) return false
+    if (appliedFilters.value.issueTo && issueDate > appliedFilters.value.issueTo) return false
+    if (appliedFilters.value.collectionFrom && collectionDate < appliedFilters.value.collectionFrom) return false
+    if (appliedFilters.value.collectionTo && collectionDate > appliedFilters.value.collectionTo) return false
+
     return true
   })
 })
@@ -189,6 +213,12 @@ function formatAmount(value, currency) {
   const symbol = currencySymbols[currency] || ''
   if (typeof value === 'number') return `${symbol}${value.toLocaleString()}`
   return `${symbol}${value}`
+}
+
+function searchRows() {
+  appliedFilters.value = {
+    ...filters.value,
+  }
 }
 </script>
 
@@ -277,7 +307,7 @@ function formatAmount(value, currency) {
             </template>
             초기화
           </BaseButton>
-          <BaseButton size="sm">
+          <BaseButton size="sm" @click="searchRows">
             <template #leading>
               <i class="fas fa-search text-[10px]" aria-hidden="true"></i>
             </template>
@@ -285,8 +315,6 @@ function formatAmount(value, currency) {
           </BaseButton>
         </div>
     </CollapsibleFilterCard>
-
-    <!-- filteredRows를 전달하여 필터 조건에 맞는 데이터만 테이블에 표시 -->
     <BaseTable
       :columns="columns"
       :rows="filteredRows"
@@ -308,12 +336,10 @@ function formatAmount(value, currency) {
         <span class="text-xs text-slate-600">{{ value }}</span>
       </template>
 
-      <!-- 통화 컬럼: 통화 코드만 표시 (금액과 혼합하지 않음) -->
       <template #cell-currency="{ value }">
         <span class="text-xs font-semibold text-slate-700">{{ value }}</span>
       </template>
 
-      <!-- 매출액 컬럼: 통화 기호 + 콤마 포맷 숫자 (예: $42,400, ¥8,388,000) -->
       <template #cell-salesAmount="{ value, row }">
         <span class="text-sm font-semibold text-slate-800">{{ formatAmount(value, row.currency) }}</span>
       </template>
@@ -336,27 +362,19 @@ function formatAmount(value, currency) {
         </select>
       </template>
 
-      <!-- ── 합계 Footer ── -->
-      <!-- ERP 스타일: 건수를 첫 칸에, "합계"를 거래처~영업담당자 영역에 병합 → 빈 셀 제거 -->
-      <!-- 레이아웃: 5건(rowspan) | 합계(colspan=3, rowspan) | USD | 142,900 | 빈칸(rowspan) -->
-      <!--                       |                          | JPY | 8,388,000 |              -->
       <template #footer>
         <tr
           v-for="(summary, index) in summaryRows"
           :key="summary.currency"
           class="bg-slate-100/80"
         >
-          <!-- 첫 행에만 rowspan 셀 렌더링 — 나머지 행은 통화/매출액만 표시 -->
           <template v-if="index === 0">
-            <!-- 조회 건수: PO번호 자리에 배치, 세로 병합 -->
-            <!-- 첫 행 상단: 두꺼운 구분선(border-t-2)으로 데이터 행과 합계 행을 시각적 분리 -->
             <td
               class="border-t-2 border-t-slate-300 border-r border-slate-200 px-4 py-3 text-center align-middle text-xs font-semibold text-slate-500"
               :rowspan="summaryRows.length"
             >
               {{ filteredRows.length }}건
             </td>
-            <!-- "합계" 텍스트: 거래처 + 국가 + 영업담당자 영역을 가로·세로 병합 -->
             <td
               class="border-t-2 border-t-slate-300 border-r border-slate-200 px-4 py-3 text-center align-middle text-base font-extrabold text-slate-800"
               :rowspan="summaryRows.length"
@@ -365,22 +383,18 @@ function formatAmount(value, currency) {
               합계
             </td>
           </template>
-          <!-- 통화 컬럼: 행마다 해당 통화 코드 표시 -->
-          <!-- 첫 행은 두꺼운 상단 보더, 이후 행은 기본 보더 -->
           <td
             class="border-r border-slate-200 px-4 py-3 text-center text-xs font-bold text-slate-700"
             :class="index === 0 ? 'border-t-2 border-t-slate-300' : 'border-t border-slate-200'"
           >
             {{ summary.currency }}
           </td>
-          <!-- 매출액 컬럼: 통화 기호 + 합산 금액 (예: $142,900) -->
           <td
             class="border-r border-slate-200 px-4 py-3 text-right text-sm font-extrabold text-slate-800"
             :class="index === 0 ? 'border-t-2 border-t-slate-300' : 'border-t border-slate-200'"
           >
             {{ formatAmount(summary.total, summary.currency) }}
           </td>
-          <!-- 발행일, 수금일, 상태: 비움, 첫 행에서만 세로 병합 -->
           <template v-if="index === 0">
             <td
               class="border-t-2 border-t-slate-300 px-4 py-3"
