@@ -42,6 +42,9 @@ function onRowMouseDown(event) {
 }
 
 function onRowClick(event, row) {
+  // 버튼·링크 등 인터랙티브 요소 클릭 시 행 이동 무시
+  if (event.target.closest('button, a, [data-action]')) return
+
   // 텍스트가 선택된 경우 (드래그) → 클릭 무시
   const selection = window.getSelection()
   if (selection && selection.toString().length > 0) return

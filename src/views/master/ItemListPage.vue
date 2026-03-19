@@ -136,39 +136,8 @@ async function handleSave(formData) {
   }
 }
 
-let rowMouseDownPos = null
-const DRAG_THRESHOLD = 5
-
-function handleRowMouseDown(event) {
-  rowMouseDownPos = { x: event.clientX, y: event.clientY }
-}
-
-function handleRowClick(event) {
-  // Ignore clicks on action buttons within the row
-  if (event.target.closest('[data-action]') || event.target.closest('button')) return
-
-  // 텍스트 선택(드래그) 시 클릭 무시
-  const selection = window.getSelection()
-  if (selection && selection.toString().length > 0) return
-  if (rowMouseDownPos) {
-    const dx = Math.abs(event.clientX - rowMouseDownPos.x)
-    const dy = Math.abs(event.clientY - rowMouseDownPos.y)
-    if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) return
-  }
-
-  const tr = event.target.closest('tbody tr')
-  if (!tr) return
-  const rowKey = tr.dataset.rowKey ?? tr.getAttribute('data-row-key')
-  if (rowKey) {
-    router.push({ name: 'item-detail', params: { id: rowKey } })
-    return
-  }
-  // Fallback: match by DOM index against filtered array
-  const rows = Array.from(tr.parentElement.children)
-  const index = rows.indexOf(tr)
-  if (index >= 0 && index < filteredItems.value.length) {
-    router.push({ name: 'item-detail', params: { id: filteredItems.value[index].id } })
-  }
+function goToDetail(row) {
+  router.push({ name: 'item-detail', params: { id: row.id } })
 }
 </script>
 
@@ -193,10 +162,10 @@ function handleRowClick(event) {
       데이터를 불러오는 중입니다...
     </div>
 
-    <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
-    <div v-else class="cursor-pointer" @mousedown="handleRowMouseDown" @click="handleRowClick">
-    <BaseTable :columns="columns" :rows="filteredItems" row-key="id"
+    <BaseTable v-else :columns="columns" :rows="filteredItems" row-key="id"
       :empty-text="searchKeyword || categoryFilter ? '검색 결과가 없습니다.' : '등록된 품목이 없습니다.'"
+      clickable-rows
+      @row-click="goToDetail"
     >
       <template #cell-code="{ row }">
         <span class="font-mono text-xs font-semibold text-brand-600">{{ row.code }}</span>
@@ -225,7 +194,6 @@ function handleRowClick(event) {
         <TableActions @edit="openEditModal(row)" @delete="confirmDelete(row)" />
       </template>
     </BaseTable>
-    </div>
 
     <div class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
       <span>총 {{ filteredItems.length }}건</span>
