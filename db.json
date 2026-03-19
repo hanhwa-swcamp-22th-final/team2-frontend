@@ -131,44 +131,44 @@
     { "id": 10, "code": "ITM010", "name": "CNC Lathe", "nameKr": "CNC 선반", "spec": "3000 × 1500 × 1800 mm", "unit": "SET", "packUnit": "LOOSE", "unitPrice": 120000000, "weight": 4200, "hsCode": "8458.11", "category": "Machinery", "status": "활성", "regDate": "2025-04-20" }
   ],
   "activityClients": [
-    { "id": "CLI001", "name": "GlobalTech",   "nameKr": "글로벌텍",    "country": "USA"     },
-    { "id": "CLI002", "name": "EuroSupply",   "nameKr": "유로서플라이", "country": "Germany" },
-    { "id": "CLI003", "name": "AsiaConnect",  "nameKr": "아시아커넥트", "country": "Japan"   }
+    { "id": 1, "name": "Global Steel Corp.", "nameKr": "글로벌 스틸",   "country": "USA"     },
+    { "id": 2, "name": "Hamburg Metal GmbH", "nameKr": "함부르크 메탈", "country": "Germany" },
+    { "id": 3, "name": "Tokyo Trading Co.",  "nameKr": "도쿄 트레이딩", "country": "Japan"   }
   ],
   "activities": [
-    { "id": "ACT001", "clientId": "CLI001", "poId": "PO-2025-001", "author": "김영업", "date": "2025-03-10", "type": "미팅/협의",  "title": "GlobalTech 1분기 미팅",       "content": "1분기 공급 계획 협의 완료" },
-    { "id": "ACT002", "clientId": "CLI001", "poId": "PO-2025-001", "author": "김영업", "date": "2025-03-15", "type": "이슈",       "title": "납기 지연 이슈",               "content": "제품 납기 2주 지연 요청" },
-    { "id": "ACT003", "clientId": "CLI001", "poId": "PO-2025-002", "author": "정영업", "date": "2025-03-20", "type": "메모/노트",  "title": "제품 스펙 변경 메모",           "content": "열연 강판 사양 변경 확인 필요" },
-    { "id": "ACT004", "clientId": "CLI002", "poId": "PO-2025-003", "author": "김영업", "date": "2025-02-28", "type": "미팅/협의",  "title": "EuroSupply 계약 논의",         "content": "2분기 공급 계약 세부 논의" },
-    { "id": "ACT005", "clientId": "CLI002", "poId": "PO-2025-003", "author": "정영업", "date": "2025-03-05", "type": "코멘트",     "title": "가격 협상 코멘트",             "content": "단가 인하 요청에 대한 내부 검토 의견" },
-    { "id": "ACT006", "clientId": "CLI003", "poId": "PO-2025-004", "author": "김영업", "date": "2025-03-01", "type": "일정",       "title": "AsiaConnect 현장 방문 일정",   "content": "도쿄 오피스 방문 일정 확정" },
-    { "id": "ACT007", "clientId": "CLI003", "poId": "PO-2025-005", "author": "정영업", "date": "2025-03-18", "type": "이슈",       "title": "통관 이슈 발생",               "content": "일본 세관 통관 지연 이슈 발생, 서류 보완 필요" }
+    { "id": "ACT001", "clientId": 1, "poId": "PO-2025-001", "author": "김영업", "date": "2025-03-10", "type": "미팅/협의",  "title": "Global Steel Corp. 1분기 미팅",       "content": "1분기 공급 계획 협의 완료" },
+    { "id": "ACT002", "clientId": 1, "poId": "PO-2025-001", "author": "김영업", "date": "2025-03-15", "type": "이슈",       "title": "납기 지연 이슈",                       "content": "제품 납기 2주 지연 요청" },
+    { "id": "ACT003", "clientId": 1, "poId": "PO-2025-002", "author": "정영업", "date": "2025-03-20", "type": "메모/노트",  "title": "제품 스펙 변경 메모",                  "content": "열연 강판 사양 변경 확인 필요" },
+    { "id": "ACT004", "clientId": 2, "poId": "PO-2025-003", "author": "김영업", "date": "2025-02-28", "type": "미팅/협의",  "title": "Hamburg Metal GmbH 계약 논의",        "content": "2분기 공급 계약 세부 논의" },
+    { "id": "ACT005", "clientId": 2, "poId": "PO-2025-003", "author": "정영업", "date": "2025-03-05", "type": "코멘트",     "title": "가격 협상 코멘트",                     "content": "단가 인하 요청에 대한 내부 검토 의견" },
+    { "id": "ACT006", "clientId": 3, "poId": "PO-2025-004", "author": "김영업", "date": "2025-03-01", "type": "일정",       "title": "Tokyo Trading Co. 현장 방문 일정",    "content": "도쿄 오피스 방문 일정 확정" },
+    { "id": "ACT007", "clientId": 3, "poId": "PO-2025-005", "author": "정영업", "date": "2025-03-18", "type": "이슈",       "title": "통관 이슈 발생",                       "content": "일본 세관 통관 지연 이슈 발생, 서류 보완 필요" }
   ],
   "buyers": [
-    { "id": "1", "clientId": "CLI001", "name": "James Carter",  "position": "Team Leader", "email": "james.carter@globaltech.com",  "tel": "+1-212-736-3110",   "signImageUrl": null },
-    { "id": "2", "clientId": "CLI001", "name": "Sarah Johnson", "position": "Team Member", "email": "sarah.johnson@globaltech.com", "tel": "+1-212-736-3111",   "signImageUrl": null },
-    { "id": "3", "clientId": "CLI001", "name": "Michael Brown", "position": "Team Member", "email": "michael.brown@globaltech.com", "tel": "+1-212-736-3112",   "signImageUrl": null },
-    { "id": "4", "clientId": "CLI002", "name": "Hans Müller",   "position": "Team Leader", "email": "hans.muller@eurosupply.de",    "tel": "+49-30-1234-5678",  "signImageUrl": null },
-    { "id": "5", "clientId": "CLI002", "name": "Anna Schmidt",  "position": "Team Member", "email": "anna.schmidt@eurosupply.de",   "tel": "+49-30-1234-5679",  "signImageUrl": null },
-    { "id": "6", "clientId": "CLI003", "name": "Yuki Tanaka",   "position": "Team Leader", "email": "yuki.tanaka@asiaconnect.jp",   "tel": "+81-3-1234-5678",   "signImageUrl": null },
-    { "id": "7", "clientId": "CLI003", "name": "Kenji Sato",    "position": "Team Member", "email": "kenji.sato@asiaconnect.jp",    "tel": "+81-3-1234-5679",   "signImageUrl": null }
+    { "id": "1", "clientId": 1, "name": "James Carter",  "position": "Team Leader", "email": "james.carter@globalsteel.com",   "tel": "+1-713-555-0101",   "signImageUrl": null },
+    { "id": "2", "clientId": 1, "name": "Sarah Johnson", "position": "Team Member", "email": "sarah.johnson@globalsteel.com",  "tel": "+1-713-555-0102",   "signImageUrl": null },
+    { "id": "3", "clientId": 1, "name": "Michael Brown", "position": "Team Member", "email": "michael.brown@globalsteel.com",  "tel": "+1-713-555-0103",   "signImageUrl": null },
+    { "id": "4", "clientId": 2, "name": "Hans Müller",   "position": "Team Leader", "email": "hans.muller@hamburgmetal.de",    "tel": "+49-40-555-0201",   "signImageUrl": null },
+    { "id": "5", "clientId": 2, "name": "Anna Schmidt",  "position": "Team Member", "email": "anna.schmidt@hamburgmetal.de",   "tel": "+49-40-555-0202",   "signImageUrl": null },
+    { "id": "6", "clientId": 3, "name": "Tanaka Yuki",   "position": "Team Leader", "email": "yuki.tanaka@tokyotrading.jp",    "tel": "+81-3-555-0301",    "signImageUrl": null },
+    { "id": "7", "clientId": 3, "name": "Kenji Sato",    "position": "Team Member", "email": "kenji.sato@tokyotrading.jp",     "tel": "+81-3-555-0302",    "signImageUrl": null }
   ],
   "activityPOs": [
-    { "id": "PO-2025-001", "clientId": "CLI001", "title": "열연강판 공급 계약 1차",  "date": "2025-02-15", "userId": 1 },
-    { "id": "PO-2025-002", "clientId": "CLI001", "title": "냉연강판 공급 계약",       "date": "2025-03-01", "userId": 5 },
-    { "id": "PO-2025-003", "clientId": "CLI002", "title": "스테인리스 봉강 공급",     "date": "2025-02-20", "userId": 1 },
-    { "id": "PO-2025-004", "clientId": "CLI003", "title": "무봉강관 2분기 공급",      "date": "2025-02-28", "userId": 1 },
-    { "id": "PO-2025-005", "clientId": "CLI003", "title": "유압프레스 납품",           "date": "2025-03-10", "userId": 5 },
-    { "id": "PO-2025-006", "clientId": "CLI002", "title": "ERW 강관 추가 발주",       "date": "2025-03-15", "userId": 5 }
+    { "id": "PO-2025-001", "clientId": 1, "title": "열연강판 공급 계약 1차",  "date": "2025-02-15", "userId": 1 },
+    { "id": "PO-2025-002", "clientId": 1, "title": "냉연강판 공급 계약",       "date": "2025-03-01", "userId": 5 },
+    { "id": "PO-2025-003", "clientId": 2, "title": "스테인리스 봉강 공급",     "date": "2025-02-20", "userId": 1 },
+    { "id": "PO-2025-004", "clientId": 3, "title": "무봉강관 2분기 공급",      "date": "2025-02-28", "userId": 1 },
+    { "id": "PO-2025-005", "clientId": 3, "title": "유압프레스 납품",           "date": "2025-03-10", "userId": 5 },
+    { "id": "PO-2025-006", "clientId": 2, "title": "ERW 강관 추가 발주",       "date": "2025-03-15", "userId": 5 }
   ],
   "activityEmails": [
-    { "id": "1", "client": "GlobalTech",  "title": "[SalesBoost] PI-2025-001 발송", "recipient": "James Carter",  "email": "james.carter@globaltech.com",  "type": "PI", "hasAttachment": true,  "status": "발송", "sentAt": "2025-03-10", "sender": "홍길동" },
-    { "id": "2", "client": "EuroSupply",  "title": "[SalesBoost] PO-2025-001 발송", "recipient": "Hans Müller",   "email": "hans.muller@eurosupply.de",    "type": "PO", "hasAttachment": true,  "status": "발송", "sentAt": "2025-03-09", "sender": "김영희" },
-    { "id": "3", "client": "AsiaConnect", "title": "[SalesBoost] CI-2025-001 발송", "recipient": "",              "email": "yuki.tanaka@asiaconnect.jp",   "type": "CI", "hasAttachment": false, "status": "실패", "sentAt": "2025-03-08", "sender": "이철수" },
-    { "id": "4", "client": "GlobalTech",  "title": "[SalesBoost] PL-2025-001 발송", "recipient": "Sarah Johnson", "email": "sarah.johnson@globaltech.com", "type": "PL", "hasAttachment": true,  "status": "발송", "sentAt": "2025-03-07", "sender": "홍길동" },
-    { "id": "5", "client": "EuroSupply",  "title": "[SalesBoost] PI-2025-002 발송", "recipient": "Anna Schmidt",  "email": "anna.schmidt@eurosupply.de",   "type": "PI", "hasAttachment": false, "status": "발송", "sentAt": "2025-03-06", "sender": "김영희" },
-    { "id": "6", "client": "AsiaConnect", "title": "[SalesBoost] PO-2025-002 발송", "recipient": "Kenji Sato",    "email": "kenji.sato@asiaconnect.jp",    "type": "PO", "hasAttachment": true,  "status": "발송", "sentAt": "2025-03-05", "sender": "이철수" },
-    { "id": "7", "client": "GlobalTech",  "title": "[SalesBoost] CI-2025-002 발송", "recipient": "",              "email": "michael.brown@globaltech.com", "type": "CI", "hasAttachment": false, "status": "발송", "sentAt": "2025-03-04", "sender": "홍길동" },
-    { "id": "8", "client": "EuroSupply",  "title": "[SalesBoost] PL-2025-002 발송", "recipient": "Hans Müller",   "email": "hans.muller@eurosupply.de",    "type": "PL", "hasAttachment": true,  "status": "실패", "sentAt": "2025-03-03", "sender": "김영희" }
+    { "id": "1", "client": "Global Steel Corp.",  "title": "[SalesBoost] PI-2025-001 발송", "recipient": "James Carter",  "email": "james.carter@globalsteel.com",   "type": "PI", "hasAttachment": true,  "status": "발송", "sentAt": "2025-03-10", "sender": "김영업" },
+    { "id": "2", "client": "Hamburg Metal GmbH",  "title": "[SalesBoost] PO-2025-001 발송", "recipient": "Hans Müller",   "email": "hans.muller@hamburgmetal.de",    "type": "PO", "hasAttachment": true,  "status": "발송", "sentAt": "2025-03-09", "sender": "정영업" },
+    { "id": "3", "client": "Tokyo Trading Co.",   "title": "[SalesBoost] CI-2025-001 발송", "recipient": "Tanaka Yuki",   "email": "yuki.tanaka@tokyotrading.jp",    "type": "CI", "hasAttachment": false, "status": "실패", "sentAt": "2025-03-08", "sender": "김영업" },
+    { "id": "4", "client": "Global Steel Corp.",  "title": "[SalesBoost] PL-2025-001 발송", "recipient": "Sarah Johnson", "email": "sarah.johnson@globalsteel.com",  "type": "PL", "hasAttachment": true,  "status": "발송", "sentAt": "2025-03-07", "sender": "정영업" },
+    { "id": "5", "client": "Hamburg Metal GmbH",  "title": "[SalesBoost] PI-2025-002 발송", "recipient": "Anna Schmidt",  "email": "anna.schmidt@hamburgmetal.de",   "type": "PI", "hasAttachment": false, "status": "발송", "sentAt": "2025-03-06", "sender": "김영업" },
+    { "id": "6", "client": "Tokyo Trading Co.",   "title": "[SalesBoost] PO-2025-002 발송", "recipient": "Kenji Sato",    "email": "kenji.sato@tokyotrading.jp",     "type": "PO", "hasAttachment": true,  "status": "발송", "sentAt": "2025-03-05", "sender": "정영업" },
+    { "id": "7", "client": "Global Steel Corp.",  "title": "[SalesBoost] CI-2025-002 발송", "recipient": "Michael Brown", "email": "michael.brown@globalsteel.com",  "type": "CI", "hasAttachment": false, "status": "발송", "sentAt": "2025-03-04", "sender": "김영업" },
+    { "id": "8", "client": "Hamburg Metal GmbH",  "title": "[SalesBoost] PL-2025-002 발송", "recipient": "Hans Müller",   "email": "hans.muller@hamburgmetal.de",    "type": "PL", "hasAttachment": true,  "status": "실패", "sentAt": "2025-03-03", "sender": "정영업" }
   ]
 }
