@@ -19,6 +19,8 @@ import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 
+import { useToast } from '@/composables/useToast'
+
 const router = useRouter()
 const { error } = useToast()
 

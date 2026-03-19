@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useToast } from '@/composables/useToast'
 import { fetchBuyers, createBuyer, updateBuyer, deleteBuyer } from '@/api/contacts'
 import { fetchActivityClients } from '@/api/activity'
 import { useToast } from '@/composables/useToast'
@@ -12,6 +13,8 @@ import InfoField from '@/components/common/InfoField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import TableActions from '@/components/common/TableActions.vue'
+
+const { error: showError } = useToast()
 
 // ── 데이터 ─────────────────────────────────────────────────
 const clients = ref([])

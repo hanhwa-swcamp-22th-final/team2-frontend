@@ -25,7 +25,7 @@ const props = defineProps({
 })
 
 const variantClasses = {
-  primary: 'border-slate-500 bg-slate-500 text-white shadow-sm hover:border-brand-600 hover:bg-brand-600 focus-visible:ring-brand/30',
+  primary: 'border-brand bg-brand text-white shadow-sm hover:border-brand-600 hover:bg-brand-600 focus-visible:ring-brand/30',
   secondary: 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 focus-visible:ring-slate-300',
   ghost: 'border-slate-100 bg-slate-100 text-slate-700 hover:border-slate-200 hover:bg-slate-200 focus-visible:ring-slate-300',
   danger: 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100 focus-visible:ring-red-200',

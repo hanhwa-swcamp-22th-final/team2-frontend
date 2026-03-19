@@ -14,6 +14,8 @@ import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 
+const { success, error: showError } = useToast()
+
 const router = useRouter()
 const authStore = useAuthStore()
 const { warning, error } = useToast()

@@ -202,9 +202,7 @@ async function handleDelete() {
   if (!userToDelete.value) return
   deleting.value = true
   try {
-    // json-server: DELETE /users/:id
-    // TODO: 실제 삭제 API 추가 시 연동 (현재 api/auth.js에 deleteUser 없음)
-    // 임시: updateUser로 status를 '퇴직'으로 변경
+    // 물리 삭제(deleteUser) 대신 소프트 삭제: status를 '퇴직'으로 변경
     await updateUser(userToDelete.value.id, { ...userToDelete.value, status: '퇴직' })
     success(`${userToDelete.value.name} 사용자가 퇴직 처리되었습니다.`)
     await loadData()

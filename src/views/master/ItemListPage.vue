@@ -8,7 +8,7 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import SearchInput from '@/components/common/SearchInput.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
-import PageTitleBar from '@/components/layout/PageTitleBar.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import ItemFormModal from '@/components/domain/master/ItemFormModal.vue'
 import { createItem, deleteItem, fetchItems, updateItem } from '@/api/master'
 import { useToast } from '@/composables/useToast'
@@ -136,32 +136,18 @@ async function handleSave(formData) {
   }
 }
 
-function handleRowClick(event) {
-  // Ignore clicks on action buttons within the row
-  if (event.target.closest('[data-action]') || event.target.closest('button')) return
-  const tr = event.target.closest('tbody tr')
-  if (!tr) return
-  const rowKey = tr.dataset.rowKey ?? tr.getAttribute('data-row-key')
-  if (rowKey) {
-    router.push({ name: 'item-detail', params: { id: rowKey } })
-    return
-  }
-  // Fallback: match by DOM index against filtered array
-  const rows = Array.from(tr.parentElement.children)
-  const index = rows.indexOf(tr)
-  if (index >= 0 && index < filteredItems.value.length) {
-    router.push({ name: 'item-detail', params: { id: filteredItems.value[index].id } })
-  }
+function goToDetail(row) {
+  router.push({ name: 'item-detail', params: { id: row.id } })
 }
 </script>
 
 <template>
   <div class="space-y-6">
-    <PageTitleBar title="품목 관리">
+    <PageHeader title="품목 관리" icon-class="fas fa-cube">
       <template #actions>
         <BaseButton variant="primary" @click="openCreateModal">신규등록</BaseButton>
       </template>
-    </PageTitleBar>
+    </PageHeader>
 
     <div class="flex flex-wrap items-center gap-3">
       <div class="min-w-0 flex-1">
@@ -176,10 +162,10 @@ function handleRowClick(event) {
       데이터를 불러오는 중입니다...
     </div>
 
-    <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
-    <div v-else class="cursor-pointer" @click="handleRowClick">
-    <BaseTable :columns="columns" :rows="filteredItems" row-key="id"
+    <BaseTable v-else :columns="columns" :rows="filteredItems" row-key="id"
       :empty-text="searchKeyword || categoryFilter ? '검색 결과가 없습니다.' : '등록된 품목이 없습니다.'"
+      clickable-rows
+      @row-click="goToDetail"
     >
       <template #cell-code="{ row }">
         <span class="font-mono text-xs font-semibold text-brand-600">{{ row.code }}</span>
@@ -208,7 +194,6 @@ function handleRowClick(event) {
         <TableActions @edit="openEditModal(row)" @delete="confirmDelete(row)" />
       </template>
     </BaseTable>
-    </div>
 
     <div class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
       <span>총 {{ filteredItems.length }}건</span>
