@@ -1,11 +1,12 @@
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import PasswordChangeModal from '@/components/domain/auth/PasswordChangeModal.vue'
 import { useUiStore } from '@/stores/ui'
 
 const uiStore = useUiStore()
 const route = useRoute()
+const router = useRouter()
 const pageTitle = computed(() => String(route.meta.serviceName ?? '공통 대시보드'))
 const isNotificationOpen = ref(false)
 const isPasswordModalOpen = ref(false)
@@ -18,6 +19,11 @@ const notifications = [
     message: '김영업(과장)이 PO26002 수정 결재를 요청했습니다.',
     time: '2026/03/15 10:00',
     unread: true,
+    to: '/po',
+    query: {
+      code: 'PO26002',
+      source: 'header-notification',
+    },
   },
   {
     id: 2,
@@ -25,6 +31,11 @@ const notifications = [
     message: '정영업(대리)이 PO26004 삭제 결재를 요청했습니다.',
     time: '2026/03/14 09:30',
     unread: true,
+    to: '/po',
+    query: {
+      code: 'PO26004',
+      source: 'header-notification',
+    },
   },
   {
     id: 3,
@@ -32,6 +43,11 @@ const notifications = [
     message: 'SH26002 출하완료 처리되었습니다.',
     time: '2026/04/10 09:00',
     unread: true,
+    to: '/shipments',
+    query: {
+      code: 'SH26002',
+      source: 'header-notification',
+    },
   },
   {
     id: 4,
@@ -39,6 +55,11 @@ const notifications = [
     message: 'PO26003 잔금 입금 확인. 완납 처리.',
     time: '2026/05/05 11:00',
     unread: false,
+    to: '/collections',
+    query: {
+      code: 'PO26003',
+      source: 'header-notification',
+    },
   },
 ]
 
@@ -54,6 +75,14 @@ function openPasswordModal() {
 
 function closePasswordModal() {
   isPasswordModalOpen.value = false
+}
+
+function goToNotification(notification) {
+  isNotificationOpen.value = false
+  router.push({
+    path: notification.to,
+    query: notification.query,
+  })
 }
 
 function handleClickOutside(event) {
@@ -124,6 +153,7 @@ onBeforeUnmount(() => {
             class="cursor-pointer px-4 py-3 transition hover:bg-slate-50"
             :class="notification.unread ? 'bg-[#EEF2FF]' : ''"
             style="border-bottom: 1px solid #E5E7EB;"
+            @click="goToNotification(notification)"
           >
             <div class="text-sm font-medium" :class="notification.unread ? 'text-[#32363A]' : 'text-slate-500'">
               {{ notification.title }}
