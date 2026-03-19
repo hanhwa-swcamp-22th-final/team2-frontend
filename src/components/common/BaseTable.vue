@@ -33,6 +33,32 @@ const emit = defineEmits(['row-click'])
 const resizeWidths = ref({})
 let activeResize = null
 
+// 드래그와 클릭을 구분하기 위한 mousedown 좌표 추적
+let rowMouseDownPos = null
+const DRAG_THRESHOLD = 5
+
+function onRowMouseDown(event) {
+  rowMouseDownPos = { x: event.clientX, y: event.clientY }
+}
+
+function onRowClick(event, row) {
+  // 버튼·링크 등 인터랙티브 요소 클릭 시 행 이동 무시
+  if (event.target.closest('button, a, [data-action]')) return
+
+  // 텍스트가 선택된 경우 (드래그) → 클릭 무시
+  const selection = window.getSelection()
+  if (selection && selection.toString().length > 0) return
+
+  // mousedown과 click 사이 마우스 이동 거리가 임계값 초과 → 드래그로 판단
+  if (rowMouseDownPos) {
+    const dx = Math.abs(event.clientX - rowMouseDownPos.x)
+    const dy = Math.abs(event.clientY - rowMouseDownPos.y)
+    if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) return
+  }
+
+  emit('row-click', row)
+}
+
 function normalizeColumn(column) {
   if (typeof column === 'string') {
     return {
@@ -180,7 +206,8 @@ onBeforeUnmount(() => {
           :key="row?.[rowKey] ?? JSON.stringify(row)"
           class="transition hover:bg-slate-50/70"
           :class="props.clickableRows ? 'cursor-pointer' : ''"
-          @click="emit('row-click', row)"
+          @mousedown="onRowMouseDown"
+          @click="onRowClick($event, row)"
         >
           <td
             v-for="column in normalizedColumns"
