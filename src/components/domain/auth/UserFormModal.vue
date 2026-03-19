@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
@@ -7,6 +7,7 @@ import BaseTextField from '@/components/common/BaseTextField.vue'
 import FileUploadField from '@/components/common/FileUploadField.vue'
 import FormField from '@/components/common/FormField.vue'
 import { useToast } from '@/composables/useToast'
+import { changePassword } from '@/api/auth'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -14,12 +15,17 @@ const props = defineProps({
   user: { type: Object, default: null },
   positions: { type: Array, default: () => [] },
   departments: { type: Array, default: () => [] },
+  allUsers: { type: Array, default: () => [] },
+  saving: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['close', 'save', 'reset-password'])
-const { success } = useToast()
+const emit = defineEmits(['close', 'save'])
+const { success, error, warning } = useToast()
 
 const form = ref(getInitialForm())
+const errors = ref({})
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const roleOptions = [
   { label: '영업', value: 'sales' },
@@ -35,7 +41,6 @@ const statusOptions = [
 
 function getInitialForm() {
   return {
-    employeeNo: '',
     name: '',
     email: '',
     positionId: '',
@@ -48,40 +53,89 @@ function getInitialForm() {
   }
 }
 
-watch(() => props.open, (isOpen) => {
-  if (isOpen && props.mode === 'edit' && props.user) {
-    form.value = {
-      employeeNo: props.user.employeeNo ?? '',
-      name: props.user.name ?? '',
-      email: props.user.email ?? '',
-      positionId: props.user.positionId ?? '',
-      role: props.user.role ?? '',
-      departmentId: props.user.departmentId ?? '',
-      status: props.user.status ?? '재직',
-      transferDepartmentId: '',
-      transferReason: '',
-      sealImage: null,
+watch(
+  () => props.open,
+  (isOpen) => {
+    errors.value = {}
+    if (isOpen && props.mode === 'edit' && props.user) {
+      form.value = {
+        name: props.user.name ?? '',
+        email: props.user.email ?? '',
+        positionId: props.user.positionId ?? '',
+        role: props.user.role ?? '',
+        departmentId: props.user.departmentId ?? '',
+        status: props.user.status ?? '재직',
+        transferDepartmentId: '',
+        transferReason: '',
+        sealImage: null,
+      }
+    } else if (isOpen && props.mode === 'create') {
+      form.value = getInitialForm()
     }
-  } else if (isOpen && props.mode === 'create') {
-    form.value = getInitialForm()
+  },
+)
+
+function validate() {
+  const e = {}
+
+  if (!form.value.name.trim()) {
+    e.name = '이름을 입력해주세요.'
   }
-})
+
+  if (!form.value.email.trim()) {
+    e.email = '이메일을 입력해주세요.'
+  } else if (!EMAIL_REGEX.test(form.value.email.trim())) {
+    e.email = '올바른 이메일 형식을 입력해주세요.'
+  } else {
+    // 중복 이메일 체크
+    const duplicate = props.allUsers.find(
+      (u) =>
+        u.email === form.value.email.trim() &&
+        (props.mode === 'create' || u.id !== props.user?.id),
+    )
+    if (duplicate) {
+      e.email = '이미 사용 중인 이메일 주소입니다.'
+    }
+  }
+
+  if (!form.value.positionId) {
+    e.positionId = '직급을 선택해주세요.'
+  }
+
+  if (!form.value.role) {
+    e.role = '역할을 선택해주세요.'
+  }
+
+  if (!form.value.departmentId && props.mode === 'create') {
+    e.departmentId = '팀을 선택해주세요.'
+  }
+
+  errors.value = e
+  return Object.keys(e).length === 0
+}
 
 function handleSave() {
-  success(props.mode === 'create' ? '사용자가 등록되었습니다.' : '사용자 정보가 수정되었습니다.')
+  if (!validate()) {
+    warning('입력 내용을 확인해주세요.')
+    return
+  }
   emit('save', { ...form.value })
-  emit('close')
 }
 
-function handleResetPassword() {
-  success('비밀번호가 1234로 초기화되었습니다.')
-  emit('reset-password', props.user?.id)
+async function handleResetPassword() {
+  if (!props.user?.id) return
+  try {
+    await changePassword(props.user.id, '1234')
+    success('비밀번호가 1234로 초기화되었습니다.')
+  } catch (e) {
+    error('비밀번호 초기화 중 오류가 발생했습니다.')
+  }
 }
 
-function getCurrentDepartmentName() {
-  const dept = props.departments.find((d) => d.id === props.user?.departmentId)
+const currentDepartmentName = computed(() => {
+  const dept = props.departments.find(d => String(d.id) === String(props.user?.departmentId))
   return dept?.name ?? '-'
-}
+})
 </script>
 
 <template>
@@ -94,19 +148,15 @@ function getCurrentDepartmentName() {
     <form class="space-y-6" @submit.prevent="handleSave">
       <!-- 기본 정보: 2열 그리드 -->
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <FormField label="사번" required>
-          <BaseTextField v-model="form.employeeNo" placeholder="사번을 입력하세요" :readonly="mode === 'edit'" />
-        </FormField>
-
-        <FormField label="이름" required>
+        <FormField label="이름" required :error="errors.name">
           <BaseTextField v-model="form.name" placeholder="이름을 입력하세요" />
         </FormField>
 
-        <FormField label="이메일" required>
-          <BaseTextField v-model="form.email" type="email" placeholder="이메일을 입력하세요" />
+        <FormField label="이메일" required :error="errors.email">
+          <BaseTextField v-model="form.email" type="email" placeholder="이메일을 입력하세요" :readonly="mode === 'edit'" />
         </FormField>
 
-        <FormField label="직급" required>
+        <FormField label="직급" required :error="errors.positionId">
           <BaseSelect
             v-model="form.positionId"
             :options="positions.map((p) => ({ label: p.name, value: p.id }))"
@@ -114,12 +164,12 @@ function getCurrentDepartmentName() {
           />
         </FormField>
 
-        <FormField label="부서" required>
-          <BaseSelect v-model="form.role" :options="roleOptions" placeholder="부서를 선택하세요" />
+        <FormField label="역할" required :error="errors.role">
+          <BaseSelect v-model="form.role" :options="roleOptions" placeholder="역할을 선택하세요" />
         </FormField>
 
         <template v-if="mode === 'create'">
-          <FormField label="팀" required>
+          <FormField label="팀" required :error="errors.departmentId">
             <BaseSelect
               v-model="form.departmentId"
               :options="departments.map((d) => ({ label: d.name, value: d.id }))"
@@ -149,7 +199,7 @@ function getCurrentDepartmentName() {
             <h3 class="text-sm font-bold text-ink">팀 이동</h3>
           </div>
           <p class="text-xs text-slate-500">
-            현재 팀: <span class="font-medium text-ink">{{ getCurrentDepartmentName() }}</span> → 이동할 팀
+            현재 팀: <span class="font-medium text-ink">{{ currentDepartmentName }}</span> → 이동할 팀
           </p>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <FormField label="이동할 팀">
@@ -187,7 +237,7 @@ function getCurrentDepartmentName() {
 
     <template #footer>
       <BaseButton variant="secondary" @click="emit('close')">취소</BaseButton>
-      <BaseButton variant="primary" @click="handleSave">저장</BaseButton>
+      <BaseButton variant="primary" :disabled="saving" @click="handleSave">{{ saving ? '저장 중...' : '저장' }}</BaseButton>
     </template>
   </BaseModal>
 </template>

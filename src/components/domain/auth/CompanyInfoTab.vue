@@ -1,25 +1,87 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import FileUploadField from '@/components/common/FileUploadField.vue'
 import FormField from '@/components/common/FormField.vue'
 import { useToast } from '@/composables/useToast'
+import { fetchCompany, updateCompany } from '@/api/auth'
 
-const { success } = useToast()
+const { success, error } = useToast()
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const form = ref({
-  nameEn: 'HANWHA SYSTEMS Co., Ltd.',
-  nameKr: '한화시스템(주)',
-  addressEn: '188, Pangyoyeok-ro, Bundang-gu, Seongnam-si, Gyeonggi-do, Korea',
-  tel: '+82-31-8000-0000',
-  fax: '+82-31-8000-0001',
-  email: 'export@hanwhasystems.com',
+  nameEn: '',
+  nameKr: '',
+  addressEn: '',
+  tel: '',
+  fax: '',
+  email: '',
+  sealImageUrl: '',
   sealImage: null,
 })
+const errors = ref({})
+const loading = ref(false)
+const saving = ref(false)
 
-function handleSave() {
-  success('자사 정보가 저장되었습니다.')
+onMounted(async () => {
+  loading.value = true
+  try {
+    const data = await fetchCompany()
+    form.value = {
+      nameEn: data.nameEn ?? '',
+      nameKr: data.nameKr ?? '',
+      addressEn: data.addressEn ?? '',
+      tel: data.tel ?? '',
+      fax: data.fax ?? '',
+      email: data.email ?? '',
+      sealImageUrl: data.sealImageUrl ?? '',
+      sealImage: null,
+    }
+  } catch (e) {
+    error('자사 정보를 불러오는 중 오류가 발생했습니다.')
+  } finally {
+    loading.value = false
+  }
+})
+
+function validate() {
+  const e = {}
+  if (!form.value.nameEn.trim()) {
+    e.nameEn = '영문 회사명을 입력해주세요.'
+  }
+  if (form.value.email && !EMAIL_REGEX.test(form.value.email.trim())) {
+    e.email = '올바른 이메일 형식을 입력해주세요.'
+  }
+  errors.value = e
+  return Object.keys(e).length === 0
+}
+
+async function handleSave() {
+  if (!validate()) {
+    warning('입력 내용을 확인해주세요.')
+    return
+  }
+  saving.value = true
+  try {
+    const payload = {
+      nameEn: form.value.nameEn.trim(),
+      nameKr: form.value.nameKr.trim(),
+      addressEn: form.value.addressEn.trim(),
+      tel: form.value.tel.trim(),
+      fax: form.value.fax.trim(),
+      email: form.value.email.trim(),
+      sealImageUrl: form.value.sealImageUrl,
+      // TODO: sealImage 파일 업로드는 백엔드 연동 시 구현
+    }
+    await updateCompany(payload)
+    success('자사 정보가 저장되었습니다.')
+  } catch (e) {
+    error('저장 중 오류가 발생했습니다.')
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 
@@ -33,10 +95,15 @@ function handleSave() {
       <h3 class="text-base font-bold text-ink">자사 정보 관리</h3>
     </div>
 
-    <form class="space-y-4" @submit.prevent="handleSave">
+    <!-- 로딩 -->
+    <div v-if="loading" class="py-12 text-center text-sm text-slate-400">
+      불러오는 중...
+    </div>
+
+    <form v-else class="space-y-4" @submit.prevent="handleSave">
       <!-- 2열: 회사명 -->
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <FormField label="영문 회사명" required>
+        <FormField label="영문 회사명" required :error="errors.nameEn">
           <BaseTextField v-model="form.nameEn" placeholder="영문 회사명" />
         </FormField>
         <FormField label="한글 회사명">
@@ -60,7 +127,7 @@ function handleSave() {
       </div>
 
       <!-- 1열: Email -->
-      <FormField label="Email">
+      <FormField label="Email" :error="errors.email">
         <BaseTextField v-model="form.email" type="email" placeholder="이메일 주소" />
       </FormField>
 
@@ -79,7 +146,9 @@ function handleSave() {
 
       <!-- 저장 버튼 -->
       <div class="flex justify-end">
-        <BaseButton variant="primary" type="submit">저장</BaseButton>
+        <BaseButton variant="primary" type="submit" :disabled="saving">
+          {{ saving ? '저장 중...' : '저장' }}
+        </BaseButton>
       </div>
     </form>
   </div>

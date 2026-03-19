@@ -1,10 +1,12 @@
 <script setup>
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PasswordChangeModal from '@/components/domain/auth/PasswordChangeModal.vue'
 import { useUiStore } from '@/stores/ui'
+import { useAuthStore } from '@/stores/auth'
 
 const uiStore = useUiStore()
+const authStore = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 const pageTitle = computed(() => String(route.meta.serviceName ?? '공통 대시보드'))
@@ -12,7 +14,7 @@ const isNotificationOpen = ref(false)
 const isPasswordModalOpen = ref(false)
 const notificationRef = ref(null)
 
-const notifications = [
+const notifications = ref([
   {
     id: 1,
     title: '결재 요청',
@@ -61,9 +63,9 @@ const notifications = [
       source: 'header-notification',
     },
   },
-]
+])
 
-const unreadCount = computed(() => notifications.filter((item) => item.unread).length)
+const unreadCount = computed(() => notifications.value.filter((item) => item.unread).length)
 
 function toggleNotifications() {
   isNotificationOpen.value = !isNotificationOpen.value
@@ -79,10 +81,25 @@ function closePasswordModal() {
 
 function goToNotification(notification) {
   isNotificationOpen.value = false
+  notification.unread = false
   router.push({
     path: notification.to,
     query: notification.query,
   })
+}
+
+const loggedInUser = computed(() => authStore.currentUser)
+const userInitial = computed(() => loggedInUser.value?.name?.charAt(0) || '?')
+const userName = computed(() => loggedInUser.value?.name || '사용자')
+const userRole = computed(() => {
+  const roles = { admin: '관리자', sales: '영업', production: '생산', shipping: '출하' }
+  return roles[loggedInUser.value?.role] || ''
+})
+
+function handleLogout() {
+  if (!confirm('로그아웃 하시겠습니까?')) return
+  authStore.logout()
+  router.push({ name: 'login' })
 }
 
 function handleClickOutside(event) {
@@ -91,7 +108,9 @@ function handleClickOutside(event) {
   }
 }
 
-document.addEventListener('click', handleClickOutside)
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
@@ -165,10 +184,10 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="hidden items-center gap-2.5 border-l border-slate-200 pl-3 text-sm sm:flex">
-        <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand text-[11px] font-semibold text-white">최</div>
+        <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand text-[11px] font-semibold text-white">{{ userInitial }}</div>
         <div>
-          <div class="text-[12px] font-semibold text-[#32363A]">최관리</div>
-          <div class="text-[10px] text-slate-400">경영지원 · 관리자</div>
+          <div class="text-[12px] font-semibold text-[#32363A]">{{ userName }}</div>
+          <div class="text-[10px] text-slate-400">{{ userRole }}</div>
         </div>
       </div>
 
@@ -181,7 +200,12 @@ onBeforeUnmount(() => {
         <i class="fas fa-key text-xs" aria-hidden="true"></i>
       </button>
 
-      <button type="button" class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-xs text-slate-400 transition hover:bg-slate-50 hover:text-slate-700" title="로그아웃">
+      <button
+        type="button"
+        class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-xs text-slate-400 transition hover:bg-slate-50 hover:text-slate-700"
+        title="로그아웃"
+        @click="handleLogout"
+      >
         <i class="fas fa-sign-out-alt text-xs" aria-hidden="true"></i>
       </button>
     </div>
