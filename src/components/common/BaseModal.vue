@@ -16,6 +16,10 @@ const props = defineProps({
     type: String,
     default: 'max-w-2xl',
   },
+  zIndex: {
+    type: Number,
+    default: 50,
+  },
   closeOnBackdrop: {
     type: Boolean,
     default: true,
@@ -39,7 +43,8 @@ function handleBackdropClick() {
   <teleport to="body">
     <div
       v-if="open"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-8"
+      class="fixed inset-0 flex items-center justify-center bg-slate-900/50 px-4 py-8"
+      :style="{ zIndex: props.zIndex }"
       @click.self="handleBackdropClick"
     >
       <div

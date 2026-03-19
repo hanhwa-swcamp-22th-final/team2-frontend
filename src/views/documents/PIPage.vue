@@ -1,18 +1,38 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DateField from '@/components/common/DateField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
+import SearchModal from '@/components/common/SearchModal.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import PIFormModal from '@/components/domain/document/PIFormModal.vue'
+import { useToast } from '@/composables/useToast'
+
+const router = useRouter()
+const { success } = useToast()
 
 const isAdvancedOpen = ref(true)
+const formOpen = ref(false)
+const formMode = ref('create')
+const selectedRow = ref(null)
+const deleteOpen = ref(false)
+const clientSearchOpen = ref(false)
+const clientSearchKeyword = ref('')
+const selectedClient = ref(null)
+const codeSearchOpen = ref(false)
+const codeSearchKeyword = ref('')
+const productSearchOpen = ref(false)
+const productSearchKeyword = ref('')
+const clientSearchContext = ref('filter')
 
 const filters = ref({
   keyword: '',
@@ -54,6 +74,11 @@ const statusOptions = [
   { value: '확정', label: '확정' },
   { value: '취소', label: '취소' },
 ]
+const clientRowsSource = [
+  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아', buyers: ['Mr. Ahmad Razak (Purchasing Manager)', 'Ms. Siti Nurhaliza (Director)'] },
+  { id: 'CL002', name: 'TechBridge GmbH', country: '독일', buyers: ['Ms. Hanna Schneider (Procurement Lead)'] },
+  { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국', buyers: ['Mr. Jacob Miller (Import Manager)'] },
+]
 
 const columns = [
   { key: 'id', label: 'PI번호', align: 'center', width: '140px' },
@@ -68,7 +93,7 @@ const columns = [
   { key: 'actions', label: '', align: 'center', width: '90px' },
 ]
 
-const rows = [
+const initialRows = [
   {
     id: 'PI26001',
     issueDate: '2026/02/01',
@@ -163,8 +188,29 @@ function normalizeDate(value) {
   return String(value ?? '').replaceAll('/', '-')
 }
 
+const rowsData = ref([...initialRows])
+const clientRows = computed(() => {
+  const keyword = clientSearchKeyword.value.trim().toLowerCase()
+  if (!keyword) return clientRowsSource
+  return clientRowsSource.filter((client) => [client.id, client.name, client.country].some((value) => value.toLowerCase().includes(keyword)))
+})
+
+const codeRows = computed(() => {
+  const keyword = codeSearchKeyword.value.trim().toLowerCase()
+  const rows = rowsData.value.map((row) => ({ id: row.id, issueDate: row.issueDate, clientName: row.clientName }))
+  if (!keyword) return rows
+  return rows.filter((row) => [row.id, row.issueDate, row.clientName].some((value) => String(value).toLowerCase().includes(keyword)))
+})
+
+const productRows = computed(() => {
+  const keyword = productSearchKeyword.value.trim().toLowerCase()
+  const rows = [...new Map(rowsData.value.map((row) => [row.itemName, { name: row.itemName, country: row.country, manager: row.manager }])).values()]
+  if (!keyword) return rows
+  return rows.filter((row) => [row.name, row.country, row.manager].some((value) => String(value).toLowerCase().includes(keyword)))
+})
+
 const filteredRows = computed(() => {
-  return rows.filter((row) => {
+  return rowsData.value.filter((row) => {
     const keyword = appliedFilters.value.keyword.trim().toLowerCase()
 
     if (keyword) {
@@ -222,16 +268,121 @@ function resetFilters() {
   }
 }
 
-function openClientSearch() {}
+function openClientSearch(context = 'filter') {
+  clientSearchContext.value = context
+  clientSearchOpen.value = true
+}
 
-function openCodeSearch() {}
+function openCodeSearch() {
+  codeSearchOpen.value = true
+}
 
-function openProductSearch() {}
+function openProductSearch() {
+  productSearchOpen.value = true
+}
 
 function searchRows() {
   appliedFilters.value = {
     ...filters.value,
   }
+}
+
+function openCreateForm() {
+  formMode.value = 'create'
+  selectedRow.value = null
+  formOpen.value = true
+}
+
+function openEditForm(row) {
+  formMode.value = 'edit'
+  selectedRow.value = {
+    id: row.id,
+    clientName: row.clientName,
+    buyerId: 'buyer-1',
+    currency: row.amount.startsWith('€') ? 'EUR' : 'USD',
+    incoterms: 'FOB BUSAN',
+    deliveryDate: row.deliveryDate,
+    items: [
+      {
+        name: row.itemName,
+        qty: 1,
+        unitPrice: row.amount.replace(/[^0-9.]/g, ''),
+        amount: row.amount,
+      },
+    ],
+  }
+  formOpen.value = true
+}
+
+function handleSave(formValue) {
+  if (formMode.value === 'create') {
+    rowsData.value = [
+      {
+        id: `PI26${String(rowsData.value.length + 1).padStart(3, '0')}`,
+        issueDate: '2026/03/19',
+        clientName: formValue.clientName || '거래처 미선택',
+        country: '말레이시아',
+        itemName: formValue.items?.[0]?.name || '품목 미입력',
+        amount: '$0',
+        manager: '김영업',
+        status: '초안',
+        deliveryDate: formValue.deliveryDate ? formValue.deliveryDate.replaceAll('-', '/') : '-',
+      },
+      ...rowsData.value,
+    ]
+    success('PI 작성 폼이 연결되었습니다.')
+    return
+  }
+
+  rowsData.value = rowsData.value.map((row) => (
+    row.id === selectedRow.value?.id
+      ? {
+        ...row,
+        clientName: formValue.clientName || row.clientName,
+        itemName: formValue.items?.[0]?.name || row.itemName,
+        deliveryDate: formValue.deliveryDate ? formValue.deliveryDate.replaceAll('-', '/') : row.deliveryDate,
+      }
+      : row
+  ))
+  success(`${selectedRow.value?.id} 수정 폼이 연결되었습니다.`)
+}
+
+function openDeleteModal(row) {
+  selectedRow.value = row
+  deleteOpen.value = true
+}
+
+function confirmDelete() {
+  rowsData.value = rowsData.value.filter((row) => row.id !== selectedRow.value?.id)
+  success(`${selectedRow.value?.id}가 삭제되었습니다.`)
+  deleteOpen.value = false
+  selectedRow.value = null
+}
+
+function goToDetail(id) {
+  router.push({ name: 'pi-detail', params: { id } })
+}
+
+function handleClientSelect(client) {
+  if (clientSearchContext.value === 'form') {
+    selectedClient.value = client
+  } else {
+    filters.value.clientName = client.name
+  }
+  clientSearchOpen.value = false
+  clientSearchKeyword.value = ''
+}
+
+function handleCodeSelect(code) {
+  filters.value.code = code.id
+  codeSearchOpen.value = false
+  codeSearchKeyword.value = ''
+}
+
+function handleProductSelect(product) {
+  filters.value.productName = product.name
+  productSearchOpen.value = false
+  productSearchKeyword.value = ''
 }
 </script>
 
@@ -239,7 +390,7 @@ function searchRows() {
   <div class="fade-in space-y-5">
     <DocumentPageHeader title="PI 관리" icon-class="fas fa-file-invoice">
       <template #actions>
-      <BaseButton>
+      <BaseButton @click="openCreateForm">
         <template #leading>
           <i class="fas fa-plus text-xs" aria-hidden="true"></i>
         </template>
@@ -348,11 +499,15 @@ function searchRows() {
     <BaseTable
       :columns="columns"
       :rows="filteredRows"
+      clickable-rows
       empty-text="데이터가 없습니다."
       :footer-text="`총 ${filteredRows.length}건`"
+      @row-click="goToDetail($event.id)"
     >
       <template #cell-id="{ value }">
-        <span class="font-mono text-xs font-semibold text-brand-600">{{ value }}</span>
+        <button type="button" class="font-mono text-xs font-semibold text-brand-600 hover:underline" @click.stop="goToDetail(value)">
+          {{ value }}
+        </button>
       </template>
 
       <template #cell-status="{ value }">
@@ -361,14 +516,80 @@ function searchRows() {
 
       <template #cell-actions="{ row }">
         <div class="flex items-center gap-1.5">
-          <button type="button" class="text-xs text-slate-500 transition hover:text-slate-700" :title="`${row.id} 수정`">
+          <button type="button" class="text-xs text-slate-500 transition hover:text-slate-700" :title="`${row.id} 수정`" @click.stop="openEditForm(row)">
             <i class="fas fa-edit" aria-hidden="true"></i>
           </button>
-          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} 삭제`">
+          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} 삭제`" @click.stop="openDeleteModal(row)">
             <i class="fas fa-trash" aria-hidden="true"></i>
           </button>
         </div>
       </template>
     </BaseTable>
+
+    <PIFormModal
+      :open="formOpen"
+      :mode="formMode"
+      :document="selectedRow"
+      :selected-client="selectedClient"
+      @open-client-search="openClientSearch('form')"
+      @close="formOpen = false"
+      @save="handleSave"
+    />
+
+    <ConfirmModal
+      :open="deleteOpen"
+      title="PI 삭제"
+      message="아래 PI를 삭제하시겠습니까?"
+      :detail="selectedRow?.id"
+      confirm-label="삭제"
+      confirm-variant="danger"
+      @confirm="confirmDelete"
+      @cancel="deleteOpen = false"
+    />
+
+    <SearchModal
+      :open="clientSearchOpen"
+      title="거래처 검색"
+      :columns="[
+        { key: 'id', label: '코드' },
+        { key: 'name', label: '거래처명' },
+        { key: 'country', label: '국가' },
+      ]"
+      :rows="clientRows"
+      :search-keyword="clientSearchKeyword"
+      @update:search-keyword="clientSearchKeyword = $event"
+      @close="clientSearchOpen = false"
+      @select="handleClientSelect"
+    />
+
+    <SearchModal
+      :open="codeSearchOpen"
+      title="PI번호 검색"
+      :columns="[
+        { key: 'id', label: 'PI번호' },
+        { key: 'issueDate', label: '발행일' },
+        { key: 'clientName', label: '거래처명' },
+      ]"
+      :rows="codeRows"
+      :search-keyword="codeSearchKeyword"
+      @update:search-keyword="codeSearchKeyword = $event"
+      @close="codeSearchOpen = false"
+      @select="handleCodeSelect"
+    />
+
+    <SearchModal
+      :open="productSearchOpen"
+      title="품목명 검색"
+      :columns="[
+        { key: 'name', label: '품목명' },
+        { key: 'country', label: '국가' },
+        { key: 'manager', label: '영업담당자' },
+      ]"
+      :rows="productRows"
+      :search-keyword="productSearchKeyword"
+      @update:search-keyword="productSearchKeyword = $event"
+      @close="productSearchOpen = false"
+      @select="handleProductSelect"
+    />
   </div>
 </template>

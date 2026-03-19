@@ -1,19 +1,62 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import FormField from '@/components/common/FormField.vue'
 import { useToast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
-const { info } = useToast()
+const route = useRoute()
+const isDev = import.meta.env.DEV
+const authStore = useAuthStore()
+const { error } = useToast()
+
 const email = ref('')
 const password = ref('')
+const emailError = ref('')
+const passwordError = ref('')
+const loading = ref(false)
 
-function handleLogin() {
-  info('로그인 기능은 추후 구현됩니다.')
-  router.push('/')
+function validate() {
+  emailError.value = ''
+  passwordError.value = ''
+  let valid = true
+
+  const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+  if (!email.value.trim()) {
+    emailError.value = '이메일을 입력해주세요.'
+    valid = false
+  } else if (!EMAIL_REGEX.test(email.value.trim())) {
+    emailError.value = '올바른 이메일 형식을 입력해주세요.'
+    valid = false
+  }
+  if (!password.value) {
+    passwordError.value = '비밀번호를 입력해주세요.'
+    valid = false
+  }
+  return valid
+}
+
+async function handleLogin() {
+  if (!validate()) return
+
+  loading.value = true
+  try {
+    await authStore.login(email.value.trim(), password.value)
+    const redirect = route.query.redirect
+    const safePath = redirect && typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/'
+    router.push(safePath)
+  } catch (e) {
+    if (e.message === 'INVALID_CREDENTIALS') {
+      error('이메일 또는 비밀번호가 올바르지 않습니다.')
+    } else {
+      error('로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+    }
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -32,7 +75,7 @@ function handleLogin() {
     <div class="w-full rounded-[28px] bg-white p-8 shadow-panel">
       <form class="space-y-5" @submit.prevent="handleLogin">
         <!-- 이메일 -->
-        <FormField label="이메일">
+        <FormField label="이메일" :error="emailError">
           <div class="relative">
             <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -51,7 +94,7 @@ function handleLogin() {
         </FormField>
 
         <!-- 비밀번호 -->
-        <FormField label="비밀번호">
+        <FormField label="비밀번호" :error="passwordError">
           <div class="relative">
             <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -69,7 +112,9 @@ function handleLogin() {
         </FormField>
 
         <!-- 로그인 버튼 -->
-        <BaseButton variant="primary" type="submit" block size="lg">로그인</BaseButton>
+        <BaseButton variant="primary" type="submit" block size="lg" :disabled="loading">
+          {{ loading ? '로그인 중...' : '로그인' }}
+        </BaseButton>
       </form>
 
       <!-- 비밀번호 찾기 링크 -->
@@ -81,7 +126,7 @@ function handleLogin() {
     </div>
 
     <!-- Demo 계정 안내 -->
-    <div class="w-full rounded-2xl bg-white p-4 shadow-panel">
+    <div v-if="isDev" class="w-full rounded-2xl bg-white p-4 shadow-panel">
       <p class="mb-2 text-xs font-semibold text-slate-600">Demo 계정 안내</p>
       <div class="space-y-1 text-xs text-slate-500">
         <p>관리자: admin@salesboost.com / 1234</p>

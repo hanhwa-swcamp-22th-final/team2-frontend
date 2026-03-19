@@ -50,6 +50,7 @@ function normalizeColumn(column) {
     :title="title"
     description="목록에서 원하는 항목을 검색해 선택하는 공통 모달"
     width="max-w-4xl"
+    :z-index="70"
     @close="$emit('close')"
   >
     <div class="space-y-4">

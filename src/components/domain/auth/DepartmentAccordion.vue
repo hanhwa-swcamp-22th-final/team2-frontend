@@ -1,7 +1,7 @@
 <script setup>
-import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import TableActions from '@/components/common/TableActions.vue'
 
 const props = defineProps({
   department: { type: String, required: true },
@@ -10,7 +10,7 @@ const props = defineProps({
   positionMap: { type: Object, default: () => ({}) },
 })
 
-const emit = defineEmits(['toggle', 'edit-user'])
+const emit = defineEmits(['toggle', 'edit-user', 'delete-user'])
 
 const avatarColors = [
   'bg-blue-500', 'bg-emerald-500', 'bg-violet-500',
@@ -23,7 +23,7 @@ const columns = [
   { key: 'email', label: '이메일' },
   { key: 'department', label: '부서', width: '120px' },
   { key: 'status', label: '상태', width: '100px', align: 'center' },
-  { key: 'actions', label: '관리', width: '100px', align: 'center' },
+  { key: 'actions', label: '관리', width: '140px', align: 'center' },
 ]
 
 function getAvatarColor(index) {
@@ -41,6 +41,8 @@ function getActiveCount() {
     <button
       type="button"
       class="flex w-full items-center gap-3 px-5 py-4 text-left transition hover:bg-slate-50"
+      :aria-expanded="expanded"
+      :aria-controls="`dept-panel-${department}`"
       @click="emit('toggle')"
     >
       <!-- Chevron -->
@@ -64,7 +66,7 @@ function getActiveCount() {
     </button>
 
     <!-- 본문 테이블 -->
-    <div v-show="expanded" class="border-t border-slate-100">
+    <div v-show="expanded" :id="`dept-panel-${department}`" class="border-t border-slate-100">
       <BaseTable :columns="columns" :rows="users" empty-text="사용자가 없습니다.">
         <template #cell-name="{ row, value }">
           <div class="flex items-center gap-2.5">
@@ -89,9 +91,12 @@ function getActiveCount() {
         </template>
 
         <template #cell-actions="{ row }">
-          <BaseButton variant="ghost" size="sm" @click.stop="emit('edit-user', row)">
-            수정
-          </BaseButton>
+          <TableActions
+            edit-label="수정"
+            delete-label="퇴직"
+            @edit="emit('edit-user', row)"
+            @delete="emit('delete-user', row)"
+          />
         </template>
       </BaseTable>
     </div>

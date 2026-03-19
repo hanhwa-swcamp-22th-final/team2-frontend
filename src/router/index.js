@@ -7,11 +7,16 @@ import DomainComponentsPage from '@/views/DomainComponentsPage.vue'
 import CIPage from '@/views/documents/CIPage.vue'
 import CollectionsPage from '@/views/documents/CollectionsPage.vue'
 import PIPage from '@/views/documents/PIPage.vue'
+import PIDetailPage from '@/views/documents/PIDetailPage.vue'
 import PLPage from '@/views/documents/PLPage.vue'
 import POPage from '@/views/documents/POPage.vue'
+import PODetailPage from '@/views/documents/PODetailPage.vue'
 import ProductionOrderPage from '@/views/documents/ProductionOrderPage.vue'
+import ProductionOrderDetailPage from '@/views/documents/ProductionOrderDetailPage.vue'
 import ShipmentsPage from '@/views/documents/ShipmentsPage.vue'
+import ShipmentsDetailPage from '@/views/documents/ShipmentsDetailPage.vue'
 import ShipmentOrderPage from '@/views/documents/ShipmentOrderPage.vue'
+import ShipmentOrderDetailPage from '@/views/documents/ShipmentOrderDetailPage.vue'
 import ServicePage from '@/views/ServicePage.vue'
 import ActivityListPage from '@/views/activity/ActivityListPage.vue'
 import ActivityCreatePage from '@/views/activity/ActivityCreatePage.vue'
@@ -138,6 +143,16 @@ const routes = [
         },
       },
       {
+        path: 'pi/:id',
+        name: 'pi-detail',
+        component: PIDetailPage,
+        meta: {
+          title: 'PI Detail',
+          serviceName: 'PI 상세',
+          description: 'PI 상세 화면',
+        },
+      },
+      {
         path: 'po',
         name: 'po',
         component: POPage,
@@ -145,6 +160,16 @@ const routes = [
           title: 'PO',
           serviceName: 'PO 관리',
           description: 'PO 조회 및 상세 화면',
+        },
+      },
+      {
+        path: 'po/:id',
+        name: 'po-detail',
+        component: PODetailPage,
+        meta: {
+          title: 'PO Detail',
+          serviceName: 'PO 상세',
+          description: 'PO 상세 화면',
         },
       },
       {
@@ -178,6 +203,16 @@ const routes = [
         },
       },
       {
+        path: 'production/:id',
+        name: 'production-detail',
+        component: ProductionOrderDetailPage,
+        meta: {
+          title: 'Production Detail',
+          serviceName: '생산지시서 상세',
+          description: '생산지시서 상세 조회 화면',
+        },
+      },
+      {
         path: 'shipment-orders',
         name: 'shipment-orders',
         component: ShipmentOrderPage,
@@ -185,6 +220,16 @@ const routes = [
           title: 'Shipment Orders',
           serviceName: '출하 관리',
           description: '출하지시서 관리 화면',
+        },
+      },
+      {
+        path: 'shipment-orders/:id',
+        name: 'shipment-order-detail',
+        component: ShipmentOrderDetailPage,
+        meta: {
+          title: 'Shipment Order Detail',
+          serviceName: '출하지시서 상세',
+          description: '출하지시서 상세 조회 화면',
         },
       },
       {
@@ -205,6 +250,16 @@ const routes = [
           title: 'Shipments',
           serviceName: '출하현황',
           description: '출하 진행 현황 화면',
+        },
+      },
+      {
+        path: 'shipments/:id',
+        name: 'shipment-detail',
+        component: ShipmentsDetailPage,
+        meta: {
+          title: 'Shipment Detail',
+          serviceName: '출하현황 상세',
+          description: '출하현황 상세 조회 화면',
         },
       },
       {
@@ -244,6 +299,7 @@ const routes = [
         meta: {
           title: 'Users',
           serviceName: '사용자 관리',
+          requiredRole: 'admin',
         },
       },
     ],

@@ -22,7 +22,13 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  clickableRows: {
+    type: Boolean,
+    default: false,
+  },
 })
+
+const emit = defineEmits(['row-click'])
 
 const resizeWidths = ref({})
 let activeResize = null
@@ -173,6 +179,8 @@ onBeforeUnmount(() => {
           v-for="row in rows"
           :key="row?.[rowKey] ?? JSON.stringify(row)"
           class="transition hover:bg-slate-50/70"
+          :class="props.clickableRows ? 'cursor-pointer' : ''"
+          @click="emit('row-click', row)"
         >
           <td
             v-for="column in normalizedColumns"

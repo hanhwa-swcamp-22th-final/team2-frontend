@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
@@ -7,105 +7,131 @@ import BaseTextField from '@/components/common/BaseTextField.vue'
 import FileUploadField from '@/components/common/FileUploadField.vue'
 import FormField from '@/components/common/FormField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
-import { useToast } from '@/composables/useToast'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
   mode: { type: String, default: 'create' },
   client: { type: Object, default: null },
+  countries: { type: Array, default: () => [] },
+  ports: { type: Array, default: () => [] },
+  currencies: { type: Array, default: () => [] },
+  paymentTerms: { type: Array, default: () => [] },
+  allClients: { type: Array, default: () => [] },
+  saving: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['close', 'save'])
-const { success } = useToast()
 
 const form = ref(getInitialForm())
+const errors = ref({})
 
-const countryOptions = [
-  { label: 'USA', value: 'USA' },
-  { label: 'Germany', value: 'Germany' },
-  { label: 'Japan', value: 'Japan' },
-  { label: 'China', value: 'China' },
-  { label: 'UK', value: 'UK' },
-  { label: 'France', value: 'France' },
-  { label: 'India', value: 'India' },
-  { label: 'Brazil', value: 'Brazil' },
-  { label: 'Singapore', value: 'Singapore' },
-  { label: 'Vietnam', value: 'Vietnam' },
-]
+const countryOptions = computed(() =>
+  props.countries.map((c) => ({ label: `${c.nameKr} (${c.name})`, value: c.id })),
+)
 
-const portOptions = [
-  { label: 'Busan', value: 'Busan' },
-  { label: 'Shanghai', value: 'Shanghai' },
-  { label: 'Los Angeles', value: 'Los Angeles' },
-  { label: 'Hamburg', value: 'Hamburg' },
-  { label: 'Rotterdam', value: 'Rotterdam' },
-  { label: 'Tokyo', value: 'Tokyo' },
-  { label: 'Singapore', value: 'Singapore' },
-  { label: 'Mumbai', value: 'Mumbai' },
-  { label: 'Ho Chi Minh', value: 'Ho Chi Minh' },
-  { label: 'Santos', value: 'Santos' },
-]
+const portOptions = computed(() =>
+  props.ports.map((p) => ({ label: p.name, value: p.id })),
+)
 
-const paymentTermsOptions = [
-  { label: 'T/T (Telegraphic Transfer)', value: 'T/T' },
-  { label: 'L/C (Letter of Credit)', value: 'L/C' },
-  { label: 'D/P (Documents against Payment)', value: 'D/P' },
-  { label: 'D/A (Documents against Acceptance)', value: 'D/A' },
-  { label: 'CAD (Cash against Documents)', value: 'CAD' },
-]
+const paymentTermsOptions = computed(() =>
+  props.paymentTerms.map((p) => ({ label: `${p.code} (${p.description})`, value: p.id })),
+)
 
-const currencyOptions = [
-  { label: 'USD', value: 'USD' },
-  { label: 'EUR', value: 'EUR' },
-  { label: 'JPY', value: 'JPY' },
-  { label: 'CNY', value: 'CNY' },
-  { label: 'KRW', value: 'KRW' },
+const currencyOptions = computed(() =>
+  props.currencies.map((c) => ({ label: `${c.code} (${c.symbol})`, value: c.id })),
+)
+
+const statusOptions = [
+  { label: '활성', value: '활성' },
+  { label: '비활성', value: '비활성' },
 ]
 
 function getInitialForm() {
   return {
+    code: '',
     name: '',
     nameKr: '',
-    country: '',
+    countryId: null,
     city: '',
-    port: '',
-    addressKr: '',
+    portId: null,
     address: '',
-    businessNo: '',
     tel: '',
     email: '',
-    paymentTerms: '',
-    currency: '',
+    paymentTermsId: null,
+    currencyId: null,
+    manager: '',
+    status: '활성',
     sealImage: null,
   }
 }
 
-watch(() => props.open, (isOpen) => {
-  if (isOpen && props.mode === 'edit' && props.client) {
-    form.value = {
-      name: props.client.name ?? '',
-      nameKr: props.client.nameKr ?? '',
-      country: props.client.country ?? '',
-      city: props.client.city ?? '',
-      port: props.client.port ?? '',
-      addressKr: props.client.addressKr ?? '',
-      address: props.client.address ?? '',
-      businessNo: props.client.businessNo ?? '',
-      tel: props.client.tel ?? '',
-      email: props.client.email ?? '',
-      paymentTerms: props.client.paymentTerms ?? '',
-      currency: props.client.currency ?? '',
-      sealImage: null,
+watch(
+  () => props.open,
+  (isOpen) => {
+    errors.value = {}
+    if (isOpen && props.mode === 'edit' && props.client) {
+      form.value = {
+        code: props.client.code ?? '',
+        name: props.client.name ?? '',
+        nameKr: props.client.nameKr ?? '',
+        countryId: props.client.countryId ?? null,
+        city: props.client.city ?? '',
+        portId: props.client.portId ?? null,
+        address: props.client.address ?? '',
+        tel: props.client.tel ?? '',
+        email: props.client.email ?? '',
+        paymentTermsId: props.client.paymentTermsId ?? null,
+        currencyId: props.client.currencyId ?? null,
+        manager: props.client.manager ?? '',
+        status: props.client.status ?? '활성',
+        sealImage: null,
+      }
+    } else if (isOpen && props.mode === 'create') {
+      form.value = getInitialForm()
     }
-  } else if (isOpen && props.mode === 'create') {
-    form.value = getInitialForm()
+  },
+)
+
+function validate() {
+  const e = {}
+
+  if (!form.value.code?.trim()) {
+    e.code = '코드를 입력하세요.'
+  } else if (props.mode === 'create') {
+    const duplicate = props.allClients.some(
+      (c) => c.code.toLowerCase() === form.value.code.trim().toLowerCase(),
+    )
+    if (duplicate) e.code = '이미 사용 중인 코드입니다.'
   }
-})
+
+  if (!form.value.name?.trim()) {
+    e.name = '영문 거래처명을 입력하세요.'
+  }
+
+  if (!form.value.countryId) {
+    e.countryId = '국가를 선택하세요.'
+  }
+
+  if (!form.value.tel?.trim()) {
+    e.tel = '전화번호를 입력하세요.'
+  }
+
+  if (form.value.email?.trim()) {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    if (!emailRegex.test(form.value.email.trim())) {
+      e.email = '올바른 이메일 형식을 입력하세요.'
+    }
+  }
+
+  errors.value = e
+  return Object.keys(e).length === 0
+}
 
 function handleSave() {
-  success(props.mode === 'create' ? '거래처가 등록되었습니다.' : '거래처 정보가 수정되었습니다.')
-  emit('save', { ...form.value })
-  emit('close')
+  if (!validate()) return
+  const payload = { ...form.value }
+  delete payload.sealImage
+  emit('save', payload)
 }
 </script>
 
@@ -118,8 +144,14 @@ function handleSave() {
   >
     <form class="space-y-6" @submit.prevent="handleSave">
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <FormField label="코드" required>
+          <BaseTextField v-model="form.code" placeholder="예) CL-011" />
+          <p v-if="errors.code" class="mt-1 text-xs text-red-500">{{ errors.code }}</p>
+        </FormField>
+
         <FormField label="영문 거래처명" required>
           <BaseTextField v-model="form.name" placeholder="영문 거래처명을 입력하세요" />
+          <p v-if="errors.name" class="mt-1 text-xs text-red-500">{{ errors.name }}</p>
         </FormField>
 
         <FormField label="한글 거래처명">
@@ -127,45 +159,51 @@ function handleSave() {
         </FormField>
 
         <FormField label="국가" required>
-          <SearchableCombobox v-model="form.country" :options="countryOptions" placeholder="국가를 검색하세요" />
+          <SearchableCombobox v-model="form.countryId" :options="countryOptions" placeholder="국가를 검색하세요" />
+          <p v-if="errors.countryId" class="mt-1 text-xs text-red-500">{{ errors.countryId }}</p>
         </FormField>
 
         <FormField label="도시">
           <BaseTextField v-model="form.city" placeholder="도시를 입력하세요" />
         </FormField>
 
-        <FormField label="도착항" required>
-          <SearchableCombobox v-model="form.port" :options="portOptions" placeholder="도착항을 검색하세요" />
+        <FormField label="도착항">
+          <SearchableCombobox v-model="form.portId" :options="portOptions" placeholder="도착항을 검색하세요" />
         </FormField>
 
-        <FormField label="사업자번호">
-          <BaseTextField v-model="form.businessNo" placeholder="사업자번호를 입력하세요" />
-        </FormField>
-
-        <FormField label="한글 주소">
-          <BaseTextField v-model="form.addressKr" placeholder="한글 주소를 입력하세요" />
-        </FormField>
-
-        <FormField label="영문 주소">
+        <FormField label="주소">
           <BaseTextField v-model="form.address" placeholder="영문 주소를 입력하세요" />
         </FormField>
 
-        <FormField label="TEL">
+        <FormField label="담당자">
+          <BaseTextField v-model="form.manager" placeholder="담당자명을 입력하세요" />
+        </FormField>
+
+        <FormField label="TEL" required>
           <BaseTextField v-model="form.tel" placeholder="전화번호를 입력하세요" />
+          <p v-if="errors.tel" class="mt-1 text-xs text-red-500">{{ errors.tel }}</p>
         </FormField>
 
         <FormField label="Email">
           <BaseTextField v-model="form.email" type="email" placeholder="이메일을 입력하세요" />
+          <p v-if="errors.email" class="mt-1 text-xs text-red-500">{{ errors.email }}</p>
         </FormField>
 
-        <FormField label="결제조건" required>
-          <BaseSelect v-model="form.paymentTerms" :options="paymentTermsOptions" placeholder="결제조건을 선택하세요" />
+        <FormField label="결제조건">
+          <BaseSelect v-model="form.paymentTermsId" :options="paymentTermsOptions" placeholder="결제조건을 선택하세요" />
         </FormField>
 
-        <FormField label="통화" required>
-          <BaseSelect v-model="form.currency" :options="currencyOptions" placeholder="통화를 선택하세요" />
+        <FormField label="통화">
+          <BaseSelect v-model="form.currencyId" :options="currencyOptions" placeholder="통화를 선택하세요" />
         </FormField>
 
+        <FormField label="상태">
+          <BaseSelect
+            v-model="form.status"
+            :options="statusOptions"
+            placeholder="상태를 선택하세요"
+          />
+        </FormField>
       </div>
 
       <FileUploadField
@@ -178,7 +216,7 @@ function handleSave() {
 
     <template #footer>
       <BaseButton variant="secondary" @click="emit('close')">취소</BaseButton>
-      <BaseButton variant="primary" @click="handleSave">저장</BaseButton>
+      <BaseButton variant="primary" :disabled="saving" @click="handleSave">{{ saving ? '저장 중...' : '저장' }}</BaseButton>
     </template>
   </BaseModal>
 </template>
