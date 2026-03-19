@@ -1,6 +1,7 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { fetchActivities, fetchAllActivityPOs } from '@/api/activity'
 import ActivityTypeBadge from '@/components/domain/activity/ActivityTypeBadge.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
@@ -8,56 +9,52 @@ import BaseTextField from '@/components/common/BaseTextField.vue'
 import DateRangeField from '@/components/common/DateRangeField.vue'
 import PageTitleBar from '@/components/layout/PageTitleBar.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
-import StatusBadge from '@/components/common/StatusBadge.vue'
 
 const router = useRouter()
 
-// ── 더미 데이터 ────────────────────────────────────────────
-const activities = ref([
-  { id: 'ACT-001', type: '미팅/협의', title: '1분기 전략 미팅',      date: '2025-03-10', author: '홍길동' },
-  { id: 'ACT-002', type: '이슈',      title: '납기 지연 이슈 발생',   date: '2025-03-08', author: '김영희' },
-  { id: 'ACT-003', type: '메모/노트', title: '거래처 미팅 메모',      date: '2025-03-07', author: '이철수' },
-  { id: 'ACT-004', type: '코멘트',    title: '제품 샘플 피드백',      date: '2025-03-05', author: '홍길동' },
-  { id: 'ACT-005', type: '일정',      title: '2분기 미팅 일정 확정',  date: '2025-03-03', author: '김영희' },
-  { id: 'ACT-006', type: '미팅/협의', title: '신규 계약 협의',        date: '2025-03-01', author: '이철수' },
-  { id: 'ACT-007', type: '이슈',      title: '품질 클레임 접수',      date: '2025-02-25', author: '홍길동' },
-  { id: 'ACT-008', type: '메모/노트', title: '현지 시장 조사 메모',   date: '2025-02-20', author: '김영희' },
-])
+// ── 데이터 ─────────────────────────────────────────────────
+const activities = ref([])
+const poList = ref([])
 
-// ── PO 더미 데이터 ─────────────────────────────────────────
-const poList = [
-  { id: 'PO-2025-001', client: 'GlobalTech',  amount: '$120,000', deliveryDate: '2025-04-30', status: '확정' },
-  { id: 'PO-2025-002', client: 'EuroSupply',  amount: '$85,000',  deliveryDate: '2025-05-15', status: '확정' },
-  { id: 'PO-2025-003', client: 'AsiaConnect', amount: '$200,000', deliveryDate: '2025-06-01', status: '생산중' },
-  { id: 'PO-2025-004', client: 'GlobalTech',  amount: '$60,000',  deliveryDate: '2025-04-10', status: '출하완료' },
-  { id: 'PO-2025-005', client: 'EuroSupply',  amount: '$95,000',  deliveryDate: '2025-07-20', status: '접수' },
-]
+onMounted(async () => {
+  try {
+    const [actData, poData] = await Promise.all([fetchActivities(), fetchAllActivityPOs()])
+    activities.value = actData
+    poList.value = poData
+  } catch (e) {
+    console.error('데이터 로드 실패', e)
+  }
+})
 
 const poColumns = [
-  { key: 'id',           label: 'PO번호'   },
-  { key: 'client',       label: '거래처'   },
-  { key: 'amount',       label: '총액'     },
-  { key: 'deliveryDate', label: '납기일'   },
-  { key: 'status',       label: '상태'     },
+  { key: 'id',    label: 'PO번호' },
+  { key: 'title', label: '제목'   },
+  { key: 'date',  label: '날짜'   },
 ]
 
 // ── PO 검색 모달 ───────────────────────────────────────────
 const isPoModalOpen = ref(false)
 const poSearchKeyword = ref('')
-const filteredPoList = ref([...poList])
+const selectedPoId = ref('')
 
-watch(poSearchKeyword, (keyword) => {
-  const q = keyword.trim().toLowerCase()
-  filteredPoList.value = q
-    ? poList.filter((p) => p.id.toLowerCase().includes(q) || p.client.toLowerCase().includes(q))
-    : [...poList]
+const filteredPoList = computed(() => {
+  const q = poSearchKeyword.value.trim().toLowerCase()
+  if (!q) return poList.value
+  return poList.value.filter(
+    (p) => p.id.toLowerCase().includes(q) || p.title.toLowerCase().includes(q),
+  )
 })
 
 function selectPo(po) {
-  poDisplay.value = `${po.id} - ${po.client}`
+  selectedPoId.value = po.id
+  poDisplay.value = `${po.id} - ${po.title}`
   isPoModalOpen.value = false
   poSearchKeyword.value = ''
-  filteredPoList.value = [...poList]
+}
+
+function clearPo() {
+  selectedPoId.value = ''
+  poDisplay.value = ''
 }
 
 // ── 패키지 생성 폼 상태 ────────────────────────────────────
@@ -96,10 +93,13 @@ const typeTabs = [
   { key: '일정',     label: '일정'     },
 ]
 
-const selectedActivityIds = ref(activities.value.map((a) => a.id))
+const selectedActivityIds = ref([])
 
 const filteredActivities = computed(() => {
   let list = activities.value
+  if (selectedPoId.value) {
+    list = list.filter((a) => a.poId === selectedPoId.value)
+  }
   if (activeTypeTab.value !== '전체') {
     list = list.filter((a) => a.type === activeTypeTab.value)
   }
@@ -110,6 +110,12 @@ const filteredActivities = computed(() => {
   if (dateFrom.value) list = list.filter((a) => a.date >= dateFrom.value)
   if (dateTo.value)   list = list.filter((a) => a.date <= dateTo.value)
   return list
+})
+
+// PO 변경 시 전체 선택으로 리셋
+watch(selectedPoId, async () => {
+  await nextTick()
+  selectedActivityIds.value = filteredActivities.value.map((a) => a.id)
 })
 
 const isAllSelected = computed(() =>
@@ -197,7 +203,7 @@ const summaryText = computed(() => {
                   </template>
                   PO 검색
                 </BaseButton>
-                <BaseButton variant="secondary" @click="poDisplay = ''">
+                <BaseButton variant="secondary" @click="clearPo">
                   <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
                   </svg>
@@ -343,11 +349,7 @@ const summaryText = computed(() => {
       @close="isPoModalOpen = false"
       @update:search-keyword="poSearchKeyword = $event"
       @select="selectPo"
-    >
-      <template #cell-status="{ row }">
-        <StatusBadge :value="row.status" />
-      </template>
-    </SearchModal>
+    />
 
   </div>
 </template>

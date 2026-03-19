@@ -1,62 +1,622 @@
 {
   "navigationItems": [
-    { "id": 1, "section": "basic", "sectionLabel": "기초정보", "label": "거래처 관리", "path": "/master/clients", "icon": "fa-building" },
-    { "id": 2, "section": "basic", "sectionLabel": "기초정보", "label": "품목 관리", "path": "/master/items", "icon": "fa-box" },
-    { "id": 3, "section": "sales", "sectionLabel": "영업 관리", "label": "PI 관리", "path": "/pi", "icon": "fa-file-invoice" },
-    { "id": 4, "section": "sales", "sectionLabel": "영업 관리", "label": "PO 관리", "path": "/po", "icon": "fa-file-contract" },
-    { "id": 5, "section": "sales", "sectionLabel": "영업 관리", "label": "CI 관리", "path": "/ci", "icon": "fa-file-invoice-dollar" },
-    { "id": 6, "section": "sales", "sectionLabel": "영업 관리", "label": "PL 관리", "path": "/pl", "icon": "fa-box-open" },
-    { "id": 7, "section": "orders", "sectionLabel": "지시서", "label": "생산 관리", "path": "/production", "icon": "fa-industry" },
-    { "id": 8, "section": "orders", "sectionLabel": "지시서", "label": "출하 관리", "path": "/shipment-orders", "icon": "fa-truck-loading" },
-    { "id": 9, "section": "status", "sectionLabel": "현황", "label": "매출·수금 현황", "path": "/collections", "icon": "fa-coins" },
-    { "id": 10, "section": "status", "sectionLabel": "현황", "label": "출하현황", "path": "/shipments", "icon": "fa-truck" },
-    { "id": 11, "section": "activity", "sectionLabel": "활동기록", "label": "기록 관리", "path": "/activities", "icon": "fa-list-check" },
-    { "id": 12, "section": "activity", "sectionLabel": "활동기록", "label": "컨택 리스트", "path": "/contacts", "icon": "fa-address-book" },
-    { "id": 13, "section": "activity", "sectionLabel": "활동기록", "label": "메일 이력", "path": "/emails", "icon": "fa-envelope" },
-    { "id": 14, "section": "activity", "sectionLabel": "활동기록", "label": "활동기록 패키지", "path": "/package", "icon": "fa-cube" },
-    { "id": 15, "section": "admin", "sectionLabel": "관리", "label": "사용자 관리", "path": "/users", "icon": "fa-users-cog" }
+    {
+      "id": "1",
+      "section": "basic",
+      "sectionLabel": "기초정보",
+      "label": "거래처 관리",
+      "path": "/master/clients",
+      "icon": "fa-building"
+    },
+    {
+      "id": "2",
+      "section": "basic",
+      "sectionLabel": "기초정보",
+      "label": "품목 관리",
+      "path": "/master/items",
+      "icon": "fa-box"
+    },
+    {
+      "id": "3",
+      "section": "sales",
+      "sectionLabel": "영업 관리",
+      "label": "PI 관리",
+      "path": "/pi",
+      "icon": "fa-file-invoice"
+    },
+    {
+      "id": "4",
+      "section": "sales",
+      "sectionLabel": "영업 관리",
+      "label": "PO 관리",
+      "path": "/po",
+      "icon": "fa-file-contract"
+    },
+    {
+      "id": "5",
+      "section": "sales",
+      "sectionLabel": "영업 관리",
+      "label": "CI 관리",
+      "path": "/ci",
+      "icon": "fa-file-invoice-dollar"
+    },
+    {
+      "id": "6",
+      "section": "sales",
+      "sectionLabel": "영업 관리",
+      "label": "PL 관리",
+      "path": "/pl",
+      "icon": "fa-box-open"
+    },
+    {
+      "id": "7",
+      "section": "orders",
+      "sectionLabel": "지시서",
+      "label": "생산 관리",
+      "path": "/production",
+      "icon": "fa-industry"
+    },
+    {
+      "id": "8",
+      "section": "orders",
+      "sectionLabel": "지시서",
+      "label": "출하 관리",
+      "path": "/shipment-orders",
+      "icon": "fa-truck-loading"
+    },
+    {
+      "id": "9",
+      "section": "status",
+      "sectionLabel": "현황",
+      "label": "매출·수금 현황",
+      "path": "/collections",
+      "icon": "fa-coins"
+    },
+    {
+      "id": "10",
+      "section": "status",
+      "sectionLabel": "현황",
+      "label": "출하현황",
+      "path": "/shipments",
+      "icon": "fa-truck"
+    },
+    {
+      "id": "11",
+      "section": "activity",
+      "sectionLabel": "활동기록",
+      "label": "기록 관리",
+      "path": "/activities",
+      "icon": "fa-list-check"
+    },
+    {
+      "id": "12",
+      "section": "activity",
+      "sectionLabel": "활동기록",
+      "label": "컨택 리스트",
+      "path": "/contacts",
+      "icon": "fa-address-book"
+    },
+    {
+      "id": "13",
+      "section": "activity",
+      "sectionLabel": "활동기록",
+      "label": "메일 이력",
+      "path": "/emails",
+      "icon": "fa-envelope"
+    },
+    {
+      "id": "14",
+      "section": "activity",
+      "sectionLabel": "활동기록",
+      "label": "활동기록 패키지",
+      "path": "/package",
+      "icon": "fa-cube"
+    },
+    {
+      "id": "15",
+      "section": "admin",
+      "sectionLabel": "관리",
+      "label": "사용자 관리",
+      "path": "/users",
+      "icon": "fa-users-cog"
+    }
   ],
   "dashboardKpis": [
-    { "id": 1, "title": "진행 화면", "value": "24", "change": "+6" },
-    { "id": 2, "title": "공통 컴포넌트", "value": "12", "change": "+4" },
-    { "id": 3, "title": "확정 메뉴", "value": "8", "change": "+2" },
-    { "id": 4, "title": "검토 필요", "value": "5", "change": "-1" }
+    {
+      "id": "1",
+      "title": "진행 화면",
+      "value": "24",
+      "change": "+6"
+    },
+    {
+      "id": "2",
+      "title": "공통 컴포넌트",
+      "value": "12",
+      "change": "+4"
+    },
+    {
+      "id": "3",
+      "title": "확정 메뉴",
+      "value": "8",
+      "change": "+2"
+    },
+    {
+      "id": "4",
+      "title": "검토 필요",
+      "value": "5",
+      "change": "-1"
+    }
   ],
   "dashboardChartPoints": [
-    { "id": 1, "value": 12 },
-    { "id": 2, "value": 18 },
-    { "id": 3, "value": 15 },
-    { "id": 4, "value": 28 },
-    { "id": 5, "value": 24 },
-    { "id": 6, "value": 31 },
-    { "id": 7, "value": 36 }
+    {
+      "id": "1",
+      "value": 12
+    },
+    {
+      "id": "2",
+      "value": 18
+    },
+    {
+      "id": "3",
+      "value": 15
+    },
+    {
+      "id": "4",
+      "value": 28
+    },
+    {
+      "id": "5",
+      "value": 24
+    },
+    {
+      "id": "6",
+      "value": 31
+    },
+    {
+      "id": "7",
+      "value": 36
+    }
   ],
   "dashboardTableRows": [
-    { "id": 1, "name": "사용자 목록", "owner": "Auth", "status": "In Progress" },
-    { "id": 2, "name": "거래처 상세", "owner": "Master", "status": "Ready" },
-    { "id": 3, "name": "주문 등록", "owner": "Order", "status": "Review" },
-    { "id": 4, "name": "문서 상세", "owner": "Document", "status": "Ready" }
+    {
+      "id": "1",
+      "name": "사용자 목록",
+      "owner": "Auth",
+      "status": "In Progress"
+    },
+    {
+      "id": "2",
+      "name": "거래처 상세",
+      "owner": "Master",
+      "status": "Ready"
+    },
+    {
+      "id": "3",
+      "name": "주문 등록",
+      "owner": "Order",
+      "status": "Review"
+    },
+    {
+      "id": "4",
+      "name": "문서 상세",
+      "owner": "Document",
+      "status": "Ready"
+    }
   ],
   "positions": [
-    { "id": 1, "name": "팀장", "level": 1 },
-    { "id": 2, "name": "팀원", "level": 2 }
+    {
+      "id": "1",
+      "name": "팀장",
+      "level": 1
+    },
+    {
+      "id": "2",
+      "name": "팀원",
+      "level": 2
+    }
   ],
   "departments": [
-    { "id": 1, "name": "영업1팀" },
-    { "id": 2, "name": "영업2팀" },
-    { "id": 3, "name": "생산팀" },
-    { "id": 4, "name": "출하팀" },
-    { "id": 5, "name": "경영지원" }
+    {
+      "id": "1",
+      "name": "영업1팀"
+    },
+    {
+      "id": "2",
+      "name": "영업2팀"
+    },
+    {
+      "id": "3",
+      "name": "생산팀"
+    },
+    {
+      "id": "4",
+      "name": "출하팀"
+    },
+    {
+      "id": "5",
+      "name": "경영지원"
+    }
   ],
   "users": [
-    { "id": 1, "employeeNo": "25061501", "name": "김영업", "email": "kim@salesboost.com", "role": "sales", "departmentId": 1, "positionId": 1, "status": "재직", "pw": "1234" },
-    { "id": 2, "employeeNo": "25061502", "name": "이생산", "email": "lee@salesboost.com", "role": "production", "departmentId": 3, "positionId": 1, "status": "재직", "pw": "1234" },
-    { "id": 3, "employeeNo": "25061503", "name": "박출하", "email": "park@salesboost.com", "role": "shipping", "departmentId": 4, "positionId": 1, "status": "재직", "pw": "1234" },
-    { "id": 4, "employeeNo": "25061504", "name": "최관리", "email": "admin@salesboost.com", "role": "admin", "departmentId": 5, "positionId": 1, "status": "재직", "pw": "1234" },
-    { "id": 5, "employeeNo": "25080101", "name": "정영업", "email": "jung@salesboost.com", "role": "sales", "departmentId": 2, "positionId": 2, "status": "재직", "pw": "1234" },
-    { "id": 6, "employeeNo": "25062001", "name": "한퇴사", "email": "han@salesboost.com", "role": "sales", "departmentId": 1, "positionId": 2, "status": "퇴직", "pw": "1234" }
+    {
+      "id": "1",
+      "employeeNo": "25061501",
+      "name": "김영업",
+      "email": "kim@salesboost.com",
+      "role": "sales",
+      "departmentId": 1,
+      "positionId": 1,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "2",
+      "employeeNo": "25061502",
+      "name": "이생산",
+      "email": "lee@salesboost.com",
+      "role": "production",
+      "departmentId": 3,
+      "positionId": 1,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "3",
+      "employeeNo": "25061503",
+      "name": "박출하",
+      "email": "park@salesboost.com",
+      "role": "shipping",
+      "departmentId": 4,
+      "positionId": 1,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "4",
+      "employeeNo": "25061504",
+      "name": "최관리",
+      "email": "admin@salesboost.com",
+      "role": "admin",
+      "departmentId": 5,
+      "positionId": 1,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "5",
+      "employeeNo": "25080101",
+      "name": "정영업",
+      "email": "jung@salesboost.com",
+      "role": "sales",
+      "departmentId": 2,
+      "positionId": 2,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "6",
+      "employeeNo": "25062001",
+      "name": "한퇴사",
+      "email": "han@salesboost.com",
+      "role": "sales",
+      "departmentId": 1,
+      "positionId": 2,
+      "status": "퇴직",
+      "pw": "1234"
+    }
   ],
   "company": [
-    { "id": 1, "nameEn": "HANWHA SYSTEMS Co., Ltd.", "nameKr": "한화시스템(주)", "addressEn": "188, Pangyoyeok-ro, Bundang-gu, Seongnam-si, Gyeonggi-do, Korea", "tel": "+82-31-8000-0000", "fax": "+82-31-8000-0001", "email": "export@hanwhasystems.com", "sealImageUrl": null }
-  ]
+    {
+      "id": "1",
+      "nameEn": "HANWHA SYSTEMS Co., Ltd.",
+      "nameKr": "한화시스템(주)",
+      "addressEn": "188, Pangyoyeok-ro, Bundang-gu, Seongnam-si, Gyeonggi-do, Korea",
+      "tel": "+82-31-8000-0000",
+      "fax": "+82-31-8000-0001",
+      "email": "export@hanwhasystems.com",
+      "sealImageUrl": null
+    }
+  ],
+  "activityClients": [
+    {
+      "id": "CLI001",
+      "name": "GlobalTech",
+      "nameKr": "글로벌텍",
+      "country": "USA"
+    },
+    {
+      "id": "CLI002",
+      "name": "EuroSupply",
+      "nameKr": "유로서플라이",
+      "country": "Germany"
+    },
+    {
+      "id": "CLI003",
+      "name": "AsiaConnect",
+      "nameKr": "아시아커넥트",
+      "country": "Japan"
+    }
+  ],
+  "activities": [
+    {
+      "id": "ACT-001",
+      "clientId": "CLI001",
+      "type": "미팅/협의",
+      "title": "1분기 전략 미팅",
+      "poId": "PO-2025-001",
+      "date": "2025-03-10",
+      "author": "김영업",
+      "content": "1분기 영업 전략에 대해 논의했습니다. 주요 목표 및 KPI를 설정하였으며, 다음 미팅은 4월 초로 예정되어 있습니다."
+    },
+    {
+      "id": "ACT-002",
+      "clientId": "CLI002",
+      "type": "이슈",
+      "title": "납기 지연 이슈 발생",
+      "poId": "PO-2025-002",
+      "date": "2025-03-08",
+      "author": "정영업",
+      "content": "생산 공정 문제로 인해 납기가 2주 지연될 예정입니다. 거래처에 공식 통보가 필요합니다."
+    },
+    {
+      "id": "ACT-003",
+      "clientId": "CLI003",
+      "type": "메모/노트",
+      "title": "거래처 미팅 메모",
+      "poId": "",
+      "date": "2025-03-07",
+      "author": "김영업",
+      "content": "거래처 담당자와의 미팅에서 신규 제품 라인업에 대한 관심을 보였습니다."
+    },
+    {
+      "id": "ACT-004",
+      "clientId": "CLI001",
+      "type": "코멘트",
+      "title": "제품 샘플 피드백",
+      "poId": "PO-2025-001",
+      "date": "2025-03-05",
+      "author": "정영업",
+      "content": "제품 샘플에 대한 긍정적인 피드백을 받았습니다. 색상 옵션 추가 요청이 있었습니다."
+    },
+    {
+      "id": "ACT-005",
+      "clientId": "CLI002",
+      "type": "일정",
+      "title": "2분기 미팅 일정 확정",
+      "poId": "",
+      "date": "2025-03-03",
+      "author": "김영업",
+      "content": "2분기 정기 미팅을 4월 15일로 확정하였습니다."
+    },
+    {
+      "id": "ACT-006",
+      "clientId": "CLI003",
+      "type": "미팅/협의",
+      "title": "신규 계약 협의",
+      "poId": "PO-2025-003",
+      "date": "2025-03-01",
+      "author": "정영업",
+      "content": "신규 계약에 대한 조건을 협의하였습니다. 단가 및 납기 조건을 재검토 중입니다."
+    },
+    {
+      "id": "ACT-007",
+      "clientId": "CLI001",
+      "type": "이슈",
+      "title": "품질 클레임 접수",
+      "poId": "PO-2025-001",
+      "date": "2025-02-25",
+      "author": "김영업",
+      "content": "불량 제품에 대한 클레임이 접수되었습니다. 품질팀과 협의 중입니다."
+    }
+  ],
+  "buyers": [
+    {
+      "id": "1",
+      "clientId": "CLI001",
+      "name": "James Carter",
+      "position": "Team Leader",
+      "email": "james.carter@globaltech.com",
+      "tel": "+1-212-736-3110",
+      "signImageUrl": null
+    },
+    {
+      "id": "2",
+      "clientId": "CLI001",
+      "name": "Sarah Johnson",
+      "position": "Team Member",
+      "email": "sarah.johnson@globaltech.com",
+      "tel": "+1-212-736-3111",
+      "signImageUrl": null
+    },
+    {
+      "id": "3",
+      "clientId": "CLI001",
+      "name": "Michael Brown",
+      "position": "Team Member",
+      "email": "michael.brown@globaltech.com",
+      "tel": "+1-212-736-3112",
+      "signImageUrl": null
+    },
+    {
+      "id": "4",
+      "clientId": "CLI002",
+      "name": "Hans Müller",
+      "position": "Team Leader",
+      "email": "hans.muller@eurosupply.de",
+      "tel": "+49-30-1234-5678",
+      "signImageUrl": null
+    },
+    {
+      "id": "5",
+      "clientId": "CLI002",
+      "name": "Anna Schmidt",
+      "position": "Team Member",
+      "email": "anna.schmidt@eurosupply.de",
+      "tel": "+49-30-1234-5679",
+      "signImageUrl": null
+    },
+    {
+      "id": "6",
+      "clientId": "CLI003",
+      "name": "Yuki Tanaka",
+      "position": "Team Leader",
+      "email": "yuki.tanaka@asiaconnect.jp",
+      "tel": "+81-3-1234-5678",
+      "signImageUrl": null
+    },
+    {
+      "id": "7",
+      "clientId": "CLI003",
+      "name": "Kenji Sato",
+      "position": "Team Member",
+      "email": "kenji.sato@asiaconnect.jp",
+      "tel": "+81-3-1234-5679",
+      "signImageUrl": null
+    }
+  ],
+  "activityPOs": [
+    {
+      "id": "PO-2025-001",
+      "clientId": "CLI001",
+      "title": "GlobalTech 1분기 수주",
+      "date": "2025-01-15"
+    },
+    {
+      "id": "PO-2025-002",
+      "clientId": "CLI002",
+      "title": "EuroSupply 납품 계약",
+      "date": "2025-02-01"
+    },
+    {
+      "id": "PO-2025-003",
+      "clientId": "CLI003",
+      "title": "AsiaConnect 신규 계약",
+      "date": "2025-02-15"
+    },
+    {
+      "id": "PO-2025-004",
+      "clientId": "CLI001",
+      "title": "GlobalTech 추가 발주",
+      "date": "2025-03-01"
+    },
+    {
+      "id": "PO-2025-005",
+      "clientId": "CLI002",
+      "title": "EuroSupply 2분기 계약",
+      "date": "2025-03-10"
+    },
+    {
+      "id": "PO-2025-006",
+      "clientId": "CLI003",
+      "title": "AsiaConnect 부품 발주",
+      "date": "2025-03-15"
+    }
+  ],
+  "activityEmails": [
+    {
+      "id": "1",
+      "clientId": "CLI001",
+      "client": "GlobalTech",
+      "title": "[SalesBoost] PI-2025-001 발송",
+      "recipient": "James Carter",
+      "email": "james.carter@globaltech.com",
+      "type": "PI",
+      "hasAttachment": true,
+      "status": "발송",
+      "sentAt": "2025-03-10",
+      "sender": "김영업"
+    },
+    {
+      "id": "2",
+      "clientId": "CLI002",
+      "client": "EuroSupply",
+      "title": "[SalesBoost] PO-2025-001 발송",
+      "recipient": "Hans Müller",
+      "email": "hans.muller@eurosupply.de",
+      "type": "PO",
+      "hasAttachment": true,
+      "status": "발송",
+      "sentAt": "2025-03-09",
+      "sender": "정영업"
+    },
+    {
+      "id": "3",
+      "clientId": "CLI003",
+      "client": "AsiaConnect",
+      "title": "[SalesBoost] CI-2025-001 발송",
+      "recipient": "",
+      "email": "yuki.tanaka@asiaconnect.jp",
+      "type": "CI",
+      "hasAttachment": false,
+      "status": "실패",
+      "sentAt": "2025-03-08",
+      "sender": "김영업"
+    },
+    {
+      "id": "4",
+      "clientId": "CLI001",
+      "client": "GlobalTech",
+      "title": "[SalesBoost] PL-2025-001 발송",
+      "recipient": "Sarah Johnson",
+      "email": "sarah.johnson@globaltech.com",
+      "type": "PL",
+      "hasAttachment": true,
+      "status": "발송",
+      "sentAt": "2025-03-07",
+      "sender": "정영업"
+    },
+    {
+      "id": "5",
+      "clientId": "CLI002",
+      "client": "EuroSupply",
+      "title": "[SalesBoost] PI-2025-002 발송",
+      "recipient": "Anna Schmidt",
+      "email": "anna.schmidt@eurosupply.de",
+      "type": "PI",
+      "hasAttachment": false,
+      "status": "발송",
+      "sentAt": "2025-03-06",
+      "sender": "김영업"
+    },
+    {
+      "id": "6",
+      "clientId": "CLI003",
+      "client": "AsiaConnect",
+      "title": "[SalesBoost] PO-2025-002 발송",
+      "recipient": "Kenji Sato",
+      "email": "kenji.sato@asiaconnect.jp",
+      "type": "PO",
+      "hasAttachment": true,
+      "status": "발송",
+      "sentAt": "2025-03-05",
+      "sender": "정영업"
+    },
+    {
+      "id": "7",
+      "clientId": "CLI001",
+      "client": "GlobalTech",
+      "title": "[SalesBoost] CI-2025-002 발송",
+      "recipient": "",
+      "email": "michael.brown@globaltech.com",
+      "type": "CI",
+      "hasAttachment": false,
+      "status": "발송",
+      "sentAt": "2025-03-04",
+      "sender": "김영업"
+    },
+    {
+      "id": "8",
+      "clientId": "CLI002",
+      "client": "EuroSupply",
+      "title": "[SalesBoost] PL-2025-002 발송",
+      "recipient": "Hans Müller",
+      "email": "hans.muller@eurosupply.de",
+      "type": "PL",
+      "hasAttachment": true,
+      "status": "실패",
+      "sentAt": "2025-03-03",
+      "sender": "정영업"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
 }
