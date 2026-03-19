@@ -913,7 +913,7 @@
     {
       "id": "ACT001",
       "clientId": 1,
-      "poId": "PO-2025-001",
+      "poId": "PO2025001",
       "author": "김영업",
       "date": "2025-03-10",
       "type": "미팅/협의",
@@ -923,7 +923,7 @@
     {
       "id": "ACT002",
       "clientId": 1,
-      "poId": "PO-2025-001",
+      "poId": "PO2025001",
       "author": "김영업",
       "date": "2025-03-15",
       "type": "이슈",
@@ -933,7 +933,7 @@
     {
       "id": "ACT003",
       "clientId": 1,
-      "poId": "PO-2025-002",
+      "poId": "PO2025002",
       "author": "정영업",
       "date": "2025-03-20",
       "type": "메모/노트",
@@ -943,7 +943,7 @@
     {
       "id": "ACT004",
       "clientId": 2,
-      "poId": "PO-2025-003",
+      "poId": "PO2025003",
       "author": "김영업",
       "date": "2025-02-28",
       "type": "미팅/협의",
@@ -953,7 +953,7 @@
     {
       "id": "ACT005",
       "clientId": 2,
-      "poId": "PO-2025-003",
+      "poId": "PO2025003",
       "author": "정영업",
       "date": "2025-03-05",
       "type": "코멘트",
@@ -963,7 +963,7 @@
     {
       "id": "ACT006",
       "clientId": 3,
-      "poId": "PO-2025-004",
+      "poId": "PO2025004",
       "author": "김영업",
       "date": "2025-03-01",
       "type": "일정",
@@ -973,7 +973,7 @@
     {
       "id": "ACT007",
       "clientId": 3,
-      "poId": "PO-2025-005",
+      "poId": "PO2025005",
       "author": "정영업",
       "date": "2025-03-18",
       "type": "이슈",
@@ -998,42 +998,42 @@
   ],
   "activityPOs": [
     {
-      "id": "PO-2025-001",
+      "id": "PO2025001",
       "clientId": 1,
       "title": "열연강판 공급 계약 1차",
       "date": "2025-02-15",
       "userId": 1
     },
     {
-      "id": "PO-2025-002",
+      "id": "PO2025002",
       "clientId": 1,
       "title": "냉연강판 공급 계약",
       "date": "2025-03-01",
       "userId": 5
     },
     {
-      "id": "PO-2025-003",
+      "id": "PO2025003",
       "clientId": 2,
       "title": "스테인리스 봉강 공급",
       "date": "2025-02-20",
       "userId": 1
     },
     {
-      "id": "PO-2025-004",
+      "id": "PO2025004",
       "clientId": 3,
       "title": "무봉강관 2분기 공급",
       "date": "2025-02-28",
       "userId": 1
     },
     {
-      "id": "PO-2025-005",
+      "id": "PO2025005",
       "clientId": 3,
       "title": "유압프레스 납품",
       "date": "2025-03-10",
       "userId": 5
     },
     {
-      "id": "PO-2025-006",
+      "id": "PO2025006",
       "clientId": 2,
       "title": "ERW 강관 추가 발주",
       "date": "2025-03-15",
@@ -1049,6 +1049,7 @@
       "email": "james.carter@globalsteel.com",
       "type": "PI",
       "hasAttachment": true,
+      "poId": "PO2025001",
       "status": "발송",
       "sentAt": "2025-03-10",
       "sender": "김영업"
@@ -1056,11 +1057,12 @@
     {
       "id": "2",
       "client": "Hamburg Metal GmbH",
-      "title": "[SalesBoost] PO-2025-001 발송",
+      "title": "[SalesBoost] PO2025003 발송",
       "recipient": "Hans Müller",
       "email": "hans.muller@hamburgmetal.de",
       "type": "PO",
       "hasAttachment": true,
+      "poId": "PO2025003",
       "status": "발송",
       "sentAt": "2025-03-09",
       "sender": "정영업"
@@ -1073,6 +1075,7 @@
       "email": "yuki.tanaka@tokyotrading.jp",
       "type": "CI",
       "hasAttachment": false,
+      "poId": null,
       "status": "실패",
       "sentAt": "2025-03-08",
       "sender": "김영업"
@@ -1085,6 +1088,7 @@
       "email": "sarah.johnson@globalsteel.com",
       "type": "PL",
       "hasAttachment": true,
+      "poId": "PO2025002",
       "status": "발송",
       "sentAt": "2025-03-07",
       "sender": "정영업"
@@ -1097,6 +1101,7 @@
       "email": "anna.schmidt@hamburgmetal.de",
       "type": "PI",
       "hasAttachment": false,
+      "poId": null,
       "status": "발송",
       "sentAt": "2025-03-06",
       "sender": "김영업"
@@ -1104,11 +1109,12 @@
     {
       "id": "6",
       "client": "Tokyo Trading Co.",
-      "title": "[SalesBoost] PO-2025-002 발송",
+      "title": "[SalesBoost] PO2025004 발송",
       "recipient": "Kenji Sato",
       "email": "kenji.sato@tokyotrading.jp",
       "type": "PO",
       "hasAttachment": true,
+      "poId": "PO2025004",
       "status": "발송",
       "sentAt": "2025-03-05",
       "sender": "정영업"
@@ -1121,6 +1127,7 @@
       "email": "michael.brown@globalsteel.com",
       "type": "CI",
       "hasAttachment": false,
+      "poId": null,
       "status": "발송",
       "sentAt": "2025-03-04",
       "sender": "김영업"
@@ -1133,6 +1140,7 @@
       "email": "hans.muller@hamburgmetal.de",
       "type": "PL",
       "hasAttachment": true,
+      "poId": "PO2025003",
       "status": "실패",
       "sentAt": "2025-03-03",
       "sender": "정영업"
