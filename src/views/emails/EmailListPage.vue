@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { fetchActivityEmails } from '@/api/emails'
+import { useToast } from '@/composables/useToast'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
@@ -10,9 +11,11 @@ import DateRangeField from '@/components/common/DateRangeField.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
 import InfoField from '@/components/common/InfoField.vue'
-import PageTitleBar from '@/components/layout/PageTitleBar.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+
+const { error } = useToast()
 
 // ── 데이터 ─────────────────────────────────────────────────
 const emails = ref([])
@@ -22,6 +25,7 @@ onMounted(async () => {
     emails.value = await fetchActivityEmails()
   } catch (e) {
     console.error('메일 이력 로드 실패', e)
+    error('데이터를 불러오지 못했습니다. 페이지를 새로고침해주세요.')
   }
 })
 
@@ -120,7 +124,7 @@ const columns = [
 <template>
   <div class="space-y-4">
     <!-- 페이지 타이틀 -->
-    <PageTitleBar title="메일 이력" description="발송된 메일 이력을 조회합니다." />
+    <PageHeader title="메일 이력" icon-class="fas fa-envelope" />
 
     <!-- 키워드 검색 + 상세검색 토글 -->
     <FilterToolbarCard
@@ -186,7 +190,7 @@ const columns = [
       <!-- 항목 번호 -->
       <template #cell-index="{ row }">
         <span class="text-xs font-medium text-slate-500">
-          {{ emails.findIndex((e) => e.id === row.id) + 1 }}
+          {{ filteredEmails.findIndex((e) => e.id === row.id) + 1 }}
         </span>
       </template>
 

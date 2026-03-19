@@ -10,17 +10,16 @@ import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTextarea from '@/components/common/BaseTextarea.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import DateField from '@/components/common/DateField.vue'
-import PageTitleBar from '@/components/layout/PageTitleBar.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
-import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
-
-const { success, error: showError } = useToast()
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { warning, error } = useToast()
 
 // ── state ──────────────────────────────────────────────────
+const isSubmitting = ref(false)
 const formClient = ref('')
 const formType = ref('')
 const formPoDisplay = ref('')
@@ -30,6 +29,7 @@ const formPriority = ref('medium')
 const formTitle = ref('')
 const formContent = ref('')
 const formAuthor = ref('')
+const errors = ref({})
 
 // ── options ────────────────────────────────────────────────
 const clientOptions = ref([])
@@ -81,7 +81,7 @@ const filteredPoList = computed(() => {
 
 async function openPoSearch() {
   if (!formClient.value) {
-    showError('거래처를 먼저 선택해주세요.')
+    warning('거래처를 먼저 선택해주세요.')
     return
   }
   try {
@@ -106,11 +106,23 @@ function clearPo() {
   formAuthor.value = ''
 }
 
+function validate() {
+  const e = {}
+  if (!formClient.value)  e.client = '거래처 값이 누락되었습니다.'
+  if (!formType.value)    e.type   = '유형 값이 누락되었습니다.'
+  if (!formDate.value)    e.date   = '날짜 값이 누락되었습니다.'
+  if (!formTitle.value.trim())  e.title  = '제목 값이 누락되었습니다.'
+  if (!formAuthor.value.trim()) e.author = '작성자 값이 누락되었습니다.'
+  errors.value = e
+  return Object.keys(e).length === 0
+}
+
 async function handleSubmit() {
-  if (!formClient.value || !formType.value || !formDate.value || !formTitle.value || !formAuthor.value) {
-    showError('거래처, 유형, 날짜, 제목, 작성자는 필수 항목입니다.')
+  if (!validate()) {
+    warning('입력 내용을 확인해주세요.')
     return
   }
+  isSubmitting.value = true
   try {
     await createActivity({
       clientId: formClient.value,
@@ -125,7 +137,9 @@ async function handleSubmit() {
     router.push('/activities')
   } catch (e) {
     console.error('기록 등록 실패', e)
-    showError('기록 등록에 실패했습니다. 다시 시도해주세요.')
+    error('기록 등록에 실패했습니다. 다시 시도해주세요.')
+  } finally {
+    isSubmitting.value = false
   }
 }
 </script>
@@ -133,7 +147,7 @@ async function handleSubmit() {
 <template>
   <div class="space-y-4">
     <!-- 페이지 타이틀 -->
-    <PageTitleBar title="기록 등록" description="새로운 활동 기록을 등록합니다.">
+    <PageHeader title="기록 등록" icon-class="fas fa-list-check">
       <template #actions>
         <BaseButton variant="secondary" @click="router.push('/activities')">
           <template #leading>
@@ -144,7 +158,7 @@ async function handleSubmit() {
           목록으로
         </BaseButton>
       </template>
-    </PageTitleBar>
+    </PageHeader>
 
     <!-- 등록 폼 -->
     <BaseCard title="기록 정보" subtitle="* 표시 항목은 필수 입력입니다.">
@@ -161,6 +175,7 @@ async function handleSubmit() {
               :options="clientOptions"
               placeholder="거래처 검색/선택..."
             />
+            <p v-if="errors.client" class="mt-1 text-xs text-red-500">{{ errors.client }}</p>
           </div>
           <div class="space-y-1.5">
             <p class="text-sm font-semibold text-slate-700">
@@ -171,6 +186,7 @@ async function handleSubmit() {
               :options="typeOptions"
               placeholder="유형 선택"
             />
+            <p v-if="errors.type" class="mt-1 text-xs text-red-500">{{ errors.type }}</p>
           </div>
         </div>
 
@@ -178,14 +194,20 @@ async function handleSubmit() {
         <div class="space-y-1.5">
           <p class="text-sm font-semibold text-slate-700">수주건</p>
           <div class="flex items-center gap-2">
-            <div class="flex-1">
-              <SearchTriggerField
-                v-model="formPoDisplay"
-                placeholder="PO 검색 버튼으로 선택"
-                title="PO 검색"
-                @trigger="openPoSearch"
-              />
-            </div>
+            <BaseTextField
+              v-model="formPoDisplay"
+              placeholder="수주건을 선택하세요 (PO 검색 클릭)"
+              :readonly="true"
+              class="flex-1"
+            />
+            <BaseButton variant="ghost" @click="openPoSearch">
+              <template #leading>
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 3.473 9.766l3.63 3.63a.75.75 0 1 0 1.06-1.06l-3.63-3.63A5.5 5.5 0 0 0 9 3.5ZM5 9a4 4 0 1 1 8 0 4 4 0 0 1-8 0Z" clip-rule="evenodd" />
+                </svg>
+              </template>
+              PO 검색
+            </BaseButton>
             <BaseButton variant="secondary" @click="clearPo">
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
@@ -201,6 +223,7 @@ async function handleSubmit() {
               날짜 <span class="text-red-500">*</span>
             </p>
             <DateField v-model="formDate" />
+            <p v-if="errors.date" class="mt-1 text-xs text-red-500">{{ errors.date }}</p>
           </div>
           <div class="space-y-1.5">
             <p class="text-sm font-semibold text-slate-700">
@@ -212,6 +235,7 @@ async function handleSubmit() {
               :readonly="isAuthorLocked"
               :class="isAuthorLocked ? 'cursor-not-allowed bg-slate-50 text-slate-500' : ''"
             />
+            <p v-if="errors.author" class="mt-1 text-xs text-red-500">{{ errors.author }}</p>
           </div>
         </div>
 
@@ -227,6 +251,7 @@ async function handleSubmit() {
             제목 <span class="text-red-500">*</span>
           </p>
           <BaseTextField v-model="formTitle" placeholder="활동 제목을 입력하세요" />
+          <p v-if="errors.title" class="mt-1 text-xs text-red-500">{{ errors.title }}</p>
         </div>
 
         <!-- 5행: 내용 -->
@@ -241,7 +266,7 @@ async function handleSubmit() {
 
         <!-- 저장 버튼 -->
         <div class="pt-2">
-          <BaseButton @click="handleSubmit">
+          <BaseButton :disabled="isSubmitting" @click="handleSubmit">
             <template #leading>
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />

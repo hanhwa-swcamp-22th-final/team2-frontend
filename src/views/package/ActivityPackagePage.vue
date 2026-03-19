@@ -8,7 +8,7 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import DateRangeField from '@/components/common/DateRangeField.vue'
-import PageTitleBar from '@/components/layout/PageTitleBar.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 
 const router = useRouter()
@@ -61,8 +61,8 @@ function clearPo() {
 // ── 패키지 생성 폼 상태 ────────────────────────────────────
 const keyword     = ref('')
 const poDisplay   = ref('')
-const dateFrom    = ref('2025-01-01')
-const dateTo      = ref('2025-03-19')
+const dateFrom    = ref(`${new Date().getFullYear()}-01-01`)
+const dateTo      = ref(new Date().toISOString().slice(0, 10))
 
 const includes = ref({
   meetings:    true,
@@ -281,7 +281,7 @@ function generatePdf() {
 <template>
   <div class="space-y-6">
     <!-- 페이지 타이틀 -->
-    <PageTitleBar title="활동기록 패키지" description="활동기록을 PDF 패키지로 생성합니다.">
+    <PageHeader title="활동기록 패키지" icon-class="fas fa-cube">
       <template #actions>
         <BaseButton variant="secondary" @click="router.push('/activities')">
           <template #leading>
@@ -292,7 +292,7 @@ function generatePdf() {
           기록 관리
         </BaseButton>
       </template>
-    </PageTitleBar>
+    </PageHeader>
 
     <!-- 본문 2컬럼 그리드 -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">

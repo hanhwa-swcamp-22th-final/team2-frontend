@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchActivities, fetchActivityClients, deleteActivity, updateActivity } from '@/api/activity'
+import { useToast } from '@/composables/useToast'
 import ActivityDetailModal from '@/components/domain/activity/ActivityDetailModal.vue'
 import ActivityEditModal from '@/components/domain/activity/ActivityEditModal.vue'
 import ActivityTypeBadge from '@/components/domain/activity/ActivityTypeBadge.vue'
@@ -13,15 +14,13 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DateRangeField from '@/components/common/DateRangeField.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
-import PageTitleBar from '@/components/layout/PageTitleBar.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 
-import { useToast } from '@/composables/useToast'
-
 const router = useRouter()
-const { error: showError } = useToast()
+const { error } = useToast()
 
 // ── 필터 상태 ──────────────────────────────────────────────
 const isFilterOpen = ref(false)
@@ -87,6 +86,7 @@ onMounted(async () => {
     clients.value = clientData
   } catch (e) {
     console.error('데이터 로드 실패', e)
+    error('데이터를 불러오지 못했습니다. 페이지를 새로고침해주세요.')
   }
 })
 
@@ -120,17 +120,6 @@ const paginatedActivities = computed(() => {
 
 // 필터 변경 시 첫 페이지로 리셋
 watch(filteredActivities, () => { currentPage.value = 1 })
-
-// ── 체크박스 ───────────────────────────────────────────────
-const selectedIds = ref([])
-
-function toggleRow(id) {
-  if (selectedIds.value.includes(id)) {
-    selectedIds.value = selectedIds.value.filter((v) => v !== id)
-  } else {
-    selectedIds.value = [...selectedIds.value, id]
-  }
-}
 
 // ── 상세 모달 ──────────────────────────────────────────────
 const selectedActivity = ref(null)
@@ -168,7 +157,7 @@ async function handleSave(updated) {
     closeEdit()
   } catch (e) {
     console.error('기록 수정 실패', e)
-    showError('기록 수정에 실패했습니다. 다시 시도해주세요.')
+    error('기록 수정에 실패했습니다. 다시 시도해주세요.')
   }
 }
 
@@ -187,33 +176,34 @@ function closeDelete() {
 }
 
 async function handleDelete() {
+  const targetId = deleteTarget.value?.id
+  if (!targetId) return
   try {
-    await deleteActivity(deleteTarget.value.id)
-    activities.value = activities.value.filter((a) => a.id !== deleteTarget.value.id)
+    await deleteActivity(targetId)
+    activities.value = activities.value.filter((a) => a.id !== targetId)
     closeDelete()
   } catch (e) {
     console.error('기록 삭제 실패', e)
-    showError('기록 삭제에 실패했습니다. 다시 시도해주세요.')
+    error('기록 삭제에 실패했습니다. 다시 시도해주세요.')
   }
 }
 
 // ── 테이블 컬럼 ────────────────────────────────────────────
 const columns = [
-  { key: 'checkbox', label: '', width: '48px', align: 'center' },
   { key: 'index', label: '항목', width: '64px', align: 'center' },
   { key: 'type', label: '유형', width: '120px' },
-  { key: 'title', label: '제목' },
-  { key: 'poId', label: 'PO', width: '130px' },
+  { key: 'title', label: '제목', width: '302px' },
+  { key: 'poId', label: 'PO', width: '130px', align: 'center' },
   { key: 'date', label: '날짜', width: '110px', align: 'center' },
-  { key: 'author', label: '작성자', width: '100px', align: 'center' },
-  { key: 'actions', label: '작업', width: '80px', align: 'center' },
+  { key: 'author', label: '작성자', width: '100px' },
+  { key: 'actions', label: '작업', width: '70px', align: 'center' },
 ]
 </script>
 
 <template>
   <div class="space-y-4">
     <!-- 페이지 타이틀 -->
-    <PageTitleBar title="기록 관리" description="활동 기록을 조회하고 관리합니다.">
+    <PageHeader title="기록 관리" icon-class="fas fa-list-check">
       <template #actions>
         <BaseButton @click="router.push('/activities/manage')">
           <template #leading>
@@ -224,7 +214,7 @@ const columns = [
           기록 등록
         </BaseButton>
       </template>
-    </PageTitleBar>
+    </PageHeader>
 
     <!-- 키워드 검색 + 상세검색 토글 -->
     <FilterToolbarCard
@@ -286,18 +276,7 @@ const columns = [
 
     <!-- 테이블 -->
     <div>
-      <BaseTable :columns="columns" :rows="paginatedActivities" row-key="id">
-        <!-- 체크박스 셀 -->
-        <template #cell-checkbox="{ row }">
-          <input
-            type="checkbox"
-            class="rounded border-slate-300 text-brand-500 focus:ring-brand-500"
-            :checked="selectedIds.includes(row.id)"
-            @change="toggleRow(row.id)"
-            @click.stop
-          />
-        </template>
-
+      <BaseTable :columns="columns" :rows="paginatedActivities" row-key="id" class="cursor-pointer" @row-click="openDetail">
         <!-- 항목 번호 -->
         <template #cell-index="{ row }">
           <span class="text-xs font-medium text-slate-500">
@@ -310,29 +289,22 @@ const columns = [
           <ActivityTypeBadge :value="row.type" />
         </template>
 
-        <!-- 제목 (클릭 시 상세 모달) -->
+        <!-- 제목 -->
         <template #cell-title="{ row }">
-          <button
-            type="button"
-            class="text-left font-medium text-slate-800 transition hover:text-brand-600"
-            @click="openDetail(row)"
-          >
-            {{ row.title }}
-          </button>
+          <span class="font-medium text-slate-800">{{ row.title }}</span>
         </template>
 
         <!-- 작업 버튼 -->
         <template #cell-actions="{ row }">
-          <TableActions @edit="openEdit(row)" @delete="openDelete(row)" />
+          <div @click.stop>
+            <TableActions @edit="openEdit(row)" @delete="openDelete(row)" />
+          </div>
         </template>
       </BaseTable>
 
       <!-- 하단 카운트 + 페이지네이션 -->
-      <div class="mt-2 flex items-center justify-between px-1 text-xs text-slate-500">
+      <div class="mt-2 px-1 text-xs text-slate-500">
         <span>총 {{ filteredActivities.length }}건</span>
-        <span v-if="selectedIds.length > 0" class="font-medium text-brand-600">
-          {{ selectedIds.length }}건 선택됨
-        </span>
       </div>
       <div class="mt-4">
         <BasePagination
