@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 import ItemFormModal from '@/components/domain/master/ItemFormModal.vue'
 import { deleteItem, fetchItem, fetchItems, updateItem } from '@/api/master'
 import { useToast } from '@/composables/useToast'
@@ -73,12 +74,13 @@ function openEditModal() {
 }
 
 async function handleSave(formData) {
+  if (saving.value) return
   saving.value = true
   try {
-    const updated = await updateItem(item.value.id, formData)
-    item.value = updated
+    await updateItem(item.value.id, formData)
     success('품목 정보가 수정되었습니다.')
     showFormModal.value = false
+    await loadData()
   } catch {
     error('수정 중 오류가 발생했습니다.')
   } finally {
@@ -86,8 +88,11 @@ async function handleSave(formData) {
   }
 }
 
+const deleting = ref(false)
+
 async function handleDelete() {
-  if (!item.value) return
+  if (!item.value || deleting.value) return
+  deleting.value = true
   const name = item.value.name
   try {
     await deleteItem(item.value.id)
@@ -97,6 +102,7 @@ async function handleDelete() {
     error('삭제 중 오류가 발생했습니다.')
   } finally {
     showConfirmModal.value = false
+    deleting.value = false
   }
 }
 
@@ -121,12 +127,7 @@ function goBack() {
           </svg>
         </button>
         <h1 class="text-2xl font-bold tracking-tight text-ink">{{ item.name }}</h1>
-        <span
-          class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-          :class="item.status === '활성' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'"
-        >
-          {{ item.status }}
-        </span>
+        <StatusBadge :value="item.status" />
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <BaseButton variant="secondary" size="sm" @click="openEditModal">수정</BaseButton>

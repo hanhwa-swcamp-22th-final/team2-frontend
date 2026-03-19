@@ -122,13 +122,17 @@ function validate() {
 
   if (form.value.unitPrice === '' || form.value.unitPrice === null || form.value.unitPrice === undefined) {
     e.unitPrice = '단가를 입력하세요.'
-  } else if (Number(form.value.unitPrice) <= 0) {
-    e.unitPrice = '단가는 0보다 커야 합니다.'
+  } else {
+    const price = Number(form.value.unitPrice)
+    if (Number.isNaN(price) || price <= 0) {
+      e.unitPrice = '단가는 유효한 양수를 입력하세요.'
+    }
   }
 
   if (form.value.weight !== '' && form.value.weight !== null && form.value.weight !== undefined) {
-    if (Number(form.value.weight) < 0) {
-      e.weight = '중량은 0 이상이어야 합니다.'
+    const w = Number(form.value.weight)
+    if (Number.isNaN(w) || w < 0) {
+      e.weight = '중량은 0 이상의 유효한 숫자를 입력하세요.'
     }
   }
 

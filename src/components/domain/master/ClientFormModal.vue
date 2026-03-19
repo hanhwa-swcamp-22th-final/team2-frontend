@@ -41,6 +41,11 @@ const currencyOptions = computed(() =>
   props.currencies.map((c) => ({ label: `${c.code} (${c.symbol})`, value: c.id })),
 )
 
+const statusOptions = [
+  { label: '활성', value: '활성' },
+  { label: '비활성', value: '비활성' },
+]
+
 function getInitialForm() {
   return {
     code: '',
@@ -195,7 +200,7 @@ function handleSave() {
         <FormField label="상태">
           <BaseSelect
             v-model="form.status"
-            :options="[{ label: '활성', value: '활성' }, { label: '비활성', value: '비활성' }]"
+            :options="statusOptions"
             placeholder="상태를 선택하세요"
           />
         </FormField>

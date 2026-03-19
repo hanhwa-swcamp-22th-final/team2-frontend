@@ -126,12 +126,13 @@ function openEditModal() {
 }
 
 async function handleSave(formData) {
+  if (saving.value) return
   saving.value = true
   try {
-    const updated = await updateClient(client.value.id, formData)
-    client.value = updated
+    await updateClient(client.value.id, formData)
     success('거래처 정보가 수정되었습니다.')
     showFormModal.value = false
+    await loadData()
   } catch {
     error('수정 중 오류가 발생했습니다.')
   } finally {
@@ -139,8 +140,11 @@ async function handleSave(formData) {
   }
 }
 
+const deleting = ref(false)
+
 async function handleDelete() {
-  if (!client.value) return
+  if (!client.value || deleting.value) return
+  deleting.value = true
   const name = client.value.name
   try {
     await deleteClient(client.value.id)
@@ -150,6 +154,7 @@ async function handleDelete() {
     error('삭제 중 오류가 발생했습니다.')
   } finally {
     showConfirmModal.value = false
+    deleting.value = false
   }
 }
 

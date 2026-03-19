@@ -6,6 +6,7 @@ import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import SearchInput from '@/components/common/SearchInput.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import PageTitleBar from '@/components/layout/PageTitleBar.vue'
 import ItemFormModal from '@/components/domain/master/ItemFormModal.vue'
@@ -200,12 +201,7 @@ function handleRowClick(event) {
       </template>
 
       <template #cell-status="{ row }">
-        <span
-          class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-          :class="row.status === '활성' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'"
-        >
-          {{ row.status }}
-        </span>
+        <StatusBadge :value="row.status" />
       </template>
 
       <template #cell-actions="{ row }">
