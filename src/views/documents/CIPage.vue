@@ -9,8 +9,10 @@ import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
+import CIDocumentTemplate from '@/components/domain/document/CIDocumentTemplate.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
+import { openDocumentOutputByType } from '@/utils/documentOutput'
 
 const isAdvancedOpen = ref(true)
 const previewTarget = ref(null)
@@ -109,19 +111,47 @@ const filteredRows = computed(() => {
   })
 })
 
-const previewFields = computed(() => {
-  if (!previewTarget.value) {
-    return []
+/**
+ * 목록 row 데이터를 CI 문서 템플릿이 필요로 하는 구조로 변환합니다.
+ * 왜 이렇게 하는가?
+ *   → 목록에는 요약 정보만 있으므로, 템플릿이 필요로 하는 items 배열 등을
+ *     단일 품목 기준으로 구성하여 양식이 렌더링될 수 있게 합니다.
+ */
+const previewDoc = computed(() => {
+  if (!previewTarget.value) return null
+  const row = previewTarget.value
+  return {
+    id: row.id,
+    issueDate: row.invoiceDate,
+    clientName: row.clientName,
+    buyer: '',
+    country: row.country,
+    currency: 'USD',
+    incoterms: 'FOB BUSAN',
+    deliveryDate: '',
+    portOfDischarge: '',
+    carrier: '',
+    totalAmount: row.amount?.replace(/[^0-9.,]/g, '') || '-',
+    items: [
+      {
+        name: row.itemName,
+        quantity: '-',
+        unitPrice: '-',
+        amount: row.amount?.replace(/[^0-9.,]/g, '') || '-',
+      },
+    ],
   }
-
-  return [
-    { label: '발행일', value: previewTarget.value.invoiceDate },
-    { label: '거래처', value: previewTarget.value.clientName },
-    { label: '국가', value: previewTarget.value.country },
-    { label: '품목명', value: previewTarget.value.itemName },
-    { label: '총액', value: previewTarget.value.amount },
-  ]
 })
+
+/**
+ * 미리보기 모달에서 인쇄 버튼 클릭 시 호출.
+ * documentOutput.js의 CI 빌더를 사용하여 새 창에 양식을 띄우고 인쇄합니다.
+ */
+function handlePrint() {
+  if (previewDoc.value) {
+    openDocumentOutputByType('CI', previewDoc.value, true)
+  }
+}
 
 function resetFilters() {
   filters.value = {
@@ -271,12 +301,15 @@ function closePreview() {
       </template>
     </BaseTable>
 
+    <!-- CI 문서 양식 미리보기 모달 (slot 모드) -->
     <DocumentPreviewModal
       :open="Boolean(previewTarget)"
       title="CI 미리보기"
-      :document-title="previewTarget?.id"
-      :fields="previewFields"
+      preview-background="white"
       @close="closePreview"
-    />
+      @print="handlePrint"
+    >
+      <CIDocumentTemplate v-if="previewDoc" :document="previewDoc" />
+    </DocumentPreviewModal>
   </div>
 </template>
