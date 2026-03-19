@@ -105,31 +105,37 @@ onMounted(async () => {
     </div>
   </aside>
 
+  <!-- 데스크톱: 토글 핸들 (aside 바깥, overflow-hidden에 잘리지 않도록) -->
+  <button
+    v-if="uiStore.isDesktop"
+    type="button"
+    class="fixed z-40 flex h-16 w-3 items-center justify-center rounded-r-md border border-l-0 border-slate-300 bg-slate-200 text-slate-500 transition-all duration-200 hover:bg-brand-100 hover:text-brand-600"
+    :style="{ left: uiStore.sidebarOpen ? 'calc(0.75rem + 220px)' : 'calc(0.75rem + 56px)', top: '50%', transform: 'translateY(-50%)' }"
+    :aria-label="uiStore.sidebarOpen ? '사이드바 접기' : '사이드바 펼치기'"
+    @click="uiStore.toggleSidebar"
+  >
+    <i
+      class="fas text-[8px] transition-transform duration-200"
+      :class="uiStore.sidebarOpen ? 'fa-chevron-left' : 'fa-chevron-right'"
+      aria-hidden="true"
+    ></i>
+  </button>
+
   <!-- 데스크톱: 접힘/펼침 방식 -->
   <aside
-    v-else
-    class="fixed inset-y-3 left-3 z-30 flex flex-col overflow-visible rounded-lg border border-slate-200 bg-white shadow-sm transition-all duration-200"
+    v-if="uiStore.isDesktop"
+    class="fixed inset-y-3 left-3 z-30 flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all duration-200"
     :class="uiStore.sidebarOpen ? 'w-[220px]' : 'w-[56px]'"
   >
-    <!-- 토글 핸들 -->
-    <button
-      type="button"
-      class="absolute -right-3 top-1/2 z-40 flex h-16 w-3 -translate-y-1/2 items-center justify-center rounded-r-md border border-l-0 border-slate-300 bg-slate-200 text-slate-500 transition-colors duration-200 hover:bg-brand-100 hover:text-brand-600"
-      :aria-label="uiStore.sidebarOpen ? '사이드바 접기' : '사이드바 펼치기'"
-      @click="uiStore.toggleSidebar"
-    >
-      <i
-        class="fas text-[8px] transition-transform duration-200"
-        :class="uiStore.sidebarOpen ? 'fa-chevron-left' : 'fa-chevron-right'"
-        aria-hidden="true"
-      ></i>
-    </button>
 
     <!-- 로고 영역 -->
-    <div class="flex h-[77px] flex-shrink-0 items-center border-b border-slate-200 px-4">
-      <RouterLink to="/" class="flex items-center gap-3">
-        <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm">
-          <img src="/salesboost.svg" alt="SalesBoost" class="h-9 w-9 object-contain" />
+    <div
+      class="flex h-[77px] flex-shrink-0 items-center border-b border-slate-200"
+      :class="uiStore.sidebarOpen ? 'px-4' : 'justify-center px-0'"
+    >
+      <RouterLink to="/" class="flex items-center gap-3" :class="{ 'justify-center': !uiStore.sidebarOpen }">
+        <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg">
+          <img src="/salesboost.svg" alt="SalesBoost" class="h-8 w-8 object-contain" />
         </div>
         <div v-if="uiStore.sidebarOpen" class="min-w-0">
           <h1 class="truncate text-lg font-bold text-slate-900">SalesBoost</h1>
@@ -139,7 +145,7 @@ onMounted(async () => {
     </div>
 
     <!-- 네비게이션 -->
-    <nav class="flex-1 overflow-y-auto py-4" :class="uiStore.sidebarOpen ? 'space-y-5 px-3' : 'space-y-2 px-1.5'">
+    <nav class="flex-1 overflow-x-hidden overflow-y-auto py-4" :class="uiStore.sidebarOpen ? 'space-y-5 px-3' : 'space-y-2 px-1.5'">
       <section
         v-for="section in groupedNavigationItems"
         :key="section.key"
@@ -163,15 +169,15 @@ onMounted(async () => {
           :class="[
             uiStore.sidebarOpen
               ? 'mx-1 gap-3 px-4 py-2.5 text-[12.5px]'
-              : 'mx-auto h-9 w-9 justify-center',
+              : 'mx-auto h-10 w-10 justify-center',
             isActive(item.path)
               ? 'bg-slate-50 text-slate-900'
               : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
           ]"
         >
           <i
-            class="fas flex-shrink-0 text-center text-[13px]"
-            :class="[item.icon, isActive(item.path) ? 'text-brand' : 'text-slate-400', uiStore.sidebarOpen ? 'w-4' : 'w-full']"
+            class="fas flex-shrink-0 text-center"
+            :class="[item.icon, isActive(item.path) ? 'text-brand' : 'text-slate-400', uiStore.sidebarOpen ? 'w-4 text-[13px]' : 'w-full text-[16px]']"
           />
           <span v-if="uiStore.sidebarOpen" class="font-medium">{{ item.label }}</span>
         </RouterLink>
@@ -179,7 +185,7 @@ onMounted(async () => {
     </nav>
 
     <!-- 하단 상태 -->
-    <div class="border-t border-slate-100 px-4 py-3">
+    <div class="border-t border-slate-100 py-3" :class="uiStore.sidebarOpen ? 'px-4' : 'px-0'">
       <div class="flex items-center gap-2 text-xs font-medium text-slate-400" :class="{ 'justify-center': !uiStore.sidebarOpen }">
         <span class="inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-400"></span>
         <span v-if="uiStore.sidebarOpen">운영 준비 완료</span>

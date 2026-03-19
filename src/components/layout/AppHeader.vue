@@ -106,7 +106,7 @@ onBeforeUnmount(() => {
     <div class="min-w-0 flex items-center gap-3">
       <button
         type="button"
-        class="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-slate-700"
+        class="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-slate-700 lg:hidden"
         @click="uiStore.toggleSidebar"
       >
         <span class="sr-only">사이드바 토글</span>
