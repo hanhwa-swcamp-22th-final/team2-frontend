@@ -399,12 +399,6 @@
   ],
   "ports": [
     {
-      "id": "1",
-      "code": "KRPUS",
-      "name": "Busan",
-      "countryId": 9
-    },
-    {
       "id": "2",
       "code": "CNSHA",
       "name": "Shanghai",
@@ -500,31 +494,43 @@
       "id": "1",
       "code": "USD",
       "name": "US Dollar",
-      "symbol": "$"
+      "symbol": "$",
+      "countryIds": [1, 7, 8, 9, 10, 12, 13]
     },
     {
       "id": "2",
       "code": "EUR",
       "name": "Euro",
-      "symbol": "€"
+      "symbol": "€",
+      "countryIds": [2, 6, 11]
     },
     {
       "id": "3",
       "code": "JPY",
       "name": "Japanese Yen",
-      "symbol": "¥"
+      "symbol": "¥",
+      "countryIds": [3]
     },
     {
       "id": "4",
       "code": "CNY",
       "name": "Chinese Yuan",
-      "symbol": "¥"
+      "symbol": "¥",
+      "countryIds": [4]
     },
     {
       "id": "5",
       "code": "KRW",
       "name": "Korean Won",
-      "symbol": "₩"
+      "symbol": "₩",
+      "countryIds": []
+    },
+    {
+      "id": "6",
+      "code": "GBP",
+      "name": "British Pound",
+      "symbol": "£",
+      "countryIds": [5]
     }
   ],
   "paymentTerms": [
@@ -567,7 +573,7 @@
       "nameKr": "글로벌 스틸",
       "countryId": 1,
       "city": "Houston",
-      "portId": 3,
+      "portId": 13,
       "address": "1234 Industrial Blvd, Houston, TX",
       "tel": "+1-713-555-0101",
       "email": "contact@globalsteel.com",
@@ -640,7 +646,7 @@
       "tel": "+44-20-555-0505",
       "email": "metals@londonmetals.co.uk",
       "paymentTermsId": 2,
-      "currencyId": 1,
+      "currencyId": 6,
       "manager": "James Brown",
       "status": "비활성",
       "regDate": "2025-04-01"

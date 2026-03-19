@@ -29,17 +29,25 @@ const countryOptions = computed(() =>
   props.countries.map((c) => ({ label: `${c.nameKr} (${c.name})`, value: c.id })),
 )
 
-const portOptions = computed(() =>
-  props.ports.map((p) => ({ label: p.name, value: p.id })),
-)
+const portOptions = computed(() => {
+  if (!form.value.countryId) return []
+  const cid = String(form.value.countryId)
+  return props.ports
+    .filter((p) => String(p.countryId) === cid)
+    .map((p) => ({ label: p.name, value: p.id }))
+})
 
 const paymentTermsOptions = computed(() =>
   props.paymentTerms.map((p) => ({ label: `${p.code} (${p.description})`, value: p.id })),
 )
 
-const currencyOptions = computed(() =>
-  props.currencies.map((c) => ({ label: `${c.code} (${c.symbol})`, value: c.id })),
-)
+const currencyOptions = computed(() => {
+  if (!form.value.countryId) return []
+  const cid = Number(form.value.countryId)
+  return props.currencies
+    .filter((c) => c.countryIds?.includes(cid))
+    .map((c) => ({ label: `${c.code} (${c.symbol})`, value: c.id }))
+})
 
 const statusOptions = [
   { label: '활성', value: '활성' },
@@ -100,6 +108,20 @@ watch(
       form.value = getInitialForm()
       form.value.code = generateNextCode()
     }
+  },
+)
+
+watch(
+  () => form.value.countryId,
+  (newId, oldId) => {
+    if (oldId == null || newId === oldId) return
+    // 국가 변경 시 해당 국가에 속하지 않는 항구·통화 초기화
+    const cid = String(newId)
+    const portBelongs = props.ports.some((p) => String(p.countryId) === cid && String(p.id) === String(form.value.portId))
+    if (!portBelongs) form.value.portId = null
+    const numId = Number(newId)
+    const currBelongs = props.currencies.some((c) => c.countryIds?.includes(numId) && String(c.id) === String(form.value.currencyId))
+    if (!currBelongs) form.value.currencyId = null
   },
 )
 
@@ -179,7 +201,7 @@ function handleSave() {
         </FormField>
 
         <FormField label="도착항">
-          <SearchableCombobox v-model="form.portId" :options="portOptions" placeholder="도착항을 검색하세요" />
+          <SearchableCombobox v-model="form.portId" :options="portOptions" :disabled="!form.countryId" :placeholder="form.countryId ? '도착항을 검색하세요' : '국가를 먼저 선택하세요'" />
         </FormField>
 
         <FormField label="주소">
@@ -205,7 +227,7 @@ function handleSave() {
         </FormField>
 
         <FormField label="통화">
-          <BaseSelect v-model="form.currencyId" :options="currencyOptions" placeholder="통화를 선택하세요" />
+          <BaseSelect v-model="form.currencyId" :options="currencyOptions" :disabled="!form.countryId" :placeholder="form.countryId ? '통화를 선택하세요' : '국가를 먼저 선택하세요'" />
         </FormField>
 
         <FormField label="상태">
