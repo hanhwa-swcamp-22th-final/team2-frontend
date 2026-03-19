@@ -6,13 +6,17 @@ import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
+import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import { useToast } from '@/composables/useToast'
 
 const isAdvancedOpen = ref(true)
+const previewTarget = ref(null)
+const toast = useToast()
 
 const filters = ref({
   keyword: '',
@@ -145,6 +149,23 @@ const filteredRows = computed(() => {
   })
 })
 
+const previewFields = computed(() => {
+  if (!previewTarget.value) {
+    return []
+  }
+
+  return [
+    { label: '생산지시일', value: previewTarget.value.issueDate },
+    { label: 'PO', value: previewTarget.value.poId },
+    { label: '국가', value: previewTarget.value.country },
+    { label: '거래처', value: previewTarget.value.clientName },
+    { label: '품목명', value: previewTarget.value.itemName },
+    { label: '영업담당자', value: previewTarget.value.manager },
+    { label: '상태', value: previewTarget.value.status },
+    { label: '납기일', value: previewTarget.value.dueDate },
+  ]
+})
+
 function resetFilters() {
   filters.value = {
     keyword: '',
@@ -176,19 +197,35 @@ function searchRows() {
     ...filters.value,
   }
 }
+
+function openPreview(row) {
+  previewTarget.value = row
+}
+
+function closePreview() {
+  previewTarget.value = null
+}
+
+function printDocument(row) {
+  toast.info(`${row.id} 인쇄 기능은 다음 단계에서 연결됩니다.`, '인쇄')
+}
+
+function downloadPdf(row) {
+  toast.info(`${row.id} PDF 다운로드 기능은 다음 단계에서 연결됩니다.`, 'PDF')
+}
 </script>
 
 <template>
   <div class="fade-in space-y-5">
     <DocumentPageHeader title="생산지시서" icon-class="fas fa-industry">
       <template #actions>
-        <BaseButton variant="secondary" size="sm">
+        <BaseButton variant="secondary" size="sm" @click="toast.info('생산지시서 인쇄 기능은 다음 단계에서 연결됩니다.', '인쇄')">
           <template #leading>
             <i class="fas fa-print text-xs" aria-hidden="true"></i>
           </template>
           인쇄
         </BaseButton>
-        <BaseButton size="sm">
+        <BaseButton size="sm" @click="toast.info('생산지시서 PDF 다운로드 기능은 다음 단계에서 연결됩니다.', 'PDF')">
           <template #leading>
             <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
           </template>
@@ -309,17 +346,25 @@ function searchRows() {
 
       <template #cell-actions="{ row }">
         <div class="flex items-center justify-center gap-2">
-          <button type="button" class="text-xs text-brand-500 transition hover:underline" :title="`${row.id} 미리보기`">
+          <button type="button" class="text-xs text-brand-500 transition hover:underline" :title="`${row.id} 미리보기`" @click="openPreview(row)">
             <i class="fas fa-eye" aria-hidden="true"></i>
           </button>
-          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} 인쇄`">
+          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} 인쇄`" @click="printDocument(row)">
             <i class="fas fa-print" aria-hidden="true"></i>
           </button>
-          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} PDF 다운로드`">
+          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} PDF 다운로드`" @click="downloadPdf(row)">
             <i class="fas fa-file-pdf" aria-hidden="true"></i>
           </button>
         </div>
       </template>
     </BaseTable>
+
+    <DocumentPreviewModal
+      :open="Boolean(previewTarget)"
+      title="생산지시서 미리보기"
+      :document-title="previewTarget?.id ?? ''"
+      :fields="previewFields"
+      @close="closePreview"
+    />
   </div>
 </template>
