@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
@@ -17,18 +17,15 @@ const filters = ref({
   keyword: '',
   registeredFrom: '',
   registeredTo: '',
-  manager: '',
   clientName: '',
   code: '',
   productName: '',
   country: '',
 })
 
-const managerOptions = [
-  { value: '김영업', label: '김영업' },
-  { value: '정영업', label: '정영업' },
-  { value: '최관리', label: '최관리' },
-]
+const appliedFilters = ref({
+  ...filters.value,
+})
 
 const countryOptions = [
   { value: '말레이시아', label: '말레이시아' },
@@ -75,16 +72,54 @@ const rows = [
   },
 ]
 
+function normalizeDate(value) {
+  return String(value ?? '').replaceAll('/', '-')
+}
+
+const filteredRows = computed(() => {
+  return rows.filter((row) => {
+    const keyword = appliedFilters.value.keyword.trim().toLowerCase()
+
+    if (keyword) {
+      const keywordMatched = [
+        row.id,
+        row.invoiceDate,
+        row.clientName,
+        row.country,
+        row.itemName,
+        row.amount,
+      ].some((value) => String(value).toLowerCase().includes(keyword))
+
+      if (!keywordMatched) return false
+    }
+
+    if (appliedFilters.value.clientName && !row.clientName.toLowerCase().includes(appliedFilters.value.clientName.toLowerCase())) return false
+    if (appliedFilters.value.code && !row.id.toLowerCase().includes(appliedFilters.value.code.toLowerCase())) return false
+    if (appliedFilters.value.productName && !row.itemName.toLowerCase().includes(appliedFilters.value.productName.toLowerCase())) return false
+    if (appliedFilters.value.country && row.country !== appliedFilters.value.country) return false
+
+    const invoiceDate = normalizeDate(row.invoiceDate)
+
+    if (appliedFilters.value.registeredFrom && invoiceDate < appliedFilters.value.registeredFrom) return false
+    if (appliedFilters.value.registeredTo && invoiceDate > appliedFilters.value.registeredTo) return false
+
+    return true
+  })
+})
+
 function resetFilters() {
   filters.value = {
     keyword: '',
     registeredFrom: '',
     registeredTo: '',
-    manager: '',
     clientName: '',
     code: '',
     productName: '',
     country: '',
+  }
+
+  appliedFilters.value = {
+    ...filters.value,
   }
 }
 
@@ -93,6 +128,12 @@ function openClientSearch() {}
 function openCodeSearch() {}
 
 function openProductSearch() {}
+
+function searchRows() {
+  appliedFilters.value = {
+    ...filters.value,
+  }
+}
 </script>
 
 <template>
@@ -128,14 +169,6 @@ function openProductSearch() {}
             <span class="text-center text-sm text-slate-400 sm:pb-2">~</span>
             <DateField v-model="filters.registeredTo" />
           </div>
-        </FormField>
-
-        <FormField label="영업담당자">
-          <SearchableCombobox
-            v-model="filters.manager"
-            :options="managerOptions"
-            placeholder="담당자 검색..."
-          />
         </FormField>
 
         <FormField label="거래처명">
@@ -181,7 +214,7 @@ function openProductSearch() {}
           </template>
           초기화
         </BaseButton>
-        <BaseButton size="sm">
+        <BaseButton size="sm" @click="searchRows">
           <template #leading>
             <i class="fas fa-search text-xs" aria-hidden="true"></i>
           </template>
@@ -192,9 +225,9 @@ function openProductSearch() {}
 
     <BaseTable
       :columns="columns"
-      :rows="rows"
+      :rows="filteredRows"
       empty-text="데이터가 없습니다."
-      :footer-text="`총 ${rows.length}건`"
+      :footer-text="`총 ${filteredRows.length}건`"
     >
       <template #cell-id="{ value }">
         <span class="font-mono text-xs font-semibold text-brand-600">{{ value }}</span>
