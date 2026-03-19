@@ -7,8 +7,10 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
+import PODocumentTemplate from '@/components/domain/document/PODocumentTemplate.vue'
 import POFormModal from '@/components/domain/document/POFormModal.vue'
 import { useToast } from '@/composables/useToast'
+import { openDocumentOutputByType } from '@/utils/documentOutput'
 
 const route = useRoute()
 const router = useRouter()
@@ -143,11 +145,21 @@ function handleDelete() {
 }
 
 function handlePrint() {
-  info('PO 인쇄 기능은 다음 단계에서 연결됩니다.')
+  if (!detail.value) return
+  openDocumentOutputByType('PO', detail.value, true)
 }
 
 function handlePdfDownload() {
-  info('PO PDF 다운로드 기능은 다음 단계에서 연결됩니다.')
+  if (!detail.value) return
+  const opened = openDocumentOutputByType('PO', detail.value, true)
+  if (opened) {
+    info('브라우저 인쇄 창에서 "PDF로 저장"을 선택하세요.', 'PDF')
+  }
+}
+
+function handlePreviewPrint() {
+  previewOpen.value = false
+  handlePrint()
 }
 
 function handleSave() {
@@ -348,7 +360,10 @@ function confirmDelete() {
       :document-title="detail.id"
       :fields="previewFields"
       @close="previewOpen = false"
-    />
+      @print="handlePreviewPrint"
+    >
+      <PODocumentTemplate :document="detail" />
+    </DocumentPreviewModal>
 
     <POFormModal
       :open="formOpen"

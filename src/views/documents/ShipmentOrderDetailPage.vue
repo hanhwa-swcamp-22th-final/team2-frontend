@@ -5,8 +5,9 @@ import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
+import ShipmentOrderTemplate from '@/components/domain/document/ShipmentOrderTemplate.vue'
 import { useToast } from '@/composables/useToast'
-import { openDocumentOutput } from '@/utils/documentOutput'
+import { openDocumentOutputByType } from '@/utils/documentOutput'
 
 const route = useRoute()
 const router = useRouter()
@@ -85,27 +86,20 @@ function openPreview() {
 
 function handlePrint() {
   if (!detail.value) return
-  openDocumentOutput({
-    title: '출하지시서',
-    documentId: detail.value.id,
-    fields: previewFields.value,
-    lineItems: detail.value.items,
-    autoPrint: true,
-  })
+  openDocumentOutputByType('SHIPMENT', detail.value, true)
 }
 
 function handlePdfDownload() {
   if (!detail.value) return
-  const opened = openDocumentOutput({
-    title: '출하지시서',
-    documentId: detail.value.id,
-    fields: previewFields.value,
-    lineItems: detail.value.items,
-    autoPrint: true,
-  })
+  const opened = openDocumentOutputByType('SHIPMENT', detail.value, true)
   if (opened) {
-    toast.info('브라우저 인쇄 창에서 PDF로 저장할 수 있습니다.', 'PDF')
+    toast.info('브라우저 인쇄 창에서 "PDF로 저장"을 선택하세요.', 'PDF')
   }
+}
+
+function handlePreviewPrint() {
+  previewOpen.value = false
+  handlePrint()
 }
 </script>
 
@@ -204,7 +198,10 @@ function handlePdfDownload() {
       :document-title="detail.id"
       :fields="previewFields"
       @close="previewOpen = false"
-    />
+      @print="handlePreviewPrint"
+    >
+      <ShipmentOrderTemplate :document="detail" />
+    </DocumentPreviewModal>
   </div>
 
   <div v-else class="flex items-center justify-center py-20 text-slate-400">

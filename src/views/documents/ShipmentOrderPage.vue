@@ -8,6 +8,7 @@ import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue
 import DateField from '@/components/common/DateField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
+import ShipmentOrderTemplate from '@/components/domain/document/ShipmentOrderTemplate.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
@@ -15,7 +16,7 @@ import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useToast } from '@/composables/useToast'
-import { openDocumentOutput } from '@/utils/documentOutput'
+import { openDocumentOutputByType } from '@/utils/documentOutput'
 
 const router = useRouter()
 const isAdvancedOpen = ref(true)
@@ -272,45 +273,11 @@ function handleProductSelect(product) {
 }
 
 function printDocument(row) {
-  openDocumentOutput({
-    title: '출하지시서',
-    documentId: row.id,
-    fields: [
-      { label: '출하지시일', value: row.issueDate },
-      { label: 'PO', value: row.poId },
-      { label: '거래처', value: row.clientName },
-      { label: '국가', value: row.country },
-      { label: '품목명', value: row.itemName },
-      { label: '영업담당자', value: row.manager },
-      { label: '상태', value: row.status },
-      { label: '납기일', value: row.dueDate },
-    ],
-    lineItems: [
-      { name: row.itemName, quantity: '-', unitPrice: '-', amount: '-' },
-    ],
-    autoPrint: true,
-  })
+  openDocumentOutputByType('SHIPMENT', row, true)
 }
 
 function downloadPdf(row) {
-  const opened = openDocumentOutput({
-    title: '출하지시서',
-    documentId: row.id,
-    fields: [
-      { label: '출하지시일', value: row.issueDate },
-      { label: 'PO', value: row.poId },
-      { label: '거래처', value: row.clientName },
-      { label: '국가', value: row.country },
-      { label: '품목명', value: row.itemName },
-      { label: '영업담당자', value: row.manager },
-      { label: '상태', value: row.status },
-      { label: '납기일', value: row.dueDate },
-    ],
-    lineItems: [
-      { name: row.itemName, quantity: '-', unitPrice: '-', amount: '-' },
-    ],
-    autoPrint: true,
-  })
+  const opened = openDocumentOutputByType('SHIPMENT', row, true)
   if (opened) {
     toast.info('브라우저 인쇄 창에서 PDF로 저장할 수 있습니다.', 'PDF')
   }
@@ -486,7 +453,10 @@ function downloadPdf(row) {
       :document-title="previewTarget?.id"
       :fields="previewFields"
       @close="closePreview"
-    />
+      @print="previewTarget ? printDocument(previewTarget) : null"
+    >
+      <ShipmentOrderTemplate v-if="previewTarget" :document="previewTarget" />
+    </DocumentPreviewModal>
 
     <SearchModal
       :open="clientSearchOpen"
