@@ -1057,7 +1057,7 @@
     {
       "id": "2",
       "client": "Hamburg Metal GmbH",
-      "title": "[SalesBoost] PO-2025-001 발송",
+      "title": "[SalesBoost] PO-2025-003 발송",
       "recipient": "Hans Müller",
       "email": "hans.muller@hamburgmetal.de",
       "type": "PO",
@@ -1109,7 +1109,7 @@
     {
       "id": "6",
       "client": "Tokyo Trading Co.",
-      "title": "[SalesBoost] PO-2025-002 발송",
+      "title": "[SalesBoost] PO-2025-004 발송",
       "recipient": "Kenji Sato",
       "email": "kenji.sato@tokyotrading.jp",
       "type": "PO",
