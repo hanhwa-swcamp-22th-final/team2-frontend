@@ -74,15 +74,19 @@ onBeforeUnmount(() => {
     class="sticky top-0 z-20 flex h-[77px] flex-shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white/90 px-6 no-print"
     style="height: 77px; min-height: 77px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);"
   >
-    <div class="flex items-center gap-3">
-      <button class="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-slate-700 lg:hidden" @click="uiStore.toggleSidebar">
-        <span class="sr-only">메뉴</span>
-        <i class="fas fa-bars text-sm" aria-hidden="true"></i>
+    <div class="min-w-0 flex items-center gap-3">
+      <button
+        type="button"
+        class="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-slate-700"
+        @click="uiStore.toggleSidebar"
+      >
+        <span class="sr-only">사이드바 토글</span>
+        <i class="fas text-sm" :class="uiStore.sidebarOpen ? 'fa-bars-staggered' : 'fa-bars'" aria-hidden="true"></i>
       </button>
-      <span class="text-sm font-semibold text-[#32363A]">{{ pageTitle }}</span>
+      <span class="min-w-0 flex-1 truncate text-sm font-semibold text-[#32363A] sm:max-w-none">{{ pageTitle }}</span>
     </div>
 
-    <div class="flex items-center gap-2 sm:gap-3">
+    <div class="ml-2 flex flex-shrink-0 items-center gap-2 sm:gap-3">
       <div class="relative hidden lg:block">
         <input
           class="w-48 rounded-lg border border-slate-200 px-4 py-1.5 pl-8 text-xs font-medium text-slate-600"
@@ -111,7 +115,7 @@ onBeforeUnmount(() => {
 
         <div
           v-if="isNotificationOpen"
-          class="absolute right-0 top-11 z-50 max-h-80 w-80 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl"
+          class="absolute right-0 top-11 z-50 max-h-80 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl"
         >
           <div class="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-[#32363A]">알림</div>
           <div

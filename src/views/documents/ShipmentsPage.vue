@@ -108,15 +108,12 @@ function openClientSearch() {}
       @toggle-advanced="isAdvancedOpen = !isAdvancedOpen"
     />
 
-    <CollapsibleFilterCard
-      :open="isAdvancedOpen"
-      @toggle="isAdvancedOpen = !isAdvancedOpen"
-    >
+    <CollapsibleFilterCard :open="isAdvancedOpen">
         <div class="grid grid-cols-2 gap-x-4 gap-y-3 md:grid-cols-4">
           <FormField label="출하요청일" class="col-span-2">
-            <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+            <div class="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
               <DateField v-model="filters.requestFrom" />
-              <span class="pb-2 text-xs text-slate-400">~</span>
+              <span class="text-center text-xs text-slate-400 sm:pb-2">~</span>
               <DateField v-model="filters.requestTo" />
             </div>
           </FormField>
@@ -139,9 +136,9 @@ function openClientSearch() {}
           </FormField>
 
           <FormField label="납기일" class="col-span-2">
-            <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+            <div class="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
               <DateField v-model="filters.dueFrom" />
-              <span class="pb-2 text-xs text-slate-400">~</span>
+              <span class="text-center text-xs text-slate-400 sm:pb-2">~</span>
               <DateField v-model="filters.dueTo" />
             </div>
           </FormField>

@@ -1,7 +1,6 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { fetchDashboardKpis } from '@/api/dashboard'
 import BaseCard from '@/components/common/BaseCard.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 
@@ -31,7 +30,6 @@ const summaryCards = ref([
     to: '/ci',
   },
 ])
-const isLoading = ref(true)
 
 const requestItems = [
   {
@@ -133,16 +131,6 @@ const recentActivities = [
     date: '2026/02/10',
   },
 ]
-
-onMounted(async () => {
-  try {
-    await fetchDashboardKpis()
-  } catch (error) {
-    console.error('Failed to fetch dashboard kpi data:', error)
-  } finally {
-    isLoading.value = false
-  }
-})
 </script>
 
 <template>
@@ -152,7 +140,7 @@ onMounted(async () => {
         v-for="card in summaryCards"
         :key="card.id"
         :to="card.to"
-        class="rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md"
+        class="min-h-[136px] rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md sm:min-h-[148px]"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-50">
@@ -164,13 +152,13 @@ onMounted(async () => {
           <StatusBadge :value="card.status" />
         </div>
         <div class="mt-4 flex items-end justify-between gap-3">
-          <div>
-            <div class="text-xs font-medium text-slate-500">{{ card.title }}</div>
+          <div class="min-w-0">
+            <div class="truncate text-xs font-medium text-slate-500">{{ card.title }}</div>
             <div class="mt-1 text-2xl font-bold text-slate-800">{{ card.count }}</div>
           </div>
           <i class="fas fa-chevron-right text-xs text-slate-300" />
         </div>
-        <div class="mt-3 text-xs text-slate-400">{{ card.helper }}</div>
+        <div class="mt-3 truncate text-xs text-slate-400">{{ card.helper }}</div>
       </RouterLink>
     </section>
 
@@ -189,9 +177,9 @@ onMounted(async () => {
         :key="item.id"
         class="flex cursor-pointer flex-col items-start gap-3 px-5 py-3.5 transition hover:bg-slate-50/50 sm:flex-row sm:items-center sm:justify-between"
       >
-          <div class="flex items-center gap-3">
+        <div class="flex min-w-0 items-center gap-3">
           <div
-            class="flex h-9 w-9 items-center justify-center rounded-lg"
+            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg"
             :class="item.actionLabel === '삭제' ? 'bg-red-50' : 'bg-blue-50'"
           >
             <i
@@ -199,16 +187,16 @@ onMounted(async () => {
               :class="item.actionLabel === '삭제' ? 'fa-trash text-red-400' : 'fa-edit text-blue-400'"
             />
           </div>
-          <div>
-            <div class="text-sm font-medium text-slate-800">
+          <div class="min-w-0">
+            <div class="truncate text-sm font-medium text-slate-800">
               {{ item.docType }} {{ item.docId }} — {{ item.actionLabel }} 결재
             </div>
-            <div class="text-xs text-slate-400">
+            <div class="truncate text-xs text-slate-400 sm:whitespace-normal">
               {{ item.company }} · 요청: {{ item.requester }} → 결재: {{ item.approver }}
             </div>
           </div>
         </div>
-          <div class="flex items-center gap-2 self-end sm:self-auto">
+        <div class="flex flex-shrink-0 items-center gap-2 self-end sm:self-auto">
           <span
             v-if="item.urgent"
             class="rounded px-1.5 py-0.5 text-[10px] font-bold text-red-600 bg-red-50"
@@ -237,13 +225,13 @@ onMounted(async () => {
             :key="item.id"
             class="group flex cursor-pointer items-start gap-3 rounded-lg px-1 py-1 text-sm transition hover:bg-slate-50/70"
           >
-          <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-xs text-slate-500">
-            <i class="fas" :class="item.icon" />
-          </div>
-          <div class="min-w-0 flex-1">
-            <div class="truncate font-medium text-slate-800 transition group-hover:text-brand-600">{{ item.title }}</div>
-            <div class="text-xs text-slate-400">{{ item.company }} · {{ item.date }}</div>
-          </div>
+            <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-xs text-slate-500">
+              <i class="fas" :class="item.icon" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="truncate font-medium text-slate-800 transition group-hover:text-brand-600">{{ item.title }}</div>
+              <div class="truncate text-xs text-slate-400 sm:whitespace-normal">{{ item.company }} · {{ item.date }}</div>
+            </div>
           </div>
         </div>
       </BaseCard>
@@ -261,14 +249,14 @@ onMounted(async () => {
           <div
             v-for="item in shipmentItems"
             :key="item.id"
-            class="flex cursor-pointer items-center justify-between rounded-xl border border-slate-100 bg-slate-50/80 p-3.5 text-sm transition hover:border-slate-200"
+            class="flex cursor-pointer flex-col items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-3.5 text-sm transition hover:border-slate-200 sm:flex-row sm:items-center sm:justify-between"
           >
-            <div>
+            <div class="min-w-0">
               <div class="font-semibold text-slate-800">{{ item.shipmentNo }}</div>
-              <div class="mt-0.5 text-xs text-slate-400">{{ item.company }}</div>
-              <div class="mt-1 text-[11px] text-slate-400">{{ item.sourcePo }} · 납기 {{ item.dueDate }}</div>
+              <div class="truncate mt-0.5 text-xs text-slate-400 sm:whitespace-normal">{{ item.company }}</div>
+              <div class="truncate mt-1 text-[11px] text-slate-400 sm:whitespace-normal">{{ item.sourcePo }} · 납기 {{ item.dueDate }}</div>
             </div>
-            <div class="ml-4 flex shrink-0 items-center gap-2">
+            <div class="flex shrink-0 items-center gap-2 sm:ml-4">
               <StatusBadge :value="item.status" />
             </div>
           </div>
