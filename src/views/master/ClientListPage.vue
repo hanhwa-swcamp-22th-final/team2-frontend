@@ -63,22 +63,22 @@ const columns = [
 ]
 
 function getCountryName(countryId) {
-  const found = countries.value.find((c) => c.id === countryId)
+  const found = countries.value.find((c) => String(c.id) === String(countryId))
   return found ? found.name : '-'
 }
 
 function getPortName(portId) {
-  const found = ports.value.find((p) => p.id === portId)
+  const found = ports.value.find((p) => String(p.id) === String(portId))
   return found ? found.name : '-'
 }
 
 function getPaymentTermsCode(paymentTermsId) {
-  const found = paymentTerms.value.find((p) => p.id === paymentTermsId)
+  const found = paymentTerms.value.find((p) => String(p.id) === String(paymentTermsId))
   return found ? found.code : '-'
 }
 
 function getCurrencyCode(currencyId) {
-  const found = currencies.value.find((c) => c.id === currencyId)
+  const found = currencies.value.find((c) => String(c.id) === String(currencyId))
   return found ? found.code : '-'
 }
 
