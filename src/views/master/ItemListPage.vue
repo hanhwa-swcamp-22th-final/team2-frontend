@@ -136,9 +136,26 @@ async function handleSave(formData) {
   }
 }
 
+let rowMouseDownPos = null
+const DRAG_THRESHOLD = 5
+
+function handleRowMouseDown(event) {
+  rowMouseDownPos = { x: event.clientX, y: event.clientY }
+}
+
 function handleRowClick(event) {
   // Ignore clicks on action buttons within the row
   if (event.target.closest('[data-action]') || event.target.closest('button')) return
+
+  // 텍스트 선택(드래그) 시 클릭 무시
+  const selection = window.getSelection()
+  if (selection && selection.toString().length > 0) return
+  if (rowMouseDownPos) {
+    const dx = Math.abs(event.clientX - rowMouseDownPos.x)
+    const dy = Math.abs(event.clientY - rowMouseDownPos.y)
+    if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) return
+  }
+
   const tr = event.target.closest('tbody tr')
   if (!tr) return
   const rowKey = tr.dataset.rowKey ?? tr.getAttribute('data-row-key')
@@ -177,7 +194,7 @@ function handleRowClick(event) {
     </div>
 
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
-    <div v-else class="cursor-pointer" @click="handleRowClick">
+    <div v-else class="cursor-pointer" @mousedown="handleRowMouseDown" @click="handleRowClick">
     <BaseTable :columns="columns" :rows="filteredItems" row-key="id"
       :empty-text="searchKeyword || categoryFilter ? '검색 결과가 없습니다.' : '등록된 품목이 없습니다.'"
     >
