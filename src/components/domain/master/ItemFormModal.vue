@@ -45,6 +45,16 @@ const statusOptions = [
   { label: '비활성', value: '비활성' },
 ]
 
+function generateNextCode() {
+  const codes = props.allItems.map((i) => i.code)
+  let maxNum = 0
+  for (const code of codes) {
+    const match = code.match(/^ITM(\d+)$/)
+    if (match) maxNum = Math.max(maxNum, Number(match[1]))
+  }
+  return `ITM${String(maxNum + 1).padStart(3, '0')}`
+}
+
 function getInitialForm() {
   return {
     code: '',
@@ -96,6 +106,7 @@ watch(
       }
     } else if (isOpen && props.mode === 'create') {
       form.value = getInitialForm()
+      form.value.code = generateNextCode()
     }
   },
 )
@@ -195,7 +206,7 @@ function handleSave() {
     <form class="space-y-6" @submit.prevent="handleSave">
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <FormField label="코드" required>
-          <BaseTextField v-model="form.code" placeholder="예) ITM-011" />
+          <BaseTextField v-model="form.code" placeholder="예) ITM011" />
           <p v-if="errors.code" class="mt-1 text-xs text-red-500">{{ errors.code }}</p>
         </FormField>
 
