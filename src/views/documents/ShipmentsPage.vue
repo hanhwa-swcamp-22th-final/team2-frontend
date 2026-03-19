@@ -19,6 +19,8 @@ const router = useRouter()
 const isAdvancedOpen = ref(true)
 const clientSearchOpen = ref(false)
 const clientSearchKeyword = ref('')
+const shipmentSearchOpen = ref(false)
+const shipmentSearchKeyword = ref('')
 
 const filters = ref({
   keyword: '',
@@ -141,6 +143,17 @@ const clientRows = computed(() => {
   return clientRowsSource.filter((row) => [row.id, row.name, row.country].some((value) => String(value).toLowerCase().includes(keyword)))
 })
 
+const shipmentRows = computed(() => {
+  const keyword = shipmentSearchKeyword.value.trim().toLowerCase()
+  const source = rows.map((row) => ({
+    id: row.id,
+    clientName: row.clientName,
+    requestDate: row.requestDate,
+  }))
+  if (!keyword) return source
+  return source.filter((row) => [row.id, row.clientName, row.requestDate].some((value) => String(value).toLowerCase().includes(keyword)))
+})
+
 function resetFilters() {
   filters.value = {
     keyword: '',
@@ -167,6 +180,16 @@ function handleClientSelect(client) {
   filters.value.clientName = client.name
   clientSearchOpen.value = false
   clientSearchKeyword.value = ''
+}
+
+function openShipmentSearch() {
+  shipmentSearchOpen.value = true
+}
+
+function handleShipmentSelect(row) {
+  filters.value.shipmentCode = row.id
+  shipmentSearchOpen.value = false
+  shipmentSearchKeyword.value = ''
 }
 
 function goToDetail(id) {
@@ -230,6 +253,7 @@ function searchRows() {
               v-model="filters.shipmentCode"
               placeholder="출하번호"
               title="출하번호 검색"
+              @trigger="openShipmentSearch"
             />
           </FormField>
 
@@ -316,6 +340,21 @@ function searchRows() {
       @update:search-keyword="clientSearchKeyword = $event"
       @close="clientSearchOpen = false"
       @select="handleClientSelect"
+    />
+
+    <SearchModal
+      :open="shipmentSearchOpen"
+      title="출하번호 검색"
+      :columns="[
+        { key: 'id', label: '출하번호' },
+        { key: 'clientName', label: '거래처명' },
+        { key: 'requestDate', label: '출하요청일' },
+      ]"
+      :rows="shipmentRows"
+      :search-keyword="shipmentSearchKeyword"
+      @update:search-keyword="shipmentSearchKeyword = $event"
+      @close="shipmentSearchOpen = false"
+      @select="handleShipmentSelect"
     />
   </div>
 </template>

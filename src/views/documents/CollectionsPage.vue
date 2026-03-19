@@ -71,7 +71,7 @@ const columns = [
   { key: 'status', label: '상태', align: 'center', width: '120px' },
 ]
 
-const rows = [
+const rowsData = ref([
   {
     poId: 'PO26001',
     clientName: 'COOLSAY SDN BHD',
@@ -127,7 +127,7 @@ const rows = [
     collectionDate: '2025/12/20',
     status: '수금완료',
   },
-]
+])
 
 const clientRowsSource = [
   { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
@@ -165,7 +165,7 @@ function normalizeDate(value) {
 }
 
 const filteredRows = computed(() => {
-  return rows.filter((row) => {
+  return rowsData.value.filter((row) => {
     if (appliedFilters.value.currency && row.currency !== appliedFilters.value.currency) return false
     if (appliedFilters.value.country && row.country !== appliedFilters.value.country) return false
     if (appliedFilters.value.manager && row.manager !== appliedFilters.value.manager) return false
@@ -203,7 +203,7 @@ const clientRows = computed(() => {
 
 const poRows = computed(() => {
   const keyword = poSearchKeyword.value.trim().toLowerCase()
-  const source = rows.map((row) => ({
+  const source = rowsData.value.map((row) => ({
     poId: row.poId,
     clientName: row.clientName,
     issueDate: row.issueDate,
@@ -266,6 +266,17 @@ function handlePoSelect(row) {
   filters.value.poId = row.poId
   poSearchOpen.value = false
   poSearchKeyword.value = ''
+}
+
+function updateStatus(poId, value) {
+  rowsData.value = rowsData.value.map((row) => (
+    row.poId === poId
+      ? {
+        ...row,
+        status: value === 'PAID' ? '수금완료' : '미수금',
+      }
+      : row
+  ))
 }
 </script>
 
@@ -404,6 +415,7 @@ function handlePoSelect(row) {
         <select
           class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:border-brand-400 focus:outline-none"
           :value="row.status === '수금완료' ? 'PAID' : 'UNPAID'"
+          @change="updateStatus(row.poId, $event.target.value)"
         >
           <option value="UNPAID">미수금</option>
           <option value="PAID">수금완료</option>
