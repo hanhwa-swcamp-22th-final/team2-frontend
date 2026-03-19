@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchActivities, fetchAllActivityPOs } from '@/api/activity'
+import { jsPDF } from 'jspdf'
 import ActivityTypeBadge from '@/components/domain/activity/ActivityTypeBadge.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
@@ -148,6 +149,133 @@ const summaryText = computed(() => {
   const colCount = 2   // 더미
   return `미리보기: 활동기록 ${actCount}건, 이메일 ${emailCount}건, 수금 ${colCount}건이 포함됩니다.`
 })
+
+function generatePdf() {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+  const pageW = doc.internal.pageSize.getWidth()
+  const margin = 20
+  let y = 20
+
+  // ── 헤더 ──────────────────────────────────────────────────
+  doc.setFontSize(20)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Activity Record Package', pageW / 2, y, { align: 'center' })
+  y += 8
+
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(100)
+  doc.text(`Generated: ${new Date().toLocaleDateString('ko-KR')}`, pageW / 2, y, { align: 'center' })
+  y += 4
+
+  if (poDisplay.value) {
+    doc.text(`PO: ${poDisplay.value}`, pageW / 2, y, { align: 'center' })
+    y += 4
+  }
+  doc.text(`Period: ${dateFrom.value} ~ ${dateTo.value}`, pageW / 2, y, { align: 'center' })
+  y += 8
+
+  // 구분선
+  doc.setDrawColor(200)
+  doc.line(margin, y, pageW - margin, y)
+  y += 8
+
+  // ── 선택된 활동기록 목록 ───────────────────────────────────
+  const selected = filteredActivities.value.filter((a) =>
+    selectedActivityIds.value.includes(a.id),
+  )
+
+  doc.setFontSize(13)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(0)
+  doc.text(`Activity Records (${selected.length})`, margin, y)
+  y += 7
+
+  if (selected.length === 0) {
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(150)
+    doc.text('No records selected.', margin, y)
+    y += 6
+  } else {
+    // 테이블 헤더
+    const cols = [
+      { label: 'No',     x: margin,      w: 12  },
+      { label: 'Date',   x: margin + 12, w: 25  },
+      { label: 'Type',   x: margin + 37, w: 28  },
+      { label: 'Title',  x: margin + 65, w: 70  },
+      { label: 'Author', x: margin + 135, w: 30 },
+    ]
+
+    doc.setFillColor(240, 244, 255)
+    doc.rect(margin, y - 4, pageW - margin * 2, 7, 'F')
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(50)
+    cols.forEach((c) => doc.text(c.label, c.x + 1, y))
+    y += 5
+
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(30)
+
+    selected.forEach((a, i) => {
+      if (y > 270) {
+        doc.addPage()
+        y = 20
+      }
+      const bg = i % 2 === 0 ? [255, 255, 255] : [248, 250, 252]
+      doc.setFillColor(...bg)
+      doc.rect(margin, y - 4, pageW - margin * 2, 6, 'F')
+
+      doc.setFontSize(8.5)
+      doc.text(String(i + 1), cols[0].x + 1, y)
+      doc.text(a.date ?? '-',  cols[1].x + 1, y)
+      doc.text(a.type ?? '-',  cols[2].x + 1, y)
+
+      // 제목 말줄임
+      const title = doc.splitTextToSize(a.title ?? '-', cols[3].w - 2)[0]
+      doc.text(title, cols[3].x + 1, y)
+      doc.text(a.author ?? '-', cols[4].x + 1, y)
+      y += 6
+    })
+  }
+
+  y += 6
+  doc.setDrawColor(200)
+  doc.line(margin, y, pageW - margin, y)
+  y += 6
+
+  // ── 포함 항목 요약 ─────────────────────────────────────────
+  doc.setFontSize(13)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(0)
+  doc.text('Include Options', margin, y)
+  y += 7
+
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(60)
+  const includeLabels = includeItems.map((item) => `${item.label}: ${includes.value[item.key] ? 'YES' : 'NO'}`)
+  includeLabels.forEach((txt) => {
+    doc.text(`• ${txt}`, margin + 4, y)
+    y += 5
+  })
+
+  // ── 푸터 ──────────────────────────────────────────────────
+  const totalPages = doc.internal.pages.length - 1
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p)
+    doc.setFontSize(8)
+    doc.setTextColor(160)
+    doc.text(`Page ${p} / ${totalPages}`, pageW / 2, 290, { align: 'center' })
+    doc.text('SalesBoost - Activity Package', margin, 290)
+  }
+
+  // 새 탭에서 PDF 미리보기
+  const blob = doc.output('blob')
+  const url = URL.createObjectURL(blob)
+  window.open(url, '_blank')
+}
 </script>
 
 <template>
@@ -250,7 +378,7 @@ const summaryText = computed(() => {
             </div>
 
             <!-- 생성 버튼 -->
-            <BaseButton :block="true">
+            <BaseButton :block="true" @click="generatePdf">
               <template #leading>
                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />

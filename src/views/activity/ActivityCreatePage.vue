@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { createActivity, fetchActivityClients, fetchPOsByClient } from '@/api/activity'
+import { useAuthStore } from '@/stores/auth'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
@@ -14,11 +15,13 @@ import SearchModal from '@/components/common/SearchModal.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 // ── state ──────────────────────────────────────────────────
 const formClient = ref('')
 const formType = ref('')
 const formPoDisplay = ref('')
+const formPoId = ref('')
 const formDate = ref(new Date().toISOString().slice(0, 10))
 const formPriority = ref('medium')
 const formTitle = ref('')
@@ -52,6 +55,7 @@ const priorityOptions = [
 
 // ── computed ───────────────────────────────────────────────
 const isIssue = computed(() => formType.value === '이슈')
+const isAuthorLocked = computed(() => !!formPoDisplay.value)
 
 // ── PO 검색 모달 ───────────────────────────────────────────
 const isPoSearchOpen = ref(false)
@@ -78,7 +82,7 @@ async function openPoSearch() {
     return
   }
   try {
-    poList.value = await fetchPOsByClient(formClient.value)
+    poList.value = await fetchPOsByClient(formClient.value, authStore.currentUser?.id)
     poKeyword.value = ''
     isPoSearchOpen.value = true
   } catch (e) {
@@ -87,8 +91,16 @@ async function openPoSearch() {
 }
 
 function selectPO(po) {
-  formPoDisplay.value = po.id
+  formPoDisplay.value = `${po.id} - ${po.title}`
+  formPoId.value = po.id
+  formAuthor.value = authStore.currentUser?.name ?? ''
   isPoSearchOpen.value = false
+}
+
+function clearPo() {
+  formPoDisplay.value = ''
+  formPoId.value = ''
+  formAuthor.value = ''
 }
 
 async function handleSubmit() {
@@ -97,7 +109,7 @@ async function handleSubmit() {
     await createActivity({
       clientId: formClient.value,
       type:     formType.value,
-      poId:     formPoDisplay.value,
+      poId:     formPoId.value,
       date:     formDate.value,
       title:    formTitle.value,
       content:  formContent.value,
@@ -168,7 +180,7 @@ async function handleSubmit() {
                 @trigger="openPoSearch"
               />
             </div>
-            <BaseButton variant="secondary" @click="formPoDisplay = ''">
+            <BaseButton variant="secondary" @click="clearPo">
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
               </svg>
@@ -188,7 +200,12 @@ async function handleSubmit() {
             <p class="text-sm font-semibold text-slate-700">
               작성자 <span class="text-red-500">*</span>
             </p>
-            <BaseTextField v-model="formAuthor" placeholder="작성자 이름" />
+            <BaseTextField
+              v-model="formAuthor"
+              :placeholder="isAuthorLocked ? '' : 'PO 선택 시 자동 입력됩니다'"
+              :readonly="isAuthorLocked"
+              :class="isAuthorLocked ? 'cursor-not-allowed bg-slate-50 text-slate-500' : ''"
+            />
           </div>
         </div>
 
