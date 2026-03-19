@@ -35,8 +35,8 @@ export function generateTokens(user) {
     exp: now + RT_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
   }
 
-  const accessToken = btoa(JSON.stringify(accessPayload))
-  const refreshToken = btoa(JSON.stringify(refreshPayload))
+  const accessToken = btoa(unescape(encodeURIComponent(JSON.stringify(accessPayload))))
+  const refreshToken = btoa(unescape(encodeURIComponent(JSON.stringify(refreshPayload))))
 
   return { accessToken, refreshToken }
 }
@@ -44,7 +44,7 @@ export function generateTokens(user) {
 /** AT 페이로드 디코딩 */
 export function decodeToken(token) {
   try {
-    return JSON.parse(atob(token))
+    return JSON.parse(decodeURIComponent(escape(atob(token))))
   } catch {
     return null
   }
