@@ -102,8 +102,8 @@ onMounted(async () => {
 
     <div class="border-t border-slate-100 px-4 py-3">
       <div class="flex items-center gap-2 text-xs font-medium text-slate-400">
-        <span class="inline-block h-1.5 w-1.5 rounded-full bg-slate-400"></span>
-        v1.0 Demo
+        <span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+        운영 준비 완료
       </div>
     </div>
   </aside>

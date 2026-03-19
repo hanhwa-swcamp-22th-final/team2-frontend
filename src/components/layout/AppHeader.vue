@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import PasswordChangeModal from '@/components/domain/auth/PasswordChangeModal.vue'
 import { useUiStore } from '@/stores/ui'
@@ -9,6 +9,7 @@ const route = useRoute()
 const pageTitle = computed(() => String(route.meta.serviceName ?? '공통 대시보드'))
 const isNotificationOpen = ref(false)
 const isPasswordModalOpen = ref(false)
+const notificationRef = ref(null)
 
 const notifications = [
   {
@@ -54,6 +55,18 @@ function openPasswordModal() {
 function closePasswordModal() {
   isPasswordModalOpen.value = false
 }
+
+function handleClickOutside(event) {
+  if (notificationRef.value && !notificationRef.value.contains(event.target)) {
+    isNotificationOpen.value = false
+  }
+}
+
+document.addEventListener('click', handleClickOutside)
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <template>
@@ -69,7 +82,7 @@ function closePasswordModal() {
       <span class="text-sm font-semibold text-[#32363A]">{{ pageTitle }}</span>
     </div>
 
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2 sm:gap-3">
       <div class="relative hidden lg:block">
         <input
           class="w-48 rounded-lg border border-slate-200 px-4 py-1.5 pl-8 text-xs font-medium text-slate-600"
@@ -79,7 +92,7 @@ function closePasswordModal() {
         <i class="fas fa-search absolute left-2.5 top-2 text-[10px] text-slate-300" aria-hidden="true"></i>
       </div>
 
-      <div class="relative">
+      <div ref="notificationRef" class="relative">
         <button
           type="button"
           class="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50"
@@ -117,7 +130,7 @@ function closePasswordModal() {
         </div>
       </div>
 
-      <div class="flex items-center gap-2.5 border-l border-slate-200 pl-3 text-sm">
+      <div class="hidden items-center gap-2.5 border-l border-slate-200 pl-3 text-sm sm:flex">
         <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand text-[11px] font-semibold text-white">최</div>
         <div>
           <div class="text-[12px] font-semibold text-[#32363A]">최관리</div>
