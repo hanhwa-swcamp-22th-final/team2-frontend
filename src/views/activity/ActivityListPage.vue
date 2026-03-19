@@ -18,7 +18,10 @@ import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 
+import { useToast } from '@/composables/useToast'
+
 const router = useRouter()
+const { error: showError } = useToast()
 
 // ── 필터 상태 ──────────────────────────────────────────────
 const isFilterOpen = ref(false)
@@ -165,7 +168,7 @@ async function handleSave(updated) {
     closeEdit()
   } catch (e) {
     console.error('기록 수정 실패', e)
-    alert('기록 수정에 실패했습니다. 다시 시도해주세요.')
+    showError('기록 수정에 실패했습니다. 다시 시도해주세요.')
   }
 }
 
@@ -190,7 +193,7 @@ async function handleDelete() {
     closeDelete()
   } catch (e) {
     console.error('기록 삭제 실패', e)
-    alert('기록 삭제에 실패했습니다. 다시 시도해주세요.')
+    showError('기록 삭제에 실패했습니다. 다시 시도해주세요.')
   }
 }
 
