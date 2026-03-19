@@ -28,9 +28,11 @@ const emit = defineEmits(['update:modelValue', 'select'])
 
 const wrapperRef = ref(null)
 const inputValue = ref('')
+const rawQuery = ref('') // event.target.value 기반 — IME 조합 중에도 실시간 반영
 const isOpen = ref(false)
 const highlightedIndex = ref(-1)
 const isSelected = ref(false)
+const lastSelectedLabel = ref('')
 
 function normalizeOption(option) {
   if (typeof option === 'object' && option !== null) {
@@ -55,15 +57,15 @@ const filteredOptions = computed(() => {
     return normalizedOptions.value
   }
 
-  const query = inputValue.value.trim().toLowerCase()
+  const query = rawQuery.value.trim().toLowerCase()
 
   if (!query) {
     return normalizedOptions.value
   }
 
   return normalizedOptions.value.filter((option) => (
-    option.label.toLowerCase().includes(query) ||
-    option.sublabel.toLowerCase().includes(query)
+    option.label.toLowerCase().startsWith(query) ||
+    option.sublabel.toLowerCase().startsWith(query)
   ))
 })
 
@@ -71,10 +73,17 @@ watch(
   () => props.modelValue,
   (value) => {
     const matched = normalizedOptions.value.find((option) => String(option.value) === String(value))
-    inputValue.value = matched?.label ?? ''
+    const label = matched?.label ?? ''
+    inputValue.value = label
+    rawQuery.value = label
   },
   { immediate: true },
 )
+
+function onInput(event) {
+  rawQuery.value = event.target.value
+  openList()
+}
 
 function openList() {
   if (props.disabled) {
@@ -91,6 +100,8 @@ function closeList() {
 
 function selectOption(option) {
   inputValue.value = option.label
+  rawQuery.value = option.label
+  lastSelectedLabel.value = option.label
   isSelected.value = true
   emit('update:modelValue', option.value)
   emit('select', option)
@@ -98,6 +109,9 @@ function selectOption(option) {
 }
 
 function onKeydown(event) {
+  // IME 조합 중(한글·일본어·중국어 입력 중)에는 키보드 처리 건너뜀
+  if (event.isComposing) return
+
   if (!isOpen.value && ['ArrowDown', 'ArrowUp'].includes(event.key)) {
     openList()
     return
@@ -115,9 +129,13 @@ function onKeydown(event) {
     return
   }
 
-  if (event.key === 'Enter' && highlightedIndex.value >= 0) {
+  if (event.key === 'Enter') {
     event.preventDefault()
-    selectOption(filteredOptions.value[highlightedIndex.value])
+    if (!isOpen.value) return
+    const target = highlightedIndex.value >= 0
+      ? filteredOptions.value[highlightedIndex.value]
+      : filteredOptions.value[0]
+    if (target) selectOption(target)
     return
   }
 
@@ -127,15 +145,26 @@ function onKeydown(event) {
     return
   }
 
+  if (event.key === 'Backspace') {
+    event.preventDefault()
+    inputValue.value = ''
+    rawQuery.value = ''
+    isSelected.value = false
+    lastSelectedLabel.value = ''
+    emit('update:modelValue', '')
+    return
+  }
+
   if (event.key === 'Escape') {
     closeList()
   }
 }
 
-function onInput() {
-  isSelected.value = false
-  openList()
-}
+watch(rawQuery, (newValue) => {
+  if (isSelected.value && newValue !== lastSelectedLabel.value) {
+    isSelected.value = false
+  }
+}, { flush: 'sync' })
 
 function handleClickOutside(event) {
   if (wrapperRef.value && !wrapperRef.value.contains(event.target)) {
