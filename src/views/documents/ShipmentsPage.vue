@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
@@ -9,11 +10,15 @@ import DateField from '@/components/common/DateField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
+import SearchModal from '@/components/common/SearchModal.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 
+const router = useRouter()
 const isAdvancedOpen = ref(true)
+const clientSearchOpen = ref(false)
+const clientSearchKeyword = ref('')
 
 const filters = ref({
   keyword: '',
@@ -39,7 +44,7 @@ const countryOptions = [
 ]
 
 const statusOptions = [
-  { value: '준비중', label: '준비중' },
+  { value: '출하준비', label: '출하준비' },
   { value: '출하완료', label: '출하완료' },
 ]
 
@@ -55,13 +60,13 @@ const columns = [
 
 const rows = [
   {
-    id: 'SH26002',
+    id: 'SH26001',
     clientName: 'COOLSAY SDN BHD',
     country: '말레이시아',
     poId: 'PO26001',
-    requestDate: '2026/02/24',
-    dueDate: '2026/04/20',
-    status: '출하완료',
+    requestDate: '2026/03/26',
+    dueDate: '2026/04/05',
+    status: '출하준비',
   },
   {
     id: 'SH26004',
@@ -70,7 +75,7 @@ const rows = [
     poId: 'PO26004',
     requestDate: '2026/03/12',
     dueDate: '2026/04/30',
-    status: '준비중',
+    status: '출하준비',
   },
   {
     id: 'SH26005',
@@ -79,8 +84,14 @@ const rows = [
     poId: 'PO26003',
     requestDate: '2026/03/18',
     dueDate: '2026/06/05',
-    status: '준비중',
+    status: '출하완료',
   },
+]
+
+const clientRowsSource = [
+  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
+  { id: 'CL002', name: 'Viet Steel JSC', country: '베트남' },
+  { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국' },
 ]
 
 function normalizeDate(value) {
@@ -122,8 +133,13 @@ const filteredRows = computed(() => {
   })
 })
 
-const preparingCount = computed(() => filteredRows.value.filter((row) => row.status === '준비중').length)
+const preparingCount = computed(() => filteredRows.value.filter((row) => row.status === '출하준비').length)
 const completedCount = computed(() => filteredRows.value.filter((row) => row.status === '출하완료').length)
+const clientRows = computed(() => {
+  const keyword = clientSearchKeyword.value.trim().toLowerCase()
+  if (!keyword) return clientRowsSource
+  return clientRowsSource.filter((row) => [row.id, row.name, row.country].some((value) => String(value).toLowerCase().includes(keyword)))
+})
 
 function resetFilters() {
   filters.value = {
@@ -143,7 +159,19 @@ function resetFilters() {
   }
 }
 
-function openClientSearch() {}
+function openClientSearch() {
+  clientSearchOpen.value = true
+}
+
+function handleClientSelect(client) {
+  filters.value.clientName = client.name
+  clientSearchOpen.value = false
+  clientSearchKeyword.value = ''
+}
+
+function goToDetail(id) {
+  router.push({ name: 'shipment-detail', params: { id } })
+}
 
 function searchRows() {
   appliedFilters.value = {
@@ -251,11 +279,15 @@ function searchRows() {
     <BaseTable
       :columns="columns"
       :rows="filteredRows"
+      clickable-rows
       empty-text="데이터가 없습니다."
       :footer-text="`총 ${filteredRows.length}건`"
+      @row-click="goToDetail($event.id)"
     >
       <template #cell-id="{ value }">
-        <span class="font-mono text-xs font-semibold text-slate-700">{{ value }}</span>
+        <button type="button" class="font-mono text-xs font-semibold text-slate-700 hover:underline" @click.stop="goToDetail(value)">
+          {{ value }}
+        </button>
       </template>
 
       <template #cell-poId="{ value }">
@@ -270,5 +302,20 @@ function searchRows() {
         <StatusBadge :value="value" />
       </template>
     </BaseTable>
+
+    <SearchModal
+      :open="clientSearchOpen"
+      title="거래처 검색"
+      :columns="[
+        { key: 'id', label: '코드' },
+        { key: 'name', label: '거래처명' },
+        { key: 'country', label: '국가' },
+      ]"
+      :rows="clientRows"
+      :search-keyword="clientSearchKeyword"
+      @update:search-keyword="clientSearchKeyword = $event"
+      @close="clientSearchOpen = false"
+      @select="handleClientSelect"
+    />
   </div>
 </template>
