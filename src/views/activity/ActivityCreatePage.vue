@@ -10,7 +10,7 @@ import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTextarea from '@/components/common/BaseTextarea.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import DateField from '@/components/common/DateField.vue'
-import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 
@@ -143,7 +143,7 @@ async function handleSubmit() {
 <template>
   <div class="space-y-4">
     <!-- 페이지 타이틀 -->
-    <DocumentPageHeader title="기록 등록" icon-class="fas fa-list-check">
+    <PageHeader title="기록 등록" icon-class="fas fa-list-check">
       <template #actions>
         <BaseButton variant="secondary" @click="router.push('/activities')">
           <template #leading>
@@ -154,7 +154,7 @@ async function handleSubmit() {
           목록으로
         </BaseButton>
       </template>
-    </DocumentPageHeader>
+    </PageHeader>
 
     <!-- 등록 폼 -->
     <BaseCard title="기록 정보" subtitle="* 표시 항목은 필수 입력입니다.">

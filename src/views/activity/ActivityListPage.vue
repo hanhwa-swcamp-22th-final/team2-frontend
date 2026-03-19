@@ -14,7 +14,7 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DateRangeField from '@/components/common/DateRangeField.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
-import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
@@ -200,7 +200,7 @@ const columns = [
 <template>
   <div class="space-y-4">
     <!-- 페이지 타이틀 -->
-    <DocumentPageHeader title="기록 관리" icon-class="fas fa-list-check">
+    <PageHeader title="기록 관리" icon-class="fas fa-list-check">
       <template #actions>
         <BaseButton @click="router.push('/activities/manage')">
           <template #leading>
@@ -211,7 +211,7 @@ const columns = [
           기록 등록
         </BaseButton>
       </template>
-    </DocumentPageHeader>
+    </PageHeader>
 
     <!-- 키워드 검색 + 상세검색 토글 -->
     <FilterToolbarCard

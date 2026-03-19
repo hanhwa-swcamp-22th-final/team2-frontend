@@ -9,7 +9,7 @@ import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import InfoField from '@/components/common/InfoField.vue'
-import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import TableActions from '@/components/common/TableActions.vue'
 
@@ -183,7 +183,7 @@ async function handleDelete() {
 <template>
   <div class="space-y-6">
     <!-- 페이지 타이틀 -->
-    <DocumentPageHeader title="컨택 리스트" icon-class="fas fa-address-book">
+    <PageHeader title="컨택 리스트" icon-class="fas fa-address-book">
       <template #actions>
         <div class="w-64">
           <SearchableCombobox
@@ -209,7 +209,7 @@ async function handleDelete() {
           연락처 등록
         </BaseButton>
       </template>
-    </DocumentPageHeader>
+    </PageHeader>
 
     <!-- 거래처별 카드 그룹 -->
     <div

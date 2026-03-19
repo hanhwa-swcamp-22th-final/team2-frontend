@@ -10,7 +10,7 @@ import DateRangeField from '@/components/common/DateRangeField.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
 import InfoField from '@/components/common/InfoField.vue'
-import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 
@@ -120,7 +120,7 @@ const columns = [
 <template>
   <div class="space-y-4">
     <!-- 페이지 타이틀 -->
-    <DocumentPageHeader title="메일 이력" icon-class="fas fa-envelope" />
+    <PageHeader title="메일 이력" icon-class="fas fa-envelope" />
 
     <!-- 키워드 검색 + 상세검색 토글 -->
     <FilterToolbarCard
