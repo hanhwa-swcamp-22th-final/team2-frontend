@@ -1,4 +1,4 @@
-import { onBeforeUnmount, ref } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
 export const useUiStore = defineStore('ui', () => {
@@ -28,10 +28,17 @@ export const useUiStore = defineStore('ui', () => {
     window.addEventListener('resize', handleResize)
   }
 
+  function dispose() {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('resize', handleResize)
+    }
+  }
+
   return {
     isDesktop,
     sidebarOpen,
     toggleSidebar,
     closeSidebar,
+    dispose,
   }
 })
