@@ -1,48 +1,88 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import SearchInput from '@/components/common/SearchInput.vue'
 import DepartmentAccordion from '@/components/domain/auth/DepartmentAccordion.vue'
 import UserFormModal from '@/components/domain/auth/UserFormModal.vue'
+import { useToast } from '@/composables/useToast'
+import {
+  createUser,
+  fetchDepartments,
+  fetchPositions,
+  fetchUsers,
+  updateUser,
+} from '@/api/auth'
 
-// Mock 데이터
-const positions = [
-  { id: 1, name: '팀장', level: 1 },
-  { id: 2, name: '팀원', level: 2 },
-]
+const { success, error } = useToast()
 
-const departments = [
-  { id: 1, name: '영업1팀' },
-  { id: 2, name: '영업2팀' },
-  { id: 3, name: '생산팀' },
-  { id: 4, name: '출하팀' },
-  { id: 5, name: '경영지원' },
-]
+// 데이터
+const users = ref([])
+const positions = ref([])
+const departments = ref([])
+const loading = ref(false)
 
-const users = ref([
-  { id: 1, employeeNo: '25061501', name: '김영업', email: 'kim@salesboost.com', role: 'sales', departmentId: 1, positionId: 1, status: '재직' },
-  { id: 2, employeeNo: '25061502', name: '이생산', email: 'lee@salesboost.com', role: 'production', departmentId: 3, positionId: 1, status: '재직' },
-  { id: 3, employeeNo: '25061503', name: '박출하', email: 'park@salesboost.com', role: 'shipping', departmentId: 4, positionId: 1, status: '재직' },
-  { id: 4, employeeNo: '25061504', name: '최관리', email: 'admin@salesboost.com', role: 'admin', departmentId: 5, positionId: 1, status: '재직' },
-  { id: 5, employeeNo: '25080101', name: '정영업', email: 'jung@salesboost.com', role: 'sales', departmentId: 2, positionId: 2, status: '재직' },
-  { id: 6, employeeNo: '25062001', name: '한퇴사', email: 'han@salesboost.com', role: 'sales', departmentId: 1, positionId: 2, status: '퇴직' },
-])
+// 사번 자동 생성 (YYMMDD + 2자리 순번)
+function generateEmployeeNo(existingUsers) {
+  const now = new Date()
+  const yy = String(now.getFullYear()).slice(2)
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const dd = String(now.getDate()).padStart(2, '0')
+  const prefix = `${yy}${mm}${dd}`
+  const todayNos = existingUsers
+    .map((u) => u.employeeNo)
+    .filter((no) => no && no.startsWith(prefix))
+  const maxSeq = todayNos.reduce((max, no) => {
+    const seq = parseInt(no.slice(6), 10)
+    return isNaN(seq) ? max : Math.max(max, seq)
+  }, 0)
+  return `${prefix}${String(maxSeq + 1).padStart(2, '0')}`
+}
 
-const positionMap = Object.fromEntries(positions.map((p) => [p.id, p.name]))
+async function loadData() {
+  loading.value = true
+  try {
+    const [usersData, positionsData, departmentsData] = await Promise.all([
+      fetchUsers(),
+      fetchPositions(),
+      fetchDepartments(),
+    ])
+    users.value = usersData
+    positions.value = positionsData
+    departments.value = departmentsData
+    // 첫 번째 부서 펼치기
+    if (departmentsData.length > 0) {
+      expandedDepts.value = new Set([departmentsData[0].id])
+    }
+  } catch (e) {
+    error('데이터를 불러오는 중 오류가 발생했습니다.')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(loadData)
+
+const positionMap = computed(() => Object.fromEntries(positions.value.map((p) => [String(p.id), p.name])))
 
 // 검색 / 필터
 const searchKeyword = ref('')
 const departmentFilter = ref('')
 
 // 아코디언 상태
-const expandedDepts = ref(new Set([1]))
+const expandedDepts = ref(new Set())
 
 // 모달 상태
 const showFormModal = ref(false)
 const formMode = ref('create')
 const selectedUser = ref(null)
+const saving = ref(false)
 
+// 삭제 확인 모달 상태
+const showDeleteModal = ref(false)
+const userToDelete = ref(null)
+const deleting = ref(false)
 
 // 부서별 그룹핑 + 필터
 const groupedByDepartment = computed(() => {
@@ -51,44 +91,57 @@ const groupedByDepartment = computed(() => {
   if (searchKeyword.value) {
     const kw = searchKeyword.value.toLowerCase()
     filtered = filtered.filter(
-      (u) => u.name.toLowerCase().includes(kw) || u.email.toLowerCase().includes(kw) || u.employeeNo.includes(kw),
+      (u) =>
+        u.name.toLowerCase().includes(kw) ||
+        u.email.toLowerCase().includes(kw) ||
+        (u.employeeNo && u.employeeNo.includes(kw)),
     )
   }
 
   if (departmentFilter.value) {
-    filtered = filtered.filter((u) => u.departmentId === Number(departmentFilter.value))
+    filtered = filtered.filter((u) => String(u.departmentId) === String(departmentFilter.value))
   }
 
-  return departments.map((dept) => ({
-    department: dept,
-    users: filtered
-      .filter((u) => u.departmentId === dept.id)
-      .map((u) => ({ ...u, department: dept.name })),
-  })).filter((g) => g.users.length > 0)
+  return departments.value
+    .map((dept) => ({
+      department: dept,
+      users: filtered
+        .filter((u) => String(u.departmentId) === String(dept.id))
+        .map((u) => ({ ...u, department: dept.name })),
+    }))
+    .filter((g) => g.users.length > 0)
 })
 
 const totalTeams = computed(() => groupedByDepartment.value.length)
-const totalUsers = computed(() => groupedByDepartment.value.reduce((sum, g) => sum + g.users.length, 0))
-const activeUsers = computed(() => groupedByDepartment.value.reduce((sum, g) => sum + g.users.filter((u) => u.status === '재직').length, 0))
+const totalUsers = computed(() =>
+  groupedByDepartment.value.reduce((sum, g) => sum + g.users.length, 0),
+)
+const activeUsers = computed(() =>
+  groupedByDepartment.value.reduce(
+    (sum, g) => sum + g.users.filter((u) => u.status === '재직').length,
+    0,
+  ),
+)
 
-const departmentFilterOptions = [
+const departmentFilterOptions = computed(() => [
   { label: '전체 부서', value: '' },
-  ...departments.map((d) => ({ label: d.name, value: d.id })),
-]
+  ...departments.value.map((d) => ({ label: d.name, value: d.id })),
+])
 
 function toggleDepartment(deptId) {
-  if (expandedDepts.value.has(deptId)) {
-    expandedDepts.value.delete(deptId)
-  } else {
-    expandedDepts.value.add(deptId)
-  }
+  const next = new Set(expandedDepts.value)
+  if (next.has(deptId)) next.delete(deptId)
+  else next.add(deptId)
+  expandedDepts.value = next
 }
 
 function toggleAll() {
-  if (expandedDepts.value.size === departments.length) {
-    expandedDepts.value.clear()
+  const visibleDeptIds = groupedByDepartment.value.map(g => g.department.id)
+  const allExpanded = visibleDeptIds.length > 0 && visibleDeptIds.every(id => expandedDepts.value.has(id))
+  if (allExpanded) {
+    expandedDepts.value = new Set()
   } else {
-    expandedDepts.value = new Set(departments.map((d) => d.id))
+    expandedDepts.value = new Set([...expandedDepts.value, ...visibleDeptIds])
   }
 }
 
@@ -102,6 +155,66 @@ function openCreateModal() {
   selectedUser.value = null
   formMode.value = 'create'
   showFormModal.value = true
+}
+
+function openDeleteModal(user) {
+  userToDelete.value = user
+  showDeleteModal.value = true
+}
+
+async function handleSave(formData) {
+  saving.value = true
+  try {
+    if (formMode.value === 'create') {
+      const employeeNo = generateEmployeeNo(users.value)
+      const newUser = {
+        ...formData,
+        employeeNo,
+        pw: '1234',
+        status: formData.status || '재직',
+      }
+      await createUser(newUser)
+      success('사용자가 등록되었습니다.')
+    } else {
+      const original = selectedUser.value
+      const { pw: _pw, ...safeOriginal } = original
+      const updateData = { ...safeOriginal, ...formData }
+      // 팀 이동 처리
+      if (formData.transferDepartmentId) {
+        updateData.departmentId = formData.transferDepartmentId
+      }
+      delete updateData.transferDepartmentId
+      delete updateData.transferReason
+      delete updateData.department
+      await updateUser(original.id, updateData)
+      success('사용자 정보가 수정되었습니다.')
+    }
+    await loadData()
+    showFormModal.value = false
+  } catch (e) {
+    error('저장 중 오류가 발생했습니다.')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function handleDelete() {
+  if (!userToDelete.value) return
+  deleting.value = true
+  try {
+    // json-server: DELETE /users/:id
+    // TODO: 실제 삭제 API 추가 시 연동 (현재 api/auth.js에 deleteUser 없음)
+    // 임시: updateUser로 status를 '퇴직'으로 변경
+    await updateUser(userToDelete.value.id, { ...userToDelete.value, status: '퇴직' })
+    success(`${userToDelete.value.name} 사용자가 퇴직 처리되었습니다.`)
+    await loadData()
+  } catch (e) {
+    error('처리 중 오류가 발생했습니다.')
+  } finally {
+    deleting.value = false
+    showDeleteModal.value = false
+    userToDelete.value = null
+  }
 }
 
 defineExpose({ openCreateModal })
@@ -122,8 +235,13 @@ defineExpose({ openCreateModal })
       </BaseButton>
     </div>
 
+    <!-- 로딩 -->
+    <div v-if="loading" class="py-12 text-center text-sm text-slate-400">
+      불러오는 중...
+    </div>
+
     <!-- 부서별 아코디언 -->
-    <div class="space-y-3">
+    <div v-else class="space-y-3">
       <DepartmentAccordion
         v-for="group in groupedByDepartment"
         :key="group.department.id"
@@ -133,7 +251,11 @@ defineExpose({ openCreateModal })
         :position-map="positionMap"
         @toggle="toggleDepartment(group.department.id)"
         @edit-user="openEditModal"
+        @delete-user="openDeleteModal"
       />
+      <div v-if="groupedByDepartment.length === 0" class="py-12 text-center text-sm text-slate-400">
+        검색 결과가 없습니다.
+      </div>
     </div>
 
     <!-- 하단 요약 -->
@@ -142,15 +264,28 @@ defineExpose({ openCreateModal })
       <span>{{ activeUsers }}명 재직</span>
     </div>
 
-    <!-- 모달들 -->
+    <!-- 사용자 등록/수정 모달 -->
     <UserFormModal
       :open="showFormModal"
       :mode="formMode"
       :user="selectedUser"
       :positions="positions"
       :departments="departments"
+      :all-users="users"
+      :saving="saving"
       @close="showFormModal = false"
+      @save="handleSave"
     />
 
+    <!-- 삭제 확인 모달 -->
+    <ConfirmModal
+      :open="showDeleteModal"
+      title="사용자 퇴직 처리"
+      :message="`${userToDelete?.name} 사용자를 퇴직 처리하시겠습니까?`"
+      confirm-label="퇴직 처리"
+      confirm-variant="danger"
+      @confirm="handleDelete"
+      @cancel="showDeleteModal = false"
+    />
   </div>
 </template>

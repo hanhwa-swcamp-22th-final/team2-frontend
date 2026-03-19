@@ -266,6 +266,7 @@ const routes = [
         meta: {
           title: 'Users',
           serviceName: '사용자 관리',
+          requiredRole: 'admin',
         },
       },
     ],

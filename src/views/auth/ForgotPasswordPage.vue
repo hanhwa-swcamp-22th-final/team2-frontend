@@ -5,15 +5,41 @@ import BaseTextField from '@/components/common/BaseTextField.vue'
 import FormField from '@/components/common/FormField.vue'
 import { useToast } from '@/composables/useToast'
 
-const { success, warning } = useToast()
-const email = ref('')
+const { success, error } = useToast()
+const isDev = import.meta.env.DEV
 
-function handleSubmit() {
-  if (!email.value) {
-    warning('이메일을 입력해주세요.')
-    return
+const email = ref('')
+const emailError = ref('')
+const loading = ref(false)
+const submitted = ref(false)
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function validate() {
+  emailError.value = ''
+  if (!email.value.trim()) {
+    emailError.value = '이메일을 입력해주세요.'
+    return false
   }
-  success('재설정 링크가 발송되었습니다.')
+  if (!EMAIL_REGEX.test(email.value.trim())) {
+    emailError.value = '올바른 이메일 형식을 입력해주세요.'
+    return false
+  }
+  return true
+}
+
+async function handleSubmit() {
+  if (!validate()) return
+
+  loading.value = true
+  try {
+    submitted.value = true
+    success('등록된 이메일이라면 재설정 링크가 발송됩니다.')
+  } catch (e) {
+    error('이메일 확인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -42,8 +68,17 @@ function handleSubmit() {
         </p>
       </div>
 
-      <form class="space-y-5" @submit.prevent="handleSubmit">
-        <FormField label="이메일">
+      <!-- 발송 완료 메시지 -->
+      <div v-if="submitted" class="rounded-xl bg-green-50 px-4 py-4 text-center text-sm text-green-700">
+        <p class="font-semibold">이메일이 발송되었습니다.</p>
+        <p class="mt-1 text-xs text-green-600">
+          <strong>{{ email }}</strong> 으로 비밀번호 재설정 링크를 발송했습니다.<br />
+          이메일을 확인해 주세요.
+        </p>
+      </div>
+
+      <form v-else class="space-y-5" @submit.prevent="handleSubmit">
+        <FormField label="이메일" :error="emailError">
           <div class="relative">
             <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -61,7 +96,9 @@ function handleSubmit() {
           </div>
         </FormField>
 
-        <BaseButton variant="primary" type="submit" block size="lg">재설정 링크 발송</BaseButton>
+        <BaseButton variant="primary" type="submit" block size="lg" :disabled="loading">
+          {{ loading ? '확인 중...' : '재설정 링크 발송' }}
+        </BaseButton>
       </form>
 
       <div class="mt-4 text-center">
@@ -72,7 +109,7 @@ function handleSubmit() {
     </div>
 
     <!-- Demo 계정 안내 -->
-    <div class="w-full rounded-2xl bg-white p-4 shadow-panel">
+    <div v-if="isDev" class="w-full rounded-2xl bg-white p-4 shadow-panel">
       <p class="mb-2 text-xs font-semibold text-slate-600">Demo 계정 안내</p>
       <div class="space-y-1 text-xs text-slate-500">
         <p>관리자: admin@salesboost.com / 1234</p>
