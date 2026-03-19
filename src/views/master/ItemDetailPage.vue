@@ -1,29 +1,24 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import ItemFormModal from '@/components/domain/master/ItemFormModal.vue'
+import { deleteItem, fetchItem, fetchItems, updateItem } from '@/api/master'
 import { useToast } from '@/composables/useToast'
 
 const route = useRoute()
 const router = useRouter()
-const { success } = useToast()
+const { success, error } = useToast()
 
-const items = ref([
-  { id: 1, code: 'ITM-001', name: 'Hot Rolled Steel Coil', nameKr: '열연 강판 코일', category: 'Steel', spec: '1200 × 2400 × 3 mm', unit: 'MT', packUnit: 'BUNDLE', unitPrice: 850000, weight: 5000, hsCode: '7208.51' },
-  { id: 2, code: 'ITM-002', name: 'Cold Rolled Steel Sheet', nameKr: '냉연 강판', category: 'Steel', spec: '1000 × 2000 × 1.5 mm', unit: 'MT', packUnit: 'PALLET', unitPrice: 920000, weight: 3000, hsCode: '7209.16' },
-  { id: 3, code: 'ITM-003', name: 'Seamless Steel Pipe', nameKr: '무봉강관', category: 'Pipe', spec: '114 × 6000 × 8 mm', unit: 'EA', packUnit: 'BUNDLE', unitPrice: 125000, weight: 120, hsCode: '7304.19' },
-  { id: 4, code: 'ITM-004', name: 'Welded Steel Pipe', nameKr: '용접강관', category: 'Pipe', spec: '219 × 12000 × 6 mm', unit: 'EA', packUnit: 'BUNDLE', unitPrice: 98000, weight: 200, hsCode: '7306.30' },
-  { id: 5, code: 'ITM-005', name: 'Lubricant Oil #32', nameKr: '윤활유 #32', category: 'Oil', spec: '200 × 200 × 500 mm', unit: 'EA', packUnit: 'CASE', unitPrice: 45000, weight: 18, hsCode: '2710.19' },
-  { id: 6, code: 'ITM-006', name: 'Hydraulic Press Machine', nameKr: '유압 프레스', category: 'Machinery', spec: '2500 × 1800 × 3200 mm', unit: 'SET', packUnit: 'LOOSE', unitPrice: 75000000, weight: 8500, hsCode: '8462.10' },
-  { id: 7, code: 'ITM-007', name: 'Stainless Steel Bar', nameKr: '스테인리스 봉강', category: 'Steel', spec: '50 × 50 × 6000 mm', unit: 'KG', packUnit: 'BUNDLE', unitPrice: 4500, weight: 117, hsCode: '7222.11' },
-  { id: 8, code: 'ITM-008', name: 'ERW Pipe', nameKr: 'ERW 강관', category: 'Pipe', spec: '76 × 6000 × 3 mm', unit: 'EA', packUnit: 'PALLET', unitPrice: 67000, weight: 32, hsCode: '7306.30' },
-  { id: 9, code: 'ITM-009', name: 'Cutting Oil', nameKr: '절삭유', category: 'Oil', spec: '150 × 150 × 300 mm', unit: 'EA', packUnit: 'CASE', unitPrice: 32000, weight: 5, hsCode: '3403.19' },
-  { id: 10, code: 'ITM-010', name: 'CNC Lathe', nameKr: 'CNC 선반', category: 'Machinery', spec: '3000 × 1500 × 1800 mm', unit: 'SET', packUnit: 'LOOSE', unitPrice: 120000000, weight: 4200, hsCode: '8458.11' },
-])
+const item = ref(null)
+const allItems = ref([]) // used for code uniqueness check in edit modal
+const loading = ref(false)
+const saving = ref(false)
 
-const item = computed(() => items.value.find((i) => i.id === Number(route.params.id)))
+const showFormModal = ref(false)
+const showConfirmModal = ref(false)
 
 const infoFields = computed(() => {
   if (!item.value) return []
@@ -37,35 +32,86 @@ const infoFields = computed(() => {
     { label: '단가 (KRW)', value: item.value.unitPrice?.toLocaleString() ?? '-' },
     { label: '중량 (kg)', value: item.value.weight?.toLocaleString() ?? '-' },
     { label: 'HS Code', value: item.value.hsCode },
+    { label: '상태', value: item.value.status },
+    { label: '등록일', value: item.value.regDate },
   ]
 })
 
+// TODO: API로 해당 품목의 연결 문서 조회
 const usageHistory = [
   { code: 'PO-2025-001', client: 'Global Steel Corp.' },
   { code: 'PO-2025-003', client: 'Tokyo Trading Co.' },
   { code: 'PO-2025-005', client: 'Hamburg Metal GmbH' },
 ]
 
-const showFormModal = ref(false)
+async function loadData() {
+  const rawId = route.params.id
+  if (!/^\d+$/.test(String(rawId))) {
+    router.replace({ name: 'item-list' })
+    return
+  }
+  loading.value = true
+  try {
+    // fetchItems() kept for allItems (code uniqueness in edit modal)
+    const [itemData, itemsData] = await Promise.all([
+      fetchItem(route.params.id),
+      fetchItems(),
+    ])
+    item.value = itemData
+    allItems.value = itemsData
+  } catch {
+    error('데이터를 불러오는 중 오류가 발생했습니다.')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(loadData)
 
 function openEditModal() {
   showFormModal.value = true
 }
 
-function handleDelete() {
+async function handleSave(formData) {
+  saving.value = true
+  try {
+    const updated = await updateItem(item.value.id, formData)
+    item.value = updated
+    success('품목 정보가 수정되었습니다.')
+    showFormModal.value = false
+  } catch {
+    error('수정 중 오류가 발생했습니다.')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function handleDelete() {
+  if (!item.value) return
   const name = item.value.name
-  items.value = items.value.filter((i) => i.id !== Number(route.params.id))
-  success(`${name} 품목이 삭제되었습니다.`)
-  router.push({ name: 'item-list' })
+  try {
+    await deleteItem(item.value.id)
+    success(`${name} 품목이 삭제되었습니다.`)
+    router.push({ name: 'item-list' })
+  } catch {
+    error('삭제 중 오류가 발생했습니다.')
+  } finally {
+    showConfirmModal.value = false
+  }
 }
 
 function goBack() {
-  router.push({ name: 'item-list' })
+  if (window.history.length > 1) router.back()
+  else router.push({ name: 'item-list' })
 }
 </script>
 
 <template>
-  <div v-if="item" class="space-y-6">
+  <div v-if="loading" class="flex items-center justify-center py-20 text-slate-400">
+    데이터를 불러오는 중입니다...
+  </div>
+
+  <div v-else-if="item" class="space-y-6">
     <!-- 헤더 -->
     <div class="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
       <div class="flex items-center gap-3">
@@ -75,28 +121,60 @@ function goBack() {
           </svg>
         </button>
         <h1 class="text-2xl font-bold tracking-tight text-ink">{{ item.name }}</h1>
+        <span
+          class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+          :class="item.status === '활성' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'"
+        >
+          {{ item.status }}
+        </span>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <BaseButton variant="secondary" size="sm" @click="openEditModal">수정</BaseButton>
-        <BaseButton variant="ghost" size="sm" @click="handleDelete">삭제</BaseButton>
-        <BaseButton variant="ghost" size="sm">인쇄</BaseButton>
+        <BaseButton variant="ghost" size="sm" @click="showConfirmModal = true">삭제</BaseButton>
+        <BaseButton variant="ghost" size="sm" :disabled="true" title="준비 중">인쇄</BaseButton>
       </div>
     </div>
 
     <!-- 2열 레이아웃 -->
     <div class="grid gap-6 xl:grid-cols-[1fr_360px]">
       <!-- 좌측: 품목 정보 -->
-      <BaseCard title="품목 정보" subtitle="품목의 상세 정보입니다.">
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div v-for="field in infoFields" :key="field.label">
-            <p class="text-xs font-medium text-slate-500">{{ field.label }}</p>
-            <p class="mt-1 text-sm text-ink">{{ field.value || '-' }}</p>
+      <div class="space-y-6">
+        <BaseCard title="품목 정보" subtitle="품목의 상세 정보입니다.">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div v-for="field in infoFields" :key="field.label">
+              <p class="text-xs font-medium text-slate-500">{{ field.label }}</p>
+              <p class="mt-1 text-sm text-ink">{{ field.value || '-' }}</p>
+            </div>
           </div>
-        </div>
-      </BaseCard>
+        </BaseCard>
 
-      <!-- 우측: 사용 내역 -->
-      <BaseCard title="사용 내역" subtitle="이 품목이 사용된 문서 목록입니다.">
+        <!-- 관련 문서 링크 -->
+        <BaseCard title="관련 문서 바로가기" subtitle="이 품목의 관련 문서를 조회합니다.">
+          <div class="flex flex-wrap gap-2">
+            <RouterLink
+              :to="{ path: '/po', query: { itemId: item.id } }"
+              class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
+            >
+              PO 조회
+            </RouterLink>
+            <RouterLink
+              :to="{ path: '/pi', query: { itemId: item.id } }"
+              class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
+            >
+              PI 조회
+            </RouterLink>
+            <RouterLink
+              :to="{ path: '/production', query: { itemId: item.id } }"
+              class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
+            >
+              생산 조회
+            </RouterLink>
+          </div>
+        </BaseCard>
+      </div>
+
+      <!-- 우측: 사용 내역 (플레이스홀더 데이터 — TODO: API로 해당 품목의 연결 문서 조회) -->
+      <BaseCard title="사용 내역" subtitle="이 품목이 사용된 문서 목록입니다. (준비 중)">
         <div v-if="usageHistory.length" class="space-y-3">
           <div
             v-for="usage in usageHistory"
@@ -117,8 +195,21 @@ function goBack() {
       :open="showFormModal"
       mode="edit"
       :item="item"
+      :all-items="allItems"
+      :saving="saving"
       @close="showFormModal = false"
-      @save="showFormModal = false"
+      @save="handleSave"
+    />
+
+    <ConfirmModal
+      :open="showConfirmModal"
+      title="품목 삭제"
+      message="해당 품목을 삭제하시겠습니까?"
+      :detail="item?.name"
+      confirm-label="삭제"
+      confirm-variant="danger"
+      @confirm="handleDelete"
+      @cancel="showConfirmModal = false"
     />
   </div>
 
