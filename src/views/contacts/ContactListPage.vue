@@ -13,8 +13,6 @@ import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import TableActions from '@/components/common/TableActions.vue'
 
-const { error: showError } = useToast()
-
 // ── 데이터 ─────────────────────────────────────────────────
 const clients = ref([])
 const contacts = ref([])
