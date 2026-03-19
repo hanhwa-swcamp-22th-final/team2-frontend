@@ -144,7 +144,10 @@ function goBack() {
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div v-for="field in infoFields" :key="field.label">
               <p class="text-xs font-medium text-slate-500">{{ field.label }}</p>
-              <p class="mt-1 text-sm text-ink">{{ field.value || '-' }}</p>
+              <p
+                class="mt-1 text-sm text-ink"
+                :class="field.label === '코드' ? 'font-mono font-semibold text-brand-600' : ''"
+              >{{ field.value || '-' }}</p>
             </div>
           </div>
         </BaseCard>
