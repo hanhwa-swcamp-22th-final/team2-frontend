@@ -1,30 +1,38 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import SearchInput from '@/components/common/SearchInput.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import TableActions from '@/components/common/TableActions.vue'
 import PageTitleBar from '@/components/layout/PageTitleBar.vue'
 import ClientFormModal from '@/components/domain/master/ClientFormModal.vue'
+import {
+  createClient,
+  deleteClient,
+  fetchClients,
+  fetchCountries,
+  fetchCurrencies,
+  fetchPaymentTerms,
+  fetchPorts,
+  updateClient,
+} from '@/api/master'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
-const { success } = useToast()
+const { success, error } = useToast()
 
-const clients = ref([
-  { id: 1, code: 'CL-001', name: 'Global Steel Corp.', nameKr: '글로벌 스틸', country: 'USA', city: 'Houston', port: 'Los Angeles', address: '1234 Industrial Blvd, Houston, TX', tel: '+1-713-555-0101', email: 'contact@globalsteel.com', paymentTerms: 'T/T', currency: 'USD', manager: 'John Smith', status: '활성', regDate: '2025-01-15' },
-  { id: 2, code: 'CL-002', name: 'Hamburg Metal GmbH', nameKr: '함부르크 메탈', country: 'Germany', city: 'Hamburg', port: 'Hamburg', address: 'Hafenstr. 42, Hamburg', tel: '+49-40-555-0202', email: 'info@hamburgmetal.de', paymentTerms: 'L/C', currency: 'EUR', manager: 'Hans Mueller', status: '활성', regDate: '2025-02-10' },
-  { id: 3, code: 'CL-003', name: 'Tokyo Trading Co.', nameKr: '도쿄 트레이딩', country: 'Japan', city: 'Tokyo', port: 'Tokyo', address: '2-1 Marunouchi, Chiyoda-ku, Tokyo', tel: '+81-3-555-0303', email: 'trade@tokyotrading.jp', paymentTerms: 'T/T', currency: 'JPY', manager: 'Tanaka Yuki', status: '활성', regDate: '2025-03-05' },
-  { id: 4, code: 'CL-004', name: 'Shanghai Import Ltd.', nameKr: '상해 임포트', country: 'China', city: 'Shanghai', port: 'Shanghai', address: '88 Pudong Ave, Shanghai', tel: '+86-21-555-0404', email: 'import@shanghaiimport.cn', paymentTerms: 'D/P', currency: 'CNY', manager: 'Wang Lei', status: '활성', regDate: '2025-03-20' },
-  { id: 5, code: 'CL-005', name: 'London Metals Plc', nameKr: '런던 메탈', country: 'UK', city: 'London', port: 'Rotterdam', address: '10 Canary Wharf, London', tel: '+44-20-555-0505', email: 'metals@londonmetals.co.uk', paymentTerms: 'L/C', currency: 'USD', manager: 'James Brown', status: '비활성', regDate: '2025-04-01' },
-  { id: 6, code: 'CL-006', name: 'Paris Acier SA', nameKr: '파리 아시에', country: 'France', city: 'Paris', port: 'Hamburg', address: '15 Rue de Rivoli, Paris', tel: '+33-1-555-0606', email: 'acier@parisacier.fr', paymentTerms: 'D/A', currency: 'EUR', manager: 'Pierre Dupont', status: '활성', regDate: '2025-04-15' },
-  { id: 7, code: 'CL-007', name: 'Mumbai Steel Works', nameKr: '뭄바이 스틸웍스', country: 'India', city: 'Mumbai', port: 'Mumbai', address: 'Andheri East, Mumbai', tel: '+91-22-555-0707', email: 'works@mumbaisteel.in', paymentTerms: 'T/T', currency: 'USD', manager: 'Raj Patel', status: '활성', regDate: '2025-05-01' },
-  { id: 8, code: 'CL-008', name: 'São Paulo Metals', nameKr: '상파울루 메탈', country: 'Brazil', city: 'São Paulo', port: 'Santos', address: 'Av. Paulista 1000, São Paulo', tel: '+55-11-555-0808', email: 'metals@spmetals.br', paymentTerms: 'CAD', currency: 'USD', manager: 'Carlos Silva', status: '활성', regDate: '2025-05-20' },
-  { id: 9, code: 'CL-009', name: 'Singapore Pipe Pte', nameKr: '싱가포르 파이프', country: 'Singapore', city: 'Singapore', port: 'Singapore', address: '1 Raffles Place, Singapore', tel: '+65-555-0909', email: 'pipe@sgpipe.sg', paymentTerms: 'T/T', currency: 'USD', manager: 'Lim Wei', status: '비활성', regDate: '2025-06-10' },
-  { id: 10, code: 'CL-010', name: 'Hanoi Industries', nameKr: '하노이 인더스트리', country: 'Vietnam', city: 'Ho Chi Minh', port: 'Ho Chi Minh', address: 'District 1, Ho Chi Minh City', tel: '+84-28-555-1010', email: 'ind@hanoiindustries.vn', paymentTerms: 'T/T', currency: 'USD', manager: 'Nguyen Van', status: '활성', regDate: '2025-06-25' },
-])
+const clients = ref([])
+const countries = ref([])
+const ports = ref([])
+const currencies = ref([])
+const paymentTerms = ref([])
+const loading = ref(false)
+const saving = ref(false)
+const deleting = ref(false)
 
 const searchKeyword = ref('')
 const statusFilter = ref('')
@@ -32,6 +40,9 @@ const statusFilter = ref('')
 const showFormModal = ref(false)
 const formMode = ref('create')
 const selectedClient = ref(null)
+
+const showConfirmModal = ref(false)
+const clientToDelete = ref(null)
 
 const statusFilterOptions = [
   { label: '전체 상태', value: '' },
@@ -51,13 +62,46 @@ const columns = [
   { key: 'actions', label: '액션', width: '120px', align: 'center' },
 ]
 
+function getCountryName(countryId) {
+  const found = countries.value.find((c) => c.id === countryId)
+  return found ? found.name : '-'
+}
+
+function getPortName(portId) {
+  const found = ports.value.find((p) => p.id === portId)
+  return found ? found.name : '-'
+}
+
+function getPaymentTermsCode(paymentTermsId) {
+  const found = paymentTerms.value.find((p) => p.id === paymentTermsId)
+  return found ? found.code : '-'
+}
+
+function getCurrencyCode(currencyId) {
+  const found = currencies.value.find((c) => c.id === currencyId)
+  return found ? found.code : '-'
+}
+
+const enrichedClients = computed(() =>
+  clients.value.map((c) => ({
+    ...c,
+    countryName: getCountryName(c.countryId),
+    portName: getPortName(c.portId),
+    paymentTermsCode: getPaymentTermsCode(c.paymentTermsId),
+    currencyCode: getCurrencyCode(c.currencyId),
+  })),
+)
+
 const filteredClients = computed(() => {
-  let result = clients.value
+  let result = enrichedClients.value
 
   if (searchKeyword.value) {
     const kw = searchKeyword.value.toLowerCase()
     result = result.filter(
-      (c) => c.name.toLowerCase().includes(kw) || c.nameKr.includes(kw) || c.code.toLowerCase().includes(kw),
+      (c) =>
+        c.name.toLowerCase().includes(kw) ||
+        (c.nameKr && c.nameKr.includes(kw)) ||
+        c.code.toLowerCase().includes(kw),
     )
   }
 
@@ -67,6 +111,31 @@ const filteredClients = computed(() => {
 
   return result
 })
+
+async function loadData() {
+  loading.value = true
+  try {
+    const [clientsData, countriesData, portsData, currenciesData, paymentTermsData] =
+      await Promise.all([
+        fetchClients(),
+        fetchCountries(),
+        fetchPorts(),
+        fetchCurrencies(),
+        fetchPaymentTerms(),
+      ])
+    clients.value = clientsData
+    countries.value = countriesData
+    ports.value = portsData
+    currencies.value = currenciesData
+    paymentTerms.value = paymentTermsData
+  } catch {
+    error('데이터를 불러오는 중 오류가 발생했습니다.')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(loadData)
 
 function openCreateModal() {
   selectedClient.value = null
@@ -80,18 +149,63 @@ function openEditModal(client) {
   showFormModal.value = true
 }
 
-function handleDelete(client) {
-  clients.value = clients.value.filter((c) => c.id !== client.id)
-  success(`${client.name} 거래처가 삭제되었습니다.`)
+function confirmDelete(client) {
+  clientToDelete.value = client
+  showConfirmModal.value = true
+}
+
+async function handleDelete() {
+  if (!clientToDelete.value || deleting.value) return
+  deleting.value = true
+  try {
+    await deleteClient(clientToDelete.value.id)
+    success(`${clientToDelete.value.name} 거래처가 삭제되었습니다.`)
+    await loadData()
+  } catch {
+    error('삭제 중 오류가 발생했습니다.')
+  } finally {
+    showConfirmModal.value = false
+    clientToDelete.value = null
+    deleting.value = false
+  }
+}
+
+async function handleSave(formData) {
+  if (saving.value) return
+  saving.value = true
+  try {
+    if (formMode.value === 'create') {
+      await createClient({ ...formData, regDate: new Date().toISOString().slice(0, 10) })
+      success('거래처가 등록되었습니다.')
+    } else {
+      await updateClient(selectedClient.value.id, formData)
+      success('거래처 정보가 수정되었습니다.')
+    }
+    showFormModal.value = false
+    await loadData()
+  } catch {
+    error('저장 중 오류가 발생했습니다.')
+  } finally {
+    saving.value = false
+  }
 }
 
 function handleRowClick(event) {
+  // Ignore clicks on action buttons within the row
+  if (event.target.closest('[data-action]') || event.target.closest('button')) return
   const tr = event.target.closest('tbody tr')
   if (!tr) return
+  const rowKey = tr.dataset.rowKey ?? tr.getAttribute('data-row-key')
+  if (rowKey) {
+    router.push({ name: 'client-detail', params: { id: rowKey } })
+    return
+  }
+  // Fallback: match by DOM index against filtered array
   const rows = Array.from(tr.parentElement.children)
   const index = rows.indexOf(tr)
-  if (index < 0 || index >= filteredClients.value.length) return
-  router.push({ name: 'client-detail', params: { id: filteredClients.value[index].id } })
+  if (index >= 0 && index < filteredClients.value.length) {
+    router.push({ name: 'client-detail', params: { id: filteredClients.value[index].id } })
+  }
 }
 </script>
 
@@ -112,9 +226,15 @@ function handleRowClick(event) {
       </div>
     </div>
 
+    <div v-if="loading" class="flex items-center justify-center py-20 text-slate-400">
+      데이터를 불러오는 중입니다...
+    </div>
+
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
-    <div class="cursor-pointer" @click="handleRowClick">
-    <BaseTable :columns="columns" :rows="filteredClients" row-key="id">
+    <div v-else class="cursor-pointer" @click="handleRowClick">
+    <BaseTable :columns="columns" :rows="filteredClients" row-key="id"
+      :empty-text="searchKeyword || statusFilter ? '검색 결과가 없습니다.' : '등록된 거래처가 없습니다.'"
+    >
       <template #cell-code="{ row }">
         <span class="font-semibold text-brand">{{ row.code }}</span>
       </template>
@@ -127,7 +247,19 @@ function handleRowClick(event) {
       </template>
 
       <template #cell-location="{ row }">
-        {{ row.country }}, {{ row.city }}
+        {{ row.countryName }}, {{ row.city }}
+      </template>
+
+      <template #cell-port="{ row }">
+        {{ row.portName }}
+      </template>
+
+      <template #cell-paymentTerms="{ row }">
+        {{ row.paymentTermsCode }}
+      </template>
+
+      <template #cell-currency="{ row }">
+        {{ row.currencyCode }}
       </template>
 
       <template #cell-status="{ row }">
@@ -135,10 +267,7 @@ function handleRowClick(event) {
       </template>
 
       <template #cell-actions="{ row }">
-        <div class="flex items-center justify-center gap-1">
-          <BaseButton variant="ghost" size="sm" @click.stop="openEditModal(row)">수정</BaseButton>
-          <BaseButton variant="ghost" size="sm" @click.stop="handleDelete(row)">삭제</BaseButton>
-        </div>
+        <TableActions @edit="openEditModal(row)" @delete="confirmDelete(row)" />
       </template>
     </BaseTable>
     </div>
@@ -151,8 +280,25 @@ function handleRowClick(event) {
       :open="showFormModal"
       :mode="formMode"
       :client="selectedClient"
+      :countries="countries"
+      :ports="ports"
+      :currencies="currencies"
+      :payment-terms="paymentTerms"
+      :all-clients="clients"
+      :saving="saving"
       @close="showFormModal = false"
-      @save="showFormModal = false"
+      @save="handleSave"
+    />
+
+    <ConfirmModal
+      :open="showConfirmModal"
+      title="거래처 삭제"
+      message="해당 거래처를 삭제하시겠습니까?"
+      :detail="clientToDelete?.name"
+      confirm-label="삭제"
+      confirm-variant="danger"
+      @confirm="handleDelete"
+      @cancel="showConfirmModal = false"
     />
   </div>
 </template>
