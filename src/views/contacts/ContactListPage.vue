@@ -43,11 +43,11 @@ function applySearch() {
 
 const filteredClients = computed(() => {
   if (!searchKeyword.value) return clients.value
-  return clients.value.filter((c) => c.id === searchKeyword.value)
+  return clients.value.filter((c) => String(c.id) === String(searchKeyword.value))
 })
 
 function getContactsByClient(clientId) {
-  return contacts.value.filter((c) => c.clientId === clientId)
+  return contacts.value.filter((c) => String(c.clientId) === String(clientId))
 }
 
 // ── 상세 모달 ──────────────────────────────────────────────
