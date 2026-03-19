@@ -1,8 +1,10 @@
 <script setup>
 import { ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import BaseCard from '@/components/common/BaseCard.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+
+const router = useRouter()
 
 const summaryCards = ref([
   {
@@ -131,6 +133,38 @@ const recentActivities = [
     date: '2026/02/10',
   },
 ]
+
+function goToRequestItem(item) {
+  const targetPath = item.docType === 'PI' ? '/pi' : '/po'
+
+  router.push({
+    path: targetPath,
+    query: {
+      code: item.docId,
+      source: 'dashboard-request',
+    },
+  })
+}
+
+function goToActivityItem(item) {
+  router.push({
+    path: '/activities',
+    query: {
+      keyword: item.company,
+      source: 'dashboard-activity',
+    },
+  })
+}
+
+function goToShipmentItem(item) {
+  router.push({
+    path: '/shipments',
+    query: {
+      code: item.shipmentNo,
+      source: 'dashboard-shipment',
+    },
+  })
+}
 </script>
 
 <template>
@@ -176,6 +210,7 @@ const recentActivities = [
         v-for="item in requestItems"
         :key="item.id"
         class="flex cursor-pointer flex-col items-start gap-3 px-5 py-3.5 transition hover:bg-slate-50/50 sm:flex-row sm:items-center sm:justify-between"
+        @click="goToRequestItem(item)"
       >
         <div class="flex min-w-0 items-center gap-3">
           <div
@@ -224,6 +259,7 @@ const recentActivities = [
             v-for="item in recentActivities"
             :key="item.id"
             class="group flex cursor-pointer items-start gap-3 rounded-lg px-1 py-1 text-sm transition hover:bg-slate-50/70"
+            @click="goToActivityItem(item)"
           >
             <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-xs text-slate-500">
               <i class="fas" :class="item.icon" />
@@ -250,6 +286,7 @@ const recentActivities = [
             v-for="item in shipmentItems"
             :key="item.id"
             class="flex cursor-pointer flex-col items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-3.5 text-sm transition hover:border-slate-200 sm:flex-row sm:items-center sm:justify-between"
+            @click="goToShipmentItem(item)"
           >
             <div class="min-w-0">
               <div class="font-semibold text-slate-800">{{ item.shipmentNo }}</div>
