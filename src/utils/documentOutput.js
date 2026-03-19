@@ -40,7 +40,7 @@ const commonStyles = `
   .info-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1.5px solid #64748b; }
   .info-table td { border: 1px solid #94a3b8; padding: 10px 12px; font-size: 11.5px; vertical-align: top; background: #fff; }
   .info-label { background: #f8fafc; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #475569; white-space: nowrap; }
-  .shipping-info-table .info-label { white-space: normal; word-break: keep-all; line-height: 1.3; }
+  .shipping-info-table .info-label { white-space: normal; word-break: keep-all; line-height: 1.3; letter-spacing: 0.04em; text-transform: none; }
   .info-value { color: #0f172a; line-height: 1.55; }
   .company-cell, .party-cell { padding-top: 12px; padding-bottom: 12px; }
   .company-name, .party-name { margin-bottom: 4px; font-size: 13px; font-weight: 700; letter-spacing: 0.02em; color: #0f172a; }

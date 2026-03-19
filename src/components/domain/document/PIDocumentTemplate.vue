@@ -67,7 +67,7 @@ function extractIncotermPlace(value) {
     </table>
 
     <!-- ── 배송 조건 (인코텀즈, 결제조건) ── -->
-    <table class="doc-info-table" style="margin-top:-1px">
+    <table class="doc-info-table shipping-info-table" style="margin-top:-1px">
       <colgroup>
         <col style="width:120px">
         <col style="width:42%">
@@ -161,6 +161,13 @@ function extractIncotermPlace(value) {
   text-transform: uppercase;
   color: #475569;
   white-space: nowrap;
+}
+.shipping-info-table .info-label {
+  white-space: normal;
+  word-break: keep-all;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  text-transform: none;
 }
 .info-value {
   color: #0f172a;
