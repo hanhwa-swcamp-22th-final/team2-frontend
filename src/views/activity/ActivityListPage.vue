@@ -6,16 +6,19 @@ import ActivityEditModal from '@/components/domain/activity/ActivityEditModal.vu
 import ActivityTypeBadge from '@/components/domain/activity/ActivityTypeBadge.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
-import BaseTextField from '@/components/common/BaseTextField.vue'
 import DateRangeField from '@/components/common/DateRangeField.vue'
+import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
+import FormField from '@/components/common/FormField.vue'
 import PageTitleBar from '@/components/layout/PageTitleBar.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
+import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 
 const router = useRouter()
 
 // ── 필터 상태 ──────────────────────────────────────────────
-const isFilterOpen = ref(true)
+const isFilterOpen = ref(false)
 const filterDateFrom = ref('')
 const filterDateTo = ref('')
 const filterAuthor = ref('')
@@ -37,13 +40,28 @@ const authorOptions = [
   { label: '이철수', value: '이철수' },
 ]
 
+// 실제 적용된 필터 (검색 버튼 클릭 시에만 반영)
+const applied = ref({ title: '', dateFrom: '', dateTo: '', author: '', po: '', type: '' })
+
+function applySearch() {
+  applied.value = {
+    title:    filterTitle.value,
+    dateFrom: filterDateFrom.value,
+    dateTo:   filterDateTo.value,
+    author:   filterAuthor.value,
+    po:       filterPo.value,
+    type:     filterType.value,
+  }
+}
+
 function resetFilters() {
   filterDateFrom.value = ''
-  filterDateTo.value = ''
-  filterAuthor.value = ''
-  filterPo.value = ''
-  filterType.value = ''
-  filterTitle.value = ''
+  filterDateTo.value   = ''
+  filterAuthor.value   = ''
+  filterPo.value       = ''
+  filterType.value     = ''
+  filterTitle.value    = ''
+  applied.value = { title: '', dateFrom: '', dateTo: '', author: '', po: '', type: '' }
 }
 
 // ── 더미 데이터 ────────────────────────────────────────────
@@ -120,15 +138,15 @@ const activities = ref([
   },
 ])
 
-// ── 필터 computed ──────────────────────────────────────────
+// ── 필터 computed (applied 기준) ───────────────────────────
 const filteredActivities = computed(() => {
   return activities.value.filter((a) => {
-    const matchType = !filterType.value || a.type === filterType.value
-    const matchTitle = !filterTitle.value || a.title.includes(filterTitle.value) || a.client.includes(filterTitle.value)
-    const matchAuthor = !filterAuthor.value || a.author === filterAuthor.value
-    const matchPo = !filterPo.value || a.poId.includes(filterPo.value)
-    const matchFrom = !filterDateFrom.value || a.date >= filterDateFrom.value
-    const matchTo = !filterDateTo.value || a.date <= filterDateTo.value
+    const matchType   = !applied.value.type   || a.type === applied.value.type
+    const matchTitle  = !applied.value.title  || a.title.includes(applied.value.title) || a.client.includes(applied.value.title)
+    const matchAuthor = !applied.value.author || a.author === applied.value.author
+    const matchPo     = !applied.value.po     || a.poId.includes(applied.value.po)
+    const matchFrom   = !applied.value.dateFrom || a.date >= applied.value.dateFrom
+    const matchTo     = !applied.value.dateTo   || a.date <= applied.value.dateTo
     return matchType && matchTitle && matchAuthor && matchPo && matchFrom && matchTo
   })
 })
@@ -215,37 +233,20 @@ const columns = [
       </template>
     </PageTitleBar>
 
-    <!-- 상세검색 필터 -->
-    <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <!-- 필터 토글 헤더 -->
-      <button
-        type="button"
-        class="flex w-full select-none items-center justify-between px-5 py-3 transition hover:bg-slate-50"
-        @click="isFilterOpen = !isFilterOpen"
-      >
-        <div class="flex items-center gap-2">
-          <svg class="h-4 w-4 text-brand-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path fill-rule="evenodd" d="M2.628 1.601C5.028 1.206 7.49 1 10 1s4.973.206 7.372.601a.75.75 0 0 1 .628.74v2.288a2.25 2.25 0 0 1-.659 1.59l-4.682 4.683a2.25 2.25 0 0 0-.659 1.59v3.037c0 .684-.31 1.33-.844 1.757l-1.937 1.55A.75.75 0 0 1 8 18.25v-5.757a2.25 2.25 0 0 0-.659-1.591L2.66 6.22A2.25 2.25 0 0 1 2 4.629V2.34a.75.75 0 0 1 .628-.74Z" clip-rule="evenodd" />
-          </svg>
-          <span class="text-sm font-semibold text-slate-700">상세검색</span>
-        </div>
-        <svg
-          class="h-4 w-4 text-slate-400 transition-transform duration-200"
-          :class="isFilterOpen ? '' : 'rotate-180'"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path fill-rule="evenodd" d="M9.47 6.47a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 1 1-1.06 1.06L10 8.06l-3.72 3.72a.75.75 0 0 1-1.06-1.06l4.25-4.25Z" clip-rule="evenodd" />
-        </svg>
-      </button>
+    <!-- 키워드 검색 + 상세검색 토글 -->
+    <FilterToolbarCard
+      v-model="filterTitle"
+      placeholder="제목 검색..."
+      :advanced-open="isFilterOpen"
+      @toggle-advanced="isFilterOpen = !isFilterOpen"
+    />
 
-      <!-- 필터 바디 -->
-      <div v-show="isFilterOpen" class="border-t border-slate-100 px-5 pb-4">
-        <div class="grid grid-cols-2 gap-x-4 gap-y-3 pt-3 md:grid-cols-4">
-          <!-- 날짜 기간 -->
-          <div class="col-span-2 space-y-1.5">
-            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">날짜 기간</p>
+    <!-- 상세검색 패널 -->
+    <CollapsibleFilterCard :open="isFilterOpen" @toggle="isFilterOpen = !isFilterOpen">
+      <div class="grid grid-cols-2 gap-x-4 gap-y-4 md:grid-cols-4">
+        <!-- 날짜 기간 -->
+        <div class="col-span-2">
+          <FormField label="날짜 기간">
             <DateRangeField
               :start="filterDateFrom"
               :end="filterDateTo"
@@ -253,47 +254,42 @@ const columns = [
               @update:end="filterDateTo = $event"
               @reset="filterDateFrom = ''; filterDateTo = ''"
             />
-          </div>
-
-          <!-- 작성자 -->
-          <div class="space-y-1.5">
-            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">작성자</p>
-            <SearchableCombobox
-              v-model="filterAuthor"
-              :options="authorOptions"
-              placeholder="작성자 검색..."
-            />
-          </div>
-
-          <!-- PO -->
-          <div class="space-y-1.5">
-            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">PO</p>
-            <BaseTextField v-model="filterPo" placeholder="PO 번호 검색..." />
-          </div>
-
-          <!-- 유형 -->
-          <div class="space-y-1.5">
-            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">유형</p>
-            <SearchableCombobox
-              v-model="filterType"
-              :options="typeOptions"
-              placeholder="유형 선택..."
-            />
-          </div>
-
-          <!-- 제목 -->
-          <div class="space-y-1.5">
-            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">제목</p>
-            <BaseTextField v-model="filterTitle" placeholder="제목 검색" />
-          </div>
+          </FormField>
         </div>
 
-        <div class="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
-          <BaseButton variant="secondary" size="sm" @click="resetFilters">초기화</BaseButton>
-          <BaseButton size="sm">검색</BaseButton>
-        </div>
+        <!-- 작성자 -->
+        <FormField label="작성자">
+          <SearchableCombobox
+            v-model="filterAuthor"
+            :options="authorOptions"
+            placeholder="작성자 검색..."
+          />
+        </FormField>
+
+        <!-- PO -->
+        <FormField label="PO">
+          <SearchTriggerField
+            v-model="filterPo"
+            placeholder="PO 검색..."
+            title="PO 검색"
+          />
+        </FormField>
+
+        <!-- 유형 -->
+        <FormField label="유형">
+          <SearchableCombobox
+            v-model="filterType"
+            :options="typeOptions"
+            placeholder="유형 선택..."
+          />
+        </FormField>
       </div>
-    </div>
+
+      <div class="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-3">
+        <BaseButton variant="secondary" size="sm" @click="resetFilters">초기화</BaseButton>
+        <BaseButton size="sm" @click="applySearch">검색</BaseButton>
+      </div>
+    </CollapsibleFilterCard>
 
     <!-- 테이블 -->
     <div>
