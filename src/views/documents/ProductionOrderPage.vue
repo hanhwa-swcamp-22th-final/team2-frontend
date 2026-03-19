@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
@@ -26,6 +26,10 @@ const filters = ref({
   status: '',
   deliveryFrom: '',
   deliveryTo: '',
+})
+
+const appliedFilters = ref({
+  ...filters.value,
 })
 
 const managerOptions = [
@@ -98,6 +102,49 @@ const rows = [
   },
 ]
 
+function normalizeDate(value) {
+  return String(value ?? '').replaceAll('/', '-')
+}
+
+const filteredRows = computed(() => {
+  return rows.filter((row) => {
+    const keyword = appliedFilters.value.keyword.trim().toLowerCase()
+
+    if (keyword) {
+      const keywordMatched = [
+        row.id,
+        row.issueDate,
+        row.poId,
+        row.country,
+        row.clientName,
+        row.itemName,
+        row.manager,
+        row.status,
+        row.dueDate,
+      ].some((value) => String(value).toLowerCase().includes(keyword))
+
+      if (!keywordMatched) return false
+    }
+
+    if (appliedFilters.value.manager && row.manager !== appliedFilters.value.manager) return false
+    if (appliedFilters.value.clientName && !row.clientName.toLowerCase().includes(appliedFilters.value.clientName.toLowerCase())) return false
+    if (appliedFilters.value.code && !row.id.toLowerCase().includes(appliedFilters.value.code.toLowerCase())) return false
+    if (appliedFilters.value.productName && !row.itemName.toLowerCase().includes(appliedFilters.value.productName.toLowerCase())) return false
+    if (appliedFilters.value.country && row.country !== appliedFilters.value.country) return false
+    if (appliedFilters.value.status && row.status !== appliedFilters.value.status) return false
+
+    const issueDate = normalizeDate(row.issueDate)
+    const dueDate = normalizeDate(row.dueDate)
+
+    if (appliedFilters.value.registeredFrom && issueDate < appliedFilters.value.registeredFrom) return false
+    if (appliedFilters.value.registeredTo && issueDate > appliedFilters.value.registeredTo) return false
+    if (appliedFilters.value.deliveryFrom && dueDate < appliedFilters.value.deliveryFrom) return false
+    if (appliedFilters.value.deliveryTo && dueDate > appliedFilters.value.deliveryTo) return false
+
+    return true
+  })
+})
+
 function resetFilters() {
   filters.value = {
     keyword: '',
@@ -112,6 +159,10 @@ function resetFilters() {
     deliveryFrom: '',
     deliveryTo: '',
   }
+
+  appliedFilters.value = {
+    ...filters.value,
+  }
 }
 
 function openClientSearch() {}
@@ -119,6 +170,12 @@ function openClientSearch() {}
 function openCodeSearch() {}
 
 function openProductSearch() {}
+
+function searchRows() {
+  appliedFilters.value = {
+    ...filters.value,
+  }
+}
 </script>
 
 <template>
@@ -223,7 +280,7 @@ function openProductSearch() {}
           </template>
           초기화
         </BaseButton>
-        <BaseButton size="sm">
+        <BaseButton size="sm" @click="searchRows">
           <template #leading>
             <i class="fas fa-search text-xs" aria-hidden="true"></i>
           </template>
@@ -234,9 +291,9 @@ function openProductSearch() {}
 
     <BaseTable
       :columns="columns"
-      :rows="rows"
+      :rows="filteredRows"
       empty-text="데이터가 없습니다."
-      :footer-text="`총 ${rows.length}건`"
+      :footer-text="`총 ${filteredRows.length}건`"
     >
       <template #cell-id="{ value }">
         <span class="font-mono text-xs font-semibold text-brand-600">{{ value }}</span>
