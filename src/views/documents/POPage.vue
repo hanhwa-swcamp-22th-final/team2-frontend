@@ -367,11 +367,13 @@ function goToDetail(id) {
     <BaseTable
       :columns="columns"
       :rows="filteredRows"
+      clickable-rows
       empty-text="데이터가 없습니다."
       :footer-text="`총 ${filteredRows.length}건`"
+      @row-click="goToDetail($event.id)"
     >
       <template #cell-id="{ value }">
-        <button type="button" class="font-mono text-xs font-semibold text-brand-600 hover:underline" @click="goToDetail(value)">
+        <button type="button" class="font-mono text-xs font-semibold text-brand-600 hover:underline" @click.stop="goToDetail(value)">
           {{ value }}
         </button>
       </template>
@@ -382,10 +384,10 @@ function goToDetail(id) {
 
       <template #cell-actions="{ row }">
         <div class="flex items-center justify-center gap-1.5">
-          <button type="button" class="text-xs text-slate-500 transition hover:text-slate-700" :title="`${row.id} 수정`" @click="openEditForm(row)">
+          <button type="button" class="text-xs text-slate-500 transition hover:text-slate-700" :title="`${row.id} 수정`" @click.stop="openEditForm(row)">
             <i class="fas fa-edit" aria-hidden="true"></i>
           </button>
-          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} 삭제`" @click="openDeleteModal(row)">
+          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} 삭제`" @click.stop="openDeleteModal(row)">
             <i class="fas fa-trash" aria-hidden="true"></i>
           </button>
         </div>

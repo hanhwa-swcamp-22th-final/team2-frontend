@@ -1,8 +1,9 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
+import SearchModal from '@/components/common/SearchModal.vue'
 import { useToast } from '@/composables/useToast'
 
 const props = defineProps({
@@ -12,7 +13,19 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'save'])
-const { info, success } = useToast()
+const { success } = useToast()
+
+const piRowsSource = [
+  { id: 'PI26001', clientName: 'COOLSAY SDN BHD', currency: 'USD', deliveryDate: '2026/04/15' },
+  { id: 'PI26002', clientName: 'TechBridge GmbH', currency: 'EUR', deliveryDate: '2026/05/20' },
+  { id: 'PI26003', clientName: 'Pacific Trading Inc.', currency: 'USD', deliveryDate: '2026/06/01' },
+]
+
+const clientRowsSource = [
+  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
+  { id: 'CL002', name: 'TechBridge GmbH', country: '독일' },
+  { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국' },
+]
 
 function createInitialForm() {
   return {
@@ -24,6 +37,26 @@ function createInitialForm() {
 }
 
 const form = ref(createInitialForm())
+const piSearchOpen = ref(false)
+const piSearchKeyword = ref('')
+const clientSearchOpen = ref(false)
+const clientSearchKeyword = ref('')
+
+const piRows = computed(() => {
+  const keyword = piSearchKeyword.value.trim().toLowerCase()
+  if (!keyword) return piRowsSource
+  return piRowsSource.filter((row) => (
+    [row.id, row.clientName, row.currency, row.deliveryDate].some((value) => value.toLowerCase().includes(keyword))
+  ))
+})
+
+const clientRows = computed(() => {
+  const keyword = clientSearchKeyword.value.trim().toLowerCase()
+  if (!keyword) return clientRowsSource
+  return clientRowsSource.filter((row) => (
+    [row.id, row.name, row.country].some((value) => value.toLowerCase().includes(keyword))
+  ))
+})
 
 watch(
   () => props.open,
@@ -46,11 +79,11 @@ watch(
 )
 
 function openPiSearch() {
-  info('PI 검색 모달 연결은 다음 단계에서 진행됩니다.')
+  piSearchOpen.value = true
 }
 
 function openClientSearch() {
-  info('거래처 검색 모달 연결은 다음 단계에서 진행됩니다.')
+  clientSearchOpen.value = true
 }
 
 function clearLinkedPi() {
@@ -62,6 +95,21 @@ function handleSave() {
   success(props.mode === 'create' ? 'PO 작성 폼 구조가 준비되었습니다.' : 'PO 수정 폼 구조가 준비되었습니다.')
   emit('save', { ...form.value })
   emit('close')
+}
+
+function selectPi(pi) {
+  form.value.linkedPiId = pi.id
+  form.value.linkedPiDisplay = pi.id
+  form.value.clientName = pi.clientName
+  form.value.deliveryDate = pi.deliveryDate.replaceAll('/', '-')
+  piSearchOpen.value = false
+  piSearchKeyword.value = ''
+}
+
+function selectClient(client) {
+  form.value.clientName = client.name
+  clientSearchOpen.value = false
+  clientSearchKeyword.value = ''
 }
 </script>
 
@@ -81,12 +129,12 @@ function handleSave() {
             readonly
             class="flex-1 cursor-pointer rounded-lg border border-slate-300 bg-slate-50 px-3 py-2"
             placeholder="PI를 검색하여 선택..."
-            @click="openPiSearch"
+            @click.stop.prevent="openPiSearch"
           >
           <button
             type="button"
             class="rounded-lg border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-50"
-            @click="openPiSearch"
+            @click.stop.prevent="openPiSearch"
           >
             <i class="fas fa-search" aria-hidden="true"></i>
           </button>
@@ -111,12 +159,12 @@ function handleSave() {
               readonly
               class="w-full cursor-pointer rounded-lg border border-slate-300 px-3 py-2 pr-9"
               style="background: var(--bg-input);"
-              @click="openClientSearch"
+              @click.stop.prevent="openClientSearch"
             >
             <button
               type="button"
               class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-brand-500"
-              @click="openClientSearch"
+              @click.stop.prevent="openClientSearch"
             >
               <i class="fas fa-search text-xs" aria-hidden="true"></i>
             </button>
@@ -143,4 +191,35 @@ function handleSave() {
       <BaseButton @click="handleSave">저장</BaseButton>
     </template>
   </BaseModal>
+
+  <SearchModal
+    :open="piSearchOpen"
+    title="PI 검색"
+    :columns="[
+      { key: 'id', label: 'PI번호' },
+      { key: 'clientName', label: '거래처명' },
+      { key: 'currency', label: '통화' },
+      { key: 'deliveryDate', label: '납기일' },
+    ]"
+    :rows="piRows"
+    :search-keyword="piSearchKeyword"
+    @update:search-keyword="piSearchKeyword = $event"
+    @close="piSearchOpen = false"
+    @select="selectPi"
+  />
+
+  <SearchModal
+    :open="clientSearchOpen"
+    title="거래처 검색"
+    :columns="[
+      { key: 'id', label: '코드' },
+      { key: 'name', label: '거래처명' },
+      { key: 'country', label: '국가' },
+    ]"
+    :rows="clientRows"
+    :search-keyword="clientSearchKeyword"
+    @update:search-keyword="clientSearchKeyword = $event"
+    @close="clientSearchOpen = false"
+    @select="selectClient"
+  />
 </template>

@@ -1,8 +1,9 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
+import SearchModal from '@/components/common/SearchModal.vue'
 import { useToast } from '@/composables/useToast'
 
 const props = defineProps({
@@ -19,6 +20,11 @@ const incotermsOptions = ['EXW', 'FCA', 'FAS', 'FOB', 'CFR', 'CIF', 'CPT', 'CIP'
 const buyerOptions = [
   'Mr. Ahmad Razak (Purchasing Manager)',
   'Ms. Siti Nurhaliza (Director)',
+]
+const clients = [
+  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아', buyers: ['Mr. Ahmad Razak (Purchasing Manager)', 'Ms. Siti Nurhaliza (Director)'] },
+  { id: 'CL002', name: 'TechBridge GmbH', country: '독일', buyers: ['Ms. Hanna Schneider (Procurement Lead)'] },
+  { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국', buyers: ['Mr. Jacob Miller (Import Manager)'] },
 ]
 const approverOptions = [
   '최관리 (경영지원 · 관리자)',
@@ -52,6 +58,18 @@ function createInitialForm() {
 }
 
 const form = ref(createInitialForm())
+const clientSearchOpen = ref(false)
+const clientSearchKeyword = ref('')
+
+const clientRows = computed(() => {
+  const keyword = clientSearchKeyword.value.trim().toLowerCase()
+
+  if (!keyword) return clients
+
+  return clients.filter((client) => (
+    [client.id, client.name, client.country].some((value) => value.toLowerCase().includes(keyword))
+  ))
+})
 
 watch(
   () => props.open,
@@ -85,7 +103,7 @@ watch(
 )
 
 function openClientSearch() {
-  info('거래처 검색 모달 연결은 다음 단계에서 진행됩니다.')
+  clientSearchOpen.value = true
 }
 
 function addItem() {
@@ -106,6 +124,13 @@ function handleSave() {
   success(props.mode === 'create' ? 'PI 작성 폼 구조가 준비되었습니다.' : 'PI 수정 폼 구조가 준비되었습니다.')
   emit('save', { ...form.value })
   emit('close')
+}
+
+function selectClient(client) {
+  form.value.clientName = client.name
+  form.value.buyerName = client.buyers[0] ?? ''
+  clientSearchOpen.value = false
+  clientSearchKeyword.value = ''
 }
 </script>
 
@@ -133,12 +158,12 @@ function handleSave() {
               readonly
               class="w-full rounded-lg border px-3 py-2 pr-9"
               style="cursor:pointer;background:var(--bg-input)"
-              @click="openClientSearch"
+              @click.stop.prevent="openClientSearch"
             >
             <button
               type="button"
               class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-brand-500"
-              @click="openClientSearch"
+              @click.stop.prevent="openClientSearch"
             >
               <i class="fas fa-search text-xs" aria-hidden="true"></i>
             </button>
@@ -330,4 +355,19 @@ function handleSave() {
       <BaseButton @click="handleSave">저장</BaseButton>
     </template>
   </BaseModal>
+
+  <SearchModal
+    :open="clientSearchOpen"
+    title="거래처 검색"
+    :columns="[
+      { key: 'id', label: '코드' },
+      { key: 'name', label: '거래처명' },
+      { key: 'country', label: '국가' },
+    ]"
+    :rows="clientRows"
+    :search-keyword="clientSearchKeyword"
+    @update:search-keyword="clientSearchKeyword = $event"
+    @close="clientSearchOpen = false"
+    @select="selectClient"
+  />
 </template>
