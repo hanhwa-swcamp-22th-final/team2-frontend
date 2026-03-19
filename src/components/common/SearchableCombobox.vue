@@ -30,6 +30,7 @@ const wrapperRef = ref(null)
 const inputValue = ref('')
 const isOpen = ref(false)
 const highlightedIndex = ref(-1)
+const isSelected = ref(false)
 
 function normalizeOption(option) {
   if (typeof option === 'object' && option !== null) {
@@ -50,6 +51,10 @@ function normalizeOption(option) {
 const normalizedOptions = computed(() => props.options.map(normalizeOption))
 
 const filteredOptions = computed(() => {
+  if (isSelected.value) {
+    return normalizedOptions.value
+  }
+
   const query = inputValue.value.trim().toLowerCase()
 
   if (!query) {
@@ -86,6 +91,7 @@ function closeList() {
 
 function selectOption(option) {
   inputValue.value = option.label
+  isSelected.value = true
   emit('update:modelValue', option.value)
   emit('select', option)
   closeList()
@@ -115,9 +121,20 @@ function onKeydown(event) {
     return
   }
 
+  if (event.key === 'Tab' && highlightedIndex.value >= 0) {
+    event.preventDefault()
+    selectOption(filteredOptions.value[highlightedIndex.value])
+    return
+  }
+
   if (event.key === 'Escape') {
     closeList()
   }
+}
+
+function onInput() {
+  isSelected.value = false
+  openList()
 }
 
 function handleClickOutside(event) {
@@ -142,7 +159,7 @@ onBeforeUnmount(() => {
         :disabled="disabled"
         class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-10 text-sm text-ink transition duration-200 placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
         @focus="openList"
-        @input="openList"
+        @input="onInput"
         @keydown="onKeydown"
       />
       <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
