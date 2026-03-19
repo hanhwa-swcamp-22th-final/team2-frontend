@@ -8,10 +8,15 @@ import DateField from '@/components/common/DateField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
+import SearchModal from '@/components/common/SearchModal.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 
 const isAdvancedOpen = ref(true)
+const clientSearchOpen = ref(false)
+const clientSearchKeyword = ref('')
+const poSearchOpen = ref(false)
+const poSearchKeyword = ref('')
 
 const filters = ref({
   keyword: '',
@@ -124,6 +129,13 @@ const rows = [
   },
 ]
 
+const clientRowsSource = [
+  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
+  { id: 'CL002', name: 'Sakura Electronics Co., Ltd.', country: '일본' },
+  { id: 'CL003', name: 'Viet Steel JSC', country: '베트남' },
+  { id: 'CL004', name: 'Al Baraka Trading LLC', country: 'UAE' },
+]
+
 function resetFilters() {
   filters.value = {
     keyword: '',
@@ -144,7 +156,9 @@ function resetFilters() {
   }
 }
 
-function openClientSearch() {}
+function openClientSearch() {
+  clientSearchOpen.value = true
+}
 
 function normalizeDate(value) {
   return String(value ?? '').replaceAll('/', '-')
@@ -179,6 +193,23 @@ const filteredRows = computed(() => {
 
     return true
   })
+})
+
+const clientRows = computed(() => {
+  const keyword = clientSearchKeyword.value.trim().toLowerCase()
+  if (!keyword) return clientRowsSource
+  return clientRowsSource.filter((row) => [row.id, row.name, row.country].some((value) => String(value).toLowerCase().includes(keyword)))
+})
+
+const poRows = computed(() => {
+  const keyword = poSearchKeyword.value.trim().toLowerCase()
+  const source = rows.map((row) => ({
+    poId: row.poId,
+    clientName: row.clientName,
+    issueDate: row.issueDate,
+  }))
+  if (!keyword) return source
+  return source.filter((row) => [row.poId, row.clientName, row.issueDate].some((value) => String(value).toLowerCase().includes(keyword)))
 })
 
 const summaryRows = computed(() => {
@@ -219,6 +250,22 @@ function searchRows() {
   appliedFilters.value = {
     ...filters.value,
   }
+}
+
+function handleClientSelect(client) {
+  filters.value.clientName = client.name
+  clientSearchOpen.value = false
+  clientSearchKeyword.value = ''
+}
+
+function openPoSearch() {
+  poSearchOpen.value = true
+}
+
+function handlePoSelect(row) {
+  filters.value.poId = row.poId
+  poSearchOpen.value = false
+  poSearchKeyword.value = ''
 }
 </script>
 
@@ -280,6 +327,7 @@ function searchRows() {
               v-model="filters.poId"
               placeholder="PO26001"
               title="PO 번호 검색"
+              @trigger="openPoSearch"
             />
           </FormField>
 
@@ -405,5 +453,35 @@ function searchRows() {
         </tr>
       </template>
     </BaseTable>
+
+    <SearchModal
+      :open="clientSearchOpen"
+      title="거래처 검색"
+      :columns="[
+        { key: 'id', label: '코드' },
+        { key: 'name', label: '거래처명' },
+        { key: 'country', label: '국가' },
+      ]"
+      :rows="clientRows"
+      :search-keyword="clientSearchKeyword"
+      @update:search-keyword="clientSearchKeyword = $event"
+      @close="clientSearchOpen = false"
+      @select="handleClientSelect"
+    />
+
+    <SearchModal
+      :open="poSearchOpen"
+      title="PO 번호 검색"
+      :columns="[
+        { key: 'poId', label: 'PO 번호' },
+        { key: 'clientName', label: '거래처명' },
+        { key: 'issueDate', label: '발행일' },
+      ]"
+      :rows="poRows"
+      :search-keyword="poSearchKeyword"
+      @update:search-keyword="poSearchKeyword = $event"
+      @close="poSearchOpen = false"
+      @select="handlePoSelect"
+    />
   </div>
 </template>
