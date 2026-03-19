@@ -253,13 +253,18 @@ const columns = [
         <InfoField label="유형"    :value="selectedEmail?.type" />
         <InfoField label="연결 PO" :value="selectedEmail?.poId || '-'" />
         <InfoField label="첨부파일">
-          <div v-if="selectedEmail?.hasAttachment" class="flex items-center gap-1.5 text-sm text-brand-600">
+          <a
+            v-if="selectedEmail?.hasAttachment"
+            href="/Purchase Order.pdf"
+            target="_blank"
+            class="flex items-center gap-1.5 text-sm text-brand-600 hover:underline"
+          >
             <svg class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path d="M9.25 13.25a.75.75 0 0 0 1.5 0V4.636l2.955 3.129a.75.75 0 0 0 1.09-1.03l-4.25-4.5a.75.75 0 0 0-1.09 0l-4.25 4.5a.75.75 0 1 0 1.09 1.03L9.25 4.636v8.614Z" />
               <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
             </svg>
-            <span>{{ selectedEmail?.title?.replace('[SalesBoost] ', '') }}.pdf</span>
-          </div>
+            <span>{{ selectedEmail?.title?.replace('[SalesBoost] ', '').replace(' 발송', '').replace(/-/g, '') }}.pdf</span>
+          </a>
           <span v-else class="text-sm text-slate-400">없음</span>
         </InfoField>
       </div>
