@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
@@ -8,27 +8,26 @@ import DateField from '@/components/common/DateField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
+import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 
 const isAdvancedOpen = ref(true)
+const previewTarget = ref(null)
 
 const filters = ref({
   keyword: '',
   registeredFrom: '',
   registeredTo: '',
-  manager: '',
   clientName: '',
   code: '',
   productName: '',
   country: '',
 })
 
-const managerOptions = [
-  { value: '김영업', label: '김영업' },
-  { value: '정영업', label: '정영업' },
-  { value: '최관리', label: '최관리' },
-]
+const appliedFilters = ref({
+  ...filters.value,
+})
 
 const countryOptions = [
   { value: '말레이시아', label: '말레이시아' },
@@ -75,16 +74,68 @@ const rows = [
   },
 ]
 
+function normalizeDate(value) {
+  return String(value ?? '').replaceAll('/', '-')
+}
+
+const filteredRows = computed(() => {
+  return rows.filter((row) => {
+    const keyword = appliedFilters.value.keyword.trim().toLowerCase()
+
+    if (keyword) {
+      const keywordMatched = [
+        row.id,
+        row.invoiceDate,
+        row.clientName,
+        row.country,
+        row.itemName,
+        row.amount,
+      ].some((value) => String(value).toLowerCase().includes(keyword))
+
+      if (!keywordMatched) return false
+    }
+
+    if (appliedFilters.value.clientName && !row.clientName.toLowerCase().includes(appliedFilters.value.clientName.toLowerCase())) return false
+    if (appliedFilters.value.code && !row.id.toLowerCase().includes(appliedFilters.value.code.toLowerCase())) return false
+    if (appliedFilters.value.productName && !row.itemName.toLowerCase().includes(appliedFilters.value.productName.toLowerCase())) return false
+    if (appliedFilters.value.country && row.country !== appliedFilters.value.country) return false
+
+    const invoiceDate = normalizeDate(row.invoiceDate)
+
+    if (appliedFilters.value.registeredFrom && invoiceDate < appliedFilters.value.registeredFrom) return false
+    if (appliedFilters.value.registeredTo && invoiceDate > appliedFilters.value.registeredTo) return false
+
+    return true
+  })
+})
+
+const previewFields = computed(() => {
+  if (!previewTarget.value) {
+    return []
+  }
+
+  return [
+    { label: '발행일', value: previewTarget.value.invoiceDate },
+    { label: '거래처', value: previewTarget.value.clientName },
+    { label: '국가', value: previewTarget.value.country },
+    { label: '품목명', value: previewTarget.value.itemName },
+    { label: '총액', value: previewTarget.value.amount },
+  ]
+})
+
 function resetFilters() {
   filters.value = {
     keyword: '',
     registeredFrom: '',
     registeredTo: '',
-    manager: '',
     clientName: '',
     code: '',
     productName: '',
     country: '',
+  }
+
+  appliedFilters.value = {
+    ...filters.value,
   }
 }
 
@@ -93,6 +144,20 @@ function openClientSearch() {}
 function openCodeSearch() {}
 
 function openProductSearch() {}
+
+function searchRows() {
+  appliedFilters.value = {
+    ...filters.value,
+  }
+}
+
+function openPreview(row) {
+  previewTarget.value = row
+}
+
+function closePreview() {
+  previewTarget.value = null
+}
 </script>
 
 <template>
@@ -128,14 +193,6 @@ function openProductSearch() {}
             <span class="text-center text-sm text-slate-400 sm:pb-2">~</span>
             <DateField v-model="filters.registeredTo" />
           </div>
-        </FormField>
-
-        <FormField label="영업담당자">
-          <SearchableCombobox
-            v-model="filters.manager"
-            :options="managerOptions"
-            placeholder="담당자 검색..."
-          />
         </FormField>
 
         <FormField label="거래처명">
@@ -181,7 +238,7 @@ function openProductSearch() {}
           </template>
           초기화
         </BaseButton>
-        <BaseButton size="sm">
+        <BaseButton size="sm" @click="searchRows">
           <template #leading>
             <i class="fas fa-search text-xs" aria-hidden="true"></i>
           </template>
@@ -192,9 +249,9 @@ function openProductSearch() {}
 
     <BaseTable
       :columns="columns"
-      :rows="rows"
+      :rows="filteredRows"
       empty-text="데이터가 없습니다."
-      :footer-text="`총 ${rows.length}건`"
+      :footer-text="`총 ${filteredRows.length}건`"
     >
       <template #cell-id="{ value }">
         <span class="font-mono text-xs font-semibold text-brand-600">{{ value }}</span>
@@ -202,11 +259,24 @@ function openProductSearch() {}
 
       <template #cell-actions="{ row }">
         <div class="flex items-center justify-center gap-2">
-          <button type="button" class="text-xs text-brand-500 transition hover:underline" :title="`${row.id} 미리보기`">
+          <button
+            type="button"
+            class="text-xs text-brand-500 transition hover:underline"
+            :title="`${row.id} 미리보기`"
+            @click="openPreview(row)"
+          >
             <i class="fas fa-eye mr-1" aria-hidden="true"></i>미리보기
           </button>
         </div>
       </template>
     </BaseTable>
+
+    <DocumentPreviewModal
+      :open="Boolean(previewTarget)"
+      title="CI 미리보기"
+      :document-title="previewTarget?.id"
+      :fields="previewFields"
+      @close="closePreview"
+    />
   </div>
 </template>

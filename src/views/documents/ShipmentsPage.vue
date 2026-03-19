@@ -27,8 +27,13 @@ const filters = ref({
   dueTo: '',
 })
 
+const appliedFilters = ref({
+  ...filters.value,
+})
+
 const countryOptions = [
   { value: '말레이시아', label: '말레이시아' },
+  { value: '베트남', label: '베트남' },
   { value: '독일', label: '독일' },
   { value: '미국', label: '미국' },
 ]
@@ -78,8 +83,47 @@ const rows = [
   },
 ]
 
-const preparingCount = computed(() => rows.filter((row) => row.status === '준비중').length)
-const completedCount = computed(() => rows.filter((row) => row.status === '출하완료').length)
+function normalizeDate(value) {
+  return String(value ?? '').replaceAll('/', '-')
+}
+
+const filteredRows = computed(() => {
+  return rows.filter((row) => {
+    const keyword = appliedFilters.value.keyword.trim().toLowerCase()
+
+    if (keyword) {
+      const keywordMatched = [
+        row.id,
+        row.clientName,
+        row.country,
+        row.poId,
+        row.requestDate,
+        row.dueDate,
+        row.status,
+      ].some((value) => String(value).toLowerCase().includes(keyword))
+
+      if (!keywordMatched) return false
+    }
+
+    if (appliedFilters.value.clientName && !row.clientName.toLowerCase().includes(appliedFilters.value.clientName.toLowerCase())) return false
+    if (appliedFilters.value.country && row.country !== appliedFilters.value.country) return false
+    if (appliedFilters.value.shipmentCode && !row.id.toLowerCase().includes(appliedFilters.value.shipmentCode.toLowerCase())) return false
+    if (appliedFilters.value.status && row.status !== appliedFilters.value.status) return false
+
+    const requestDate = normalizeDate(row.requestDate)
+    const dueDate = normalizeDate(row.dueDate)
+
+    if (appliedFilters.value.requestFrom && requestDate < appliedFilters.value.requestFrom) return false
+    if (appliedFilters.value.requestTo && requestDate > appliedFilters.value.requestTo) return false
+    if (appliedFilters.value.dueFrom && dueDate < appliedFilters.value.dueFrom) return false
+    if (appliedFilters.value.dueTo && dueDate > appliedFilters.value.dueTo) return false
+
+    return true
+  })
+})
+
+const preparingCount = computed(() => filteredRows.value.filter((row) => row.status === '준비중').length)
+const completedCount = computed(() => filteredRows.value.filter((row) => row.status === '출하완료').length)
 
 function resetFilters() {
   filters.value = {
@@ -93,9 +137,19 @@ function resetFilters() {
     dueFrom: '',
     dueTo: '',
   }
+
+  appliedFilters.value = {
+    ...filters.value,
+  }
 }
 
 function openClientSearch() {}
+
+function searchRows() {
+  appliedFilters.value = {
+    ...filters.value,
+  }
+}
 </script>
 
 <template>
@@ -167,7 +221,7 @@ function openClientSearch() {}
             </template>
             초기화
           </BaseButton>
-          <BaseButton size="sm">
+          <BaseButton size="sm" @click="searchRows">
             <template #leading>
               <i class="fas fa-search text-[10px]" aria-hidden="true"></i>
             </template>
@@ -196,9 +250,9 @@ function openClientSearch() {}
 
     <BaseTable
       :columns="columns"
-      :rows="rows"
+      :rows="filteredRows"
       empty-text="데이터가 없습니다."
-      :footer-text="`총 ${rows.length}건`"
+      :footer-text="`총 ${filteredRows.length}건`"
     >
       <template #cell-id="{ value }">
         <span class="font-mono text-xs font-semibold text-slate-700">{{ value }}</span>

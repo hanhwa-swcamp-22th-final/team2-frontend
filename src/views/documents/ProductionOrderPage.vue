@@ -1,18 +1,22 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
+import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import { useToast } from '@/composables/useToast'
 
 const isAdvancedOpen = ref(true)
+const previewTarget = ref(null)
+const toast = useToast()
 
 const filters = ref({
   keyword: '',
@@ -26,6 +30,10 @@ const filters = ref({
   status: '',
   deliveryFrom: '',
   deliveryTo: '',
+})
+
+const appliedFilters = ref({
+  ...filters.value,
 })
 
 const managerOptions = [
@@ -98,6 +106,66 @@ const rows = [
   },
 ]
 
+function normalizeDate(value) {
+  return String(value ?? '').replaceAll('/', '-')
+}
+
+const filteredRows = computed(() => {
+  return rows.filter((row) => {
+    const keyword = appliedFilters.value.keyword.trim().toLowerCase()
+
+    if (keyword) {
+      const keywordMatched = [
+        row.id,
+        row.issueDate,
+        row.poId,
+        row.country,
+        row.clientName,
+        row.itemName,
+        row.manager,
+        row.status,
+        row.dueDate,
+      ].some((value) => String(value).toLowerCase().includes(keyword))
+
+      if (!keywordMatched) return false
+    }
+
+    if (appliedFilters.value.manager && row.manager !== appliedFilters.value.manager) return false
+    if (appliedFilters.value.clientName && !row.clientName.toLowerCase().includes(appliedFilters.value.clientName.toLowerCase())) return false
+    if (appliedFilters.value.code && !row.id.toLowerCase().includes(appliedFilters.value.code.toLowerCase())) return false
+    if (appliedFilters.value.productName && !row.itemName.toLowerCase().includes(appliedFilters.value.productName.toLowerCase())) return false
+    if (appliedFilters.value.country && row.country !== appliedFilters.value.country) return false
+    if (appliedFilters.value.status && row.status !== appliedFilters.value.status) return false
+
+    const issueDate = normalizeDate(row.issueDate)
+    const dueDate = normalizeDate(row.dueDate)
+
+    if (appliedFilters.value.registeredFrom && issueDate < appliedFilters.value.registeredFrom) return false
+    if (appliedFilters.value.registeredTo && issueDate > appliedFilters.value.registeredTo) return false
+    if (appliedFilters.value.deliveryFrom && dueDate < appliedFilters.value.deliveryFrom) return false
+    if (appliedFilters.value.deliveryTo && dueDate > appliedFilters.value.deliveryTo) return false
+
+    return true
+  })
+})
+
+const previewFields = computed(() => {
+  if (!previewTarget.value) {
+    return []
+  }
+
+  return [
+    { label: '생산지시일', value: previewTarget.value.issueDate },
+    { label: 'PO', value: previewTarget.value.poId },
+    { label: '국가', value: previewTarget.value.country },
+    { label: '거래처', value: previewTarget.value.clientName },
+    { label: '품목명', value: previewTarget.value.itemName },
+    { label: '영업담당자', value: previewTarget.value.manager },
+    { label: '상태', value: previewTarget.value.status },
+    { label: '납기일', value: previewTarget.value.dueDate },
+  ]
+})
+
 function resetFilters() {
   filters.value = {
     keyword: '',
@@ -112,6 +180,10 @@ function resetFilters() {
     deliveryFrom: '',
     deliveryTo: '',
   }
+
+  appliedFilters.value = {
+    ...filters.value,
+  }
 }
 
 function openClientSearch() {}
@@ -119,19 +191,41 @@ function openClientSearch() {}
 function openCodeSearch() {}
 
 function openProductSearch() {}
+
+function searchRows() {
+  appliedFilters.value = {
+    ...filters.value,
+  }
+}
+
+function openPreview(row) {
+  previewTarget.value = row
+}
+
+function closePreview() {
+  previewTarget.value = null
+}
+
+function printDocument(row) {
+  toast.info(`${row.id} 인쇄 기능은 다음 단계에서 연결됩니다.`, '인쇄')
+}
+
+function downloadPdf(row) {
+  toast.info(`${row.id} PDF 다운로드 기능은 다음 단계에서 연결됩니다.`, 'PDF')
+}
 </script>
 
 <template>
   <div class="fade-in space-y-5">
     <DocumentPageHeader title="생산지시서" icon-class="fas fa-industry">
       <template #actions>
-        <BaseButton variant="secondary" size="sm">
+        <BaseButton variant="secondary" size="sm" @click="toast.info('생산지시서 인쇄 기능은 다음 단계에서 연결됩니다.', '인쇄')">
           <template #leading>
             <i class="fas fa-print text-xs" aria-hidden="true"></i>
           </template>
           인쇄
         </BaseButton>
-        <BaseButton size="sm">
+        <BaseButton size="sm" @click="toast.info('생산지시서 PDF 다운로드 기능은 다음 단계에서 연결됩니다.', 'PDF')">
           <template #leading>
             <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
           </template>
@@ -223,7 +317,7 @@ function openProductSearch() {}
           </template>
           초기화
         </BaseButton>
-        <BaseButton size="sm">
+        <BaseButton size="sm" @click="searchRows">
           <template #leading>
             <i class="fas fa-search text-xs" aria-hidden="true"></i>
           </template>
@@ -234,9 +328,9 @@ function openProductSearch() {}
 
     <BaseTable
       :columns="columns"
-      :rows="rows"
+      :rows="filteredRows"
       empty-text="데이터가 없습니다."
-      :footer-text="`총 ${rows.length}건`"
+      :footer-text="`총 ${filteredRows.length}건`"
     >
       <template #cell-id="{ value }">
         <span class="font-mono text-xs font-semibold text-brand-600">{{ value }}</span>
@@ -252,17 +346,25 @@ function openProductSearch() {}
 
       <template #cell-actions="{ row }">
         <div class="flex items-center justify-center gap-2">
-          <button type="button" class="text-xs text-brand-500 transition hover:underline" :title="`${row.id} 미리보기`">
+          <button type="button" class="text-xs text-brand-500 transition hover:underline" :title="`${row.id} 미리보기`" @click="openPreview(row)">
             <i class="fas fa-eye" aria-hidden="true"></i>
           </button>
-          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} 인쇄`">
+          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} 인쇄`" @click="printDocument(row)">
             <i class="fas fa-print" aria-hidden="true"></i>
           </button>
-          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} PDF 다운로드`">
+          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} PDF 다운로드`" @click="downloadPdf(row)">
             <i class="fas fa-file-pdf" aria-hidden="true"></i>
           </button>
         </div>
       </template>
     </BaseTable>
+
+    <DocumentPreviewModal
+      :open="Boolean(previewTarget)"
+      title="생산지시서 미리보기"
+      :document-title="previewTarget?.id ?? ''"
+      :fields="previewFields"
+      @close="closePreview"
+    />
   </div>
 </template>

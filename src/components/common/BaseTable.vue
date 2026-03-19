@@ -168,15 +168,9 @@ onBeforeUnmount(() => {
           </th>
         </tr>
       </thead>
-      <tbody class="bg-white">
-        <tr v-if="rows.length === 0">
-          <td :colspan="normalizedColumns.length || 1" class="border-b border-slate-200 px-4 py-12 text-center text-sm text-slate-400">
-            {{ emptyText }}
-          </td>
-        </tr>
+      <tbody v-if="rows.length > 0" class="bg-white">
         <tr
           v-for="row in rows"
-          v-else
           :key="row?.[rowKey] ?? JSON.stringify(row)"
           class="transition hover:bg-slate-50/70"
         >
@@ -201,6 +195,12 @@ onBeforeUnmount(() => {
         <slot name="footer" />
       </tfoot>
     </table>
+    <div
+      v-if="rows.length === 0"
+      class="flex min-h-[160px] items-center justify-center border-t border-slate-200 bg-white px-4 py-12 text-center text-sm text-slate-400"
+    >
+      {{ emptyText }}
+    </div>
     <div
       v-if="!$slots.footer && footerText"
       class="border-t border-slate-100 bg-slate-50 px-4 py-3 text-xs font-medium text-slate-500"
