@@ -1049,6 +1049,7 @@
       "email": "james.carter@globalsteel.com",
       "type": "PI",
       "hasAttachment": true,
+      "poId": "PO-2025-001",
       "status": "발송",
       "sentAt": "2025-03-10",
       "sender": "김영업"
@@ -1061,6 +1062,7 @@
       "email": "hans.muller@hamburgmetal.de",
       "type": "PO",
       "hasAttachment": true,
+      "poId": "PO-2025-003",
       "status": "발송",
       "sentAt": "2025-03-09",
       "sender": "정영업"
@@ -1073,6 +1075,7 @@
       "email": "yuki.tanaka@tokyotrading.jp",
       "type": "CI",
       "hasAttachment": false,
+      "poId": null,
       "status": "실패",
       "sentAt": "2025-03-08",
       "sender": "김영업"
@@ -1085,6 +1088,7 @@
       "email": "sarah.johnson@globalsteel.com",
       "type": "PL",
       "hasAttachment": true,
+      "poId": "PO-2025-002",
       "status": "발송",
       "sentAt": "2025-03-07",
       "sender": "정영업"
@@ -1097,6 +1101,7 @@
       "email": "anna.schmidt@hamburgmetal.de",
       "type": "PI",
       "hasAttachment": false,
+      "poId": null,
       "status": "발송",
       "sentAt": "2025-03-06",
       "sender": "김영업"
@@ -1109,6 +1114,7 @@
       "email": "kenji.sato@tokyotrading.jp",
       "type": "PO",
       "hasAttachment": true,
+      "poId": "PO-2025-004",
       "status": "발송",
       "sentAt": "2025-03-05",
       "sender": "정영업"
@@ -1121,6 +1127,7 @@
       "email": "michael.brown@globalsteel.com",
       "type": "CI",
       "hasAttachment": false,
+      "poId": null,
       "status": "발송",
       "sentAt": "2025-03-04",
       "sender": "김영업"
@@ -1133,6 +1140,7 @@
       "email": "hans.muller@hamburgmetal.de",
       "type": "PL",
       "hasAttachment": true,
+      "poId": "PO-2025-003",
       "status": "실패",
       "sentAt": "2025-03-03",
       "sender": "정영업"

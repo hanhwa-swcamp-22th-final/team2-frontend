@@ -1,5 +1,6 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { fetchActivityEmails } from '@/api/emails'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
@@ -13,105 +14,16 @@ import PageTitleBar from '@/components/layout/PageTitleBar.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 
-// ── 더미 데이터 ────────────────────────────────────────────
-const emails = ref([
-  {
-    id: '1',
-    client: 'GlobalTech',
-    title: '[SalesBoost] PI-2025-001 발송',
-    recipient: 'James Carter',
-    email: 'james.carter@globaltech.com',
-    type: 'PI',
-    hasAttachment: true,
-    status: '발송',
-    sentAt: '2025-03-10',
-    sender: '홍길동',
-  },
-  {
-    id: '2',
-    client: 'EuroSupply',
-    title: '[SalesBoost] PO-2025-001 발송',
-    recipient: 'Hans Müller',
-    email: 'hans.muller@eurosupply.de',
-    type: 'PO',
-    hasAttachment: true,
-    status: '발송',
-    sentAt: '2025-03-09',
-    sender: '김영희',
-  },
-  {
-    id: '3',
-    client: 'AsiaConnect',
-    title: '[SalesBoost] CI-2025-001 발송',
-    recipient: '',
-    email: 'yuki.tanaka@asiaconnect.jp',
-    type: 'CI',
-    hasAttachment: false,
-    status: '실패',
-    sentAt: '2025-03-08',
-    sender: '이철수',
-  },
-  {
-    id: '4',
-    client: 'GlobalTech',
-    title: '[SalesBoost] PL-2025-001 발송',
-    recipient: 'Sarah Johnson',
-    email: 'sarah.johnson@globaltech.com',
-    type: 'PL',
-    hasAttachment: true,
-    status: '발송',
-    sentAt: '2025-03-07',
-    sender: '홍길동',
-  },
-  {
-    id: '5',
-    client: 'EuroSupply',
-    title: '[SalesBoost] PI-2025-002 발송',
-    recipient: 'Anna Schmidt',
-    email: 'anna.schmidt@eurosupply.de',
-    type: 'PI',
-    hasAttachment: false,
-    status: '발송',
-    sentAt: '2025-03-06',
-    sender: '김영희',
-  },
-  {
-    id: '6',
-    client: 'AsiaConnect',
-    title: '[SalesBoost] PO-2025-002 발송',
-    recipient: 'Kenji Sato',
-    email: 'kenji.sato@asiaconnect.jp',
-    type: 'PO',
-    hasAttachment: true,
-    status: '발송',
-    sentAt: '2025-03-05',
-    sender: '이철수',
-  },
-  {
-    id: '7',
-    client: 'GlobalTech',
-    title: '[SalesBoost] CI-2025-002 발송',
-    recipient: '',
-    email: 'michael.brown@globaltech.com',
-    type: 'CI',
-    hasAttachment: false,
-    status: '발송',
-    sentAt: '2025-03-04',
-    sender: '홍길동',
-  },
-  {
-    id: '8',
-    client: 'EuroSupply',
-    title: '[SalesBoost] PL-2025-002 발송',
-    recipient: 'Hans Müller',
-    email: 'hans.muller@eurosupply.de',
-    type: 'PL',
-    hasAttachment: true,
-    status: '실패',
-    sentAt: '2025-03-03',
-    sender: '김영희',
-  },
-])
+// ── 데이터 ─────────────────────────────────────────────────
+const emails = ref([])
+
+onMounted(async () => {
+  try {
+    emails.value = await fetchActivityEmails()
+  } catch (e) {
+    console.error('메일 이력 로드 실패', e)
+  }
+})
 
 // ── 필터 상태 ──────────────────────────────────────────────
 const isFilterOpen = ref(false)
@@ -269,7 +181,7 @@ const columns = [
     </CollapsibleFilterCard>
 
     <!-- 테이블 -->
-    <BaseTable :columns="columns" :rows="filteredEmails" row-key="id">
+    <BaseTable :columns="columns" :rows="filteredEmails" row-key="id" class="cursor-pointer" @row-click="openDetail">
 
       <!-- 항목 번호 -->
       <template #cell-index="{ row }">
@@ -296,17 +208,18 @@ const columns = [
 
       <!-- 첨부 -->
       <template #cell-attachment="{ row }">
-        <button
-          v-if="row.hasAttachment"
-          type="button"
-          class="mx-auto flex items-center justify-center text-slate-400 transition hover:text-brand-500"
-          @click="openDetail(row)"
-        >
-          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <div v-if="row.hasAttachment" class="group relative mx-auto flex items-center justify-center">
+          <svg class="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path d="M9.25 13.25a.75.75 0 0 0 1.5 0V4.636l2.955 3.129a.75.75 0 0 0 1.09-1.03l-4.25-4.5a.75.75 0 0 0-1.09 0l-4.25 4.5a.75.75 0 1 0 1.09 1.03L9.25 4.636v8.614Z" />
             <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
           </svg>
-        </button>
+          <span
+            v-if="row.poId"
+            class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-slate-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+          >
+            {{ row.poId }}
+          </span>
+        </div>
         <span v-else class="text-slate-300">—</span>
       </template>
 
@@ -336,14 +249,16 @@ const columns = [
         <InfoField label="발송일시" :value="selectedEmail?.sentAt" />
         <InfoField label="제목"    :value="selectedEmail?.title" />
         <InfoField label="유형"    :value="selectedEmail?.type" />
+        <InfoField label="연결 PO" :value="selectedEmail?.poId || '-'" />
         <InfoField label="첨부파일">
-          <div class="flex items-center gap-1.5 text-sm text-brand-600">
+          <div v-if="selectedEmail?.hasAttachment" class="flex items-center gap-1.5 text-sm text-brand-600">
             <svg class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path d="M9.25 13.25a.75.75 0 0 0 1.5 0V4.636l2.955 3.129a.75.75 0 0 0 1.09-1.03l-4.25-4.5a.75.75 0 0 0-1.09 0l-4.25 4.5a.75.75 0 1 0 1.09 1.03L9.25 4.636v8.614Z" />
               <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
             </svg>
             <span>{{ selectedEmail?.title?.replace('[SalesBoost] ', '') }}.pdf</span>
           </div>
+          <span v-else class="text-sm text-slate-400">없음</span>
         </InfoField>
       </div>
       <template #footer>
