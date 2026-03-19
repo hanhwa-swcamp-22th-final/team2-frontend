@@ -35,6 +35,7 @@ watch(
     formDate.value    = val?.date    ?? ''
     formTitle.value   = val?.title   ?? ''
     formContent.value = val?.content ?? ''
+    errors.value      = {}
   },
   { immediate: true },
 )

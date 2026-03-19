@@ -19,6 +19,7 @@ const authStore = useAuthStore()
 const { warning, error } = useToast()
 
 // ── state ──────────────────────────────────────────────────
+const isSubmitting = ref(false)
 const formClient = ref('')
 const formType = ref('')
 const formPoDisplay = ref('')
@@ -121,6 +122,7 @@ async function handleSubmit() {
     warning('입력 내용을 확인해주세요.')
     return
   }
+  isSubmitting.value = true
   try {
     await createActivity({
       clientId: formClient.value,
@@ -136,6 +138,8 @@ async function handleSubmit() {
   } catch (e) {
     console.error('기록 등록 실패', e)
     error('기록 등록에 실패했습니다. 다시 시도해주세요.')
+  } finally {
+    isSubmitting.value = false
   }
 }
 </script>
@@ -262,7 +266,7 @@ async function handleSubmit() {
 
         <!-- 저장 버튼 -->
         <div class="pt-2">
-          <BaseButton @click="handleSubmit">
+          <BaseButton :disabled="isSubmitting" @click="handleSubmit">
             <template #leading>
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />

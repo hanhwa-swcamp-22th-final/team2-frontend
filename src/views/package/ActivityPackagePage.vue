@@ -61,8 +61,8 @@ function clearPo() {
 // ── 패키지 생성 폼 상태 ────────────────────────────────────
 const keyword     = ref('')
 const poDisplay   = ref('')
-const dateFrom    = ref('2025-01-01')
-const dateTo      = ref('2025-03-19')
+const dateFrom    = ref(`${new Date().getFullYear()}-01-01`)
+const dateTo      = ref(new Date().toISOString().slice(0, 10))
 
 const includes = ref({
   meetings:    true,

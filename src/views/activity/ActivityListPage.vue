@@ -86,6 +86,7 @@ onMounted(async () => {
     clients.value = clientData
   } catch (e) {
     console.error('데이터 로드 실패', e)
+    error('데이터를 불러오지 못했습니다. 페이지를 새로고침해주세요.')
   }
 })
 
@@ -175,9 +176,11 @@ function closeDelete() {
 }
 
 async function handleDelete() {
+  const targetId = deleteTarget.value?.id
+  if (!targetId) return
   try {
-    await deleteActivity(deleteTarget.value.id)
-    activities.value = activities.value.filter((a) => a.id !== deleteTarget.value.id)
+    await deleteActivity(targetId)
+    activities.value = activities.value.filter((a) => a.id !== targetId)
     closeDelete()
   } catch (e) {
     console.error('기록 삭제 실패', e)

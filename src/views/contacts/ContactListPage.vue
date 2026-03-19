@@ -27,6 +27,7 @@ onMounted(async () => {
     contacts.value = buyerData
   } catch (e) {
     console.error('데이터 로드 실패', e)
+    error('데이터를 불러오지 못했습니다. 페이지를 새로고침해주세요.')
   }
 })
 
@@ -111,6 +112,7 @@ function openEdit(contact) {
   formPosition.value = contact.position
   formEmail.value = contact.email
   formTel.value = contact.tel
+  formErrors.value = {}
   isDetailOpen.value = false
   isFormOpen.value = true
 }
