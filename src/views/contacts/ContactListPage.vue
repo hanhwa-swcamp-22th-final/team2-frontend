@@ -2,13 +2,14 @@
 import { computed, onMounted, ref } from 'vue'
 import { fetchBuyers, createBuyer, updateBuyer, deleteBuyer } from '@/api/contacts'
 import { fetchActivityClients } from '@/api/activity'
+import { useToast } from '@/composables/useToast'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import InfoField from '@/components/common/InfoField.vue'
-import PageTitleBar from '@/components/layout/PageTitleBar.vue'
+import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import TableActions from '@/components/common/TableActions.vue'
 
@@ -70,6 +71,7 @@ function getClientName(clientId) {
 }
 
 // ── 등록/수정 모달 ─────────────────────────────────────────
+const { warning, error } = useToast()
 const isFormOpen = ref(false)
 const isEditMode = ref(false)
 const editingId = ref(null)
@@ -78,6 +80,7 @@ const formName = ref('')
 const formPosition = ref('')
 const formEmail = ref('')
 const formTel = ref('')
+const formErrors = ref({})
 
 const positionOptions = [
   { label: 'Team Leader', value: 'Team Leader' },
@@ -96,6 +99,7 @@ function openCreate() {
   formPosition.value = ''
   formEmail.value = ''
   formTel.value = ''
+  formErrors.value = {}
   isFormOpen.value = true
 }
 
@@ -112,7 +116,15 @@ function openEdit(contact) {
 }
 
 async function handleFormSubmit() {
-  if (!formClientId.value || !formName.value || !formEmail.value) return
+  const e = {}
+  if (!formClientId.value)    e.clientId = '거래처 값이 누락되었습니다.'
+  if (!formName.value.trim()) e.name     = '이름 값이 누락되었습니다.'
+  if (!formEmail.value.trim()) e.email   = '이메일 값이 누락되었습니다.'
+  formErrors.value = e
+  if (Object.keys(e).length > 0) {
+    warning('입력 내용을 확인해주세요.')
+    return
+  }
   const payload = {
     clientId:    formClientId.value,
     name:        formName.value,
@@ -133,7 +145,7 @@ async function handleFormSubmit() {
     closeForm()
   } catch (e) {
     console.error('연락처 저장 실패', e)
-    alert('저장에 실패했습니다. 다시 시도해주세요.')
+    error('저장에 실패했습니다. 다시 시도해주세요.')
   }
 }
 
@@ -163,7 +175,7 @@ async function handleDelete() {
     closeDelete()
   } catch (e) {
     console.error('연락처 삭제 실패', e)
-    alert('삭제에 실패했습니다. 다시 시도해주세요.')
+    error('삭제에 실패했습니다. 다시 시도해주세요.')
   }
 }
 </script>
@@ -171,7 +183,7 @@ async function handleDelete() {
 <template>
   <div class="space-y-6">
     <!-- 페이지 타이틀 -->
-    <PageTitleBar title="컨택 리스트" description="거래처별 담당자 연락처를 조회하고 관리합니다.">
+    <DocumentPageHeader title="컨택 리스트" icon-class="fas fa-address-book">
       <template #actions>
         <div class="w-64">
           <SearchableCombobox
@@ -197,7 +209,7 @@ async function handleDelete() {
           연락처 등록
         </BaseButton>
       </template>
-    </PageTitleBar>
+    </DocumentPageHeader>
 
     <!-- 거래처별 카드 그룹 -->
     <div
@@ -299,12 +311,14 @@ async function handleDelete() {
               :options="clientOptions"
               placeholder="거래처 검색/선택..."
             />
+            <p v-if="formErrors.clientId" class="mt-1 text-xs text-red-500">{{ formErrors.clientId }}</p>
           </div>
           <div class="space-y-1.5">
             <p class="text-sm font-semibold text-slate-700">
               이름 <span class="text-red-500">*</span>
             </p>
             <BaseTextField v-model="formName" placeholder="연락처 이름" />
+            <p v-if="formErrors.name" class="mt-1 text-xs text-red-500">{{ formErrors.name }}</p>
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
@@ -317,6 +331,7 @@ async function handleDelete() {
               이메일 <span class="text-red-500">*</span>
             </p>
             <BaseTextField v-model="formEmail" placeholder="이메일" type="email" />
+            <p v-if="formErrors.email" class="mt-1 text-xs text-red-500">{{ formErrors.email }}</p>
           </div>
         </div>
         <div class="space-y-1.5">
