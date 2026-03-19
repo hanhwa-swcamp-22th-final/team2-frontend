@@ -1,9 +1,11 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DateField from '@/components/common/DateField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
@@ -11,8 +13,17 @@ import FormField from '@/components/common/FormField.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import PIFormModal from '@/components/domain/document/PIFormModal.vue'
+import { useToast } from '@/composables/useToast'
+
+const router = useRouter()
+const { success } = useToast()
 
 const isAdvancedOpen = ref(true)
+const formOpen = ref(false)
+const formMode = ref('create')
+const selectedRow = ref(null)
+const deleteOpen = ref(false)
 
 const filters = ref({
   keyword: '',
@@ -68,7 +79,7 @@ const columns = [
   { key: 'actions', label: '', align: 'center', width: '90px' },
 ]
 
-const rows = [
+const initialRows = [
   {
     id: 'PI26001',
     issueDate: '2026/02/01',
@@ -163,8 +174,10 @@ function normalizeDate(value) {
   return String(value ?? '').replaceAll('/', '-')
 }
 
+const rowsData = ref([...initialRows])
+
 const filteredRows = computed(() => {
-  return rows.filter((row) => {
+  return rowsData.value.filter((row) => {
     const keyword = appliedFilters.value.keyword.trim().toLowerCase()
 
     if (keyword) {
@@ -233,13 +246,89 @@ function searchRows() {
     ...filters.value,
   }
 }
+
+function openCreateForm() {
+  formMode.value = 'create'
+  selectedRow.value = null
+  formOpen.value = true
+}
+
+function openEditForm(row) {
+  formMode.value = 'edit'
+  selectedRow.value = {
+    id: row.id,
+    clientName: row.clientName,
+    buyerId: 'buyer-1',
+    currency: row.amount.startsWith('€') ? 'EUR' : 'USD',
+    incoterms: 'FOB BUSAN',
+    deliveryDate: row.deliveryDate,
+    items: [
+      {
+        name: row.itemName,
+        qty: 1,
+        unitPrice: row.amount.replace(/[^0-9.]/g, ''),
+        amount: row.amount,
+      },
+    ],
+  }
+  formOpen.value = true
+}
+
+function handleSave(formValue) {
+  if (formMode.value === 'create') {
+    rowsData.value = [
+      {
+        id: `PI26${String(rowsData.value.length + 1).padStart(3, '0')}`,
+        issueDate: '2026/03/19',
+        clientName: formValue.clientName || '거래처 미선택',
+        country: '말레이시아',
+        itemName: formValue.items?.[0]?.name || '품목 미입력',
+        amount: '$0',
+        manager: '김영업',
+        status: '초안',
+        deliveryDate: formValue.deliveryDate ? formValue.deliveryDate.replaceAll('-', '/') : '-',
+      },
+      ...rowsData.value,
+    ]
+    success('PI 작성 폼이 연결되었습니다.')
+    return
+  }
+
+  rowsData.value = rowsData.value.map((row) => (
+    row.id === selectedRow.value?.id
+      ? {
+        ...row,
+        clientName: formValue.clientName || row.clientName,
+        itemName: formValue.items?.[0]?.name || row.itemName,
+        deliveryDate: formValue.deliveryDate ? formValue.deliveryDate.replaceAll('-', '/') : row.deliveryDate,
+      }
+      : row
+  ))
+  success(`${selectedRow.value?.id} 수정 폼이 연결되었습니다.`)
+}
+
+function openDeleteModal(row) {
+  selectedRow.value = row
+  deleteOpen.value = true
+}
+
+function confirmDelete() {
+  rowsData.value = rowsData.value.filter((row) => row.id !== selectedRow.value?.id)
+  success(`${selectedRow.value?.id}가 삭제되었습니다.`)
+  deleteOpen.value = false
+  selectedRow.value = null
+}
+
+function goToDetail(id) {
+  router.push({ name: 'pi-detail', params: { id } })
+}
 </script>
 
 <template>
   <div class="fade-in space-y-5">
     <DocumentPageHeader title="PI 관리" icon-class="fas fa-file-invoice">
       <template #actions>
-      <BaseButton>
+      <BaseButton @click="openCreateForm">
         <template #leading>
           <i class="fas fa-plus text-xs" aria-hidden="true"></i>
         </template>
@@ -352,7 +441,9 @@ function searchRows() {
       :footer-text="`총 ${filteredRows.length}건`"
     >
       <template #cell-id="{ value }">
-        <span class="font-mono text-xs font-semibold text-brand-600">{{ value }}</span>
+        <button type="button" class="font-mono text-xs font-semibold text-brand-600 hover:underline" @click="goToDetail(value)">
+          {{ value }}
+        </button>
       </template>
 
       <template #cell-status="{ value }">
@@ -361,14 +452,33 @@ function searchRows() {
 
       <template #cell-actions="{ row }">
         <div class="flex items-center gap-1.5">
-          <button type="button" class="text-xs text-slate-500 transition hover:text-slate-700" :title="`${row.id} 수정`">
+          <button type="button" class="text-xs text-slate-500 transition hover:text-slate-700" :title="`${row.id} 수정`" @click="openEditForm(row)">
             <i class="fas fa-edit" aria-hidden="true"></i>
           </button>
-          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} 삭제`">
+          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} 삭제`" @click="openDeleteModal(row)">
             <i class="fas fa-trash" aria-hidden="true"></i>
           </button>
         </div>
       </template>
     </BaseTable>
+
+    <PIFormModal
+      :open="formOpen"
+      :mode="formMode"
+      :document="selectedRow"
+      @close="formOpen = false"
+      @save="handleSave"
+    />
+
+    <ConfirmModal
+      :open="deleteOpen"
+      title="PI 삭제"
+      message="아래 PI를 삭제하시겠습니까?"
+      :detail="selectedRow?.id"
+      confirm-label="삭제"
+      confirm-variant="danger"
+      @confirm="confirmDelete"
+      @cancel="deleteOpen = false"
+    />
   </div>
 </template>
