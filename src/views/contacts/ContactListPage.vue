@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useToast } from '@/composables/useToast'
 import { fetchBuyers, createBuyer, updateBuyer, deleteBuyer } from '@/api/contacts'
 import { fetchActivityClients } from '@/api/activity'
 import BaseButton from '@/components/common/BaseButton.vue'
@@ -11,6 +12,8 @@ import InfoField from '@/components/common/InfoField.vue'
 import PageTitleBar from '@/components/layout/PageTitleBar.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import TableActions from '@/components/common/TableActions.vue'
+
+const { error: showError } = useToast()
 
 // ── 데이터 ─────────────────────────────────────────────────
 const clients = ref([])
@@ -112,7 +115,10 @@ function openEdit(contact) {
 }
 
 async function handleFormSubmit() {
-  if (!formClientId.value || !formName.value || !formEmail.value) return
+  if (!formClientId.value || !formName.value || !formEmail.value) {
+    showError('거래처, 이름, 이메일은 필수 항목입니다.')
+    return
+  }
   const payload = {
     clientId:    formClientId.value,
     name:        formName.value,
@@ -133,7 +139,7 @@ async function handleFormSubmit() {
     closeForm()
   } catch (e) {
     console.error('연락처 저장 실패', e)
-    alert('저장에 실패했습니다. 다시 시도해주세요.')
+    showError('저장에 실패했습니다. 다시 시도해주세요.')
   }
 }
 
@@ -163,7 +169,7 @@ async function handleDelete() {
     closeDelete()
   } catch (e) {
     console.error('연락처 삭제 실패', e)
-    alert('삭제에 실패했습니다. 다시 시도해주세요.')
+    showError('삭제에 실패했습니다. 다시 시도해주세요.')
   }
 }
 </script>

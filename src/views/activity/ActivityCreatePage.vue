@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { createActivity, fetchActivityClients, fetchPOsByClient } from '@/api/activity'
 import { useAuthStore } from '@/stores/auth'
+import { useToast } from '@/composables/useToast'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
@@ -13,6 +14,8 @@ import PageTitleBar from '@/components/layout/PageTitleBar.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
+
+const { success, error: showError } = useToast()
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -78,7 +81,7 @@ const filteredPoList = computed(() => {
 
 async function openPoSearch() {
   if (!formClient.value) {
-    alert('거래처를 먼저 선택해주세요.')
+    showError('거래처를 먼저 선택해주세요.')
     return
   }
   try {
@@ -104,7 +107,10 @@ function clearPo() {
 }
 
 async function handleSubmit() {
-  if (!formClient.value || !formType.value || !formDate.value || !formTitle.value || !formAuthor.value) return
+  if (!formClient.value || !formType.value || !formDate.value || !formTitle.value || !formAuthor.value) {
+    showError('거래처, 유형, 날짜, 제목, 작성자는 필수 항목입니다.')
+    return
+  }
   try {
     await createActivity({
       clientId: formClient.value,
@@ -119,7 +125,7 @@ async function handleSubmit() {
     router.push('/activities')
   } catch (e) {
     console.error('기록 등록 실패', e)
-    alert('기록 등록에 실패했습니다. 다시 시도해주세요.')
+    showError('기록 등록에 실패했습니다. 다시 시도해주세요.')
   }
 }
 </script>

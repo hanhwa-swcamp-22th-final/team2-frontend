@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import PasswordChangeModal from '@/components/domain/auth/PasswordChangeModal.vue'
 import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
@@ -96,8 +97,14 @@ const userRole = computed(() => {
   return roles[loggedInUser.value?.role] || ''
 })
 
+const isLogoutConfirmOpen = ref(false)
+
 function handleLogout() {
-  if (!confirm('로그아웃 하시겠습니까?')) return
+  isLogoutConfirmOpen.value = true
+}
+
+function confirmLogout() {
+  isLogoutConfirmOpen.value = false
   authStore.logout()
   router.push({ name: 'login' })
 }
@@ -212,4 +219,13 @@ onBeforeUnmount(() => {
   </header>
 
   <PasswordChangeModal :open="isPasswordModalOpen" @close="closePasswordModal" @save="closePasswordModal" />
+
+  <ConfirmModal
+    :open="isLogoutConfirmOpen"
+    title="로그아웃"
+    message="로그아웃 하시겠습니까?"
+    confirm-label="로그아웃"
+    @confirm="confirmLogout"
+    @cancel="isLogoutConfirmOpen = false"
+  />
 </template>
