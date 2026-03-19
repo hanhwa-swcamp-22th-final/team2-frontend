@@ -6,12 +6,14 @@ import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
+import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 
 const isAdvancedOpen = ref(true)
+const previewTarget = ref(null)
 
 const filters = ref({
   keyword: '',
@@ -107,6 +109,20 @@ const filteredRows = computed(() => {
   })
 })
 
+const previewFields = computed(() => {
+  if (!previewTarget.value) {
+    return []
+  }
+
+  return [
+    { label: '발행일', value: previewTarget.value.invoiceDate },
+    { label: '거래처', value: previewTarget.value.clientName },
+    { label: '국가', value: previewTarget.value.country },
+    { label: '품목명', value: previewTarget.value.itemName },
+    { label: '총중량(kg)', value: previewTarget.value.grossWeight },
+  ]
+})
+
 function resetFilters() {
   filters.value = {
     keyword: '',
@@ -133,6 +149,14 @@ function searchRows() {
   appliedFilters.value = {
     ...filters.value,
   }
+}
+
+function openPreview(row) {
+  previewTarget.value = row
+}
+
+function closePreview() {
+  previewTarget.value = null
 }
 </script>
 
@@ -235,11 +259,24 @@ function searchRows() {
 
       <template #cell-actions="{ row }">
         <div class="flex items-center justify-center gap-2">
-          <button type="button" class="text-xs text-brand-500 transition hover:underline" :title="`${row.id} 미리보기`">
+          <button
+            type="button"
+            class="text-xs text-brand-500 transition hover:underline"
+            :title="`${row.id} 미리보기`"
+            @click="openPreview(row)"
+          >
             <i class="fas fa-eye mr-1" aria-hidden="true"></i>미리보기
           </button>
         </div>
       </template>
     </BaseTable>
+
+    <DocumentPreviewModal
+      :open="Boolean(previewTarget)"
+      title="PL 미리보기"
+      :document-title="previewTarget?.id"
+      :fields="previewFields"
+      @close="closePreview"
+    />
   </div>
 </template>
