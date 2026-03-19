@@ -1,5 +1,7 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { fetchBuyers, createBuyer, updateBuyer, deleteBuyer } from '@/api/contacts'
+import { fetchActivityClients } from '@/api/activity'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
@@ -8,27 +10,28 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import InfoField from '@/components/common/InfoField.vue'
 import PageTitleBar from '@/components/layout/PageTitleBar.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
+import TableActions from '@/components/common/TableActions.vue'
 
-// ── 더미 데이터 ────────────────────────────────────────────
-const clients = ref([
-  { id: 'CLI001', name: 'GlobalTech',   nameKr: '글로벌텍',  country: 'USA'     },
-  { id: 'CLI002', name: 'EuroSupply',   nameKr: '유로서플라이', country: 'Germany' },
-  { id: 'CLI003', name: 'AsiaConnect',  nameKr: '아시아커넥트', country: 'Japan'   },
-])
+// ── 데이터 ─────────────────────────────────────────────────
+const clients = ref([])
+const contacts = ref([])
 
-const contacts = ref([
-  { id: '1', clientId: 'CLI001', name: 'James Carter',  position: 'Team Leader', email: 'james.carter@globaltech.com',  tel: '+1-212-736-3110', signImageUrl: null },
-  { id: '2', clientId: 'CLI001', name: 'Sarah Johnson', position: 'Team Member', email: 'sarah.johnson@globaltech.com', tel: '+1-212-736-3111', signImageUrl: null },
-  { id: '3', clientId: 'CLI001', name: 'Michael Brown', position: 'Team Member', email: 'michael.brown@globaltech.com', tel: '+1-212-736-3112', signImageUrl: null },
-  { id: '4', clientId: 'CLI002', name: 'Hans Müller',   position: 'Team Leader', email: 'hans.muller@eurosupply.de',    tel: '+49-30-1234-5678', signImageUrl: null },
-  { id: '5', clientId: 'CLI002', name: 'Anna Schmidt',  position: 'Team Member', email: 'anna.schmidt@eurosupply.de',   tel: '+49-30-1234-5679', signImageUrl: null },
-  { id: '6', clientId: 'CLI003', name: 'Yuki Tanaka',   position: 'Team Leader', email: 'yuki.tanaka@asiaconnect.jp',   tel: '+81-3-1234-5678',  signImageUrl: null },
-  { id: '7', clientId: 'CLI003', name: 'Kenji Sato',    position: 'Team Member', email: 'kenji.sato@asiaconnect.jp',    tel: '+81-3-1234-5679',  signImageUrl: null },
-])
+onMounted(async () => {
+  try {
+    const [clientData, buyerData] = await Promise.all([
+      fetchActivityClients(),
+      fetchBuyers(),
+    ])
+    clients.value = clientData
+    contacts.value = buyerData
+  } catch (e) {
+    console.error('데이터 로드 실패', e)
+  }
+})
 
 // ── 검색 ───────────────────────────────────────────────────
-const searchInput = ref('')    // 입력 중인 값 (버튼 클릭 전까지 화면에 반영 안 됨)
-const searchKeyword = ref('')  // 실제 적용된 필터 값
+const searchInput = ref('')
+const searchKeyword = ref('')
 
 const clientSearchOptions = computed(() =>
   clients.value.map((c) => ({ label: `${c.name} (${c.nameKr})`, value: c.id })),
@@ -40,14 +43,12 @@ function applySearch() {
 
 const filteredClients = computed(() => {
   if (!searchKeyword.value) return clients.value
-  return clients.value.filter((c) => c.id === searchKeyword.value)
+  return clients.value.filter((c) => String(c.id) === String(searchKeyword.value))
 })
 
 function getContactsByClient(clientId) {
-  return contacts.value.filter((c) => c.clientId === clientId)
+  return contacts.value.filter((c) => String(c.clientId) === String(clientId))
 }
-
-
 
 // ── 상세 모달 ──────────────────────────────────────────────
 const selectedContact = ref(null)
@@ -71,6 +72,7 @@ function getClientName(clientId) {
 // ── 등록/수정 모달 ─────────────────────────────────────────
 const isFormOpen = ref(false)
 const isEditMode = ref(false)
+const editingId = ref(null)
 const formClientId = ref('')
 const formName = ref('')
 const formPosition = ref('')
@@ -88,6 +90,7 @@ const clientOptions = computed(() =>
 
 function openCreate() {
   isEditMode.value = false
+  editingId.value = null
   formClientId.value = ''
   formName.value = ''
   formPosition.value = ''
@@ -98,6 +101,7 @@ function openCreate() {
 
 function openEdit(contact) {
   isEditMode.value = true
+  editingId.value = contact.id
   formClientId.value = contact.clientId
   formName.value = contact.name
   formPosition.value = contact.position
@@ -105,6 +109,32 @@ function openEdit(contact) {
   formTel.value = contact.tel
   isDetailOpen.value = false
   isFormOpen.value = true
+}
+
+async function handleFormSubmit() {
+  if (!formClientId.value || !formName.value || !formEmail.value) return
+  const payload = {
+    clientId:    formClientId.value,
+    name:        formName.value,
+    position:    formPosition.value,
+    email:       formEmail.value,
+    tel:         formTel.value,
+    signImageUrl: null,
+  }
+  try {
+    if (isEditMode.value) {
+      const updated = await updateBuyer(editingId.value, { id: editingId.value, ...payload })
+      const idx = contacts.value.findIndex((c) => c.id === editingId.value)
+      if (idx !== -1) contacts.value[idx] = updated
+    } else {
+      const created = await createBuyer(payload)
+      contacts.value.push(created)
+    }
+    closeForm()
+  } catch (e) {
+    console.error('연락처 저장 실패', e)
+    alert('저장에 실패했습니다. 다시 시도해주세요.')
+  }
 }
 
 function closeForm() {
@@ -124,6 +154,17 @@ function openDelete(contact) {
 function closeDelete() {
   isDeleteOpen.value = false
   deleteTarget.value = null
+}
+
+async function handleDelete() {
+  try {
+    await deleteBuyer(deleteTarget.value.id)
+    contacts.value = contacts.value.filter((c) => c.id !== deleteTarget.value.id)
+    closeDelete()
+  } catch (e) {
+    console.error('연락처 삭제 실패', e)
+    alert('삭제에 실패했습니다. 다시 시도해주세요.')
+  }
 }
 </script>
 
@@ -200,9 +241,8 @@ function closeDelete() {
             </div>
           </div>
           <!-- 수정/삭제 -->
-          <div class="mt-3 flex justify-end gap-3 border-t border-slate-100 pt-2" @click.stop>
-            <button type="button" class="text-xs text-brand-500 transition hover:text-brand-700" @click="openEdit(contact)">수정</button>
-            <button type="button" class="text-xs text-slate-400 transition hover:text-red-500" @click="openDelete(contact)">삭제</button>
+          <div class="mt-3 border-t border-slate-100 pt-2" @click.stop>
+            <TableActions @edit="openEdit(contact)" @delete="openDelete(contact)" />
           </div>
         </div>
       </div>
@@ -224,7 +264,6 @@ function closeDelete() {
       @close="closeDetail"
     >
       <div class="space-y-4">
-        <!-- 이름 -->
         <div>
           <p class="text-lg font-bold text-slate-900">{{ selectedContact?.name }}</p>
           <p class="text-sm text-slate-500">{{ selectedContact?.position }}</p>
@@ -287,7 +326,7 @@ function closeDelete() {
       </div>
       <template #footer>
         <BaseButton variant="secondary" @click="closeForm">취소</BaseButton>
-        <BaseButton @click="closeForm">{{ isEditMode ? '수정' : '등록' }}</BaseButton>
+        <BaseButton @click="handleFormSubmit">{{ isEditMode ? '수정' : '등록' }}</BaseButton>
       </template>
     </BaseModal>
 
@@ -299,7 +338,7 @@ function closeDelete() {
       :detail="`${deleteTarget?.name} (${deleteTarget?.position})`"
       confirm-label="삭제"
       confirm-variant="danger"
-      @confirm="closeDelete"
+      @confirm="handleDelete"
       @cancel="closeDelete"
     />
   </div>

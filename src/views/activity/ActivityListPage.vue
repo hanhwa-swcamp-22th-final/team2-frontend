@@ -1,10 +1,12 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { fetchActivities, fetchActivityClients, deleteActivity, updateActivity } from '@/api/activity'
 import ActivityDetailModal from '@/components/domain/activity/ActivityDetailModal.vue'
 import ActivityEditModal from '@/components/domain/activity/ActivityEditModal.vue'
 import ActivityTypeBadge from '@/components/domain/activity/ActivityTypeBadge.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
+import BasePagination from '@/components/common/BasePagination.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
@@ -13,6 +15,7 @@ import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
 import PageTitleBar from '@/components/layout/PageTitleBar.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
+import TableActions from '@/components/common/TableActions.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 
 const router = useRouter()
@@ -34,11 +37,14 @@ const typeOptions = [
   { label: '일정', value: '일정' },
 ]
 
-const authorOptions = [
-  { label: '홍길동', value: '홍길동' },
-  { label: '김영희', value: '김영희' },
-  { label: '이철수', value: '이철수' },
-]
+const authorOptions = computed(() => {
+  const unique = [...new Set(activities.value.map((a) => a.author).filter(Boolean))]
+  return unique.map((a) => ({ label: a, value: a }))
+})
+
+const clientOptions = computed(() => {
+  return clients.value.map((c) => ({ label: `${c.name} (${c.nameKr})`, value: c.id }))
+})
 
 // 실제 적용된 필터 (검색 버튼 클릭 시에만 반영)
 const applied = ref({ title: '', dateFrom: '', dateTo: '', author: '', po: '', type: '' })
@@ -64,92 +70,53 @@ function resetFilters() {
   applied.value = { title: '', dateFrom: '', dateTo: '', author: '', po: '', type: '' }
 }
 
-// ── 더미 데이터 ────────────────────────────────────────────
-const activities = ref([
-  {
-    id: 'ACT-001',
-    client: 'Acme Corp',
-    type: '미팅/협의',
-    title: '1분기 전략 미팅',
-    poId: 'PO-2024-001',
-    date: '2025-03-10',
-    author: '홍길동',
-    content: '1분기 영업 전략에 대해 논의했습니다. 주요 목표 및 KPI를 설정하였으며, 다음 미팅은 4월 초로 예정되어 있습니다.',
-  },
-  {
-    id: 'ACT-002',
-    client: 'Globex Corp',
-    type: '이슈',
-    title: '납기 지연 이슈 발생',
-    poId: 'PO-2024-002',
-    date: '2025-03-08',
-    author: '김영희',
-    content: '생산 공정 문제로 인해 납기가 2주 지연될 예정입니다. 거래처에 공식 통보가 필요합니다.',
-  },
-  {
-    id: 'ACT-003',
-    client: 'Initech',
-    type: '메모/노트',
-    title: '거래처 미팅 메모',
-    poId: '-',
-    date: '2025-03-07',
-    author: '이철수',
-    content: '거래처 담당자와의 미팅에서 신규 제품 라인업에 대한 관심을 보였습니다.',
-  },
-  {
-    id: 'ACT-004',
-    client: 'Acme Corp',
-    type: '코멘트',
-    title: '제품 샘플 피드백',
-    poId: 'PO-2024-001',
-    date: '2025-03-05',
-    author: '홍길동',
-    content: '제품 샘플에 대한 긍정적인 피드백을 받았습니다. 색상 옵션 추가 요청이 있었습니다.',
-  },
-  {
-    id: 'ACT-005',
-    client: 'Globex Corp',
-    type: '일정',
-    title: '2분기 미팅 일정 확정',
-    poId: '-',
-    date: '2025-03-03',
-    author: '김영희',
-    content: '2분기 정기 미팅을 4월 15일로 확정하였습니다.',
-  },
-  {
-    id: 'ACT-006',
-    client: 'Initech',
-    type: '미팅/협의',
-    title: '신규 계약 협의',
-    poId: 'PO-2024-003',
-    date: '2025-03-01',
-    author: '이철수',
-    content: '신규 계약에 대한 조건을 협의하였습니다. 단가 및 납기 조건을 재검토 중입니다.',
-  },
-  {
-    id: 'ACT-007',
-    client: 'Acme Corp',
-    type: '이슈',
-    title: '품질 클레임 접수',
-    poId: 'PO-2024-001',
-    date: '2025-02-25',
-    author: '홍길동',
-    content: '불량 제품에 대한 클레임이 접수되었습니다. 품질팀과 협의 중입니다.',
-  },
-])
+// ── 데이터 ─────────────────────────────────────────────────
+const activities = ref([])
+const clients = ref([])
+
+onMounted(async () => {
+  try {
+    const [activityData, clientData] = await Promise.all([
+      fetchActivities(),
+      fetchActivityClients(),
+    ])
+    activities.value = activityData
+    clients.value = clientData
+  } catch (e) {
+    console.error('데이터 로드 실패', e)
+  }
+})
 
 // ── 필터 computed (applied 기준) ───────────────────────────
+const clientMap = computed(() =>
+  Object.fromEntries(clients.value.map((c) => [c.id, c])),
+)
+
 const filteredActivities = computed(() => {
   return activities.value.filter((a) => {
+    const client = clientMap.value[a.clientId]
     const matchType   = !applied.value.type   || a.type === applied.value.type
-    const matchTitle  = !applied.value.title  || a.title.includes(applied.value.title) || a.client.includes(applied.value.title)
+    const matchTitle  = !applied.value.title  || a.title.includes(applied.value.title)
+      || client?.name.includes(applied.value.title) || client?.nameKr.includes(applied.value.title)
     const matchAuthor = !applied.value.author || a.author === applied.value.author
-    const matchPo     = !applied.value.po     || a.poId.includes(applied.value.po)
+    const matchPo     = !applied.value.po     || (a.poId ?? '').includes(applied.value.po)
     const matchFrom   = !applied.value.dateFrom || a.date >= applied.value.dateFrom
     const matchTo     = !applied.value.dateTo   || a.date <= applied.value.dateTo
     return matchType && matchTitle && matchAuthor && matchPo && matchFrom && matchTo
   })
 })
+
+// ── 페이지네이션 ────────────────────────────────────────────
+const PAGE_SIZE = 10
+const currentPage = ref(1)
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredActivities.value.length / PAGE_SIZE)))
+const paginatedActivities = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return filteredActivities.value.slice(start, start + PAGE_SIZE)
+})
+
+// 필터 변경 시 첫 페이지로 리셋
+watch(filteredActivities, () => { currentPage.value = 1 })
 
 // ── 체크박스 ───────────────────────────────────────────────
 const selectedIds = ref([])
@@ -190,6 +157,18 @@ function closeEdit() {
   editActivity.value = null
 }
 
+async function handleSave(updated) {
+  try {
+    await updateActivity(updated.id, updated)
+    const idx = activities.value.findIndex((a) => a.id === updated.id)
+    if (idx !== -1) activities.value[idx] = updated
+    closeEdit()
+  } catch (e) {
+    console.error('기록 수정 실패', e)
+    alert('기록 수정에 실패했습니다. 다시 시도해주세요.')
+  }
+}
+
 // ── 삭제 확인 모달 ─────────────────────────────────────────
 const deleteTarget = ref(null)
 const isDeleteOpen = ref(false)
@@ -202,6 +181,17 @@ function openDelete(activity) {
 function closeDelete() {
   isDeleteOpen.value = false
   deleteTarget.value = null
+}
+
+async function handleDelete() {
+  try {
+    await deleteActivity(deleteTarget.value.id)
+    activities.value = activities.value.filter((a) => a.id !== deleteTarget.value.id)
+    closeDelete()
+  } catch (e) {
+    console.error('기록 삭제 실패', e)
+    alert('기록 삭제에 실패했습니다. 다시 시도해주세요.')
+  }
 }
 
 // ── 테이블 컬럼 ────────────────────────────────────────────
@@ -293,7 +283,7 @@ const columns = [
 
     <!-- 테이블 -->
     <div>
-      <BaseTable :columns="columns" :rows="filteredActivities" row-key="id">
+      <BaseTable :columns="columns" :rows="paginatedActivities" row-key="id">
         <!-- 체크박스 셀 -->
         <template #cell-checkbox="{ row }">
           <input
@@ -330,31 +320,22 @@ const columns = [
 
         <!-- 작업 버튼 -->
         <template #cell-actions="{ row }">
-          <div class="flex items-center justify-center gap-3">
-            <button
-              type="button"
-              class="text-xs text-brand-500 transition hover:text-brand-700"
-              @click="openEdit(row)"
-            >
-              수정
-            </button>
-            <button
-              type="button"
-              class="text-xs text-slate-400 transition hover:text-red-500"
-              @click="openDelete(row)"
-            >
-              삭제
-            </button>
-          </div>
+          <TableActions @edit="openEdit(row)" @delete="openDelete(row)" />
         </template>
       </BaseTable>
 
-      <!-- 하단 카운트 -->
+      <!-- 하단 카운트 + 페이지네이션 -->
       <div class="mt-2 flex items-center justify-between px-1 text-xs text-slate-500">
         <span>총 {{ filteredActivities.length }}건</span>
         <span v-if="selectedIds.length > 0" class="font-medium text-brand-600">
           {{ selectedIds.length }}건 선택됨
         </span>
+      </div>
+      <div class="mt-4">
+        <BasePagination
+          v-model:current-page="currentPage"
+          :total-pages="totalPages"
+        />
       </div>
     </div>
 
@@ -370,6 +351,7 @@ const columns = [
       :open="isEditOpen"
       :activity="editActivity ?? {}"
       @close="closeEdit"
+      @save="handleSave"
     />
 
     <!-- 삭제 확인 모달 -->
@@ -380,7 +362,7 @@ const columns = [
       :detail="deleteTarget?.title"
       confirm-label="삭제"
       confirm-variant="danger"
-      @confirm="closeDelete"
+      @confirm="handleDelete"
       @cancel="closeDelete"
     />
   </div>
