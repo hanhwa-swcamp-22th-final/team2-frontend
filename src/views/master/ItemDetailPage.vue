@@ -5,6 +5,7 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
+import DocumentLinkButton from '@/components/domain/master/DocumentLinkButton.vue'
 import ItemFormModal from '@/components/domain/master/ItemFormModal.vue'
 import { deleteItem, fetchItem, fetchItems, updateItem } from '@/api/master'
 import { useToast } from '@/composables/useToast'
@@ -37,8 +38,6 @@ const infoFields = computed(() => {
     { label: '등록일', value: item.value.regDate },
   ]
 })
-
-const usageHistory = ref([])
 
 async function loadData() {
   const rawId = route.params.id
@@ -122,65 +121,34 @@ function goBack() {
       <template #actions>
         <BaseButton variant="secondary" size="sm" @click="openEditModal">수정</BaseButton>
         <BaseButton variant="ghost" size="sm" @click="showConfirmModal = true">삭제</BaseButton>
-        <BaseButton variant="ghost" size="sm" :disabled="true" title="준비 중">인쇄</BaseButton>
       </template>
     </DetailPageHeader>
 
-    <!-- 2열 레이아웃 -->
-    <div class="grid gap-6 xl:grid-cols-[1fr_360px]">
-      <!-- 좌측: 품목 정보 -->
-      <div class="space-y-6">
-        <BaseCard title="품목 정보" subtitle="품목의 상세 정보입니다.">
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div v-for="field in infoFields" :key="field.label">
-              <p class="text-xs font-medium text-slate-500">{{ field.label }}</p>
-              <p
-                class="mt-1 text-sm text-ink"
-                :class="field.label === '코드' ? 'font-mono font-semibold text-brand-600' : ''"
-              >{{ field.value || '-' }}</p>
-            </div>
-          </div>
-        </BaseCard>
-
-        <!-- 관련 문서 링크 -->
-        <BaseCard title="관련 문서 바로가기" subtitle="이 품목의 관련 문서를 조회합니다.">
-          <div class="flex flex-wrap gap-2">
-            <RouterLink
-              :to="{ path: '/po', query: { itemId: item.id } }"
-              class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
-            >
-              PO 조회
-            </RouterLink>
-            <RouterLink
-              :to="{ path: '/pi', query: { itemId: item.id } }"
-              class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
-            >
-              PI 조회
-            </RouterLink>
-            <RouterLink
-              :to="{ path: '/production', query: { itemId: item.id } }"
-              class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
-            >
-              생산 조회
-            </RouterLink>
-          </div>
-        </BaseCard>
-      </div>
-
-      <!-- 우측: 사용 내역 -->
-      <BaseCard title="사용 내역" subtitle="이 품목이 사용된 문서 목록입니다.">
-        <div v-if="usageHistory.length" class="space-y-3">
-          <div
-            v-for="usage in usageHistory"
-            :key="usage.code"
-            class="rounded-2xl border border-slate-200 bg-white px-4 py-3"
-          >
-            <p class="text-sm font-semibold text-ink">{{ usage.code }}</p>
-            <p class="mt-1 text-xs text-slate-500">{{ usage.client }}</p>
+    <div class="space-y-6">
+      <BaseCard title="품목 정보" subtitle="품목의 상세 정보입니다.">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div v-for="field in infoFields" :key="field.label">
+            <p class="text-xs font-medium text-slate-500">{{ field.label }}</p>
+            <p
+              class="mt-1 text-sm text-ink"
+              :class="field.label === '코드' ? 'font-mono font-semibold text-brand-600' : ''"
+            >{{ field.value || '-' }}</p>
           </div>
         </div>
-        <div v-else class="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-400">
-          사용 내역이 없습니다.
+      </BaseCard>
+
+      <!-- 관련 문서 링크 -->
+      <BaseCard title="관련 문서 바로가기" subtitle="이 품목의 관련 문서를 조회합니다.">
+        <div class="flex flex-wrap gap-2">
+          <DocumentLinkButton :to="{ path: '/po', query: { itemId: item.id } }">
+            PO 조회
+          </DocumentLinkButton>
+          <DocumentLinkButton :to="{ path: '/pi', query: { itemId: item.id } }">
+            PI 조회
+          </DocumentLinkButton>
+          <DocumentLinkButton :to="{ path: '/production', query: { itemId: item.id } }">
+            생산 조회
+          </DocumentLinkButton>
         </div>
       </BaseCard>
     </div>
