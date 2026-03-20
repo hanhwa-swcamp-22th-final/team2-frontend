@@ -33,9 +33,10 @@ async function handleSubmit() {
 
   loading.value = true
   try {
+    // TODO: 백엔드 연동 시 await sendPasswordResetEmail(email.value.trim())
     submitted.value = true
     success('등록된 이메일이라면 재설정 링크가 발송됩니다.')
-  } catch (e) {
+  } catch {
     error('이메일 확인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
   } finally {
     loading.value = false

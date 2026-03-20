@@ -203,7 +203,8 @@ async function handleDelete() {
   deleting.value = true
   try {
     // 물리 삭제(deleteUser) 대신 소프트 삭제: status를 '퇴직'으로 변경
-    await updateUser(userToDelete.value.id, { ...userToDelete.value, status: '퇴직' })
+    const { pw: _, ...safeUser } = userToDelete.value
+    await updateUser(safeUser.id, { ...safeUser, status: '퇴직' })
     success(`${userToDelete.value.name} 사용자가 퇴직 처리되었습니다.`)
     await loadData()
   } catch (e) {
