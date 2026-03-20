@@ -135,6 +135,11 @@ function toggleDepartment(deptId) {
   expandedDepts.value = next
 }
 
+const allVisibleExpanded = computed(() => {
+  const visibleDeptIds = groupedByDepartment.value.map(g => g.department.id)
+  return visibleDeptIds.length > 0 && visibleDeptIds.every(id => expandedDepts.value.has(id))
+})
+
 function toggleAll() {
   const visibleDeptIds = groupedByDepartment.value.map(g => g.department.id)
   const allExpanded = visibleDeptIds.length > 0 && visibleDeptIds.every(id => expandedDepts.value.has(id))
@@ -229,7 +234,7 @@ defineExpose({ openCreateModal })
         <BaseSelect v-model="departmentFilter" :options="departmentFilterOptions" placeholder="전체 부서" />
       </div>
       <BaseButton variant="ghost" size="sm" @click="toggleAll">
-        {{ expandedDepts.size === departments.length ? '전체 접기' : '전체 펼치기' }}
+        {{ allVisibleExpanded ? '전체 접기' : '전체 펼치기' }}
       </BaseButton>
     </div>
 

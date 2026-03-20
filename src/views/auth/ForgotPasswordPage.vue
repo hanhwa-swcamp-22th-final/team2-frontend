@@ -6,7 +6,6 @@ import FormField from '@/components/common/FormField.vue'
 import { useToast } from '@/composables/useToast'
 
 const { success, error } = useToast()
-const isDev = import.meta.env.DEV
 
 const email = ref('')
 const emailError = ref('')
@@ -108,15 +107,5 @@ async function handleSubmit() {
       </div>
     </div>
 
-    <!-- Demo 계정 안내 -->
-    <div v-if="isDev" class="w-full rounded-2xl bg-white p-4 shadow-panel">
-      <p class="mb-2 text-xs font-semibold text-slate-600">Demo 계정 안내</p>
-      <div class="space-y-1 text-xs text-slate-500">
-        <p>관리자: admin@salesboost.com / 1234</p>
-        <p>영업: kim@salesboost.com / 1234</p>
-        <p>생산: lee@salesboost.com / 1234</p>
-        <p>출하: park@salesboost.com / 1234</p>
-      </div>
-    </div>
   </div>
 </template>
