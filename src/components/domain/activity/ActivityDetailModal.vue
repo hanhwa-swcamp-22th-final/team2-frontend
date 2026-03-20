@@ -26,14 +26,14 @@ defineEmits(['close'])
   >
     <div class="space-y-4">
       <InfoField label="유형">
-        <ActivityTypeBadge :value="activity.type || '메모/노트'" />
+        <div class="flex justify-end">
+          <ActivityTypeBadge :value="activity.type || '메모/노트'" />
+        </div>
       </InfoField>
       <InfoField label="거래처" :value="activity.client" />
       <InfoField label="작성일" :value="activity.date" />
       <InfoField label="작성자" :value="activity.author" />
-      <InfoField label="내용" stacked>
-        <p class="leading-6 text-slate-600">{{ activity.content || '-' }}</p>
-      </InfoField>
+      <InfoField label="내용" :value="activity.content || '-'" />
     </div>
   </BaseModal>
 </template>

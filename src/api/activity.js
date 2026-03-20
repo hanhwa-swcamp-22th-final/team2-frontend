@@ -27,10 +27,8 @@ export async function deleteActivity(id) {
 }
 
 // ── PO 검색 ────────────────────────────────────────────────
-export async function fetchPOsByClient(clientId, userId) {
-  const params = { clientId }
-  if (userId != null) params.userId = userId
-  const { data } = await api.get('/activityPOs', { params })
+export async function fetchPOsByClient(clientId) {
+  const { data } = await api.get('/activityPOs', { params: { clientId: Number(clientId) } })
   return data
 }
 
