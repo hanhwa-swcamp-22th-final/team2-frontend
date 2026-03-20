@@ -303,6 +303,160 @@
       "positionId": 2,
       "status": "퇴직",
       "pw": "1234"
+    },
+    {
+      "id": "7",
+      "employeeNo": "25080201",
+      "name": "조영업",
+      "email": "jo@salesboost.com",
+      "role": "sales",
+      "departmentId": 1,
+      "positionId": 2,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "8",
+      "employeeNo": "25080202",
+      "name": "윤생산",
+      "email": "yoon@salesboost.com",
+      "role": "production",
+      "departmentId": 3,
+      "positionId": 2,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "9",
+      "employeeNo": "25080203",
+      "name": "임출하",
+      "email": "lim@salesboost.com",
+      "role": "shipping",
+      "departmentId": 4,
+      "positionId": 2,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "10",
+      "employeeNo": "25080204",
+      "name": "강영업",
+      "email": "kang@salesboost.com",
+      "role": "sales",
+      "departmentId": 2,
+      "positionId": 2,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "11",
+      "employeeNo": "25080205",
+      "name": "신생산",
+      "email": "shin@salesboost.com",
+      "role": "production",
+      "departmentId": 3,
+      "positionId": 2,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "12",
+      "employeeNo": "25080206",
+      "name": "오출하",
+      "email": "oh@salesboost.com",
+      "role": "shipping",
+      "departmentId": 4,
+      "positionId": 2,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "13",
+      "employeeNo": "25090101",
+      "name": "서영업",
+      "email": "seo@salesboost.com",
+      "role": "sales",
+      "departmentId": 1,
+      "positionId": 2,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "14",
+      "employeeNo": "25090102",
+      "name": "권관리",
+      "email": "kwon@salesboost.com",
+      "role": "admin",
+      "departmentId": 5,
+      "positionId": 2,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "15",
+      "employeeNo": "25090103",
+      "name": "황영업",
+      "email": "hwang@salesboost.com",
+      "role": "sales",
+      "departmentId": 2,
+      "positionId": 2,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "16",
+      "employeeNo": "25090104",
+      "name": "문생산",
+      "email": "moon@salesboost.com",
+      "role": "production",
+      "departmentId": 3,
+      "positionId": 2,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "17",
+      "employeeNo": "25100101",
+      "name": "배출하",
+      "email": "bae@salesboost.com",
+      "role": "shipping",
+      "departmentId": 4,
+      "positionId": 2,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "18",
+      "employeeNo": "25100102",
+      "name": "류영업",
+      "email": "ryu@salesboost.com",
+      "role": "sales",
+      "departmentId": 1,
+      "positionId": 2,
+      "status": "퇴직",
+      "pw": "1234"
+    },
+    {
+      "id": "19",
+      "employeeNo": "25100103",
+      "name": "전영업",
+      "email": "jeon@salesboost.com",
+      "role": "sales",
+      "departmentId": 2,
+      "positionId": 2,
+      "status": "재직",
+      "pw": "1234"
+    },
+    {
+      "id": "20",
+      "employeeNo": "25100104",
+      "name": "표관리",
+      "email": "pyo@salesboost.com",
+      "role": "admin",
+      "departmentId": 5,
+      "positionId": 2,
+      "status": "재직",
+      "pw": "1234"
     }
   ],
   "company": [
@@ -495,28 +649,44 @@
       "code": "USD",
       "name": "US Dollar",
       "symbol": "$",
-      "countryIds": [1, 7, 8, 9, 10, 12, 13]
+      "countryIds": [
+        1,
+        7,
+        8,
+        9,
+        10,
+        12,
+        13
+      ]
     },
     {
       "id": "2",
       "code": "EUR",
       "name": "Euro",
       "symbol": "€",
-      "countryIds": [2, 6, 11]
+      "countryIds": [
+        2,
+        6,
+        11
+      ]
     },
     {
       "id": "3",
       "code": "JPY",
       "name": "Japanese Yen",
       "symbol": "¥",
-      "countryIds": [3]
+      "countryIds": [
+        3
+      ]
     },
     {
       "id": "4",
       "code": "CNY",
       "name": "Chinese Yuan",
       "symbol": "¥",
-      "countryIds": [4]
+      "countryIds": [
+        4
+      ]
     },
     {
       "id": "5",
@@ -530,7 +700,9 @@
       "code": "GBP",
       "name": "British Pound",
       "symbol": "£",
-      "countryIds": [5]
+      "countryIds": [
+        5
+      ]
     }
   ],
   "paymentTerms": [
@@ -581,7 +753,7 @@
       "currencyId": 1,
       "manager": "John Smith",
       "status": "활성",
-      "regDate": "2025-01-15"
+      "regDate": "2025/01/15"
     },
     {
       "id": "2",
@@ -598,7 +770,7 @@
       "currencyId": 2,
       "manager": "Hans Mueller",
       "status": "활성",
-      "regDate": "2025-02-10"
+      "regDate": "2025/02/10"
     },
     {
       "id": "3",
@@ -615,7 +787,7 @@
       "currencyId": 3,
       "manager": "Tanaka Yuki",
       "status": "활성",
-      "regDate": "2025-03-05"
+      "regDate": "2025/03/05"
     },
     {
       "id": "4",
@@ -632,7 +804,7 @@
       "currencyId": 4,
       "manager": "Wang Lei",
       "status": "활성",
-      "regDate": "2025-03-20"
+      "regDate": "2025/03/20"
     },
     {
       "id": "5",
@@ -649,7 +821,7 @@
       "currencyId": 6,
       "manager": "James Brown",
       "status": "비활성",
-      "regDate": "2025-04-01"
+      "regDate": "2025/04/01"
     },
     {
       "id": "6",
@@ -666,7 +838,7 @@
       "currencyId": 2,
       "manager": "Pierre Dupont",
       "status": "활성",
-      "regDate": "2025-04-15"
+      "regDate": "2025/04/15"
     },
     {
       "id": "7",
@@ -683,7 +855,7 @@
       "currencyId": 1,
       "manager": "Raj Patel",
       "status": "활성",
-      "regDate": "2025-05-01"
+      "regDate": "2025/05/01"
     },
     {
       "id": "8",
@@ -700,7 +872,7 @@
       "currencyId": 1,
       "manager": "Carlos Silva",
       "status": "활성",
-      "regDate": "2025-05-20"
+      "regDate": "2025/05/20"
     },
     {
       "id": "9",
@@ -717,7 +889,7 @@
       "currencyId": 1,
       "manager": "Lim Wei",
       "status": "비활성",
-      "regDate": "2025-06-10"
+      "regDate": "2025/06/10"
     },
     {
       "id": "10",
@@ -734,159 +906,479 @@
       "currencyId": 1,
       "manager": "Nguyen Van",
       "status": "활성",
-      "regDate": "2025-06-25"
+      "regDate": "2025/06/25"
+    },
+    {
+      "id": "11",
+      "code": "CLI011",
+      "name": "Dtech Electronics Inc.",
+      "nameKr": "디텍 일렉트로닉스",
+      "countryId": 1,
+      "city": "New York",
+      "portId": 3,
+      "address": "350 Fifth Ave, New York, NY",
+      "tel": "+1-212-555-1101",
+      "email": "info@dtech.com",
+      "paymentTermsId": 1,
+      "currencyId": 1,
+      "manager": "David Kim",
+      "status": "활성",
+      "regDate": "2025/07/01"
+    },
+    {
+      "id": "12",
+      "code": "CLI012",
+      "name": "Berlin Digital AG",
+      "nameKr": "베를린 디지털",
+      "countryId": 2,
+      "city": "Berlin",
+      "portId": 4,
+      "address": "Unter den Linden 10, Berlin",
+      "tel": "+49-30-555-1202",
+      "email": "info@berlindgital.de",
+      "paymentTermsId": 2,
+      "currencyId": 2,
+      "manager": "Lukas Weber",
+      "status": "활성",
+      "regDate": "2025/07/05"
+    },
+    {
+      "id": "13",
+      "code": "CLI013",
+      "name": "Osaka Tech Corp.",
+      "nameKr": "오사카 테크",
+      "countryId": 3,
+      "city": "Osaka",
+      "portId": 16,
+      "address": "1-1 Namba, Osaka",
+      "tel": "+81-6-555-1303",
+      "email": "contact@osaktech.jp",
+      "paymentTermsId": 1,
+      "currencyId": 3,
+      "manager": "Suzuki Ichiro",
+      "status": "활성",
+      "regDate": "2025/07/10"
+    },
+    {
+      "id": "14",
+      "code": "CLI014",
+      "name": "Shenzhen Gadgets Co.",
+      "nameKr": "선전 가젯",
+      "countryId": 4,
+      "city": "Shenzhen",
+      "portId": 2,
+      "address": "Nanshan District, Shenzhen",
+      "tel": "+86-755-555-1404",
+      "email": "sales@szgadgets.cn",
+      "paymentTermsId": 3,
+      "currencyId": 4,
+      "manager": "Li Fang",
+      "status": "활성",
+      "regDate": "2025/07/15"
+    },
+    {
+      "id": "15",
+      "code": "CLI015",
+      "name": "London Tech Ltd",
+      "nameKr": "런던 테크",
+      "countryId": 5,
+      "city": "London",
+      "portId": 11,
+      "address": "30 St Mary Axe, London",
+      "tel": "+44-20-555-1505",
+      "email": "hello@londontech.co.uk",
+      "paymentTermsId": 2,
+      "currencyId": 6,
+      "manager": "Emma Wilson",
+      "status": "활성",
+      "regDate": "2025/07/20"
+    },
+    {
+      "id": "16",
+      "code": "CLI016",
+      "name": "Paris Digital SAS",
+      "nameKr": "파리 디지털",
+      "countryId": 6,
+      "city": "Paris",
+      "portId": 12,
+      "address": "25 Rue du Faubourg, Paris",
+      "tel": "+33-1-555-1606",
+      "email": "contact@parisdigital.fr",
+      "paymentTermsId": 4,
+      "currencyId": 2,
+      "manager": "Sophie Martin",
+      "status": "활성",
+      "regDate": "2025/07/25"
+    },
+    {
+      "id": "17",
+      "code": "CLI017",
+      "name": "Singapore Electronics Pte",
+      "nameKr": "싱가포르 일렉트로닉스",
+      "countryId": 9,
+      "city": "Singapore",
+      "portId": 7,
+      "address": "Marina Bay, Singapore",
+      "tel": "+65-555-1707",
+      "email": "info@sgelec.sg",
+      "paymentTermsId": 1,
+      "currencyId": 1,
+      "manager": "Tan Ah Kow",
+      "status": "활성",
+      "regDate": "2025/08/01"
+    },
+    {
+      "id": "18",
+      "code": "CLI018",
+      "name": "Sydney Tech Pty",
+      "nameKr": "시드니 테크",
+      "countryId": 12,
+      "city": "Sydney",
+      "portId": 14,
+      "address": "1 Macquarie St, Sydney",
+      "tel": "+61-2-555-1808",
+      "email": "info@sydneytech.au",
+      "paymentTermsId": 1,
+      "currencyId": 1,
+      "manager": "Chris Anderson",
+      "status": "비활성",
+      "regDate": "2025/08/05"
+    },
+    {
+      "id": "19",
+      "code": "CLI019",
+      "name": "Toronto Systems Inc.",
+      "nameKr": "토론토 시스템즈",
+      "countryId": 13,
+      "city": "Toronto",
+      "portId": 15,
+      "address": "100 King St W, Toronto",
+      "tel": "+1-416-555-1909",
+      "email": "info@torontosys.ca",
+      "paymentTermsId": 1,
+      "currencyId": 1,
+      "manager": "Mark Johnson",
+      "status": "활성",
+      "regDate": "2025/08/10"
+    },
+    {
+      "id": "20",
+      "code": "CLI020",
+      "name": "Hanoi Digital JSC",
+      "nameKr": "하노이 디지털",
+      "countryId": 10,
+      "city": "Hanoi",
+      "portId": 9,
+      "address": "Hoan Kiem District, Hanoi",
+      "tel": "+84-24-555-2010",
+      "email": "info@hanoidigital.vn",
+      "paymentTermsId": 1,
+      "currencyId": 1,
+      "manager": "Pham Thi Lan",
+      "status": "활성",
+      "regDate": "2025/08/15"
     }
   ],
   "items": [
     {
       "id": "1",
       "code": "ITM001",
-      "name": "Hot Rolled Steel Coil",
-      "nameKr": "열연 강판 코일",
-      "spec": "1200 × 2400 × 3 mm",
-      "unit": "MT",
-      "packUnit": "BUNDLE",
-      "unitPrice": 850000,
-      "weight": 5000,
-      "hsCode": "7208.51",
-      "category": "Steel",
+      "name": "Wireless Presenter",
+      "nameKr": "무선 프레젠터",
+      "spec": "2.4GHz / 100m / USB Receiver / Laser Pointer",
+      "unit": "EA",
+      "packUnit": "BOX",
+      "unitPrice": 55000,
+      "weight": 0.06,
+      "hsCode": "8471.60",
+      "category": "Electronics",
       "status": "활성",
-      "regDate": "2025-01-10"
+      "regDate": "2025/01/10"
     },
     {
       "id": "2",
       "code": "ITM002",
-      "name": "Cold Rolled Steel Sheet",
-      "nameKr": "냉연 강판",
-      "spec": "1000 × 2000 × 1.5 mm",
-      "unit": "MT",
-      "packUnit": "PALLET",
-      "unitPrice": 920000,
-      "weight": 3000,
-      "hsCode": "7209.16",
-      "category": "Steel",
+      "name": "Tablet PC 10\"",
+      "nameKr": "태블릿 PC 10형",
+      "spec": "10.1\" FHD / Octa-core / 4GB / 64GB / WiFi",
+      "unit": "EA",
+      "packUnit": "BOX",
+      "unitPrice": 650000,
+      "weight": 0.52,
+      "hsCode": "8471.30",
+      "category": "Electronics",
       "status": "활성",
-      "regDate": "2025-01-15"
+      "regDate": "2025/01/15"
     },
     {
       "id": "3",
       "code": "ITM003",
-      "name": "Seamless Steel Pipe",
-      "nameKr": "무봉강관",
-      "spec": "114 × 6000 × 8 mm",
+      "name": "Smart Projector FHD",
+      "nameKr": "스마트 프로젝터 FHD",
+      "spec": "FHD 1920×1080 / 3500lm / HDMI / WiFi / BT",
       "unit": "EA",
-      "packUnit": "BUNDLE",
-      "unitPrice": 125000,
-      "weight": 120,
-      "hsCode": "7304.19",
-      "category": "Pipe",
+      "packUnit": "BOX",
+      "unitPrice": 780000,
+      "weight": 2.8,
+      "hsCode": "8528.62",
+      "category": "Electronics",
       "status": "활성",
-      "regDate": "2025-02-01"
+      "regDate": "2025/02/01"
     },
     {
       "id": "4",
       "code": "ITM004",
-      "name": "Welded Steel Pipe",
-      "nameKr": "용접강관",
-      "spec": "219 × 12000 × 6 mm",
+      "name": "All-in-One PC 24\"",
+      "nameKr": "올인원 PC 24형",
+      "spec": "24\" FHD / Intel i5 / 16GB / 512GB SSD",
       "unit": "EA",
-      "packUnit": "BUNDLE",
-      "unitPrice": 98000,
-      "weight": 200,
-      "hsCode": "7306.30",
-      "category": "Pipe",
+      "packUnit": "BOX",
+      "unitPrice": 1650000,
+      "weight": 6.3,
+      "hsCode": "8471.41",
+      "category": "Electronics",
       "status": "활성",
-      "regDate": "2025-02-10"
+      "regDate": "2025/02/10"
     },
     {
       "id": "5",
       "code": "ITM005",
-      "name": "Lubricant Oil #32",
-      "nameKr": "윤활유 #32",
-      "spec": "200 × 200 × 500 mm",
+      "name": "Network Switch 24Port",
+      "nameKr": "네트워크 스위치 24포트",
+      "spec": "24-Port / Gigabit / PoE+ / Managed / 19\" Rack",
       "unit": "EA",
-      "packUnit": "CASE",
-      "unitPrice": 45000,
-      "weight": 18,
-      "hsCode": "2710.19",
-      "category": "Oil",
+      "packUnit": "BOX",
+      "unitPrice": 420000,
+      "weight": 3.5,
+      "hsCode": "8517.62",
+      "category": "Electronics",
       "status": "활성",
-      "regDate": "2025-02-20"
+      "regDate": "2025/02/20"
     },
     {
       "id": "6",
       "code": "ITM006",
-      "name": "Hydraulic Press Machine",
-      "nameKr": "유압 프레스",
-      "spec": "2500 × 1800 × 3200 mm",
-      "unit": "SET",
-      "packUnit": "LOOSE",
-      "unitPrice": 75000000,
-      "weight": 8500,
-      "hsCode": "8462.10",
-      "category": "Machinery",
+      "name": "Multifunction Printer A3",
+      "nameKr": "A3 복합기",
+      "spec": "A3 / Print·Scan·Copy·Fax / 40ppm / WiFi",
+      "unit": "EA",
+      "packUnit": "BOX",
+      "unitPrice": 1200000,
+      "weight": 22.0,
+      "hsCode": "8443.32",
+      "category": "Electronics",
       "status": "활성",
-      "regDate": "2025-03-01"
+      "regDate": "2025/03/01"
     },
     {
       "id": "7",
       "code": "ITM007",
-      "name": "Stainless Steel Bar",
-      "nameKr": "스테인리스 봉강",
-      "spec": "50 × 50 × 6000 mm",
-      "unit": "KG",
-      "packUnit": "BUNDLE",
-      "unitPrice": 4500,
-      "weight": 117,
-      "hsCode": "7222.11",
-      "category": "Steel",
+      "name": "USB-C Hub 7-in-1",
+      "nameKr": "USB-C 허브 7포트",
+      "spec": "USB-C / HDMI 4K / USB3.0×3 / SD / PD100W",
+      "unit": "EA",
+      "packUnit": "BOX",
+      "unitPrice": 48000,
+      "weight": 0.12,
+      "hsCode": "8473.30",
+      "category": "Electronics",
       "status": "활성",
-      "regDate": "2025-03-15"
+      "regDate": "2025/03/15"
     },
     {
       "id": "8",
       "code": "ITM008",
-      "name": "ERW Pipe",
-      "nameKr": "ERW 강관",
-      "spec": "76 × 6000 × 3 mm",
+      "name": "Bluetooth Headset",
+      "nameKr": "블루투스 헤드셋",
+      "spec": "BT 5.3 / ANC / 30h Battery / USB-C / Foldable",
       "unit": "EA",
-      "packUnit": "PALLET",
-      "unitPrice": 67000,
-      "weight": 32,
-      "hsCode": "7306.30",
-      "category": "Pipe",
+      "packUnit": "BOX",
+      "unitPrice": 95000,
+      "weight": 0.28,
+      "hsCode": "8518.30",
+      "category": "Electronics",
       "status": "활성",
-      "regDate": "2025-04-01"
+      "regDate": "2025/04/01"
     },
     {
       "id": "9",
       "code": "ITM009",
-      "name": "Cutting Oil",
-      "nameKr": "절삭유",
-      "spec": "150 × 150 × 300 mm",
+      "name": "NAS Storage 4-Bay",
+      "nameKr": "NAS 스토리지 4베이",
+      "spec": "4-Bay / Quad-core / 4GB ECC / 2×GbE / USB3.2",
       "unit": "EA",
-      "packUnit": "CASE",
-      "unitPrice": 32000,
-      "weight": 5,
-      "hsCode": "3403.19",
-      "category": "Oil",
-      "status": "비활성",
-      "regDate": "2025-04-10"
+      "packUnit": "BOX",
+      "unitPrice": 680000,
+      "weight": 2.1,
+      "hsCode": "8471.70",
+      "category": "Electronics",
+      "status": "활성",
+      "regDate": "2025/04/10"
     },
     {
       "id": "10",
       "code": "ITM010",
-      "name": "CNC Lathe",
-      "nameKr": "CNC 선반",
-      "spec": "3000 × 1500 × 1800 mm",
-      "unit": "SET",
+      "name": "Smart Whiteboard 65\"",
+      "nameKr": "스마트 화이트보드 65형",
+      "spec": "65\" 4K Touch / Android / WiFi / HDMI / 20pt",
+      "unit": "EA",
       "packUnit": "LOOSE",
-      "unitPrice": 120000000,
-      "weight": 4200,
-      "hsCode": "8458.11",
-      "category": "Machinery",
+      "unitPrice": 3500000,
+      "weight": 38.0,
+      "hsCode": "8528.52",
+      "category": "Electronics",
       "status": "활성",
-      "regDate": "2025-04-20"
+      "regDate": "2025/04/20"
+    },
+    {
+      "id": "11",
+      "code": "ITM011",
+      "name": "Business Laptop 15\"",
+      "nameKr": "비즈니스 노트북 15형",
+      "spec": "15.6\" FHD / Intel i7 / 16GB / 512GB SSD",
+      "unit": "EA",
+      "packUnit": "BOX",
+      "unitPrice": 1850000,
+      "weight": 1.8,
+      "hsCode": "8471.30",
+      "category": "Electronics",
+      "status": "활성",
+      "regDate": "2025/07/01"
+    },
+    {
+      "id": "12",
+      "code": "ITM012",
+      "name": "Desktop PC Set",
+      "nameKr": "데스크탑 PC 세트",
+      "spec": "Intel i7 / 32GB / 1TB SSD / Tower",
+      "unit": "SET",
+      "packUnit": "BOX",
+      "unitPrice": 2200000,
+      "weight": 8.5,
+      "hsCode": "8471.41",
+      "category": "Electronics",
+      "status": "활성",
+      "regDate": "2025/07/05"
+    },
+    {
+      "id": "13",
+      "code": "ITM013",
+      "name": "LED Monitor 27\"",
+      "nameKr": "LED 모니터 27형",
+      "spec": "27\" QHD 2560×1440 / IPS / 75Hz",
+      "unit": "EA",
+      "packUnit": "BOX",
+      "unitPrice": 450000,
+      "weight": 4.2,
+      "hsCode": "8528.52",
+      "category": "Electronics",
+      "status": "활성",
+      "regDate": "2025/07/10"
+    },
+    {
+      "id": "14",
+      "code": "ITM014",
+      "name": "Laser Printer A4",
+      "nameKr": "레이저 프린터 A4",
+      "spec": "A4 / 30ppm / Duplex / WiFi / USB",
+      "unit": "EA",
+      "packUnit": "BOX",
+      "unitPrice": 380000,
+      "weight": 7.8,
+      "hsCode": "8443.31",
+      "category": "Electronics",
+      "status": "활성",
+      "regDate": "2025/07/15"
+    },
+    {
+      "id": "15",
+      "code": "ITM015",
+      "name": "Document Scanner",
+      "nameKr": "문서 스캐너",
+      "spec": "A4 / ADF 50매 / 600dpi / USB",
+      "unit": "EA",
+      "packUnit": "BOX",
+      "unitPrice": 290000,
+      "weight": 3.1,
+      "hsCode": "8471.90",
+      "category": "Electronics",
+      "status": "활성",
+      "regDate": "2025/07/20"
+    },
+    {
+      "id": "16",
+      "code": "ITM016",
+      "name": "Mechanical Keyboard",
+      "nameKr": "기계식 키보드",
+      "spec": "TKL / Cherry MX Red / USB-C / Backlit",
+      "unit": "EA",
+      "packUnit": "BOX",
+      "unitPrice": 120000,
+      "weight": 0.85,
+      "hsCode": "8471.60",
+      "category": "Electronics",
+      "status": "활성",
+      "regDate": "2025/07/25"
+    },
+    {
+      "id": "17",
+      "code": "ITM017",
+      "name": "Wireless Mouse",
+      "nameKr": "무선 마우스",
+      "spec": "2.4GHz / 1600DPI / USB Dongle / 12M Battery",
+      "unit": "EA",
+      "packUnit": "BOX",
+      "unitPrice": 35000,
+      "weight": 0.09,
+      "hsCode": "8471.60",
+      "category": "Electronics",
+      "status": "활성",
+      "regDate": "2025/08/01"
+    },
+    {
+      "id": "18",
+      "code": "ITM018",
+      "name": "External SSD 1TB",
+      "nameKr": "외장 SSD 1TB",
+      "spec": "1TB / USB 3.2 / 1050MB/s / Pocket Size",
+      "unit": "EA",
+      "packUnit": "BOX",
+      "unitPrice": 98000,
+      "weight": 0.05,
+      "hsCode": "8471.70",
+      "category": "Electronics",
+      "status": "활성",
+      "regDate": "2025/08/05"
+    },
+    {
+      "id": "19",
+      "code": "ITM019",
+      "name": "UPS 1000VA",
+      "nameKr": "UPS 전원장치 1000VA",
+      "spec": "1000VA / 600W / 8 Outlet / LCD Display",
+      "unit": "EA",
+      "packUnit": "BOX",
+      "unitPrice": 185000,
+      "weight": 9.5,
+      "hsCode": "8504.40",
+      "category": "Electronics",
+      "status": "활성",
+      "regDate": "2025/08/10"
+    },
+    {
+      "id": "20",
+      "code": "ITM020",
+      "name": "Video Conference Camera",
+      "nameKr": "화상회의 카메라",
+      "spec": "4K / 120° FOV / Built-in Mic / USB-C",
+      "unit": "EA",
+      "packUnit": "BOX",
+      "unitPrice": 320000,
+      "weight": 0.35,
+      "hsCode": "8525.80",
+      "category": "Electronics",
+      "status": "활성",
+      "regDate": "2025/08/15"
     }
   ],
   "activityClients": [
@@ -907,6 +1399,108 @@
       "name": "Tokyo Trading Co.",
       "nameKr": "도쿄 트레이딩",
       "country": "Japan"
+    },
+    {
+      "id": "4",
+      "name": "Shanghai Import Ltd.",
+      "nameKr": "상해 임포트",
+      "country": "China"
+    },
+    {
+      "id": "5",
+      "name": "London Metals Plc",
+      "nameKr": "런던 메탈",
+      "country": "UK"
+    },
+    {
+      "id": "6",
+      "name": "Paris Acier SA",
+      "nameKr": "파리 아시에",
+      "country": "France"
+    },
+    {
+      "id": "7",
+      "name": "Mumbai Steel Works",
+      "nameKr": "뭄바이 스틸웍스",
+      "country": "India"
+    },
+    {
+      "id": "8",
+      "name": "São Paulo Metals",
+      "nameKr": "상파울루 메탈",
+      "country": "Brazil"
+    },
+    {
+      "id": "9",
+      "name": "Singapore Pipe Pte",
+      "nameKr": "싱가포르 파이프",
+      "country": "Singapore"
+    },
+    {
+      "id": "10",
+      "name": "Hanoi Industries",
+      "nameKr": "하노이 인더스트리",
+      "country": "Vietnam"
+    },
+    {
+      "id": "11",
+      "name": "Dtech Electronics Inc.",
+      "nameKr": "디텍 일렉트로닉스",
+      "country": "USA"
+    },
+    {
+      "id": "12",
+      "name": "Berlin Digital AG",
+      "nameKr": "베를린 디지털",
+      "country": "Germany"
+    },
+    {
+      "id": "13",
+      "name": "Osaka Tech Corp.",
+      "nameKr": "오사카 테크",
+      "country": "Japan"
+    },
+    {
+      "id": "14",
+      "name": "Shenzhen Gadgets Co.",
+      "nameKr": "선전 가젯",
+      "country": "China"
+    },
+    {
+      "id": "15",
+      "name": "London Tech Ltd",
+      "nameKr": "런던 테크",
+      "country": "UK"
+    },
+    {
+      "id": "16",
+      "name": "Paris Digital SAS",
+      "nameKr": "파리 디지털",
+      "country": "France"
+    },
+    {
+      "id": "17",
+      "name": "Singapore Electronics Pte",
+      "nameKr": "싱가포르 일렉트로닉스",
+      "country": "Singapore"
+    },
+    {
+      "id": "18",
+      "name": "Sydney Tech Pty",
+      "nameKr": "시드니 테크",
+      "country": "Australia"
+    },
+    {
+      "id": "19",
+      "name": "Toronto Systems Inc.",
+      "nameKr": "토론토 시스템즈",
+      "country": "Canada"
+    },
+    {
+      "id": "20",
+      "name": "Hanoi Digital JSC",
+      "nameKr": "하노이 디지털",
+      "country": "Vietnam"
     }
   ],
   "activities": [
@@ -915,7 +1509,7 @@
       "clientId": 1,
       "poId": "PO2025001",
       "author": "김영업",
-      "date": "2025-03-10",
+      "date": "2025/03/10",
       "type": "미팅/협의",
       "title": "Global Steel Corp. 1분기 미팅",
       "content": "1분기 공급 계획 협의 완료"
@@ -925,7 +1519,7 @@
       "clientId": 1,
       "poId": "PO2025001",
       "author": "김영업",
-      "date": "2025-03-15",
+      "date": "2025/03/15",
       "type": "이슈",
       "title": "납기 지연 이슈",
       "content": "제품 납기 2주 지연 요청"
@@ -935,7 +1529,7 @@
       "clientId": 1,
       "poId": "PO2025002",
       "author": "정영업",
-      "date": "2025-03-20",
+      "date": "2025/03/20",
       "type": "메모/노트",
       "title": "제품 스펙 변경 메모",
       "content": "열연 강판 사양 변경 확인 필요"
@@ -945,7 +1539,7 @@
       "clientId": 2,
       "poId": "PO2025003",
       "author": "김영업",
-      "date": "2025-02-28",
+      "date": "2025/02/28",
       "type": "미팅/협의",
       "title": "Hamburg Metal GmbH 계약 논의",
       "content": "2분기 공급 계약 세부 논의"
@@ -955,7 +1549,7 @@
       "clientId": 2,
       "poId": "PO2025003",
       "author": "정영업",
-      "date": "2025-03-05",
+      "date": "2025/03/05",
       "type": "코멘트",
       "title": "가격 협상 코멘트",
       "content": "단가 인하 요청에 대한 내부 검토 의견"
@@ -965,7 +1559,7 @@
       "clientId": 3,
       "poId": "PO2025004",
       "author": "김영업",
-      "date": "2025-03-01",
+      "date": "2025/03/01",
       "type": "일정",
       "title": "Tokyo Trading Co. 현장 방문 일정",
       "content": "도쿄 오피스 방문 일정 확정"
@@ -975,68 +1569,2497 @@
       "clientId": 3,
       "poId": "PO2025005",
       "author": "정영업",
-      "date": "2025-03-18",
+      "date": "2025/03/18",
       "type": "이슈",
       "title": "통관 이슈 발생",
       "content": "일본 세관 통관 지연 이슈 발생, 서류 보완 필요"
+    },
+    {
+      "id": "ACT008",
+      "clientId": 4,
+      "poId": "PO2025007",
+      "author": "김영업",
+      "date": "2025/04/02",
+      "type": "미팅/협의",
+      "title": "Shanghai Import 노트북 계약 미팅",
+      "content": "노트북 100대 공급 계약 세부 조건 협의"
+    },
+    {
+      "id": "ACT009",
+      "clientId": 5,
+      "poId": "PO2025008",
+      "author": "정영업",
+      "date": "2025/04/06",
+      "type": "이슈",
+      "title": "모니터 규격 불일치 이슈",
+      "content": "발주 사양과 샘플 제품 해상도 불일치 확인, 재협의 필요"
+    },
+    {
+      "id": "ACT010",
+      "clientId": 6,
+      "poId": "PO2025009",
+      "author": "김영업",
+      "date": "2025/04/11",
+      "type": "메모/노트",
+      "title": "Paris Acier 프린터 사양 메모",
+      "content": "A3 지원 여부 추가 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT011",
+      "clientId": 7,
+      "poId": "PO2025010",
+      "author": "정영업",
+      "date": "2025/04/16",
+      "type": "코멘트",
+      "title": "데스크탑 PC 단가 협상 코멘트",
+      "content": "50대 이상 주문 시 5% 할인 가능 여부 내부 검토 의견"
+    },
+    {
+      "id": "ACT012",
+      "clientId": 8,
+      "poId": "PO2025011",
+      "author": "김영업",
+      "date": "2025/04/21",
+      "type": "일정",
+      "title": "São Paulo Metals UPS 납품 일정 확정",
+      "content": "5월 3주차 납품 일정 확정, 운송 루트 사전 점검 완료"
+    },
+    {
+      "id": "ACT013",
+      "clientId": 9,
+      "poId": "PO2025012",
+      "author": "정영업",
+      "date": "2025/04/26",
+      "type": "미팅/협의",
+      "title": "싱가포르 파이프 화상회의 시스템 협의",
+      "content": "원격 설치 지원 및 AS 조건 협의 완료"
+    },
+    {
+      "id": "ACT014",
+      "clientId": 10,
+      "poId": "PO2025013",
+      "author": "김영업",
+      "date": "2025/05/02",
+      "type": "이슈",
+      "title": "통관 서류 누락 이슈",
+      "content": "원산지 증명서 누락으로 베트남 통관 지연, 서류 재발송 진행 중"
+    },
+    {
+      "id": "ACT015",
+      "clientId": 11,
+      "poId": "PO2025014",
+      "author": "정영업",
+      "date": "2025/05/06",
+      "type": "미팅/협의",
+      "title": "Dtech 2차 발주 미팅",
+      "content": "노트북 추가 발주 50대 및 납기 조건 재협의"
+    },
+    {
+      "id": "ACT016",
+      "clientId": 12,
+      "poId": "PO2025015",
+      "author": "김영업",
+      "date": "2025/05/11",
+      "type": "메모/노트",
+      "title": "Berlin Digital 모니터 계약 메모",
+      "content": "B2B 장기 계약 조건 및 AS 정책 메모"
+    },
+    {
+      "id": "ACT017",
+      "clientId": 13,
+      "poId": "PO2025016",
+      "author": "정영업",
+      "date": "2025/05/16",
+      "type": "코멘트",
+      "title": "오사카 테크 키보드 색상 요청 코멘트",
+      "content": "화이트 컬러 추가 옵션 요청, 생산팀 확인 필요"
+    },
+    {
+      "id": "ACT018",
+      "clientId": 14,
+      "poId": "PO2025017",
+      "author": "김영업",
+      "date": "2025/05/21",
+      "type": "일정",
+      "title": "선전 가젯 SSD 출하 일정",
+      "content": "6월 1주차 출하 예정, 운송장 번호 사전 전달 완료"
+    },
+    {
+      "id": "ACT019",
+      "clientId": 15,
+      "poId": "PO2025018",
+      "author": "정영업",
+      "date": "2025/05/26",
+      "type": "미팅/협의",
+      "title": "런던 테크 프린터 계약 협의",
+      "content": "유지보수 계약 포함 여부 및 토너 공급 조건 논의"
+    },
+    {
+      "id": "ACT020",
+      "clientId": 16,
+      "poId": "PO2025019",
+      "author": "김영업",
+      "date": "2025/06/02",
+      "type": "이슈",
+      "title": "화상회의 카메라 호환성 이슈",
+      "content": "Paris Digital 사용 중인 화상회의 솔루션과 호환성 테스트 필요"
+    },
+    {
+      "id": "ACT021",
+      "clientId": 1,
+      "poId": "PO2025001",
+      "author": "조영업",
+      "date": "2025/03/07",
+      "type": "미팅/협의",
+      "title": "Global Steel Corp. 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 글로벌 스틸 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT022",
+      "clientId": 1,
+      "poId": "PO2025001",
+      "author": "강영업",
+      "date": "2025/03/15",
+      "type": "일정",
+      "title": "열연강판 공급 계약 1차 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 글로벌 스틸 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT023",
+      "clientId": 1,
+      "poId": "PO2025001",
+      "author": "서영업",
+      "date": "2025/03/22",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "열연강판 공급 계약 1차 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT024",
+      "clientId": 1,
+      "poId": "PO2025001",
+      "author": "황영업",
+      "date": "2025/03/31",
+      "type": "메모/노트",
+      "title": "열연강판 공급 계약 1차 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 글로벌 스틸 중간 보고 완료"
+    },
+    {
+      "id": "ACT025",
+      "clientId": 1,
+      "poId": "PO2025001",
+      "author": "전영업",
+      "date": "2025/04/08",
+      "type": "미팅/협의",
+      "title": "Global Steel Corp. 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 글로벌 스틸 동의"
+    },
+    {
+      "id": "ACT026",
+      "clientId": 1,
+      "poId": "PO2025001",
+      "author": "김영업",
+      "date": "2025/04/16",
+      "type": "이슈",
+      "title": "열연강판 공급 계약 1차 수량 변경 이슈",
+      "content": "글로벌 스틸 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT027",
+      "clientId": 1,
+      "poId": "PO2025001",
+      "author": "정영업",
+      "date": "2025/04/23",
+      "type": "일정",
+      "title": "Global Steel Corp. 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 글로벌 스틸 측 공식 통보"
+    },
+    {
+      "id": "ACT028",
+      "clientId": 1,
+      "poId": "PO2025001",
+      "author": "조영업",
+      "date": "2025/04/30",
+      "type": "미팅/협의",
+      "title": "열연강판 공급 계약 1차 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Global Steel Corp. 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT029",
+      "clientId": 1,
+      "poId": "PO2025002",
+      "author": "조영업",
+      "date": "2025/03/13",
+      "type": "메모/노트",
+      "title": "냉연강판 공급 계약 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT030",
+      "clientId": 1,
+      "poId": "PO2025002",
+      "author": "강영업",
+      "date": "2025/03/21",
+      "type": "미팅/협의",
+      "title": "Global Steel Corp. 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 글로벌 스틸 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT031",
+      "clientId": 1,
+      "poId": "PO2025002",
+      "author": "서영업",
+      "date": "2025/03/29",
+      "type": "일정",
+      "title": "냉연강판 공급 계약 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 글로벌 스틸 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT032",
+      "clientId": 1,
+      "poId": "PO2025002",
+      "author": "황영업",
+      "date": "2025/04/05",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "냉연강판 공급 계약 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT033",
+      "clientId": 1,
+      "poId": "PO2025002",
+      "author": "전영업",
+      "date": "2025/04/14",
+      "type": "메모/노트",
+      "title": "냉연강판 공급 계약 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 글로벌 스틸 중간 보고 완료"
+    },
+    {
+      "id": "ACT034",
+      "clientId": 1,
+      "poId": "PO2025002",
+      "author": "김영업",
+      "date": "2025/04/22",
+      "type": "미팅/협의",
+      "title": "Global Steel Corp. 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 글로벌 스틸 동의"
+    },
+    {
+      "id": "ACT035",
+      "clientId": 1,
+      "poId": "PO2025002",
+      "author": "정영업",
+      "date": "2025/04/30",
+      "type": "이슈",
+      "title": "냉연강판 공급 계약 수량 변경 이슈",
+      "content": "글로벌 스틸 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT036",
+      "clientId": 1,
+      "poId": "PO2025002",
+      "author": "조영업",
+      "date": "2025/05/07",
+      "type": "일정",
+      "title": "Global Steel Corp. 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 글로벌 스틸 측 공식 통보"
+    },
+    {
+      "id": "ACT037",
+      "clientId": 1,
+      "poId": "PO2025002",
+      "author": "강영업",
+      "date": "2025/05/14",
+      "type": "미팅/협의",
+      "title": "냉연강판 공급 계약 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Global Steel Corp. 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT038",
+      "clientId": 2,
+      "poId": "PO2025003",
+      "author": "조영업",
+      "date": "2025/03/12",
+      "type": "미팅/협의",
+      "title": "Hamburg Metal GmbH 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 함부르크 메탈 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT039",
+      "clientId": 2,
+      "poId": "PO2025003",
+      "author": "강영업",
+      "date": "2025/03/20",
+      "type": "일정",
+      "title": "스테인리스 봉강 공급 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 함부르크 메탈 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT040",
+      "clientId": 2,
+      "poId": "PO2025003",
+      "author": "서영업",
+      "date": "2025/03/27",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "스테인리스 봉강 공급 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT041",
+      "clientId": 2,
+      "poId": "PO2025003",
+      "author": "황영업",
+      "date": "2025/04/05",
+      "type": "메모/노트",
+      "title": "스테인리스 봉강 공급 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 함부르크 메탈 중간 보고 완료"
+    },
+    {
+      "id": "ACT042",
+      "clientId": 2,
+      "poId": "PO2025003",
+      "author": "전영업",
+      "date": "2025/04/13",
+      "type": "미팅/협의",
+      "title": "Hamburg Metal GmbH 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 함부르크 메탈 동의"
+    },
+    {
+      "id": "ACT043",
+      "clientId": 2,
+      "poId": "PO2025003",
+      "author": "김영업",
+      "date": "2025/04/21",
+      "type": "이슈",
+      "title": "스테인리스 봉강 공급 수량 변경 이슈",
+      "content": "함부르크 메탈 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT044",
+      "clientId": 2,
+      "poId": "PO2025003",
+      "author": "정영업",
+      "date": "2025/04/28",
+      "type": "일정",
+      "title": "Hamburg Metal GmbH 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 함부르크 메탈 측 공식 통보"
+    },
+    {
+      "id": "ACT045",
+      "clientId": 2,
+      "poId": "PO2025003",
+      "author": "조영업",
+      "date": "2025/05/05",
+      "type": "미팅/협의",
+      "title": "스테인리스 봉강 공급 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Hamburg Metal GmbH 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT046",
+      "clientId": 3,
+      "poId": "PO2025004",
+      "author": "정영업",
+      "date": "2025/03/12",
+      "type": "메모/노트",
+      "title": "무봉강관 2분기 공급 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT047",
+      "clientId": 3,
+      "poId": "PO2025004",
+      "author": "조영업",
+      "date": "2025/03/20",
+      "type": "미팅/협의",
+      "title": "Tokyo Trading Co. 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 도쿄 트레이딩 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT048",
+      "clientId": 3,
+      "poId": "PO2025004",
+      "author": "강영업",
+      "date": "2025/03/28",
+      "type": "일정",
+      "title": "무봉강관 2분기 공급 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 도쿄 트레이딩 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT049",
+      "clientId": 3,
+      "poId": "PO2025004",
+      "author": "서영업",
+      "date": "2025/04/04",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "무봉강관 2분기 공급 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT050",
+      "clientId": 3,
+      "poId": "PO2025004",
+      "author": "황영업",
+      "date": "2025/04/13",
+      "type": "메모/노트",
+      "title": "무봉강관 2분기 공급 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 도쿄 트레이딩 중간 보고 완료"
+    },
+    {
+      "id": "ACT051",
+      "clientId": 3,
+      "poId": "PO2025004",
+      "author": "전영업",
+      "date": "2025/04/21",
+      "type": "미팅/협의",
+      "title": "Tokyo Trading Co. 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 도쿄 트레이딩 동의"
+    },
+    {
+      "id": "ACT052",
+      "clientId": 3,
+      "poId": "PO2025004",
+      "author": "김영업",
+      "date": "2025/04/29",
+      "type": "이슈",
+      "title": "무봉강관 2분기 공급 수량 변경 이슈",
+      "content": "도쿄 트레이딩 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT053",
+      "clientId": 3,
+      "poId": "PO2025004",
+      "author": "정영업",
+      "date": "2025/05/06",
+      "type": "일정",
+      "title": "Tokyo Trading Co. 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 도쿄 트레이딩 측 공식 통보"
+    },
+    {
+      "id": "ACT054",
+      "clientId": 3,
+      "poId": "PO2025004",
+      "author": "조영업",
+      "date": "2025/05/13",
+      "type": "미팅/협의",
+      "title": "무봉강관 2분기 공급 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Tokyo Trading Co. 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT055",
+      "clientId": 3,
+      "poId": "PO2025005",
+      "author": "조영업",
+      "date": "2025/03/22",
+      "type": "메모/노트",
+      "title": "유압프레스 납품 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT056",
+      "clientId": 3,
+      "poId": "PO2025005",
+      "author": "강영업",
+      "date": "2025/03/30",
+      "type": "미팅/협의",
+      "title": "Tokyo Trading Co. 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 도쿄 트레이딩 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT057",
+      "clientId": 3,
+      "poId": "PO2025005",
+      "author": "서영업",
+      "date": "2025/04/07",
+      "type": "일정",
+      "title": "유압프레스 납품 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 도쿄 트레이딩 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT058",
+      "clientId": 3,
+      "poId": "PO2025005",
+      "author": "황영업",
+      "date": "2025/04/14",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "유압프레스 납품 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT059",
+      "clientId": 3,
+      "poId": "PO2025005",
+      "author": "전영업",
+      "date": "2025/04/23",
+      "type": "메모/노트",
+      "title": "유압프레스 납품 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 도쿄 트레이딩 중간 보고 완료"
+    },
+    {
+      "id": "ACT060",
+      "clientId": 3,
+      "poId": "PO2025005",
+      "author": "김영업",
+      "date": "2025/05/01",
+      "type": "미팅/협의",
+      "title": "Tokyo Trading Co. 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 도쿄 트레이딩 동의"
+    },
+    {
+      "id": "ACT061",
+      "clientId": 3,
+      "poId": "PO2025005",
+      "author": "정영업",
+      "date": "2025/05/09",
+      "type": "이슈",
+      "title": "유압프레스 납품 수량 변경 이슈",
+      "content": "도쿄 트레이딩 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT062",
+      "clientId": 3,
+      "poId": "PO2025005",
+      "author": "조영업",
+      "date": "2025/05/16",
+      "type": "일정",
+      "title": "Tokyo Trading Co. 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 도쿄 트레이딩 측 공식 통보"
+    },
+    {
+      "id": "ACT063",
+      "clientId": 3,
+      "poId": "PO2025005",
+      "author": "강영업",
+      "date": "2025/05/23",
+      "type": "미팅/협의",
+      "title": "유압프레스 납품 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Tokyo Trading Co. 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT064",
+      "clientId": 2,
+      "poId": "PO2025006",
+      "author": "정영업",
+      "date": "2025/03/20",
+      "type": "미팅/협의",
+      "title": "Hamburg Metal GmbH ERW 강관 추가 발주 계약 초기 협의",
+      "content": "ERW 강관 추가 발주 관련 초기 요구사항, 수량, 납기 조건 협의 완료. 함부르크 메탈 담당자 확인"
+    },
+    {
+      "id": "ACT065",
+      "clientId": 2,
+      "poId": "PO2025006",
+      "author": "조영업",
+      "date": "2025/03/27",
+      "type": "메모/노트",
+      "title": "ERW 강관 추가 발주 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT066",
+      "clientId": 2,
+      "poId": "PO2025006",
+      "author": "강영업",
+      "date": "2025/04/04",
+      "type": "미팅/협의",
+      "title": "Hamburg Metal GmbH 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 함부르크 메탈 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT067",
+      "clientId": 2,
+      "poId": "PO2025006",
+      "author": "서영업",
+      "date": "2025/04/12",
+      "type": "일정",
+      "title": "ERW 강관 추가 발주 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 함부르크 메탈 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT068",
+      "clientId": 2,
+      "poId": "PO2025006",
+      "author": "황영업",
+      "date": "2025/04/19",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "ERW 강관 추가 발주 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT069",
+      "clientId": 2,
+      "poId": "PO2025006",
+      "author": "전영업",
+      "date": "2025/04/28",
+      "type": "메모/노트",
+      "title": "ERW 강관 추가 발주 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 함부르크 메탈 중간 보고 완료"
+    },
+    {
+      "id": "ACT070",
+      "clientId": 2,
+      "poId": "PO2025006",
+      "author": "김영업",
+      "date": "2025/05/06",
+      "type": "미팅/협의",
+      "title": "Hamburg Metal GmbH 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 함부르크 메탈 동의"
+    },
+    {
+      "id": "ACT071",
+      "clientId": 2,
+      "poId": "PO2025006",
+      "author": "정영업",
+      "date": "2025/05/14",
+      "type": "이슈",
+      "title": "ERW 강관 추가 발주 수량 변경 이슈",
+      "content": "함부르크 메탈 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT072",
+      "clientId": 2,
+      "poId": "PO2025006",
+      "author": "조영업",
+      "date": "2025/05/21",
+      "type": "일정",
+      "title": "Hamburg Metal GmbH 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 함부르크 메탈 측 공식 통보"
+    },
+    {
+      "id": "ACT073",
+      "clientId": 2,
+      "poId": "PO2025006",
+      "author": "강영업",
+      "date": "2025/05/28",
+      "type": "미팅/협의",
+      "title": "ERW 강관 추가 발주 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Hamburg Metal GmbH 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT074",
+      "clientId": 4,
+      "poId": "PO2025007",
+      "author": "정영업",
+      "date": "2025/04/13",
+      "type": "메모/노트",
+      "title": "노트북 PC 공급 계약 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT075",
+      "clientId": 4,
+      "poId": "PO2025007",
+      "author": "조영업",
+      "date": "2025/04/21",
+      "type": "미팅/협의",
+      "title": "Shanghai Import Ltd. 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 상해 임포트 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT076",
+      "clientId": 4,
+      "poId": "PO2025007",
+      "author": "강영업",
+      "date": "2025/04/29",
+      "type": "일정",
+      "title": "노트북 PC 공급 계약 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 상해 임포트 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT077",
+      "clientId": 4,
+      "poId": "PO2025007",
+      "author": "서영업",
+      "date": "2025/05/06",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "노트북 PC 공급 계약 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT078",
+      "clientId": 4,
+      "poId": "PO2025007",
+      "author": "황영업",
+      "date": "2025/05/15",
+      "type": "메모/노트",
+      "title": "노트북 PC 공급 계약 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 상해 임포트 중간 보고 완료"
+    },
+    {
+      "id": "ACT079",
+      "clientId": 4,
+      "poId": "PO2025007",
+      "author": "전영업",
+      "date": "2025/05/23",
+      "type": "미팅/협의",
+      "title": "Shanghai Import Ltd. 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 상해 임포트 동의"
+    },
+    {
+      "id": "ACT080",
+      "clientId": 4,
+      "poId": "PO2025007",
+      "author": "김영업",
+      "date": "2025/05/31",
+      "type": "이슈",
+      "title": "노트북 PC 공급 계약 수량 변경 이슈",
+      "content": "상해 임포트 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT081",
+      "clientId": 4,
+      "poId": "PO2025007",
+      "author": "정영업",
+      "date": "2025/06/07",
+      "type": "일정",
+      "title": "Shanghai Import Ltd. 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 상해 임포트 측 공식 통보"
+    },
+    {
+      "id": "ACT082",
+      "clientId": 4,
+      "poId": "PO2025007",
+      "author": "조영업",
+      "date": "2025/06/14",
+      "type": "미팅/협의",
+      "title": "노트북 PC 공급 계약 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Shanghai Import Ltd. 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT083",
+      "clientId": 5,
+      "poId": "PO2025008",
+      "author": "조영업",
+      "date": "2025/04/17",
+      "type": "메모/노트",
+      "title": "모니터 1차 공급 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT084",
+      "clientId": 5,
+      "poId": "PO2025008",
+      "author": "강영업",
+      "date": "2025/04/25",
+      "type": "미팅/협의",
+      "title": "London Metals Plc 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 런던 메탈 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT085",
+      "clientId": 5,
+      "poId": "PO2025008",
+      "author": "서영업",
+      "date": "2025/05/03",
+      "type": "일정",
+      "title": "모니터 1차 공급 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 런던 메탈 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT086",
+      "clientId": 5,
+      "poId": "PO2025008",
+      "author": "황영업",
+      "date": "2025/05/10",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "모니터 1차 공급 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT087",
+      "clientId": 5,
+      "poId": "PO2025008",
+      "author": "전영업",
+      "date": "2025/05/19",
+      "type": "메모/노트",
+      "title": "모니터 1차 공급 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 런던 메탈 중간 보고 완료"
+    },
+    {
+      "id": "ACT088",
+      "clientId": 5,
+      "poId": "PO2025008",
+      "author": "김영업",
+      "date": "2025/05/27",
+      "type": "미팅/협의",
+      "title": "London Metals Plc 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 런던 메탈 동의"
+    },
+    {
+      "id": "ACT089",
+      "clientId": 5,
+      "poId": "PO2025008",
+      "author": "정영업",
+      "date": "2025/06/04",
+      "type": "이슈",
+      "title": "모니터 1차 공급 수량 변경 이슈",
+      "content": "런던 메탈 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT090",
+      "clientId": 5,
+      "poId": "PO2025008",
+      "author": "조영업",
+      "date": "2025/06/11",
+      "type": "일정",
+      "title": "London Metals Plc 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 런던 메탈 측 공식 통보"
+    },
+    {
+      "id": "ACT091",
+      "clientId": 5,
+      "poId": "PO2025008",
+      "author": "강영업",
+      "date": "2025/06/18",
+      "type": "미팅/협의",
+      "title": "모니터 1차 공급 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. London Metals Plc 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT092",
+      "clientId": 6,
+      "poId": "PO2025009",
+      "author": "정영업",
+      "date": "2025/04/22",
+      "type": "메모/노트",
+      "title": "프린터 및 스캐너 공급 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT093",
+      "clientId": 6,
+      "poId": "PO2025009",
+      "author": "조영업",
+      "date": "2025/04/30",
+      "type": "미팅/협의",
+      "title": "Paris Acier SA 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 파리 아시에 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT094",
+      "clientId": 6,
+      "poId": "PO2025009",
+      "author": "강영업",
+      "date": "2025/05/08",
+      "type": "일정",
+      "title": "프린터 및 스캐너 공급 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 파리 아시에 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT095",
+      "clientId": 6,
+      "poId": "PO2025009",
+      "author": "서영업",
+      "date": "2025/05/15",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "프린터 및 스캐너 공급 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT096",
+      "clientId": 6,
+      "poId": "PO2025009",
+      "author": "황영업",
+      "date": "2025/05/24",
+      "type": "메모/노트",
+      "title": "프린터 및 스캐너 공급 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 파리 아시에 중간 보고 완료"
+    },
+    {
+      "id": "ACT097",
+      "clientId": 6,
+      "poId": "PO2025009",
+      "author": "전영업",
+      "date": "2025/06/01",
+      "type": "미팅/협의",
+      "title": "Paris Acier SA 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 파리 아시에 동의"
+    },
+    {
+      "id": "ACT098",
+      "clientId": 6,
+      "poId": "PO2025009",
+      "author": "김영업",
+      "date": "2025/06/09",
+      "type": "이슈",
+      "title": "프린터 및 스캐너 공급 수량 변경 이슈",
+      "content": "파리 아시에 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT099",
+      "clientId": 6,
+      "poId": "PO2025009",
+      "author": "정영업",
+      "date": "2025/06/16",
+      "type": "일정",
+      "title": "Paris Acier SA 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 파리 아시에 측 공식 통보"
+    },
+    {
+      "id": "ACT100",
+      "clientId": 6,
+      "poId": "PO2025009",
+      "author": "조영업",
+      "date": "2025/06/23",
+      "type": "미팅/협의",
+      "title": "프린터 및 스캐너 공급 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Paris Acier SA 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT101",
+      "clientId": 7,
+      "poId": "PO2025010",
+      "author": "조영업",
+      "date": "2025/04/27",
+      "type": "메모/노트",
+      "title": "데스크탑 PC 납품 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT102",
+      "clientId": 7,
+      "poId": "PO2025010",
+      "author": "강영업",
+      "date": "2025/05/05",
+      "type": "미팅/협의",
+      "title": "Mumbai Steel Works 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 뭄바이 스틸웍스 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT103",
+      "clientId": 7,
+      "poId": "PO2025010",
+      "author": "서영업",
+      "date": "2025/05/13",
+      "type": "일정",
+      "title": "데스크탑 PC 납품 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 뭄바이 스틸웍스 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT104",
+      "clientId": 7,
+      "poId": "PO2025010",
+      "author": "황영업",
+      "date": "2025/05/20",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "데스크탑 PC 납품 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT105",
+      "clientId": 7,
+      "poId": "PO2025010",
+      "author": "전영업",
+      "date": "2025/05/29",
+      "type": "메모/노트",
+      "title": "데스크탑 PC 납품 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 뭄바이 스틸웍스 중간 보고 완료"
+    },
+    {
+      "id": "ACT106",
+      "clientId": 7,
+      "poId": "PO2025010",
+      "author": "김영업",
+      "date": "2025/06/06",
+      "type": "미팅/협의",
+      "title": "Mumbai Steel Works 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 뭄바이 스틸웍스 동의"
+    },
+    {
+      "id": "ACT107",
+      "clientId": 7,
+      "poId": "PO2025010",
+      "author": "정영업",
+      "date": "2025/06/14",
+      "type": "이슈",
+      "title": "데스크탑 PC 납품 수량 변경 이슈",
+      "content": "뭄바이 스틸웍스 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT108",
+      "clientId": 7,
+      "poId": "PO2025010",
+      "author": "조영업",
+      "date": "2025/06/21",
+      "type": "일정",
+      "title": "Mumbai Steel Works 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 뭄바이 스틸웍스 측 공식 통보"
+    },
+    {
+      "id": "ACT109",
+      "clientId": 7,
+      "poId": "PO2025010",
+      "author": "강영업",
+      "date": "2025/06/28",
+      "type": "미팅/협의",
+      "title": "데스크탑 PC 납품 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Mumbai Steel Works 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT110",
+      "clientId": 8,
+      "poId": "PO2025011",
+      "author": "정영업",
+      "date": "2025/05/02",
+      "type": "메모/노트",
+      "title": "UPS 전원장치 공급 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT111",
+      "clientId": 8,
+      "poId": "PO2025011",
+      "author": "조영업",
+      "date": "2025/05/10",
+      "type": "미팅/협의",
+      "title": "São Paulo Metals 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 상파울루 메탈 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT112",
+      "clientId": 8,
+      "poId": "PO2025011",
+      "author": "강영업",
+      "date": "2025/05/18",
+      "type": "일정",
+      "title": "UPS 전원장치 공급 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 상파울루 메탈 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT113",
+      "clientId": 8,
+      "poId": "PO2025011",
+      "author": "서영업",
+      "date": "2025/05/25",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "UPS 전원장치 공급 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT114",
+      "clientId": 8,
+      "poId": "PO2025011",
+      "author": "황영업",
+      "date": "2025/06/03",
+      "type": "메모/노트",
+      "title": "UPS 전원장치 공급 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 상파울루 메탈 중간 보고 완료"
+    },
+    {
+      "id": "ACT115",
+      "clientId": 8,
+      "poId": "PO2025011",
+      "author": "전영업",
+      "date": "2025/06/11",
+      "type": "미팅/협의",
+      "title": "São Paulo Metals 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 상파울루 메탈 동의"
+    },
+    {
+      "id": "ACT116",
+      "clientId": 8,
+      "poId": "PO2025011",
+      "author": "김영업",
+      "date": "2025/06/19",
+      "type": "이슈",
+      "title": "UPS 전원장치 공급 수량 변경 이슈",
+      "content": "상파울루 메탈 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT117",
+      "clientId": 8,
+      "poId": "PO2025011",
+      "author": "정영업",
+      "date": "2025/06/26",
+      "type": "일정",
+      "title": "São Paulo Metals 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 상파울루 메탈 측 공식 통보"
+    },
+    {
+      "id": "ACT118",
+      "clientId": 8,
+      "poId": "PO2025011",
+      "author": "조영업",
+      "date": "2025/07/03",
+      "type": "미팅/협의",
+      "title": "UPS 전원장치 공급 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. São Paulo Metals 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT119",
+      "clientId": 9,
+      "poId": "PO2025012",
+      "author": "조영업",
+      "date": "2025/05/07",
+      "type": "메모/노트",
+      "title": "화상회의 시스템 공급 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT120",
+      "clientId": 9,
+      "poId": "PO2025012",
+      "author": "강영업",
+      "date": "2025/05/15",
+      "type": "미팅/협의",
+      "title": "Singapore Pipe Pte 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 싱가포르 파이프 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT121",
+      "clientId": 9,
+      "poId": "PO2025012",
+      "author": "서영업",
+      "date": "2025/05/23",
+      "type": "일정",
+      "title": "화상회의 시스템 공급 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 싱가포르 파이프 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT122",
+      "clientId": 9,
+      "poId": "PO2025012",
+      "author": "황영업",
+      "date": "2025/05/30",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "화상회의 시스템 공급 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT123",
+      "clientId": 9,
+      "poId": "PO2025012",
+      "author": "전영업",
+      "date": "2025/06/08",
+      "type": "메모/노트",
+      "title": "화상회의 시스템 공급 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 싱가포르 파이프 중간 보고 완료"
+    },
+    {
+      "id": "ACT124",
+      "clientId": 9,
+      "poId": "PO2025012",
+      "author": "김영업",
+      "date": "2025/06/16",
+      "type": "미팅/협의",
+      "title": "Singapore Pipe Pte 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 싱가포르 파이프 동의"
+    },
+    {
+      "id": "ACT125",
+      "clientId": 9,
+      "poId": "PO2025012",
+      "author": "정영업",
+      "date": "2025/06/24",
+      "type": "이슈",
+      "title": "화상회의 시스템 공급 수량 변경 이슈",
+      "content": "싱가포르 파이프 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT126",
+      "clientId": 9,
+      "poId": "PO2025012",
+      "author": "조영업",
+      "date": "2025/07/01",
+      "type": "일정",
+      "title": "Singapore Pipe Pte 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 싱가포르 파이프 측 공식 통보"
+    },
+    {
+      "id": "ACT127",
+      "clientId": 9,
+      "poId": "PO2025012",
+      "author": "강영업",
+      "date": "2025/07/08",
+      "type": "미팅/협의",
+      "title": "화상회의 시스템 공급 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Singapore Pipe Pte 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT128",
+      "clientId": 10,
+      "poId": "PO2025013",
+      "author": "정영업",
+      "date": "2025/05/13",
+      "type": "메모/노트",
+      "title": "사무용 전자기기 일괄 공급 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT129",
+      "clientId": 10,
+      "poId": "PO2025013",
+      "author": "조영업",
+      "date": "2025/05/21",
+      "type": "미팅/협의",
+      "title": "Hanoi Industries 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 하노이 인더스트리 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT130",
+      "clientId": 10,
+      "poId": "PO2025013",
+      "author": "강영업",
+      "date": "2025/05/29",
+      "type": "일정",
+      "title": "사무용 전자기기 일괄 공급 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 하노이 인더스트리 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT131",
+      "clientId": 10,
+      "poId": "PO2025013",
+      "author": "서영업",
+      "date": "2025/06/05",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "사무용 전자기기 일괄 공급 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT132",
+      "clientId": 10,
+      "poId": "PO2025013",
+      "author": "황영업",
+      "date": "2025/06/14",
+      "type": "메모/노트",
+      "title": "사무용 전자기기 일괄 공급 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 하노이 인더스트리 중간 보고 완료"
+    },
+    {
+      "id": "ACT133",
+      "clientId": 10,
+      "poId": "PO2025013",
+      "author": "전영업",
+      "date": "2025/06/22",
+      "type": "미팅/협의",
+      "title": "Hanoi Industries 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 하노이 인더스트리 동의"
+    },
+    {
+      "id": "ACT134",
+      "clientId": 10,
+      "poId": "PO2025013",
+      "author": "김영업",
+      "date": "2025/06/30",
+      "type": "이슈",
+      "title": "사무용 전자기기 일괄 공급 수량 변경 이슈",
+      "content": "하노이 인더스트리 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT135",
+      "clientId": 10,
+      "poId": "PO2025013",
+      "author": "정영업",
+      "date": "2025/07/07",
+      "type": "일정",
+      "title": "Hanoi Industries 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 하노이 인더스트리 측 공식 통보"
+    },
+    {
+      "id": "ACT136",
+      "clientId": 10,
+      "poId": "PO2025013",
+      "author": "조영업",
+      "date": "2025/07/14",
+      "type": "미팅/협의",
+      "title": "사무용 전자기기 일괄 공급 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Hanoi Industries 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT137",
+      "clientId": 11,
+      "poId": "PO2025014",
+      "author": "조영업",
+      "date": "2025/05/17",
+      "type": "메모/노트",
+      "title": "노트북 2차 추가 발주 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT138",
+      "clientId": 11,
+      "poId": "PO2025014",
+      "author": "강영업",
+      "date": "2025/05/25",
+      "type": "미팅/협의",
+      "title": "Dtech Electronics Inc. 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 디텍 일렉트로닉스 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT139",
+      "clientId": 11,
+      "poId": "PO2025014",
+      "author": "서영업",
+      "date": "2025/06/02",
+      "type": "일정",
+      "title": "노트북 2차 추가 발주 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 디텍 일렉트로닉스 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT140",
+      "clientId": 11,
+      "poId": "PO2025014",
+      "author": "황영업",
+      "date": "2025/06/09",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "노트북 2차 추가 발주 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT141",
+      "clientId": 11,
+      "poId": "PO2025014",
+      "author": "전영업",
+      "date": "2025/06/18",
+      "type": "메모/노트",
+      "title": "노트북 2차 추가 발주 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 디텍 일렉트로닉스 중간 보고 완료"
+    },
+    {
+      "id": "ACT142",
+      "clientId": 11,
+      "poId": "PO2025014",
+      "author": "김영업",
+      "date": "2025/06/26",
+      "type": "미팅/협의",
+      "title": "Dtech Electronics Inc. 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 디텍 일렉트로닉스 동의"
+    },
+    {
+      "id": "ACT143",
+      "clientId": 11,
+      "poId": "PO2025014",
+      "author": "정영업",
+      "date": "2025/07/04",
+      "type": "이슈",
+      "title": "노트북 2차 추가 발주 수량 변경 이슈",
+      "content": "디텍 일렉트로닉스 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT144",
+      "clientId": 11,
+      "poId": "PO2025014",
+      "author": "조영업",
+      "date": "2025/07/11",
+      "type": "일정",
+      "title": "Dtech Electronics Inc. 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 디텍 일렉트로닉스 측 공식 통보"
+    },
+    {
+      "id": "ACT145",
+      "clientId": 11,
+      "poId": "PO2025014",
+      "author": "강영업",
+      "date": "2025/07/18",
+      "type": "미팅/협의",
+      "title": "노트북 2차 추가 발주 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Dtech Electronics Inc. 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT146",
+      "clientId": 12,
+      "poId": "PO2025015",
+      "author": "정영업",
+      "date": "2025/05/22",
+      "type": "메모/노트",
+      "title": "모니터 B2B 공급 계약 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT147",
+      "clientId": 12,
+      "poId": "PO2025015",
+      "author": "조영업",
+      "date": "2025/05/30",
+      "type": "미팅/협의",
+      "title": "Berlin Digital AG 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 베를린 디지털 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT148",
+      "clientId": 12,
+      "poId": "PO2025015",
+      "author": "강영업",
+      "date": "2025/06/07",
+      "type": "일정",
+      "title": "모니터 B2B 공급 계약 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 베를린 디지털 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT149",
+      "clientId": 12,
+      "poId": "PO2025015",
+      "author": "서영업",
+      "date": "2025/06/14",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "모니터 B2B 공급 계약 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT150",
+      "clientId": 12,
+      "poId": "PO2025015",
+      "author": "황영업",
+      "date": "2025/06/23",
+      "type": "메모/노트",
+      "title": "모니터 B2B 공급 계약 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 베를린 디지털 중간 보고 완료"
+    },
+    {
+      "id": "ACT151",
+      "clientId": 12,
+      "poId": "PO2025015",
+      "author": "전영업",
+      "date": "2025/07/01",
+      "type": "미팅/협의",
+      "title": "Berlin Digital AG 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 베를린 디지털 동의"
+    },
+    {
+      "id": "ACT152",
+      "clientId": 12,
+      "poId": "PO2025015",
+      "author": "김영업",
+      "date": "2025/07/09",
+      "type": "이슈",
+      "title": "모니터 B2B 공급 계약 수량 변경 이슈",
+      "content": "베를린 디지털 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT153",
+      "clientId": 12,
+      "poId": "PO2025015",
+      "author": "정영업",
+      "date": "2025/07/16",
+      "type": "일정",
+      "title": "Berlin Digital AG 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 베를린 디지털 측 공식 통보"
+    },
+    {
+      "id": "ACT154",
+      "clientId": 12,
+      "poId": "PO2025015",
+      "author": "조영업",
+      "date": "2025/07/23",
+      "type": "미팅/협의",
+      "title": "모니터 B2B 공급 계약 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Berlin Digital AG 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT155",
+      "clientId": 13,
+      "poId": "PO2025016",
+      "author": "조영업",
+      "date": "2025/05/27",
+      "type": "메모/노트",
+      "title": "키보드·마우스 세트 공급 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT156",
+      "clientId": 13,
+      "poId": "PO2025016",
+      "author": "강영업",
+      "date": "2025/06/04",
+      "type": "미팅/협의",
+      "title": "Osaka Tech Corp. 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 오사카 테크 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT157",
+      "clientId": 13,
+      "poId": "PO2025016",
+      "author": "서영업",
+      "date": "2025/06/12",
+      "type": "일정",
+      "title": "키보드·마우스 세트 공급 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 오사카 테크 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT158",
+      "clientId": 13,
+      "poId": "PO2025016",
+      "author": "황영업",
+      "date": "2025/06/19",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "키보드·마우스 세트 공급 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT159",
+      "clientId": 13,
+      "poId": "PO2025016",
+      "author": "전영업",
+      "date": "2025/06/28",
+      "type": "메모/노트",
+      "title": "키보드·마우스 세트 공급 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 오사카 테크 중간 보고 완료"
+    },
+    {
+      "id": "ACT160",
+      "clientId": 13,
+      "poId": "PO2025016",
+      "author": "김영업",
+      "date": "2025/07/06",
+      "type": "미팅/협의",
+      "title": "Osaka Tech Corp. 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 오사카 테크 동의"
+    },
+    {
+      "id": "ACT161",
+      "clientId": 13,
+      "poId": "PO2025016",
+      "author": "정영업",
+      "date": "2025/07/14",
+      "type": "이슈",
+      "title": "키보드·마우스 세트 공급 수량 변경 이슈",
+      "content": "오사카 테크 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT162",
+      "clientId": 13,
+      "poId": "PO2025016",
+      "author": "조영업",
+      "date": "2025/07/21",
+      "type": "일정",
+      "title": "Osaka Tech Corp. 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 오사카 테크 측 공식 통보"
+    },
+    {
+      "id": "ACT163",
+      "clientId": 13,
+      "poId": "PO2025016",
+      "author": "강영업",
+      "date": "2025/07/28",
+      "type": "미팅/협의",
+      "title": "키보드·마우스 세트 공급 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Osaka Tech Corp. 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT164",
+      "clientId": 14,
+      "poId": "PO2025017",
+      "author": "정영업",
+      "date": "2025/06/01",
+      "type": "메모/노트",
+      "title": "외장 SSD 대량 공급 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT165",
+      "clientId": 14,
+      "poId": "PO2025017",
+      "author": "조영업",
+      "date": "2025/06/09",
+      "type": "미팅/협의",
+      "title": "Shenzhen Gadgets Co. 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 선전 가젯 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT166",
+      "clientId": 14,
+      "poId": "PO2025017",
+      "author": "강영업",
+      "date": "2025/06/17",
+      "type": "일정",
+      "title": "외장 SSD 대량 공급 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 선전 가젯 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT167",
+      "clientId": 14,
+      "poId": "PO2025017",
+      "author": "서영업",
+      "date": "2025/06/24",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "외장 SSD 대량 공급 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT168",
+      "clientId": 14,
+      "poId": "PO2025017",
+      "author": "황영업",
+      "date": "2025/07/03",
+      "type": "메모/노트",
+      "title": "외장 SSD 대량 공급 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 선전 가젯 중간 보고 완료"
+    },
+    {
+      "id": "ACT169",
+      "clientId": 14,
+      "poId": "PO2025017",
+      "author": "전영업",
+      "date": "2025/07/11",
+      "type": "미팅/협의",
+      "title": "Shenzhen Gadgets Co. 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 선전 가젯 동의"
+    },
+    {
+      "id": "ACT170",
+      "clientId": 14,
+      "poId": "PO2025017",
+      "author": "김영업",
+      "date": "2025/07/19",
+      "type": "이슈",
+      "title": "외장 SSD 대량 공급 수량 변경 이슈",
+      "content": "선전 가젯 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT171",
+      "clientId": 14,
+      "poId": "PO2025017",
+      "author": "정영업",
+      "date": "2025/07/26",
+      "type": "일정",
+      "title": "Shenzhen Gadgets Co. 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 선전 가젯 측 공식 통보"
+    },
+    {
+      "id": "ACT172",
+      "clientId": 14,
+      "poId": "PO2025017",
+      "author": "조영업",
+      "date": "2025/08/02",
+      "type": "미팅/협의",
+      "title": "외장 SSD 대량 공급 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Shenzhen Gadgets Co. 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT173",
+      "clientId": 15,
+      "poId": "PO2025018",
+      "author": "조영업",
+      "date": "2025/06/06",
+      "type": "메모/노트",
+      "title": "레이저 프린터 공급 계약 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT174",
+      "clientId": 15,
+      "poId": "PO2025018",
+      "author": "강영업",
+      "date": "2025/06/14",
+      "type": "미팅/협의",
+      "title": "London Tech Ltd 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 런던 테크 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT175",
+      "clientId": 15,
+      "poId": "PO2025018",
+      "author": "서영업",
+      "date": "2025/06/22",
+      "type": "일정",
+      "title": "레이저 프린터 공급 계약 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 런던 테크 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT176",
+      "clientId": 15,
+      "poId": "PO2025018",
+      "author": "황영업",
+      "date": "2025/06/29",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "레이저 프린터 공급 계약 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT177",
+      "clientId": 15,
+      "poId": "PO2025018",
+      "author": "전영업",
+      "date": "2025/07/08",
+      "type": "메모/노트",
+      "title": "레이저 프린터 공급 계약 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 런던 테크 중간 보고 완료"
+    },
+    {
+      "id": "ACT178",
+      "clientId": 15,
+      "poId": "PO2025018",
+      "author": "김영업",
+      "date": "2025/07/16",
+      "type": "미팅/협의",
+      "title": "London Tech Ltd 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 런던 테크 동의"
+    },
+    {
+      "id": "ACT179",
+      "clientId": 15,
+      "poId": "PO2025018",
+      "author": "정영업",
+      "date": "2025/07/24",
+      "type": "이슈",
+      "title": "레이저 프린터 공급 계약 수량 변경 이슈",
+      "content": "런던 테크 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT180",
+      "clientId": 15,
+      "poId": "PO2025018",
+      "author": "조영업",
+      "date": "2025/07/31",
+      "type": "일정",
+      "title": "London Tech Ltd 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 런던 테크 측 공식 통보"
+    },
+    {
+      "id": "ACT181",
+      "clientId": 15,
+      "poId": "PO2025018",
+      "author": "강영업",
+      "date": "2025/08/07",
+      "type": "미팅/협의",
+      "title": "레이저 프린터 공급 계약 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. London Tech Ltd 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT182",
+      "clientId": 16,
+      "poId": "PO2025019",
+      "author": "정영업",
+      "date": "2025/06/13",
+      "type": "메모/노트",
+      "title": "화상회의 카메라 납품 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT183",
+      "clientId": 16,
+      "poId": "PO2025019",
+      "author": "조영업",
+      "date": "2025/06/21",
+      "type": "미팅/협의",
+      "title": "Paris Digital SAS 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 파리 디지털 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT184",
+      "clientId": 16,
+      "poId": "PO2025019",
+      "author": "강영업",
+      "date": "2025/06/29",
+      "type": "일정",
+      "title": "화상회의 카메라 납품 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 파리 디지털 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT185",
+      "clientId": 16,
+      "poId": "PO2025019",
+      "author": "서영업",
+      "date": "2025/07/06",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "화상회의 카메라 납품 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT186",
+      "clientId": 16,
+      "poId": "PO2025019",
+      "author": "황영업",
+      "date": "2025/07/15",
+      "type": "메모/노트",
+      "title": "화상회의 카메라 납품 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 파리 디지털 중간 보고 완료"
+    },
+    {
+      "id": "ACT187",
+      "clientId": 16,
+      "poId": "PO2025019",
+      "author": "전영업",
+      "date": "2025/07/23",
+      "type": "미팅/협의",
+      "title": "Paris Digital SAS 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 파리 디지털 동의"
+    },
+    {
+      "id": "ACT188",
+      "clientId": 16,
+      "poId": "PO2025019",
+      "author": "김영업",
+      "date": "2025/07/31",
+      "type": "이슈",
+      "title": "화상회의 카메라 납품 수량 변경 이슈",
+      "content": "파리 디지털 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT189",
+      "clientId": 16,
+      "poId": "PO2025019",
+      "author": "정영업",
+      "date": "2025/08/07",
+      "type": "일정",
+      "title": "Paris Digital SAS 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 파리 디지털 측 공식 통보"
+    },
+    {
+      "id": "ACT190",
+      "clientId": 16,
+      "poId": "PO2025019",
+      "author": "조영업",
+      "date": "2025/08/14",
+      "type": "미팅/협의",
+      "title": "화상회의 카메라 납품 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Paris Digital SAS 최종 승인, 세금계산서 발행 완료"
+    },
+    {
+      "id": "ACT191",
+      "clientId": 17,
+      "poId": "PO2025020",
+      "author": "정영업",
+      "date": "2025/06/10",
+      "type": "미팅/협의",
+      "title": "Singapore Electronics Pte PC 및 주변기기 공급 계약 초기 협의",
+      "content": "PC 및 주변기기 공급 관련 초기 요구사항, 수량, 납기 조건 협의 완료. 싱가포르 일렉트로닉스 담당자 확인"
+    },
+    {
+      "id": "ACT192",
+      "clientId": 17,
+      "poId": "PO2025020",
+      "author": "조영업",
+      "date": "2025/06/17",
+      "type": "메모/노트",
+      "title": "PC 및 주변기기 공급 제품 사양 확인 메모",
+      "content": "요청 스펙 상세 내용 검토. 규격 및 포장 조건 내부 공유 필요"
+    },
+    {
+      "id": "ACT193",
+      "clientId": 17,
+      "poId": "PO2025020",
+      "author": "강영업",
+      "date": "2025/06/25",
+      "type": "미팅/협의",
+      "title": "Singapore Electronics Pte 단가 협상 미팅",
+      "content": "단가 및 결제 조건 협의. 싱가포르 일렉트로닉스 측 5% 할인 요청, 내부 검토 후 회신 예정"
+    },
+    {
+      "id": "ACT194",
+      "clientId": 17,
+      "poId": "PO2025020",
+      "author": "서영업",
+      "date": "2025/07/03",
+      "type": "일정",
+      "title": "PC 및 주변기기 공급 납기 일정 확정",
+      "content": "생산 및 출하 일정 합의 완료. 싱가포르 일렉트로닉스 납기 일정 이메일로 통보"
+    },
+    {
+      "id": "ACT195",
+      "clientId": 17,
+      "poId": "PO2025020",
+      "author": "황영업",
+      "date": "2025/07/10",
+      "type": "코멘트",
+      "title": "계약서 조항 검토 코멘트",
+      "content": "PC 및 주변기기 공급 계약서 법무 검토 의견 공유. 3조 귀책 조항 수정 요청"
+    },
+    {
+      "id": "ACT196",
+      "clientId": 17,
+      "poId": "PO2025020",
+      "author": "전영업",
+      "date": "2025/07/19",
+      "type": "메모/노트",
+      "title": "PC 및 주변기기 공급 생산 50% 진행 현황 메모",
+      "content": "생산팀 확인 결과 일정대로 진행 중. 품질 이상 없음, 싱가포르 일렉트로닉스 중간 보고 완료"
+    },
+    {
+      "id": "ACT197",
+      "clientId": 17,
+      "poId": "PO2025020",
+      "author": "김영업",
+      "date": "2025/07/27",
+      "type": "미팅/협의",
+      "title": "Singapore Electronics Pte 선적 조건 협의",
+      "content": "선적 서류(B/L, C/O) 준비 현황 및 인코텀즈 조건 재확인. 싱가포르 일렉트로닉스 동의"
+    },
+    {
+      "id": "ACT198",
+      "clientId": 17,
+      "poId": "PO2025020",
+      "author": "정영업",
+      "date": "2025/08/04",
+      "type": "이슈",
+      "title": "PC 및 주변기기 공급 수량 변경 이슈",
+      "content": "싱가포르 일렉트로닉스 측 추가 수량 10% 증량 요청 접수. 생산 일정 조정 가능 여부 검토 중"
+    },
+    {
+      "id": "ACT199",
+      "clientId": 17,
+      "poId": "PO2025020",
+      "author": "조영업",
+      "date": "2025/08/11",
+      "type": "일정",
+      "title": "Singapore Electronics Pte 출하 준비 완료 일정 통보",
+      "content": "출하 준비 완료. 포워더 예약 확인 및 선적 예정일 싱가포르 일렉트로닉스 측 공식 통보"
+    },
+    {
+      "id": "ACT200",
+      "clientId": 17,
+      "poId": "PO2025020",
+      "author": "강영업",
+      "date": "2025/08/18",
+      "type": "미팅/협의",
+      "title": "PC 및 주변기기 공급 최종 납품 완료 확인",
+      "content": "납품 완료 및 검수 확인 미팅. Singapore Electronics Pte 최종 승인, 세금계산서 발행 완료"
     }
   ],
   "buyers": [
-    { "id": "1",  "clientId": 1, "name": "James Carter",    "position": "Team Leader", "email": "james.carter@globalsteel.com",    "tel": "+1-713-555-0101", "signImageUrl": null },
-    { "id": "2",  "clientId": 1, "name": "Sarah Johnson",   "position": "Team Member", "email": "sarah.johnson@globalsteel.com",   "tel": "+1-713-555-0102", "signImageUrl": null },
-    { "id": "3",  "clientId": 1, "name": "Michael Brown",   "position": "Team Member", "email": "michael.brown@globalsteel.com",   "tel": "+1-713-555-0103", "signImageUrl": null },
-    { "id": "4",  "clientId": 1, "name": "Emily Davis",     "position": "Team Member", "email": "emily.davis@globalsteel.com",     "tel": "+1-713-555-0104", "signImageUrl": null },
-    { "id": "5",  "clientId": 1, "name": "Robert Wilson",   "position": "Team Member", "email": "robert.wilson@globalsteel.com",   "tel": "+1-713-555-0105", "signImageUrl": null },
-    { "id": "6",  "clientId": 2, "name": "Hans Müller",     "position": "Team Leader", "email": "hans.muller@hamburgmetal.de",     "tel": "+49-40-555-0201", "signImageUrl": null },
-    { "id": "7",  "clientId": 2, "name": "Anna Schmidt",    "position": "Team Member", "email": "anna.schmidt@hamburgmetal.de",    "tel": "+49-40-555-0202", "signImageUrl": null },
-    { "id": "8",  "clientId": 2, "name": "Klaus Fischer",   "position": "Team Member", "email": "klaus.fischer@hamburgmetal.de",   "tel": "+49-40-555-0203", "signImageUrl": null },
-    { "id": "9",  "clientId": 2, "name": "Petra Wagner",    "position": "Team Member", "email": "petra.wagner@hamburgmetal.de",    "tel": "+49-40-555-0204", "signImageUrl": null },
-    { "id": "10", "clientId": 3, "name": "Tanaka Yuki",     "position": "Team Leader", "email": "yuki.tanaka@tokyotrading.jp",     "tel": "+81-3-555-0301",  "signImageUrl": null },
-    { "id": "11", "clientId": 3, "name": "Sato Kenji",      "position": "Team Member", "email": "kenji.sato@tokyotrading.jp",      "tel": "+81-3-555-0302",  "signImageUrl": null },
-    { "id": "12", "clientId": 3, "name": "Yamamoto Hiroshi","position": "Team Member", "email": "hiroshi.yamamoto@tokyotrading.jp","tel": "+81-3-555-0303",  "signImageUrl": null },
-    { "id": "13", "clientId": 3, "name": "Nakamura Akiko",  "position": "Team Member", "email": "akiko.nakamura@tokyotrading.jp",  "tel": "+81-3-555-0304",  "signImageUrl": null }
+    {
+      "id": "1",
+      "clientId": 1,
+      "name": "James Carter",
+      "position": "Team Leader",
+      "email": "james.carter@globalsteel.com",
+      "tel": "+1-713-555-0101",
+      "signImageUrl": null
+    },
+    {
+      "id": "2",
+      "clientId": 1,
+      "name": "Sarah Johnson",
+      "position": "Team Member",
+      "email": "sarah.johnson@globalsteel.com",
+      "tel": "+1-713-555-0102",
+      "signImageUrl": null
+    },
+    {
+      "id": "3",
+      "clientId": 1,
+      "name": "Michael Brown",
+      "position": "Team Member",
+      "email": "michael.brown@globalsteel.com",
+      "tel": "+1-713-555-0103",
+      "signImageUrl": null
+    },
+    {
+      "id": "4",
+      "clientId": 1,
+      "name": "Emily Davis",
+      "position": "Team Member",
+      "email": "emily.davis@globalsteel.com",
+      "tel": "+1-713-555-0104",
+      "signImageUrl": null
+    },
+    {
+      "id": "5",
+      "clientId": 1,
+      "name": "Robert Wilson",
+      "position": "Team Member",
+      "email": "robert.wilson@globalsteel.com",
+      "tel": "+1-713-555-0105",
+      "signImageUrl": null
+    },
+    {
+      "id": "6",
+      "clientId": 2,
+      "name": "Hans Müller",
+      "position": "Team Leader",
+      "email": "hans.muller@hamburgmetal.de",
+      "tel": "+49-40-555-0201",
+      "signImageUrl": null
+    },
+    {
+      "id": "7",
+      "clientId": 2,
+      "name": "Anna Schmidt",
+      "position": "Team Member",
+      "email": "anna.schmidt@hamburgmetal.de",
+      "tel": "+49-40-555-0202",
+      "signImageUrl": null
+    },
+    {
+      "id": "8",
+      "clientId": 2,
+      "name": "Klaus Fischer",
+      "position": "Team Member",
+      "email": "klaus.fischer@hamburgmetal.de",
+      "tel": "+49-40-555-0203",
+      "signImageUrl": null
+    },
+    {
+      "id": "9",
+      "clientId": 2,
+      "name": "Petra Wagner",
+      "position": "Team Member",
+      "email": "petra.wagner@hamburgmetal.de",
+      "tel": "+49-40-555-0204",
+      "signImageUrl": null
+    },
+    {
+      "id": "10",
+      "clientId": 3,
+      "name": "Tanaka Yuki",
+      "position": "Team Leader",
+      "email": "yuki.tanaka@tokyotrading.jp",
+      "tel": "+81-3-555-0301",
+      "signImageUrl": null
+    },
+    {
+      "id": "11",
+      "clientId": 3,
+      "name": "Sato Kenji",
+      "position": "Team Member",
+      "email": "kenji.sato@tokyotrading.jp",
+      "tel": "+81-3-555-0302",
+      "signImageUrl": null
+    },
+    {
+      "id": "12",
+      "clientId": 3,
+      "name": "Yamamoto Hiroshi",
+      "position": "Team Member",
+      "email": "hiroshi.yamamoto@tokyotrading.jp",
+      "tel": "+81-3-555-0303",
+      "signImageUrl": null
+    },
+    {
+      "id": "13",
+      "clientId": 3,
+      "name": "Nakamura Akiko",
+      "position": "Team Member",
+      "email": "akiko.nakamura@tokyotrading.jp",
+      "tel": "+81-3-555-0304",
+      "signImageUrl": null
+    },
+    {
+      "id": "14",
+      "clientId": 4,
+      "name": "Wang Lei",
+      "position": "Team Leader",
+      "email": "wang.lei@shanghaiimport.cn",
+      "tel": "+86-21-555-0401",
+      "signImageUrl": null
+    },
+    {
+      "id": "15",
+      "clientId": 4,
+      "name": "Zhou Ming",
+      "position": "Team Member",
+      "email": "zhou.ming@shanghaiimport.cn",
+      "tel": "+86-21-555-0402",
+      "signImageUrl": null
+    },
+    {
+      "id": "16",
+      "clientId": 5,
+      "name": "James Brown",
+      "position": "Team Leader",
+      "email": "james.brown@londonmetals.co.uk",
+      "tel": "+44-20-555-0501",
+      "signImageUrl": null
+    },
+    {
+      "id": "17",
+      "clientId": 5,
+      "name": "Lucy Green",
+      "position": "Team Member",
+      "email": "lucy.green@londonmetals.co.uk",
+      "tel": "+44-20-555-0502",
+      "signImageUrl": null
+    },
+    {
+      "id": "18",
+      "clientId": 6,
+      "name": "Pierre Dupont",
+      "position": "Team Leader",
+      "email": "pierre.dupont@parisacier.fr",
+      "tel": "+33-1-555-0601",
+      "signImageUrl": null
+    },
+    {
+      "id": "19",
+      "clientId": 7,
+      "name": "Raj Patel",
+      "position": "Team Leader",
+      "email": "raj.patel@mumbaisteel.in",
+      "tel": "+91-22-555-0701",
+      "signImageUrl": null
+    },
+    {
+      "id": "20",
+      "clientId": 8,
+      "name": "Carlos Silva",
+      "position": "Team Leader",
+      "email": "carlos.silva@spmetals.br",
+      "tel": "+55-11-555-0801",
+      "signImageUrl": null
+    },
+    {
+      "id": "21",
+      "clientId": 9,
+      "name": "Lim Wei Jing",
+      "position": "Team Leader",
+      "email": "lim.weijing@singaporepipe.sg",
+      "tel": "+65-6123-4567",
+      "signImageUrl": null
+    },
+    {
+      "id": "22",
+      "clientId": 11,
+      "name": "David Chen",
+      "position": "Team Member",
+      "email": "david.chen@dtechelectronics.com",
+      "tel": "+1-212-555-0921",
+      "signImageUrl": null
+    },
+    {
+      "id": "23",
+      "clientId": 15,
+      "name": "Oliver Hughes",
+      "position": "Team Leader",
+      "email": "o.hughes@londontech.co.uk",
+      "tel": "+44-20-7946-0315",
+      "signImageUrl": null
+    },
+    {
+      "id": "24",
+      "clientId": 9,
+      "name": "Tan Boon Huat",
+      "position": "Team Member",
+      "email": "boon.huat@singaporepipe.sg",
+      "tel": "+65-6234-5678",
+      "signImageUrl": null
+    },
+    {
+      "id": "25",
+      "clientId": 10,
+      "name": "Nguyen Thi Lan",
+      "position": "Team Leader",
+      "email": "lan.nguyen@hanoiindustries.vn",
+      "tel": "+84-24-3826-1001",
+      "signImageUrl": null
+    },
+    {
+      "id": "26",
+      "clientId": 10,
+      "name": "Tran Van Duc",
+      "position": "Team Member",
+      "email": "duc.tran@hanoiindustries.vn",
+      "tel": "+84-24-3826-1002",
+      "signImageUrl": null
+    },
+    {
+      "id": "27",
+      "clientId": 11,
+      "name": "Jessica Park",
+      "position": "Team Leader",
+      "email": "jessica.park@dtechelectronics.com",
+      "tel": "+1-212-555-0922",
+      "signImageUrl": null
+    },
+    {
+      "id": "28",
+      "clientId": 11,
+      "name": "Brian Thompson",
+      "position": "Team Member",
+      "email": "b.thompson@dtechelectronics.com",
+      "tel": "+1-212-555-0923",
+      "signImageUrl": null
+    },
+    {
+      "id": "29",
+      "clientId": 12,
+      "name": "Lukas Bauer",
+      "position": "Team Leader",
+      "email": "lukas.bauer@berlindigital.de",
+      "tel": "+49-30-2000-1201",
+      "signImageUrl": null
+    },
+    {
+      "id": "30",
+      "clientId": 12,
+      "name": "Sophie Richter",
+      "position": "Team Member",
+      "email": "sophie.richter@berlindigital.de",
+      "tel": "+49-30-2000-1202",
+      "signImageUrl": null
+    },
+    {
+      "id": "31",
+      "clientId": 13,
+      "name": "Fujiwara Naoki",
+      "position": "Team Leader",
+      "email": "naoki.fujiwara@osakatech.co.jp",
+      "tel": "+81-6-6210-1301",
+      "signImageUrl": null
+    },
+    {
+      "id": "32",
+      "clientId": 13,
+      "name": "Ishida Megumi",
+      "position": "Team Member",
+      "email": "megumi.ishida@osakatech.co.jp",
+      "tel": "+81-6-6210-1302",
+      "signImageUrl": null
+    },
+    {
+      "id": "33",
+      "clientId": 13,
+      "name": "Kobayashi Ryo",
+      "position": "Team Member",
+      "email": "ryo.kobayashi@osakatech.co.jp",
+      "tel": "+81-6-6210-1303",
+      "signImageUrl": null
+    },
+    {
+      "id": "34",
+      "clientId": 14,
+      "name": "Li Xiaoming",
+      "position": "Team Leader",
+      "email": "xiaoming.li@szgadgets.cn",
+      "tel": "+86-755-8888-1401",
+      "signImageUrl": null
+    },
+    {
+      "id": "35",
+      "clientId": 14,
+      "name": "Zhang Ying",
+      "position": "Team Member",
+      "email": "ying.zhang@szgadgets.cn",
+      "tel": "+86-755-8888-1402",
+      "signImageUrl": null
+    },
+    {
+      "id": "36",
+      "clientId": 15,
+      "name": "Emma Clarke",
+      "position": "Team Member",
+      "email": "emma.clarke@londontech.co.uk",
+      "tel": "+44-20-7946-0316",
+      "signImageUrl": null
+    },
+    {
+      "id": "37",
+      "clientId": 16,
+      "name": "Sophie Martin",
+      "position": "Team Leader",
+      "email": "sophie.martin@parisdigital.fr",
+      "tel": "+33-1-4200-1601",
+      "signImageUrl": null
+    },
+    {
+      "id": "38",
+      "clientId": 16,
+      "name": "Antoine Leroy",
+      "position": "Team Member",
+      "email": "antoine.leroy@parisdigital.fr",
+      "tel": "+33-1-4200-1602",
+      "signImageUrl": null
+    },
+    {
+      "id": "39",
+      "clientId": 17,
+      "name": "Kevin Ng",
+      "position": "Team Leader",
+      "email": "kevin.ng@sgelectronics.sg",
+      "tel": "+65-6345-7890",
+      "signImageUrl": null
+    },
+    {
+      "id": "40",
+      "clientId": 17,
+      "name": "Priya Krishnan",
+      "position": "Team Member",
+      "email": "priya.krishnan@sgelectronics.sg",
+      "tel": "+65-6345-7891",
+      "signImageUrl": null
+    },
+    {
+      "id": "41",
+      "clientId": 18,
+      "name": "Jack Williams",
+      "position": "Team Leader",
+      "email": "jack.williams@sydneytech.com.au",
+      "tel": "+61-2-9000-1801",
+      "signImageUrl": null
+    },
+    {
+      "id": "42",
+      "clientId": 18,
+      "name": "Mia Anderson",
+      "position": "Team Member",
+      "email": "mia.anderson@sydneytech.com.au",
+      "tel": "+61-2-9000-1802",
+      "signImageUrl": null
+    },
+    {
+      "id": "43",
+      "clientId": 19,
+      "name": "Ryan Mitchell",
+      "position": "Team Leader",
+      "email": "ryan.mitchell@torontosystems.ca",
+      "tel": "+1-416-555-1901",
+      "signImageUrl": null
+    },
+    {
+      "id": "44",
+      "clientId": 19,
+      "name": "Chloe Nguyen",
+      "position": "Team Member",
+      "email": "chloe.nguyen@torontosystems.ca",
+      "tel": "+1-416-555-1902",
+      "signImageUrl": null
+    },
+    {
+      "id": "45",
+      "clientId": 20,
+      "name": "Pham Thi Hoa",
+      "position": "Team Leader",
+      "email": "hoa.pham@hanoidigital.vn",
+      "tel": "+84-24-3999-2001",
+      "signImageUrl": null
+    },
+    {
+      "id": "46",
+      "clientId": 20,
+      "name": "Le Van Thanh",
+      "position": "Team Member",
+      "email": "thanh.le@hanoidigital.vn",
+      "tel": "+84-24-3999-2002",
+      "signImageUrl": null
+    }
   ],
   "activityPOs": [
     {
       "id": "PO2025001",
       "clientId": 1,
       "title": "열연강판 공급 계약 1차",
-      "date": "2025-02-15",
+      "date": "2025/02/15",
       "userId": 1
     },
     {
       "id": "PO2025002",
       "clientId": 1,
       "title": "냉연강판 공급 계약",
-      "date": "2025-03-01",
+      "date": "2025/03/01",
       "userId": 5
     },
     {
       "id": "PO2025003",
       "clientId": 2,
       "title": "스테인리스 봉강 공급",
-      "date": "2025-02-20",
+      "date": "2025/02/20",
       "userId": 1
     },
     {
       "id": "PO2025004",
       "clientId": 3,
       "title": "무봉강관 2분기 공급",
-      "date": "2025-02-28",
+      "date": "2025/02/28",
       "userId": 1
     },
     {
       "id": "PO2025005",
       "clientId": 3,
       "title": "유압프레스 납품",
-      "date": "2025-03-10",
+      "date": "2025/03/10",
       "userId": 5
     },
     {
       "id": "PO2025006",
       "clientId": 2,
       "title": "ERW 강관 추가 발주",
-      "date": "2025-03-15",
+      "date": "2025/03/15",
+      "userId": 5
+    },
+    {
+      "id": "PO2025007",
+      "clientId": 4,
+      "title": "노트북 PC 공급 계약",
+      "date": "2025/04/01",
+      "userId": 1
+    },
+    {
+      "id": "PO2025008",
+      "clientId": 5,
+      "title": "모니터 1차 공급",
+      "date": "2025/04/05",
+      "userId": 5
+    },
+    {
+      "id": "PO2025009",
+      "clientId": 6,
+      "title": "프린터 및 스캐너 공급",
+      "date": "2025/04/10",
+      "userId": 1
+    },
+    {
+      "id": "PO2025010",
+      "clientId": 7,
+      "title": "데스크탑 PC 납품",
+      "date": "2025/04/15",
+      "userId": 5
+    },
+    {
+      "id": "PO2025011",
+      "clientId": 8,
+      "title": "UPS 전원장치 공급",
+      "date": "2025/04/20",
+      "userId": 1
+    },
+    {
+      "id": "PO2025012",
+      "clientId": 9,
+      "title": "화상회의 시스템 공급",
+      "date": "2025/04/25",
+      "userId": 5
+    },
+    {
+      "id": "PO2025013",
+      "clientId": 10,
+      "title": "사무용 전자기기 일괄 공급",
+      "date": "2025/05/01",
+      "userId": 1
+    },
+    {
+      "id": "PO2025014",
+      "clientId": 11,
+      "title": "노트북 2차 추가 발주",
+      "date": "2025/05/05",
+      "userId": 5
+    },
+    {
+      "id": "PO2025015",
+      "clientId": 12,
+      "title": "모니터 B2B 공급 계약",
+      "date": "2025/05/10",
+      "userId": 1
+    },
+    {
+      "id": "PO2025016",
+      "clientId": 13,
+      "title": "키보드·마우스 세트 공급",
+      "date": "2025/05/15",
+      "userId": 5
+    },
+    {
+      "id": "PO2025017",
+      "clientId": 14,
+      "title": "외장 SSD 대량 공급",
+      "date": "2025/05/20",
+      "userId": 1
+    },
+    {
+      "id": "PO2025018",
+      "clientId": 15,
+      "title": "레이저 프린터 공급 계약",
+      "date": "2025/05/25",
+      "userId": 5
+    },
+    {
+      "id": "PO2025019",
+      "clientId": 16,
+      "title": "화상회의 카메라 납품",
+      "date": "2025/06/01",
+      "userId": 1
+    },
+    {
+      "id": "PO2025020",
+      "clientId": 17,
+      "title": "PC 및 주변기기 공급",
+      "date": "2025/06/05",
       "userId": 5
     }
   ],
@@ -1051,7 +4074,7 @@
       "hasAttachment": true,
       "poId": "PO2025001",
       "status": "발송",
-      "sentAt": "2025-03-10",
+      "sentAt": "2025/03/10",
       "sender": "김영업"
     },
     {
@@ -1064,7 +4087,7 @@
       "hasAttachment": true,
       "poId": "PO2025003",
       "status": "발송",
-      "sentAt": "2025-03-09",
+      "sentAt": "2025/03/09",
       "sender": "정영업"
     },
     {
@@ -1077,7 +4100,7 @@
       "hasAttachment": false,
       "poId": null,
       "status": "실패",
-      "sentAt": "2025-03-08",
+      "sentAt": "2025/03/08",
       "sender": "김영업"
     },
     {
@@ -1090,7 +4113,7 @@
       "hasAttachment": true,
       "poId": "PO2025002",
       "status": "발송",
-      "sentAt": "2025-03-07",
+      "sentAt": "2025/03/07",
       "sender": "정영업"
     },
     {
@@ -1103,7 +4126,7 @@
       "hasAttachment": false,
       "poId": null,
       "status": "발송",
-      "sentAt": "2025-03-06",
+      "sentAt": "2025/03/06",
       "sender": "김영업"
     },
     {
@@ -1116,7 +4139,7 @@
       "hasAttachment": true,
       "poId": "PO2025004",
       "status": "발송",
-      "sentAt": "2025-03-05",
+      "sentAt": "2025/03/05",
       "sender": "정영업"
     },
     {
@@ -1129,7 +4152,7 @@
       "hasAttachment": false,
       "poId": null,
       "status": "발송",
-      "sentAt": "2025-03-04",
+      "sentAt": "2025/03/04",
       "sender": "김영업"
     },
     {
@@ -1142,8 +4165,1920 @@
       "hasAttachment": true,
       "poId": "PO2025003",
       "status": "실패",
-      "sentAt": "2025-03-03",
+      "sentAt": "2025/03/03",
       "sender": "정영업"
+    },
+    {
+      "id": "9",
+      "client": "Shanghai Import Ltd.",
+      "title": "[SalesBoost] PI-2025-003 발송",
+      "recipient": "Wang Lei",
+      "email": "wang.lei@shanghaiimport.cn",
+      "type": "PI",
+      "hasAttachment": true,
+      "poId": "PO2025007",
+      "status": "발송",
+      "sentAt": "2025/04/03",
+      "sender": "김영업"
+    },
+    {
+      "id": "10",
+      "client": "London Metals Plc",
+      "title": "[SalesBoost] PO2025008 발송",
+      "recipient": "James Brown",
+      "email": "james.brown@londonmetals.co.uk",
+      "type": "PO",
+      "hasAttachment": true,
+      "poId": "PO2025008",
+      "status": "실패",
+      "sentAt": "2025/04/07",
+      "sender": "정영업"
+    },
+    {
+      "id": "11",
+      "client": "Paris Acier SA",
+      "title": "[SalesBoost] CI-2025-003 발송",
+      "recipient": "Pierre Dupont",
+      "email": "pierre.dupont@parisacier.fr",
+      "type": "CI",
+      "hasAttachment": false,
+      "poId": null,
+      "status": "발송",
+      "sentAt": "2025/04/12",
+      "sender": "김영업"
+    },
+    {
+      "id": "12",
+      "client": "Mumbai Steel Works",
+      "title": "[SalesBoost] PL-2025-003 발송",
+      "recipient": "Raj Patel",
+      "email": "raj.patel@mumbaisteel.in",
+      "type": "PL",
+      "hasAttachment": true,
+      "poId": "PO2025010",
+      "status": "발송",
+      "sentAt": "2025/04/17",
+      "sender": "정영업"
+    },
+    {
+      "id": "13",
+      "client": "São Paulo Metals",
+      "title": "[SalesBoost] PI-2025-004 발송",
+      "recipient": "Carlos Silva",
+      "email": "carlos.silva@spmetals.br",
+      "type": "PI",
+      "hasAttachment": true,
+      "poId": "PO2025011",
+      "status": "발송",
+      "sentAt": "2025/04/22",
+      "sender": "김영업"
+    },
+    {
+      "id": "14",
+      "client": "Dtech Electronics Inc.",
+      "title": "[SalesBoost] PO2025014 발송",
+      "recipient": "David Kim",
+      "email": "info@dtech.com",
+      "type": "PO",
+      "hasAttachment": true,
+      "poId": "PO2025014",
+      "status": "발송",
+      "sentAt": "2025/05/06",
+      "sender": "정영업"
+    },
+    {
+      "id": "15",
+      "client": "Berlin Digital AG",
+      "title": "[SalesBoost] CI-2025-004 발송",
+      "recipient": "Lukas Weber",
+      "email": "info@berlindgital.de",
+      "type": "CI",
+      "hasAttachment": false,
+      "poId": null,
+      "status": "발송",
+      "sentAt": "2025/05/12",
+      "sender": "김영업"
+    },
+    {
+      "id": "16",
+      "client": "Osaka Tech Corp.",
+      "title": "[SalesBoost] PL-2025-004 발송",
+      "recipient": "Suzuki Ichiro",
+      "email": "contact@osaktech.jp",
+      "type": "PL",
+      "hasAttachment": true,
+      "poId": "PO2025016",
+      "status": "실패",
+      "sentAt": "2025/05/17",
+      "sender": "정영업"
+    },
+    {
+      "id": "17",
+      "client": "Shenzhen Gadgets Co.",
+      "title": "[SalesBoost] PI-2025-005 발송",
+      "recipient": "Li Fang",
+      "email": "sales@szgadgets.cn",
+      "type": "PI",
+      "hasAttachment": true,
+      "poId": "PO2025017",
+      "status": "발송",
+      "sentAt": "2025/05/22",
+      "sender": "김영업"
+    },
+    {
+      "id": "18",
+      "client": "London Tech Ltd",
+      "title": "[SalesBoost] PO2025018 발송",
+      "recipient": "Emma Wilson",
+      "email": "hello@londontech.co.uk",
+      "type": "PO",
+      "hasAttachment": true,
+      "poId": "PO2025018",
+      "status": "발송",
+      "sentAt": "2025/05/27",
+      "sender": "정영업"
+    },
+    {
+      "id": "19",
+      "client": "Paris Digital SAS",
+      "title": "[SalesBoost] CI-2025-005 발송",
+      "recipient": "Sophie Martin",
+      "email": "contact@parisdigital.fr",
+      "type": "CI",
+      "hasAttachment": false,
+      "poId": null,
+      "status": "발송",
+      "sentAt": "2025/06/02",
+      "sender": "김영업"
+    },
+    {
+      "id": "20",
+      "client": "Singapore Electronics Pte",
+      "title": "[SalesBoost] PO2025020 발송",
+      "recipient": "Tan Ah Kow",
+      "email": "info@sgelec.sg",
+      "type": "PO",
+      "hasAttachment": true,
+      "poId": "PO2025020",
+      "status": "발송",
+      "sentAt": "2025/06/06",
+      "sender": "정영업"
+    }
+  ],
+  "pi": [
+    {
+      "id": "PI2025001",
+      "issueDate": "2025/01/10",
+      "clientName": "Global Steel Corp.",
+      "country": "USA",
+      "itemName": "Business Laptop 15\"",
+      "amount": 71000,
+      "currency": "USD",
+      "manager": "김영업",
+      "status": "확정",
+      "deliveryDate": "2025/03/01"
+    },
+    {
+      "id": "PI2025002",
+      "issueDate": "2025/01/15",
+      "clientName": "Hamburg Metal GmbH",
+      "country": "Germany",
+      "itemName": "LED Monitor 27\"",
+      "amount": 10500,
+      "currency": "EUR",
+      "manager": "정영업",
+      "status": "확정",
+      "deliveryDate": "2025/03/10"
+    },
+    {
+      "id": "PI2025003",
+      "issueDate": "2025/02/01",
+      "clientName": "Tokyo Trading Co.",
+      "country": "Japan",
+      "itemName": "Laser Printer A4",
+      "amount": 760000,
+      "currency": "JPY",
+      "manager": "김영업",
+      "status": "확정",
+      "deliveryDate": "2025/03/20"
+    },
+    {
+      "id": "PI2025004",
+      "issueDate": "2025/02/10",
+      "clientName": "Shanghai Import Ltd.",
+      "country": "China",
+      "itemName": "Desktop PC Set",
+      "amount": 165000,
+      "currency": "CNY",
+      "manager": "조영업",
+      "status": "발송",
+      "deliveryDate": "2025/04/01"
+    },
+    {
+      "id": "PI2025005",
+      "issueDate": "2025/02/15",
+      "clientName": "London Metals Plc",
+      "country": "UK",
+      "itemName": "Video Conference Camera",
+      "amount": 2460,
+      "currency": "GBP",
+      "manager": "강영업",
+      "status": "취소",
+      "deliveryDate": "2025/04/10"
+    },
+    {
+      "id": "PI2025006",
+      "issueDate": "2025/03/01",
+      "clientName": "Paris Acier SA",
+      "country": "France",
+      "itemName": "Smart Projector FHD",
+      "amount": 15000,
+      "currency": "EUR",
+      "manager": "정영업",
+      "status": "확정",
+      "deliveryDate": "2025/04/20"
+    },
+    {
+      "id": "PI2025007",
+      "issueDate": "2025/03/05",
+      "clientName": "Mumbai Steel Works",
+      "country": "India",
+      "itemName": "UPS 1000VA",
+      "amount": 5680,
+      "currency": "USD",
+      "manager": "서영업",
+      "status": "확정",
+      "deliveryDate": "2025/04/25"
+    },
+    {
+      "id": "PI2025008",
+      "issueDate": "2025/03/10",
+      "clientName": "São Paulo Metals",
+      "country": "Brazil",
+      "itemName": "Document Scanner",
+      "amount": 7700,
+      "currency": "USD",
+      "manager": "김영업",
+      "status": "확정",
+      "deliveryDate": "2025/05/01"
+    },
+    {
+      "id": "PI2025009",
+      "issueDate": "2025/03/15",
+      "clientName": "Singapore Pipe Pte",
+      "country": "Singapore",
+      "itemName": "Mechanical Keyboard",
+      "amount": 9200,
+      "currency": "USD",
+      "manager": "황영업",
+      "status": "발송",
+      "deliveryDate": "2025/05/10"
+    },
+    {
+      "id": "PI2025010",
+      "issueDate": "2025/04/01",
+      "clientName": "Hanoi Industries",
+      "country": "Vietnam",
+      "itemName": "Wireless Mouse",
+      "amount": 5400,
+      "currency": "USD",
+      "manager": "정영업",
+      "status": "확정",
+      "deliveryDate": "2025/05/20"
+    },
+    {
+      "id": "PI2025011",
+      "issueDate": "2025/04/05",
+      "clientName": "Dtech Electronics Inc.",
+      "country": "USA",
+      "itemName": "All-in-One PC 24\"",
+      "amount": 25400,
+      "currency": "USD",
+      "manager": "강영업",
+      "status": "확정",
+      "deliveryDate": "2025/06/01"
+    },
+    {
+      "id": "PI2025012",
+      "issueDate": "2025/04/10",
+      "clientName": "Berlin Digital AG",
+      "country": "Germany",
+      "itemName": "Multifunction Printer A3",
+      "amount": 13800,
+      "currency": "EUR",
+      "manager": "전영업",
+      "status": "발송",
+      "deliveryDate": "2025/06/05"
+    },
+    {
+      "id": "PI2025013",
+      "issueDate": "2025/04/20",
+      "clientName": "Osaka Tech Corp.",
+      "country": "Japan",
+      "itemName": "NAS Storage 4-Bay",
+      "amount": 520000,
+      "currency": "JPY",
+      "manager": "김영업",
+      "status": "확정",
+      "deliveryDate": "2025/06/15"
+    },
+    {
+      "id": "PI2025014",
+      "issueDate": "2025/05/01",
+      "clientName": "Shenzhen Gadgets Co.",
+      "country": "China",
+      "itemName": "USB-C Hub 7-in-1",
+      "amount": 120000,
+      "currency": "CNY",
+      "manager": "정영업",
+      "status": "초안",
+      "deliveryDate": "2025/06/20"
+    },
+    {
+      "id": "PI2025015",
+      "issueDate": "2025/05/10",
+      "clientName": "London Tech Ltd",
+      "country": "UK",
+      "itemName": "Bluetooth Headset",
+      "amount": 5840,
+      "currency": "GBP",
+      "manager": "서영업",
+      "status": "발송",
+      "deliveryDate": "2025/07/01"
+    },
+    {
+      "id": "PI2025016",
+      "issueDate": "2025/05/15",
+      "clientName": "Paris Digital SAS",
+      "country": "France",
+      "itemName": "Smart Whiteboard 65\"",
+      "amount": 13450,
+      "currency": "EUR",
+      "manager": "강영업",
+      "status": "확정",
+      "deliveryDate": "2025/07/05"
+    },
+    {
+      "id": "PI2025017",
+      "issueDate": "2025/06/01",
+      "clientName": "Singapore Electronics Pte",
+      "country": "Singapore",
+      "itemName": "Network Switch 24Port",
+      "amount": 9600,
+      "currency": "USD",
+      "manager": "황영업",
+      "status": "확정",
+      "deliveryDate": "2025/07/20"
+    },
+    {
+      "id": "PI2025018",
+      "issueDate": "2025/06/05",
+      "clientName": "Sydney Tech Pty",
+      "country": "Australia",
+      "itemName": "Wireless Presenter",
+      "amount": 6300,
+      "currency": "USD",
+      "manager": "정영업",
+      "status": "발송",
+      "deliveryDate": "2025/07/25"
+    },
+    {
+      "id": "PI2025019",
+      "issueDate": "2025/06/10",
+      "clientName": "Toronto Systems Inc.",
+      "country": "Canada",
+      "itemName": "Tablet PC 10\"",
+      "amount": 20000,
+      "currency": "USD",
+      "manager": "전영업",
+      "status": "초안",
+      "deliveryDate": "2025/08/01"
+    },
+    {
+      "id": "PI2025020",
+      "issueDate": "2025/07/01",
+      "clientName": "Hanoi Digital JSC",
+      "country": "Vietnam",
+      "itemName": "External SSD 1TB",
+      "amount": 22500,
+      "currency": "USD",
+      "manager": "김영업",
+      "status": "발송",
+      "deliveryDate": "2025/08/20"
+    }
+  ],
+  "po": [
+    {
+      "id": "PO2025001",
+      "piId": "PI-2025-001",
+      "issueDate": "2025/01/20",
+      "clientName": "Global Steel Corp.",
+      "country": "USA",
+      "itemName": "Business Laptop 15\"",
+      "amount": 71000,
+      "currency": "USD",
+      "manager": "김영업",
+      "status": "확정",
+      "deliveryDate": "2025/03/01"
+    },
+    {
+      "id": "PO2025002",
+      "piId": "PI-2025-002",
+      "issueDate": "2025/01/25",
+      "clientName": "Hamburg Metal GmbH",
+      "country": "Germany",
+      "itemName": "LED Monitor 27\"",
+      "amount": 10500,
+      "currency": "EUR",
+      "manager": "정영업",
+      "status": "확정",
+      "deliveryDate": "2025/03/10"
+    },
+    {
+      "id": "PO2025003",
+      "piId": "PI-2025-003",
+      "issueDate": "2025/02/10",
+      "clientName": "Tokyo Trading Co.",
+      "country": "Japan",
+      "itemName": "Laser Printer A4",
+      "amount": 760000,
+      "currency": "JPY",
+      "manager": "김영업",
+      "status": "확정",
+      "deliveryDate": "2025/03/20"
+    },
+    {
+      "id": "PO2025004",
+      "piId": "PI-2025-004",
+      "issueDate": "2025/02/20",
+      "clientName": "Shanghai Import Ltd.",
+      "country": "China",
+      "itemName": "Desktop PC Set",
+      "amount": 165000,
+      "currency": "CNY",
+      "manager": "조영업",
+      "status": "발송",
+      "deliveryDate": "2025/04/01"
+    },
+    {
+      "id": "PO2025005",
+      "piId": "PI-2025-005",
+      "issueDate": "2025/02/25",
+      "clientName": "London Metals Plc",
+      "country": "UK",
+      "itemName": "Video Conference Camera",
+      "amount": 2460,
+      "currency": "GBP",
+      "manager": "강영업",
+      "status": "취소",
+      "deliveryDate": "2025/04/10"
+    },
+    {
+      "id": "PO2025006",
+      "piId": "PI-2025-006",
+      "issueDate": "2025/03/10",
+      "clientName": "Paris Acier SA",
+      "country": "France",
+      "itemName": "Smart Projector FHD",
+      "amount": 15000,
+      "currency": "EUR",
+      "manager": "정영업",
+      "status": "확정",
+      "deliveryDate": "2025/04/20"
+    },
+    {
+      "id": "PO2025007",
+      "piId": "PI-2025-007",
+      "issueDate": "2025/03/15",
+      "clientName": "Mumbai Steel Works",
+      "country": "India",
+      "itemName": "UPS 1000VA",
+      "amount": 5680,
+      "currency": "USD",
+      "manager": "서영업",
+      "status": "확정",
+      "deliveryDate": "2025/04/25"
+    },
+    {
+      "id": "PO2025008",
+      "piId": "PI-2025-008",
+      "issueDate": "2025/03/20",
+      "clientName": "São Paulo Metals",
+      "country": "Brazil",
+      "itemName": "Document Scanner",
+      "amount": 7700,
+      "currency": "USD",
+      "manager": "김영업",
+      "status": "확정",
+      "deliveryDate": "2025/05/01"
+    },
+    {
+      "id": "PO2025009",
+      "piId": "PI-2025-009",
+      "issueDate": "2025/03/25",
+      "clientName": "Singapore Pipe Pte",
+      "country": "Singapore",
+      "itemName": "Mechanical Keyboard",
+      "amount": 9200,
+      "currency": "USD",
+      "manager": "황영업",
+      "status": "발송",
+      "deliveryDate": "2025/05/10"
+    },
+    {
+      "id": "PO2025010",
+      "piId": "PI-2025-010",
+      "issueDate": "2025/04/10",
+      "clientName": "Hanoi Industries",
+      "country": "Vietnam",
+      "itemName": "Wireless Mouse",
+      "amount": 5400,
+      "currency": "USD",
+      "manager": "정영업",
+      "status": "확정",
+      "deliveryDate": "2025/05/20"
+    },
+    {
+      "id": "PO2025011",
+      "piId": "PI-2025-011",
+      "issueDate": "2025/04/15",
+      "clientName": "Dtech Electronics Inc.",
+      "country": "USA",
+      "itemName": "All-in-One PC 24\"",
+      "amount": 25400,
+      "currency": "USD",
+      "manager": "강영업",
+      "status": "확정",
+      "deliveryDate": "2025/06/01"
+    },
+    {
+      "id": "PO2025012",
+      "piId": "PI-2025-012",
+      "issueDate": "2025/04/20",
+      "clientName": "Berlin Digital AG",
+      "country": "Germany",
+      "itemName": "Multifunction Printer A3",
+      "amount": 13800,
+      "currency": "EUR",
+      "manager": "전영업",
+      "status": "발송",
+      "deliveryDate": "2025/06/05"
+    },
+    {
+      "id": "PO2025013",
+      "piId": "PI-2025-013",
+      "issueDate": "2025/04/30",
+      "clientName": "Osaka Tech Corp.",
+      "country": "Japan",
+      "itemName": "NAS Storage 4-Bay",
+      "amount": 520000,
+      "currency": "JPY",
+      "manager": "김영업",
+      "status": "확정",
+      "deliveryDate": "2025/06/15"
+    },
+    {
+      "id": "PO2025014",
+      "piId": "PI-2025-014",
+      "issueDate": "2025/05/10",
+      "clientName": "Shenzhen Gadgets Co.",
+      "country": "China",
+      "itemName": "USB-C Hub 7-in-1",
+      "amount": 120000,
+      "currency": "CNY",
+      "manager": "정영업",
+      "status": "초안",
+      "deliveryDate": "2025/06/20"
+    },
+    {
+      "id": "PO2025015",
+      "piId": "PI-2025-015",
+      "issueDate": "2025/05/20",
+      "clientName": "London Tech Ltd",
+      "country": "UK",
+      "itemName": "Bluetooth Headset",
+      "amount": 5840,
+      "currency": "GBP",
+      "manager": "서영업",
+      "status": "발송",
+      "deliveryDate": "2025/07/01"
+    },
+    {
+      "id": "PO2025016",
+      "piId": "PI-2025-016",
+      "issueDate": "2025/05/25",
+      "clientName": "Paris Digital SAS",
+      "country": "France",
+      "itemName": "Smart Whiteboard 65\"",
+      "amount": 13450,
+      "currency": "EUR",
+      "manager": "강영업",
+      "status": "확정",
+      "deliveryDate": "2025/07/05"
+    },
+    {
+      "id": "PO2025017",
+      "piId": "PI-2025-017",
+      "issueDate": "2025/06/10",
+      "clientName": "Singapore Electronics Pte",
+      "country": "Singapore",
+      "itemName": "Network Switch 24Port",
+      "amount": 9600,
+      "currency": "USD",
+      "manager": "황영업",
+      "status": "확정",
+      "deliveryDate": "2025/07/20"
+    },
+    {
+      "id": "PO2025018",
+      "piId": "PI-2025-018",
+      "issueDate": "2025/06/15",
+      "clientName": "Sydney Tech Pty",
+      "country": "Australia",
+      "itemName": "Wireless Presenter",
+      "amount": 6300,
+      "currency": "USD",
+      "manager": "정영업",
+      "status": "발송",
+      "deliveryDate": "2025/07/25"
+    },
+    {
+      "id": "PO2025019",
+      "piId": "PI-2025-019",
+      "issueDate": "2025/06/20",
+      "clientName": "Toronto Systems Inc.",
+      "country": "Canada",
+      "itemName": "Tablet PC 10\"",
+      "amount": 20000,
+      "currency": "USD",
+      "manager": "전영업",
+      "status": "초안",
+      "deliveryDate": "2025/08/01"
+    },
+    {
+      "id": "PO2025020",
+      "piId": "PI-2025-020",
+      "issueDate": "2025/07/10",
+      "clientName": "Hanoi Digital JSC",
+      "country": "Vietnam",
+      "itemName": "External SSD 1TB",
+      "amount": 22500,
+      "currency": "USD",
+      "manager": "김영업",
+      "status": "발송",
+      "deliveryDate": "2025/08/20"
+    }
+  ],
+  "ci": [
+    {
+      "id": "CI2025001",
+      "invoiceDate": "2025/03/01",
+      "poId": "PO-2025-001",
+      "clientName": "Global Steel Corp.",
+      "country": "USA",
+      "itemName": "Business Laptop 15\"",
+      "amount": 71000,
+      "currency": "USD"
+    },
+    {
+      "id": "CI2025002",
+      "invoiceDate": "2025/03/10",
+      "poId": "PO-2025-002",
+      "clientName": "Hamburg Metal GmbH",
+      "country": "Germany",
+      "itemName": "LED Monitor 27\"",
+      "amount": 10500,
+      "currency": "EUR"
+    },
+    {
+      "id": "CI2025003",
+      "invoiceDate": "2025/03/20",
+      "poId": "PO-2025-003",
+      "clientName": "Tokyo Trading Co.",
+      "country": "Japan",
+      "itemName": "Laser Printer A4",
+      "amount": 760000,
+      "currency": "JPY"
+    },
+    {
+      "id": "CI2025004",
+      "invoiceDate": "2025/04/01",
+      "poId": "PO-2025-004",
+      "clientName": "Shanghai Import Ltd.",
+      "country": "China",
+      "itemName": "Desktop PC Set",
+      "amount": 165000,
+      "currency": "CNY"
+    },
+    {
+      "id": "CI2025005",
+      "invoiceDate": "2025/02/28",
+      "poId": "PO-2025-005",
+      "clientName": "London Metals Plc",
+      "country": "UK",
+      "itemName": "Video Conference Camera",
+      "amount": 2460,
+      "currency": "GBP"
+    },
+    {
+      "id": "CI2025006",
+      "invoiceDate": "2025/04/20",
+      "poId": "PO-2025-006",
+      "clientName": "Paris Acier SA",
+      "country": "France",
+      "itemName": "Smart Projector FHD",
+      "amount": 15000,
+      "currency": "EUR"
+    },
+    {
+      "id": "CI2025007",
+      "invoiceDate": "2025/04/25",
+      "poId": "PO-2025-007",
+      "clientName": "Mumbai Steel Works",
+      "country": "India",
+      "itemName": "UPS 1000VA",
+      "amount": 5680,
+      "currency": "USD"
+    },
+    {
+      "id": "CI2025008",
+      "invoiceDate": "2025/05/01",
+      "poId": "PO-2025-008",
+      "clientName": "São Paulo Metals",
+      "country": "Brazil",
+      "itemName": "Document Scanner",
+      "amount": 7700,
+      "currency": "USD"
+    },
+    {
+      "id": "CI2025009",
+      "invoiceDate": "2025/05/10",
+      "poId": "PO-2025-009",
+      "clientName": "Singapore Pipe Pte",
+      "country": "Singapore",
+      "itemName": "Mechanical Keyboard",
+      "amount": 9200,
+      "currency": "USD"
+    },
+    {
+      "id": "CI2025010",
+      "invoiceDate": "2025/05/20",
+      "poId": "PO-2025-010",
+      "clientName": "Hanoi Industries",
+      "country": "Vietnam",
+      "itemName": "Wireless Mouse",
+      "amount": 5400,
+      "currency": "USD"
+    },
+    {
+      "id": "CI2025011",
+      "invoiceDate": "2025/06/01",
+      "poId": "PO-2025-011",
+      "clientName": "Dtech Electronics Inc.",
+      "country": "USA",
+      "itemName": "All-in-One PC 24\"",
+      "amount": 25400,
+      "currency": "USD"
+    },
+    {
+      "id": "CI2025012",
+      "invoiceDate": "2025/06/05",
+      "poId": "PO-2025-012",
+      "clientName": "Berlin Digital AG",
+      "country": "Germany",
+      "itemName": "Multifunction Printer A3",
+      "amount": 13800,
+      "currency": "EUR"
+    },
+    {
+      "id": "CI2025013",
+      "invoiceDate": "2025/06/15",
+      "poId": "PO-2025-013",
+      "clientName": "Osaka Tech Corp.",
+      "country": "Japan",
+      "itemName": "NAS Storage 4-Bay",
+      "amount": 520000,
+      "currency": "JPY"
+    },
+    {
+      "id": "CI2025014",
+      "invoiceDate": "2025/06/20",
+      "poId": "PO-2025-014",
+      "clientName": "Shenzhen Gadgets Co.",
+      "country": "China",
+      "itemName": "USB-C Hub 7-in-1",
+      "amount": 120000,
+      "currency": "CNY"
+    },
+    {
+      "id": "CI2025015",
+      "invoiceDate": "2025/07/01",
+      "poId": "PO-2025-015",
+      "clientName": "London Tech Ltd",
+      "country": "UK",
+      "itemName": "Bluetooth Headset",
+      "amount": 5840,
+      "currency": "GBP"
+    },
+    {
+      "id": "CI2025016",
+      "invoiceDate": "2025/07/05",
+      "poId": "PO-2025-016",
+      "clientName": "Paris Digital SAS",
+      "country": "France",
+      "itemName": "Smart Whiteboard 65\"",
+      "amount": 13450,
+      "currency": "EUR"
+    },
+    {
+      "id": "CI2025017",
+      "invoiceDate": "2025/07/20",
+      "poId": "PO-2025-017",
+      "clientName": "Singapore Electronics Pte",
+      "country": "Singapore",
+      "itemName": "Network Switch 24Port",
+      "amount": 9600,
+      "currency": "USD"
+    },
+    {
+      "id": "CI2025018",
+      "invoiceDate": "2025/07/25",
+      "poId": "PO-2025-018",
+      "clientName": "Sydney Tech Pty",
+      "country": "Australia",
+      "itemName": "Wireless Presenter",
+      "amount": 6300,
+      "currency": "USD"
+    },
+    {
+      "id": "CI2025019",
+      "invoiceDate": "2025/08/01",
+      "poId": "PO-2025-019",
+      "clientName": "Toronto Systems Inc.",
+      "country": "Canada",
+      "itemName": "Tablet PC 10\"",
+      "amount": 20000,
+      "currency": "USD"
+    },
+    {
+      "id": "CI2025020",
+      "invoiceDate": "2025/08/20",
+      "poId": "PO-2025-020",
+      "clientName": "Hanoi Digital JSC",
+      "country": "Vietnam",
+      "itemName": "External SSD 1TB",
+      "amount": 22500,
+      "currency": "USD"
+    }
+  ],
+  "pl": [
+    {
+      "id": "PL2025001",
+      "invoiceDate": "2025/03/01",
+      "poId": "PO-2025-001",
+      "clientName": "Global Steel Corp.",
+      "country": "USA",
+      "itemName": "Business Laptop 15\"",
+      "grossWeight": 90.0
+    },
+    {
+      "id": "PL2025002",
+      "invoiceDate": "2025/03/10",
+      "poId": "PO-2025-002",
+      "clientName": "Hamburg Metal GmbH",
+      "country": "Germany",
+      "itemName": "LED Monitor 27\"",
+      "grossWeight": 126.0
+    },
+    {
+      "id": "PL2025003",
+      "invoiceDate": "2025/03/20",
+      "poId": "PO-2025-003",
+      "clientName": "Tokyo Trading Co.",
+      "country": "Japan",
+      "itemName": "Laser Printer A4",
+      "grossWeight": 156.0
+    },
+    {
+      "id": "PL2025004",
+      "invoiceDate": "2025/04/01",
+      "poId": "PO-2025-004",
+      "clientName": "Shanghai Import Ltd.",
+      "country": "China",
+      "itemName": "Desktop PC Set",
+      "grossWeight": 127.5
+    },
+    {
+      "id": "PL2025005",
+      "invoiceDate": "2025/02/28",
+      "poId": "PO-2025-005",
+      "clientName": "London Metals Plc",
+      "country": "UK",
+      "itemName": "Video Conference Camera",
+      "grossWeight": 3.5
+    },
+    {
+      "id": "PL2025006",
+      "invoiceDate": "2025/04/20",
+      "poId": "PO-2025-006",
+      "clientName": "Paris Acier SA",
+      "country": "France",
+      "itemName": "Smart Projector FHD",
+      "grossWeight": 70.0
+    },
+    {
+      "id": "PL2025007",
+      "invoiceDate": "2025/04/25",
+      "poId": "PO-2025-007",
+      "clientName": "Mumbai Steel Works",
+      "country": "India",
+      "itemName": "UPS 1000VA",
+      "grossWeight": 380.0
+    },
+    {
+      "id": "PL2025008",
+      "invoiceDate": "2025/05/01",
+      "poId": "PO-2025-008",
+      "clientName": "São Paulo Metals",
+      "country": "Brazil",
+      "itemName": "Document Scanner",
+      "grossWeight": 108.5
+    },
+    {
+      "id": "PL2025009",
+      "invoiceDate": "2025/05/10",
+      "poId": "PO-2025-009",
+      "clientName": "Singapore Pipe Pte",
+      "country": "Singapore",
+      "itemName": "Mechanical Keyboard",
+      "grossWeight": 85.0
+    },
+    {
+      "id": "PL2025010",
+      "invoiceDate": "2025/05/20",
+      "poId": "PO-2025-010",
+      "clientName": "Hanoi Industries",
+      "country": "Vietnam",
+      "itemName": "Wireless Mouse",
+      "grossWeight": 18.0
+    },
+    {
+      "id": "PL2025011",
+      "invoiceDate": "2025/06/01",
+      "poId": "PO-2025-011",
+      "clientName": "Dtech Electronics Inc.",
+      "country": "USA",
+      "itemName": "All-in-One PC 24\"",
+      "grossWeight": 126.0
+    },
+    {
+      "id": "PL2025012",
+      "invoiceDate": "2025/06/05",
+      "poId": "PO-2025-012",
+      "clientName": "Berlin Digital AG",
+      "country": "Germany",
+      "itemName": "Multifunction Printer A3",
+      "grossWeight": 330.0
+    },
+    {
+      "id": "PL2025013",
+      "invoiceDate": "2025/06/15",
+      "poId": "PO-2025-013",
+      "clientName": "Osaka Tech Corp.",
+      "country": "Japan",
+      "itemName": "NAS Storage 4-Bay",
+      "grossWeight": 21.0
+    },
+    {
+      "id": "PL2025014",
+      "invoiceDate": "2025/06/20",
+      "poId": "PO-2025-014",
+      "clientName": "Shenzhen Gadgets Co.",
+      "country": "China",
+      "itemName": "USB-C Hub 7-in-1",
+      "grossWeight": 60.0
+    },
+    {
+      "id": "PL2025015",
+      "invoiceDate": "2025/07/01",
+      "poId": "PO-2025-015",
+      "clientName": "London Tech Ltd",
+      "country": "UK",
+      "itemName": "Bluetooth Headset",
+      "grossWeight": 22.4
+    },
+    {
+      "id": "PL2025016",
+      "invoiceDate": "2025/07/05",
+      "poId": "PO-2025-016",
+      "clientName": "Paris Digital SAS",
+      "country": "France",
+      "itemName": "Smart Whiteboard 65\"",
+      "grossWeight": 190.0
+    },
+    {
+      "id": "PL2025017",
+      "invoiceDate": "2025/07/20",
+      "poId": "PO-2025-017",
+      "clientName": "Singapore Electronics Pte",
+      "country": "Singapore",
+      "itemName": "Network Switch 24Port",
+      "grossWeight": 105.0
+    },
+    {
+      "id": "PL2025018",
+      "invoiceDate": "2025/07/25",
+      "poId": "PO-2025-018",
+      "clientName": "Sydney Tech Pty",
+      "country": "Australia",
+      "itemName": "Wireless Presenter",
+      "grossWeight": 9.0
+    },
+    {
+      "id": "PL2025019",
+      "invoiceDate": "2025/08/01",
+      "poId": "PO-2025-019",
+      "clientName": "Toronto Systems Inc.",
+      "country": "Canada",
+      "itemName": "Tablet PC 10\"",
+      "grossWeight": 20.8
+    },
+    {
+      "id": "PL2025020",
+      "invoiceDate": "2025/08/20",
+      "poId": "PO-2025-020",
+      "clientName": "Hanoi Digital JSC",
+      "country": "Vietnam",
+      "itemName": "External SSD 1TB",
+      "grossWeight": 15.0
+    }
+  ],
+  "productionOrders": [
+    {
+      "id": "MO2025001",
+      "issueDate": "2025/02/01",
+      "poId": "PO-2025-001",
+      "clientName": "Global Steel Corp.",
+      "country": "USA",
+      "itemName": "Business Laptop 15\"",
+      "manager": "김영업",
+      "status": "완료",
+      "dueDate": "2025/03/01"
+    },
+    {
+      "id": "MO2025002",
+      "issueDate": "2025/02/10",
+      "poId": "PO-2025-002",
+      "clientName": "Hamburg Metal GmbH",
+      "country": "Germany",
+      "itemName": "LED Monitor 27\"",
+      "manager": "정영업",
+      "status": "완료",
+      "dueDate": "2025/03/10"
+    },
+    {
+      "id": "MO2025003",
+      "issueDate": "2025/02/20",
+      "poId": "PO-2025-003",
+      "clientName": "Tokyo Trading Co.",
+      "country": "Japan",
+      "itemName": "Laser Printer A4",
+      "manager": "김영업",
+      "status": "완료",
+      "dueDate": "2025/03/20"
+    },
+    {
+      "id": "MO2025004",
+      "issueDate": "2025/03/01",
+      "poId": "PO-2025-004",
+      "clientName": "Shanghai Import Ltd.",
+      "country": "China",
+      "itemName": "Desktop PC Set",
+      "manager": "조영업",
+      "status": "진행중",
+      "dueDate": "2025/04/01"
+    },
+    {
+      "id": "MO2025005",
+      "issueDate": "2025/03/05",
+      "poId": "PO-2025-005",
+      "clientName": "London Metals Plc",
+      "country": "UK",
+      "itemName": "Video Conference Camera",
+      "manager": "강영업",
+      "status": "대기",
+      "dueDate": "2025/04/10"
+    },
+    {
+      "id": "MO2025006",
+      "issueDate": "2025/03/20",
+      "poId": "PO-2025-006",
+      "clientName": "Paris Acier SA",
+      "country": "France",
+      "itemName": "Smart Projector FHD",
+      "manager": "정영업",
+      "status": "완료",
+      "dueDate": "2025/04/20"
+    },
+    {
+      "id": "MO2025007",
+      "issueDate": "2025/03/25",
+      "poId": "PO-2025-007",
+      "clientName": "Mumbai Steel Works",
+      "country": "India",
+      "itemName": "UPS 1000VA",
+      "manager": "서영업",
+      "status": "완료",
+      "dueDate": "2025/04/25"
+    },
+    {
+      "id": "MO2025008",
+      "issueDate": "2025/04/01",
+      "poId": "PO-2025-008",
+      "clientName": "São Paulo Metals",
+      "country": "Brazil",
+      "itemName": "Document Scanner",
+      "manager": "김영업",
+      "status": "완료",
+      "dueDate": "2025/05/01"
+    },
+    {
+      "id": "MO2025009",
+      "issueDate": "2025/04/05",
+      "poId": "PO-2025-009",
+      "clientName": "Singapore Pipe Pte",
+      "country": "Singapore",
+      "itemName": "Mechanical Keyboard",
+      "manager": "황영업",
+      "status": "진행중",
+      "dueDate": "2025/05/10"
+    },
+    {
+      "id": "MO2025010",
+      "issueDate": "2025/04/20",
+      "poId": "PO-2025-010",
+      "clientName": "Hanoi Industries",
+      "country": "Vietnam",
+      "itemName": "Wireless Mouse",
+      "manager": "정영업",
+      "status": "완료",
+      "dueDate": "2025/05/20"
+    },
+    {
+      "id": "MO2025011",
+      "issueDate": "2025/04/25",
+      "poId": "PO-2025-011",
+      "clientName": "Dtech Electronics Inc.",
+      "country": "USA",
+      "itemName": "All-in-One PC 24\"",
+      "manager": "강영업",
+      "status": "완료",
+      "dueDate": "2025/06/01"
+    },
+    {
+      "id": "MO2025012",
+      "issueDate": "2025/05/01",
+      "poId": "PO-2025-012",
+      "clientName": "Berlin Digital AG",
+      "country": "Germany",
+      "itemName": "Multifunction Printer A3",
+      "manager": "전영업",
+      "status": "진행중",
+      "dueDate": "2025/06/05"
+    },
+    {
+      "id": "MO2025013",
+      "issueDate": "2025/05/10",
+      "poId": "PO-2025-013",
+      "clientName": "Osaka Tech Corp.",
+      "country": "Japan",
+      "itemName": "NAS Storage 4-Bay",
+      "manager": "김영업",
+      "status": "완료",
+      "dueDate": "2025/06/15"
+    },
+    {
+      "id": "MO2025014",
+      "issueDate": "2025/05/20",
+      "poId": "PO-2025-014",
+      "clientName": "Shenzhen Gadgets Co.",
+      "country": "China",
+      "itemName": "USB-C Hub 7-in-1",
+      "manager": "정영업",
+      "status": "대기",
+      "dueDate": "2025/06/20"
+    },
+    {
+      "id": "MO2025015",
+      "issueDate": "2025/06/01",
+      "poId": "PO-2025-015",
+      "clientName": "London Tech Ltd",
+      "country": "UK",
+      "itemName": "Bluetooth Headset",
+      "manager": "서영업",
+      "status": "완료",
+      "dueDate": "2025/07/01"
+    },
+    {
+      "id": "MO2025016",
+      "issueDate": "2025/06/05",
+      "poId": "PO-2025-016",
+      "clientName": "Paris Digital SAS",
+      "country": "France",
+      "itemName": "Smart Whiteboard 65\"",
+      "manager": "강영업",
+      "status": "완료",
+      "dueDate": "2025/07/05"
+    },
+    {
+      "id": "MO2025017",
+      "issueDate": "2025/06/20",
+      "poId": "PO-2025-017",
+      "clientName": "Singapore Electronics Pte",
+      "country": "Singapore",
+      "itemName": "Network Switch 24Port",
+      "manager": "황영업",
+      "status": "완료",
+      "dueDate": "2025/07/20"
+    },
+    {
+      "id": "MO2025018",
+      "issueDate": "2025/06/25",
+      "poId": "PO-2025-018",
+      "clientName": "Sydney Tech Pty",
+      "country": "Australia",
+      "itemName": "Wireless Presenter",
+      "manager": "정영업",
+      "status": "진행중",
+      "dueDate": "2025/07/25"
+    },
+    {
+      "id": "MO2025019",
+      "issueDate": "2025/07/01",
+      "poId": "PO-2025-019",
+      "clientName": "Toronto Systems Inc.",
+      "country": "Canada",
+      "itemName": "Tablet PC 10\"",
+      "manager": "전영업",
+      "status": "대기",
+      "dueDate": "2025/08/01"
+    },
+    {
+      "id": "MO2025020",
+      "issueDate": "2025/07/20",
+      "poId": "PO-2025-020",
+      "clientName": "Hanoi Digital JSC",
+      "country": "Vietnam",
+      "itemName": "External SSD 1TB",
+      "manager": "김영업",
+      "status": "진행중",
+      "dueDate": "2025/08/20"
+    }
+  ],
+  "shipmentOrders": [
+    {
+      "id": "SO2025001",
+      "issueDate": "2025/03/01",
+      "poId": "PO-2025-001",
+      "clientName": "Global Steel Corp.",
+      "country": "USA",
+      "itemName": "Business Laptop 15\"",
+      "manager": "김영업",
+      "status": "출하완료",
+      "dueDate": "2025/03/01"
+    },
+    {
+      "id": "SO2025002",
+      "issueDate": "2025/03/10",
+      "poId": "PO-2025-002",
+      "clientName": "Hamburg Metal GmbH",
+      "country": "Germany",
+      "itemName": "LED Monitor 27\"",
+      "manager": "정영업",
+      "status": "출하완료",
+      "dueDate": "2025/03/10"
+    },
+    {
+      "id": "SO2025003",
+      "issueDate": "2025/03/20",
+      "poId": "PO-2025-003",
+      "clientName": "Tokyo Trading Co.",
+      "country": "Japan",
+      "itemName": "Laser Printer A4",
+      "manager": "김영업",
+      "status": "출하완료",
+      "dueDate": "2025/03/20"
+    },
+    {
+      "id": "SO2025004",
+      "issueDate": "2025/04/01",
+      "poId": "PO-2025-004",
+      "clientName": "Shanghai Import Ltd.",
+      "country": "China",
+      "itemName": "Desktop PC Set",
+      "manager": "조영업",
+      "status": "준비완료",
+      "dueDate": "2025/04/01"
+    },
+    {
+      "id": "SO2025005",
+      "issueDate": "2025/02/28",
+      "poId": "PO-2025-005",
+      "clientName": "London Metals Plc",
+      "country": "UK",
+      "itemName": "Video Conference Camera",
+      "manager": "강영업",
+      "status": "준비완료",
+      "dueDate": "2025/04/10"
+    },
+    {
+      "id": "SO2025006",
+      "issueDate": "2025/04/20",
+      "poId": "PO-2025-006",
+      "clientName": "Paris Acier SA",
+      "country": "France",
+      "itemName": "Smart Projector FHD",
+      "manager": "정영업",
+      "status": "출하완료",
+      "dueDate": "2025/04/20"
+    },
+    {
+      "id": "SO2025007",
+      "issueDate": "2025/04/25",
+      "poId": "PO-2025-007",
+      "clientName": "Mumbai Steel Works",
+      "country": "India",
+      "itemName": "UPS 1000VA",
+      "manager": "서영업",
+      "status": "출하완료",
+      "dueDate": "2025/04/25"
+    },
+    {
+      "id": "SO2025008",
+      "issueDate": "2025/05/01",
+      "poId": "PO-2025-008",
+      "clientName": "São Paulo Metals",
+      "country": "Brazil",
+      "itemName": "Document Scanner",
+      "manager": "김영업",
+      "status": "출하완료",
+      "dueDate": "2025/05/01"
+    },
+    {
+      "id": "SO2025009",
+      "issueDate": "2025/05/10",
+      "poId": "PO-2025-009",
+      "clientName": "Singapore Pipe Pte",
+      "country": "Singapore",
+      "itemName": "Mechanical Keyboard",
+      "manager": "황영업",
+      "status": "준비완료",
+      "dueDate": "2025/05/10"
+    },
+    {
+      "id": "SO2025010",
+      "issueDate": "2025/05/20",
+      "poId": "PO-2025-010",
+      "clientName": "Hanoi Industries",
+      "country": "Vietnam",
+      "itemName": "Wireless Mouse",
+      "manager": "정영업",
+      "status": "출하완료",
+      "dueDate": "2025/05/20"
+    },
+    {
+      "id": "SO2025011",
+      "issueDate": "2025/06/01",
+      "poId": "PO-2025-011",
+      "clientName": "Dtech Electronics Inc.",
+      "country": "USA",
+      "itemName": "All-in-One PC 24\"",
+      "manager": "강영업",
+      "status": "출하완료",
+      "dueDate": "2025/06/01"
+    },
+    {
+      "id": "SO2025012",
+      "issueDate": "2025/06/05",
+      "poId": "PO-2025-012",
+      "clientName": "Berlin Digital AG",
+      "country": "Germany",
+      "itemName": "Multifunction Printer A3",
+      "manager": "전영업",
+      "status": "준비완료",
+      "dueDate": "2025/06/05"
+    },
+    {
+      "id": "SO2025013",
+      "issueDate": "2025/06/15",
+      "poId": "PO-2025-013",
+      "clientName": "Osaka Tech Corp.",
+      "country": "Japan",
+      "itemName": "NAS Storage 4-Bay",
+      "manager": "김영업",
+      "status": "출하완료",
+      "dueDate": "2025/06/15"
+    },
+    {
+      "id": "SO2025014",
+      "issueDate": "2025/06/20",
+      "poId": "PO-2025-014",
+      "clientName": "Shenzhen Gadgets Co.",
+      "country": "China",
+      "itemName": "USB-C Hub 7-in-1",
+      "manager": "정영업",
+      "status": "준비완료",
+      "dueDate": "2025/06/20"
+    },
+    {
+      "id": "SO2025015",
+      "issueDate": "2025/07/01",
+      "poId": "PO-2025-015",
+      "clientName": "London Tech Ltd",
+      "country": "UK",
+      "itemName": "Bluetooth Headset",
+      "manager": "서영업",
+      "status": "출하완료",
+      "dueDate": "2025/07/01"
+    },
+    {
+      "id": "SO2025016",
+      "issueDate": "2025/07/05",
+      "poId": "PO-2025-016",
+      "clientName": "Paris Digital SAS",
+      "country": "France",
+      "itemName": "Smart Whiteboard 65\"",
+      "manager": "강영업",
+      "status": "출하완료",
+      "dueDate": "2025/07/05"
+    },
+    {
+      "id": "SO2025017",
+      "issueDate": "2025/07/20",
+      "poId": "PO-2025-017",
+      "clientName": "Singapore Electronics Pte",
+      "country": "Singapore",
+      "itemName": "Network Switch 24Port",
+      "manager": "황영업",
+      "status": "출하완료",
+      "dueDate": "2025/07/20"
+    },
+    {
+      "id": "SO2025018",
+      "issueDate": "2025/07/25",
+      "poId": "PO-2025-018",
+      "clientName": "Sydney Tech Pty",
+      "country": "Australia",
+      "itemName": "Wireless Presenter",
+      "manager": "정영업",
+      "status": "준비완료",
+      "dueDate": "2025/07/25"
+    },
+    {
+      "id": "SO2025019",
+      "issueDate": "2025/08/01",
+      "poId": "PO-2025-019",
+      "clientName": "Toronto Systems Inc.",
+      "country": "Canada",
+      "itemName": "Tablet PC 10\"",
+      "manager": "전영업",
+      "status": "준비완료",
+      "dueDate": "2025/08/01"
+    },
+    {
+      "id": "SO2025020",
+      "issueDate": "2025/08/20",
+      "poId": "PO-2025-020",
+      "clientName": "Hanoi Digital JSC",
+      "country": "Vietnam",
+      "itemName": "External SSD 1TB",
+      "manager": "김영업",
+      "status": "준비완료",
+      "dueDate": "2025/08/20"
+    }
+  ],
+  "salesCollections": [
+    {
+      "id": "1",
+      "poId": "PO-2025-001",
+      "clientName": "Global Steel Corp.",
+      "country": "USA",
+      "manager": "김영업",
+      "currency": "USD",
+      "salesAmount": 71000,
+      "issueDate": "2025/03/01",
+      "collectionDate": "2025/03/30",
+      "status": "수금완료"
+    },
+    {
+      "id": "2",
+      "poId": "PO-2025-002",
+      "clientName": "Hamburg Metal GmbH",
+      "country": "Germany",
+      "manager": "정영업",
+      "currency": "EUR",
+      "salesAmount": 10500,
+      "issueDate": "2025/03/10",
+      "collectionDate": "2025/04/10",
+      "status": "수금완료"
+    },
+    {
+      "id": "3",
+      "poId": "PO-2025-003",
+      "clientName": "Tokyo Trading Co.",
+      "country": "Japan",
+      "manager": "김영업",
+      "currency": "JPY",
+      "salesAmount": 760000,
+      "issueDate": "2025/03/20",
+      "collectionDate": "2025/04/20",
+      "status": "수금완료"
+    },
+    {
+      "id": "4",
+      "poId": "PO-2025-004",
+      "clientName": "Shanghai Import Ltd.",
+      "country": "China",
+      "manager": "조영업",
+      "currency": "CNY",
+      "salesAmount": 165000,
+      "issueDate": "2025/04/01",
+      "collectionDate": null,
+      "status": "미수금"
+    },
+    {
+      "id": "5",
+      "poId": "PO-2025-005",
+      "clientName": "London Metals Plc",
+      "country": "UK",
+      "manager": "강영업",
+      "currency": "GBP",
+      "salesAmount": 2460,
+      "issueDate": "2025/02/28",
+      "collectionDate": null,
+      "status": "미수금"
+    },
+    {
+      "id": "6",
+      "poId": "PO-2025-006",
+      "clientName": "Paris Acier SA",
+      "country": "France",
+      "manager": "정영업",
+      "currency": "EUR",
+      "salesAmount": 15000,
+      "issueDate": "2025/04/20",
+      "collectionDate": "2025/05/20",
+      "status": "수금완료"
+    },
+    {
+      "id": "7",
+      "poId": "PO-2025-007",
+      "clientName": "Mumbai Steel Works",
+      "country": "India",
+      "manager": "서영업",
+      "currency": "USD",
+      "salesAmount": 5680,
+      "issueDate": "2025/04/25",
+      "collectionDate": "2025/05/25",
+      "status": "수금완료"
+    },
+    {
+      "id": "8",
+      "poId": "PO-2025-008",
+      "clientName": "São Paulo Metals",
+      "country": "Brazil",
+      "manager": "김영업",
+      "currency": "USD",
+      "salesAmount": 7700,
+      "issueDate": "2025/05/01",
+      "collectionDate": "2025/06/01",
+      "status": "수금완료"
+    },
+    {
+      "id": "9",
+      "poId": "PO-2025-009",
+      "clientName": "Singapore Pipe Pte",
+      "country": "Singapore",
+      "manager": "황영업",
+      "currency": "USD",
+      "salesAmount": 9200,
+      "issueDate": "2025/05/10",
+      "collectionDate": null,
+      "status": "미수금"
+    },
+    {
+      "id": "10",
+      "poId": "PO-2025-010",
+      "clientName": "Hanoi Industries",
+      "country": "Vietnam",
+      "manager": "정영업",
+      "currency": "USD",
+      "salesAmount": 5400,
+      "issueDate": "2025/05/20",
+      "collectionDate": "2025/06/20",
+      "status": "수금완료"
+    },
+    {
+      "id": "11",
+      "poId": "PO-2025-011",
+      "clientName": "Dtech Electronics Inc.",
+      "country": "USA",
+      "manager": "강영업",
+      "currency": "USD",
+      "salesAmount": 25400,
+      "issueDate": "2025/06/01",
+      "collectionDate": "2025/07/01",
+      "status": "수금완료"
+    },
+    {
+      "id": "12",
+      "poId": "PO-2025-012",
+      "clientName": "Berlin Digital AG",
+      "country": "Germany",
+      "manager": "전영업",
+      "currency": "EUR",
+      "salesAmount": 13800,
+      "issueDate": "2025/06/05",
+      "collectionDate": null,
+      "status": "미수금"
+    },
+    {
+      "id": "13",
+      "poId": "PO-2025-013",
+      "clientName": "Osaka Tech Corp.",
+      "country": "Japan",
+      "manager": "김영업",
+      "currency": "JPY",
+      "salesAmount": 520000,
+      "issueDate": "2025/06/15",
+      "collectionDate": "2025/07/15",
+      "status": "수금완료"
+    },
+    {
+      "id": "14",
+      "poId": "PO-2025-014",
+      "clientName": "Shenzhen Gadgets Co.",
+      "country": "China",
+      "manager": "정영업",
+      "currency": "CNY",
+      "salesAmount": 120000,
+      "issueDate": "2025/06/20",
+      "collectionDate": null,
+      "status": "미수금"
+    },
+    {
+      "id": "15",
+      "poId": "PO-2025-015",
+      "clientName": "London Tech Ltd",
+      "country": "UK",
+      "manager": "서영업",
+      "currency": "GBP",
+      "salesAmount": 5840,
+      "issueDate": "2025/07/01",
+      "collectionDate": "2025/08/01",
+      "status": "수금완료"
+    },
+    {
+      "id": "16",
+      "poId": "PO-2025-016",
+      "clientName": "Paris Digital SAS",
+      "country": "France",
+      "manager": "강영업",
+      "currency": "EUR",
+      "salesAmount": 13450,
+      "issueDate": "2025/07/05",
+      "collectionDate": "2025/08/05",
+      "status": "수금완료"
+    },
+    {
+      "id": "17",
+      "poId": "PO-2025-017",
+      "clientName": "Singapore Electronics Pte",
+      "country": "Singapore",
+      "manager": "황영업",
+      "currency": "USD",
+      "salesAmount": 9600,
+      "issueDate": "2025/07/20",
+      "collectionDate": "2025/08/20",
+      "status": "수금완료"
+    },
+    {
+      "id": "18",
+      "poId": "PO-2025-018",
+      "clientName": "Sydney Tech Pty",
+      "country": "Australia",
+      "manager": "정영업",
+      "currency": "USD",
+      "salesAmount": 6300,
+      "issueDate": "2025/07/25",
+      "collectionDate": null,
+      "status": "미수금"
+    },
+    {
+      "id": "19",
+      "poId": "PO-2025-019",
+      "clientName": "Toronto Systems Inc.",
+      "country": "Canada",
+      "manager": "전영업",
+      "currency": "USD",
+      "salesAmount": 20000,
+      "issueDate": "2025/08/01",
+      "collectionDate": null,
+      "status": "미수금"
+    },
+    {
+      "id": "20",
+      "poId": "PO-2025-020",
+      "clientName": "Hanoi Digital JSC",
+      "country": "Vietnam",
+      "manager": "김영업",
+      "currency": "USD",
+      "salesAmount": 22500,
+      "issueDate": "2025/08/20",
+      "collectionDate": null,
+      "status": "미수금"
+    }
+  ],
+  "shipments": [
+    {
+      "id": "SH-2025-001",
+      "clientName": "Global Steel Corp.",
+      "country": "USA",
+      "poId": "PO-2025-001",
+      "requestDate": "2025/03/01",
+      "dueDate": "2025/03/01",
+      "status": "출하완료"
+    },
+    {
+      "id": "SH-2025-002",
+      "clientName": "Hamburg Metal GmbH",
+      "country": "Germany",
+      "poId": "PO-2025-002",
+      "requestDate": "2025/03/10",
+      "dueDate": "2025/03/10",
+      "status": "출하완료"
+    },
+    {
+      "id": "SH-2025-003",
+      "clientName": "Tokyo Trading Co.",
+      "country": "Japan",
+      "poId": "PO-2025-003",
+      "requestDate": "2025/03/20",
+      "dueDate": "2025/03/20",
+      "status": "출하완료"
+    },
+    {
+      "id": "SH-2025-004",
+      "clientName": "Shanghai Import Ltd.",
+      "country": "China",
+      "poId": "PO-2025-004",
+      "requestDate": "2025/04/01",
+      "dueDate": "2025/04/01",
+      "status": "출하준비"
+    },
+    {
+      "id": "SH-2025-005",
+      "clientName": "London Metals Plc",
+      "country": "UK",
+      "poId": "PO-2025-005",
+      "requestDate": "2025/02/28",
+      "dueDate": "2025/04/10",
+      "status": "출하준비"
+    },
+    {
+      "id": "SH-2025-006",
+      "clientName": "Paris Acier SA",
+      "country": "France",
+      "poId": "PO-2025-006",
+      "requestDate": "2025/04/20",
+      "dueDate": "2025/04/20",
+      "status": "출하완료"
+    },
+    {
+      "id": "SH-2025-007",
+      "clientName": "Mumbai Steel Works",
+      "country": "India",
+      "poId": "PO-2025-007",
+      "requestDate": "2025/04/25",
+      "dueDate": "2025/04/25",
+      "status": "출하완료"
+    },
+    {
+      "id": "SH-2025-008",
+      "clientName": "São Paulo Metals",
+      "country": "Brazil",
+      "poId": "PO-2025-008",
+      "requestDate": "2025/05/01",
+      "dueDate": "2025/05/01",
+      "status": "출하완료"
+    },
+    {
+      "id": "SH-2025-009",
+      "clientName": "Singapore Pipe Pte",
+      "country": "Singapore",
+      "poId": "PO-2025-009",
+      "requestDate": "2025/05/10",
+      "dueDate": "2025/05/10",
+      "status": "출하준비"
+    },
+    {
+      "id": "SH-2025-010",
+      "clientName": "Hanoi Industries",
+      "country": "Vietnam",
+      "poId": "PO-2025-010",
+      "requestDate": "2025/05/20",
+      "dueDate": "2025/05/20",
+      "status": "출하완료"
+    },
+    {
+      "id": "SH-2025-011",
+      "clientName": "Dtech Electronics Inc.",
+      "country": "USA",
+      "poId": "PO-2025-011",
+      "requestDate": "2025/06/01",
+      "dueDate": "2025/06/01",
+      "status": "출하완료"
+    },
+    {
+      "id": "SH-2025-012",
+      "clientName": "Berlin Digital AG",
+      "country": "Germany",
+      "poId": "PO-2025-012",
+      "requestDate": "2025/06/05",
+      "dueDate": "2025/06/05",
+      "status": "출하준비"
+    },
+    {
+      "id": "SH-2025-013",
+      "clientName": "Osaka Tech Corp.",
+      "country": "Japan",
+      "poId": "PO-2025-013",
+      "requestDate": "2025/06/15",
+      "dueDate": "2025/06/15",
+      "status": "출하완료"
+    },
+    {
+      "id": "SH-2025-014",
+      "clientName": "Shenzhen Gadgets Co.",
+      "country": "China",
+      "poId": "PO-2025-014",
+      "requestDate": "2025/06/20",
+      "dueDate": "2025/06/20",
+      "status": "출하준비"
+    },
+    {
+      "id": "SH-2025-015",
+      "clientName": "London Tech Ltd",
+      "country": "UK",
+      "poId": "PO-2025-015",
+      "requestDate": "2025/07/01",
+      "dueDate": "2025/07/01",
+      "status": "출하완료"
+    },
+    {
+      "id": "SH-2025-016",
+      "clientName": "Paris Digital SAS",
+      "country": "France",
+      "poId": "PO-2025-016",
+      "requestDate": "2025/07/05",
+      "dueDate": "2025/07/05",
+      "status": "출하완료"
+    },
+    {
+      "id": "SH-2025-017",
+      "clientName": "Singapore Electronics Pte",
+      "country": "Singapore",
+      "poId": "PO-2025-017",
+      "requestDate": "2025/07/20",
+      "dueDate": "2025/07/20",
+      "status": "출하완료"
+    },
+    {
+      "id": "SH-2025-018",
+      "clientName": "Sydney Tech Pty",
+      "country": "Australia",
+      "poId": "PO-2025-018",
+      "requestDate": "2025/07/25",
+      "dueDate": "2025/07/25",
+      "status": "출하준비"
+    },
+    {
+      "id": "SH-2025-019",
+      "clientName": "Toronto Systems Inc.",
+      "country": "Canada",
+      "poId": "PO-2025-019",
+      "requestDate": "2025/08/01",
+      "dueDate": "2025/08/01",
+      "status": "출하준비"
+    },
+    {
+      "id": "SH-2025-020",
+      "clientName": "Hanoi Digital JSC",
+      "country": "Vietnam",
+      "poId": "PO-2025-020",
+      "requestDate": "2025/08/20",
+      "dueDate": "2025/08/20",
+      "status": "출하준비"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"
