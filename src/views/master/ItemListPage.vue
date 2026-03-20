@@ -25,8 +25,8 @@ const deleting = ref(false)
 const searchKeyword = ref('')
 const categoryFilter = ref('')
 
+const PAGE_SIZE = 10
 const currentPage = ref(1)
-const pageSize = ref(20)
 
 const showFormModal = ref(false)
 const formMode = ref('create')
@@ -73,11 +73,11 @@ const filteredItems = computed(() => {
   return result
 })
 
-const totalPages = computed(() => Math.ceil(filteredItems.value.length / pageSize.value) || 1)
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredItems.value.length / PAGE_SIZE)))
 
 const paginatedItems = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  return filteredItems.value.slice(start, start + pageSize.value)
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return filteredItems.value.slice(start, start + PAGE_SIZE)
 })
 
 // Reset to page 1 when filters change
@@ -211,13 +211,16 @@ function goToDetail(row) {
       </template>
     </BaseTable>
 
-    <div class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-      <span>총 {{ filteredItems.length }}건</span>
-      <BasePagination
-        :current-page="currentPage"
-        :total-pages="totalPages"
-        @update:current-page="currentPage = $event"
-      />
+    <div>
+      <div class="mt-2 px-1 text-xs text-slate-500">
+        <span>총 {{ filteredItems.length }}건</span>
+      </div>
+      <div class="mt-4">
+        <BasePagination
+          v-model:current-page="currentPage"
+          :total-pages="totalPages"
+        />
+      </div>
     </div>
 
     <ItemFormModal
