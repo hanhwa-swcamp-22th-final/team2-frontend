@@ -175,7 +175,7 @@ async function handleSave(formData) {
       const newUser = {
         ...formData,
         employeeNo,
-        pw: '1234',
+        pw: 'test1234',
         status: formData.status || '재직',
       }
       await createUser(newUser)

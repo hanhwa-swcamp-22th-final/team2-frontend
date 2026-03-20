@@ -134,8 +134,8 @@ function confirmResetPassword() {
 async function handleResetPassword() {
   if (!props.user?.id) return
   try {
-    await changePassword(props.user.id, '1234')
-    success('비밀번호가 1234로 초기화되었습니다.')
+    await changePassword(props.user.id, 'test1234')
+    success('비밀번호가 test1234로 초기화되었습니다.')
   } catch (e) {
     error('비밀번호 초기화 중 오류가 발생했습니다.')
   } finally {
@@ -189,7 +189,7 @@ const currentDepartmentName = computed(() => {
           </FormField>
 
           <FormField label="초기 비밀번호">
-            <BaseTextField model-value="1234" type="password" readonly />
+            <BaseTextField model-value="test1234" type="password" readonly />
           </FormField>
         </template>
       </div>
@@ -238,7 +238,7 @@ const currentDepartmentName = computed(() => {
       <div v-if="mode === 'edit'" class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-4">
         <div>
           <p class="text-sm font-medium text-ink">비밀번호 초기화</p>
-          <p class="text-xs text-slate-500">비밀번호를 초기값(1234)으로 재설정합니다.</p>
+          <p class="text-xs text-slate-500">비밀번호를 초기값(test1234)으로 재설정합니다.</p>
         </div>
         <BaseButton variant="secondary" size="sm" type="button" @click="confirmResetPassword">
           초기화
@@ -250,7 +250,7 @@ const currentDepartmentName = computed(() => {
     <ConfirmModal
       :open="showResetConfirm"
       title="비밀번호 초기화"
-      :message="`${user?.name} 사용자의 비밀번호를 초기값(1234)으로 초기화하시겠습니까?`"
+      :message="`${user?.name} 사용자의 비밀번호를 초기값(test1234)으로 초기화하시겠습니까?`"
       confirm-label="초기화"
       confirm-variant="danger"
       @confirm="handleResetPassword"
