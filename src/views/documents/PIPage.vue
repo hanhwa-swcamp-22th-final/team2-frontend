@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
@@ -16,6 +16,7 @@ import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import PIFormModal from '@/components/domain/document/PIFormModal.vue'
+import { fetchBuyers, fetchClients, fetchCountries } from '@/api/master'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { useToast } from '@/composables/useToast'
 
@@ -58,11 +59,12 @@ const statusOptions = [
   { value: '확정', label: '확정' },
   { value: '취소', label: '취소' },
 ]
-const clientRowsSource = [
+const fallbackClientRowsSource = [
   { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아', buyers: ['Mr. Ahmad Razak (Purchasing Manager)', 'Ms. Siti Nurhaliza (Director)'] },
   { id: 'CL002', name: 'TechBridge GmbH', country: '독일', buyers: ['Ms. Hanna Schneider (Procurement Lead)'] },
   { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국', buyers: ['Mr. Jacob Miller (Import Manager)'] },
 ]
+const clientRowsSource = ref([...fallbackClientRowsSource])
 
 const columns = [
   { key: 'id', label: 'PI번호', align: 'center', width: '140px' },
@@ -177,8 +179,8 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
 
 const clientRows = computed(() => {
   const keyword = clientSearchKeyword.value.trim().toLowerCase()
-  if (!keyword) return clientRowsSource
-  return clientRowsSource.filter((client) => [client.id, client.name, client.country].some((value) => value.toLowerCase().includes(keyword)))
+  if (!keyword) return clientRowsSource.value
+  return clientRowsSource.value.filter((client) => [client.id, client.name, client.country].some((value) => value.toLowerCase().includes(keyword)))
 })
 
 const codeRows = computed(() => {
@@ -216,6 +218,41 @@ const currencySymbolMap = {
   CHF: 'CHF ',
 }
 
+async function loadClientRows() {
+  try {
+    const [clientsData, countriesData, buyersData] = await Promise.all([
+      fetchClients(),
+      fetchCountries(),
+      fetchBuyers(),
+    ])
+
+    const countryMap = new Map(
+      countriesData.map((country) => [String(country.id), country.nameKr ?? country.name ?? '-']),
+    )
+
+    const buyersByClientId = buyersData.reduce((map, buyer) => {
+      const clientId = String(buyer.clientId)
+      const label = buyer.position ? `${buyer.name} (${buyer.position})` : buyer.name
+      const rows = map.get(clientId) ?? []
+      rows.push(label)
+      map.set(clientId, rows)
+      return map
+    }, new Map())
+
+    clientRowsSource.value = clientsData.map((client) => ({
+      id: String(client.id),
+      code: client.code,
+      name: client.name,
+      country: countryMap.get(String(client.countryId)) ?? '-',
+      buyers: buyersByClientId.get(String(client.id)) ?? [],
+    }))
+  } catch {
+    clientRowsSource.value = [...fallbackClientRowsSource]
+  }
+}
+
+onMounted(loadClientRows)
+
 function openClientSearch(context = 'filter') {
   clientSearchContext.value = context
   clientSearchOpen.value = true
@@ -241,7 +278,7 @@ function openCreateForm() {
 }
 
 function openEditForm(row) {
-  const matchedClient = clientRowsSource.find((client) => client.name === row.clientName) ?? null
+  const matchedClient = clientRowsSource.value.find((client) => client.name === row.clientName) ?? null
   selectedClient.value = matchedClient
   formMode.value = 'edit'
   selectedRow.value = {
@@ -274,6 +311,10 @@ function formatAmount(currency, value) {
   return `${symbol}${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
 }
 
+function formatSlashDate(value) {
+  return value ? value.replaceAll('-', '/') : '-'
+}
+
 function handleSave(formValue) {
   const currency = formValue.currency || 'USD'
   const totalAmount = (formValue.items ?? []).reduce((sum, item) => {
@@ -283,20 +324,20 @@ function handleSave(formValue) {
     const calculatedAmount = Number.isFinite(amount) ? amount : (Number.isFinite(qty) && Number.isFinite(unitPrice) ? qty * unitPrice : 0)
     return sum + calculatedAmount
   }, 0)
-  const matchedClient = clientRowsSource.find((client) => client.name === formValue.clientName)
+  const matchedClient = clientRowsSource.value.find((client) => client.name === formValue.clientName)
   const nextRow = {
     clientName: formValue.clientName || '거래처 미선택',
     country: formValue.country || matchedClient?.country || selectedClient.value?.country || '-',
     itemName: formValue.items?.[0]?.name || '품목 미입력',
     amount: formatAmount(currency, totalAmount),
-    deliveryDate: formValue.deliveryDate ? formValue.deliveryDate.replaceAll('-', '/') : '-',
+    issueDate: formatSlashDate(formValue.issueDate),
+    deliveryDate: formatSlashDate(formValue.deliveryDate),
   }
 
   if (formMode.value === 'create') {
     rowsData.value = [
       {
         id: `PI26${String(rowsData.value.length + 1).padStart(3, '0')}`,
-        issueDate: '2026/03/19',
         ...nextRow,
         manager: '김영업',
         status: '초안',

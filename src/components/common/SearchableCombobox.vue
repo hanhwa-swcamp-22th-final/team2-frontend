@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -27,12 +27,14 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'select'])
 
 const wrapperRef = ref(null)
+const dropdownRef = ref(null)
 const inputValue = ref('')
 const rawQuery = ref('') // event.target.value 기반 — IME 조합 중에도 실시간 반영
 const isOpen = ref(false)
 const highlightedIndex = ref(-1)
 const isSelected = ref(false)
 const lastSelectedLabel = ref('')
+const dropdownStyle = ref({})
 
 function normalizeOption(option) {
   if (typeof option === 'object' && option !== null) {
@@ -91,11 +93,28 @@ function openList() {
   }
 
   isOpen.value = true
+  nextTick(updateDropdownPosition)
 }
 
 function closeList() {
   isOpen.value = false
   highlightedIndex.value = -1
+}
+
+function updateDropdownPosition() {
+  if (!isOpen.value || !wrapperRef.value) {
+    return
+  }
+
+  const rect = wrapperRef.value.getBoundingClientRect()
+
+  dropdownStyle.value = {
+    position: 'fixed',
+    top: `${rect.bottom + 8}px`,
+    left: `${rect.left}px`,
+    width: `${rect.width}px`,
+    zIndex: '90',
+  }
 }
 
 function selectOption(option) {
@@ -167,15 +186,32 @@ watch(rawQuery, (newValue) => {
 }, { flush: 'sync' })
 
 function handleClickOutside(event) {
-  if (wrapperRef.value && !wrapperRef.value.contains(event.target)) {
+  const clickedInsideWrapper = wrapperRef.value?.contains(event.target)
+  const clickedInsideDropdown = dropdownRef.value?.contains(event.target)
+
+  if (!clickedInsideWrapper && !clickedInsideDropdown) {
     closeList()
   }
 }
 
 document.addEventListener('click', handleClickOutside)
+window.addEventListener('resize', updateDropdownPosition)
+window.addEventListener('scroll', updateDropdownPosition, true)
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
+  window.removeEventListener('resize', updateDropdownPosition)
+  window.removeEventListener('scroll', updateDropdownPosition, true)
+})
+
+watch(isOpen, (open) => {
+  if (!open) return
+  nextTick(updateDropdownPosition)
+})
+
+watch(filteredOptions, () => {
+  if (!isOpen.value) return
+  nextTick(updateDropdownPosition)
 })
 </script>
 
@@ -202,24 +238,28 @@ onBeforeUnmount(() => {
       </span>
     </div>
 
-    <div
-      v-if="isOpen"
-      class="absolute z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 shadow-lg"
-    >
-      <button
-        v-for="(option, index) in filteredOptions"
-        :key="option.value"
-        type="button"
-        class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition"
-        :class="index === highlightedIndex ? 'bg-brand/10 text-brand' : 'hover:bg-slate-50 text-slate-700'"
-        @click="selectOption(option)"
+    <Teleport to="body">
+      <div
+        v-if="isOpen"
+        ref="dropdownRef"
+        class="max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 shadow-lg"
+        :style="dropdownStyle"
       >
-        <span class="font-medium">{{ option.label }}</span>
-        <span v-if="option.sublabel" class="ml-3 text-xs text-slate-400">{{ option.sublabel }}</span>
-      </button>
-      <div v-if="filteredOptions.length === 0" class="px-3 py-6 text-center text-sm text-slate-400">
-        {{ emptyText }}
+        <button
+          v-for="(option, index) in filteredOptions"
+          :key="option.value"
+          type="button"
+          class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition"
+          :class="index === highlightedIndex ? 'bg-brand/10 text-brand' : 'hover:bg-slate-50 text-slate-700'"
+          @click="selectOption(option)"
+        >
+          <span class="font-medium">{{ option.label }}</span>
+          <span v-if="option.sublabel" class="ml-3 text-xs text-slate-400">{{ option.sublabel }}</span>
+        </button>
+        <div v-if="filteredOptions.length === 0" class="px-3 py-6 text-center text-sm text-slate-400">
+          {{ emptyText }}
+        </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>

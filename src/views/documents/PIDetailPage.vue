@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
@@ -10,6 +10,7 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import PIDocumentTemplate from '@/components/domain/document/PIDocumentTemplate.vue'
 import PIFormModal from '@/components/domain/document/PIFormModal.vue'
+import { fetchBuyers, fetchClients, fetchCountries } from '@/api/master'
 import { useToast } from '@/composables/useToast'
 import { openDocumentOutput } from '@/utils/documentOutput'
 
@@ -87,16 +88,17 @@ const detailMap = {
 
 const detail = computed(() => detailMap[route.params.id] ?? null)
 
-const clientRowsSource = [
+const fallbackClientRowsSource = [
   { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아', buyers: ['Mr. Ahmad Razak (Purchasing Manager)', 'Ms. Siti Nurhaliza (Director)'] },
   { id: 'CL002', name: 'TechBridge GmbH', country: '독일', buyers: ['Ms. Hanna Schneider (Procurement Lead)'] },
   { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국', buyers: ['Mr. Jacob Miller (Import Manager)'] },
 ]
+const clientRowsSource = ref([...fallbackClientRowsSource])
 
 const clientRows = computed(() => {
   const keyword = clientSearchKeyword.value.trim().toLowerCase()
-  if (!keyword) return clientRowsSource
-  return clientRowsSource.filter((client) => [client.id, client.name, client.country].some((value) => value.toLowerCase().includes(keyword)))
+  if (!keyword) return clientRowsSource.value
+  return clientRowsSource.value.filter((client) => [client.id, client.name, client.country].some((value) => value.toLowerCase().includes(keyword)))
 })
 
 const previewFields = computed(() => {
@@ -111,6 +113,41 @@ const previewFields = computed(() => {
     { label: '발행일', value: detail.value.issueDate },
   ]
 })
+
+async function loadClientRows() {
+  try {
+    const [clientsData, countriesData, buyersData] = await Promise.all([
+      fetchClients(),
+      fetchCountries(),
+      fetchBuyers(),
+    ])
+
+    const countryMap = new Map(
+      countriesData.map((country) => [String(country.id), country.nameKr ?? country.name ?? '-']),
+    )
+
+    const buyersByClientId = buyersData.reduce((map, buyer) => {
+      const clientId = String(buyer.clientId)
+      const label = buyer.position ? `${buyer.name} (${buyer.position})` : buyer.name
+      const rows = map.get(clientId) ?? []
+      rows.push(label)
+      map.set(clientId, rows)
+      return map
+    }, new Map())
+
+    clientRowsSource.value = clientsData.map((client) => ({
+      id: String(client.id),
+      code: client.code,
+      name: client.name,
+      country: countryMap.get(String(client.countryId)) ?? '-',
+      buyers: buyersByClientId.get(String(client.id)) ?? [],
+    }))
+  } catch {
+    clientRowsSource.value = [...fallbackClientRowsSource]
+  }
+}
+
+onMounted(loadClientRows)
 
 function goBack() {
   router.push({ name: 'pi' })
@@ -369,6 +406,7 @@ function confirmDelete() {
         country: selectedClient?.country ?? '',
         currency: detail.currency,
         incoterms: detail.incoterms,
+        issueDate: detail.issueDate,
         deliveryDate: detail.deliveryDate,
         items: detail.items.map((item) => ({
           name: item.name,
