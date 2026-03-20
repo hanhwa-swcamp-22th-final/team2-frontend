@@ -539,9 +539,6 @@ function validateForm() {
       errors[itemErrorKey(item.id, 'unitPrice')] = '단가를 입력하세요.'
     }
 
-    if (!String(item.remark ?? '').trim()) {
-      errors[itemErrorKey(item.id, 'remark')] = '비고를 입력하세요.'
-    }
   }
 
   if (isReasonRequired.value && !form.value.reason.trim()) {
@@ -986,7 +983,6 @@ watch(
                 placeholder="비고 입력"
                 @update:modelValue="clearItemError(row.id, 'remark')"
               />
-              <p v-if="getItemError(row.id, 'remark')" class="mt-1 text-[11px] text-red-500">{{ getItemError(row.id, 'remark') }}</p>
             </div>
           </template>
         </BaseTable>
