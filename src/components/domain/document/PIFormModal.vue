@@ -431,12 +431,24 @@ function validateForm() {
     errors.clientName = '거래처를 선택하세요.'
   }
 
+  if (!form.value.buyerName.trim()) {
+    errors.buyerName = '바이어를 선택하세요.'
+  }
+
+  if (!form.value.currency.trim()) {
+    errors.currency = '통화를 선택하세요.'
+  }
+
   if (!form.value.deliveryDate) {
     errors.deliveryDate = '납기일을 입력하세요.'
   }
 
   if (!form.value.issueDate) {
     errors.issueDate = '발행일을 입력하세요.'
+  }
+
+  if (!form.value.incoterms.trim()) {
+    errors.incoterms = '인코텀즈를 선택하세요.'
   }
 
   if (!form.value.items.length) {
@@ -452,8 +464,16 @@ function validateForm() {
       errors[itemErrorKey(item.id, 'qty')] = '수량은 1 이상이어야 합니다.'
     }
 
-    if (String(item.unitPrice ?? '').trim() === '' || Number(item.unitPrice) < 0) {
+    if (!String(item.unit ?? '').trim()) {
+      errors[itemErrorKey(item.id, 'unit')] = '단위를 입력하세요.'
+    }
+
+    if (String(item.unitPrice ?? '').trim() === '' || Number(item.unitPrice) <= 0) {
       errors[itemErrorKey(item.id, 'unitPrice')] = '단가를 입력하세요.'
+    }
+
+    if (!String(item.remark ?? '').trim()) {
+      errors[itemErrorKey(item.id, 'remark')] = '비고를 입력하세요.'
     }
   }
 
@@ -492,43 +512,47 @@ function updateItemAmount(item) {
   item.amount = formatAmount(quantity * unitPrice)
 }
 
-watch(
-  () => props.open,
-  async (isOpen) => {
-    if (!isOpen) return
+async function initializeForm() {
+  if (!props.open) return
 
-    validationErrors.value = {}
+  validationErrors.value = {}
 
-    if (props.mode === 'edit' && props.document) {
-      form.value = {
-        clientName: props.document.clientName ?? '',
-        buyerName: props.document.buyerName ?? 'Mr. Ahmad Razak (Purchasing Manager)',
-        currency: props.document.currency ?? 'USD',
-        issueDate: props.document.issueDate?.replaceAll('/', '-') ?? getTodayDateInput(),
-        deliveryDate: props.document.deliveryDate?.replaceAll('/', '-') ?? '',
-        incoterms: props.document.incoterms ?? 'FOB',
-        reason: '',
-        approver: getDefaultApprover(),
-        items: props.document.items?.map((item, index) => ({
-          id: index + 1,
-          name: item.name ?? '',
-          qty: String(item.qty ?? ''),
-          unit: item.unit ?? '',
-          unitPrice: String(item.unitPrice ?? ''),
-          amount: item.amount ?? '0',
-          remark: item.remark ?? item.remarks ?? '',
-          baseUnitPrice: null,
-        })) ?? [],
-      }
-      form.value.items.forEach(updateItemAmount)
-      await loadReferenceData()
-      await loadBuyerOptions()
-      return
+  if (props.mode === 'edit' && props.document) {
+    form.value = {
+      clientName: props.document.clientName ?? '',
+      buyerName: props.document.buyerName ?? 'Mr. Ahmad Razak (Purchasing Manager)',
+      currency: props.document.currency ?? 'USD',
+      issueDate: props.document.issueDate?.replaceAll('/', '-') ?? getTodayDateInput(),
+      deliveryDate: props.document.deliveryDate?.replaceAll('/', '-') ?? '',
+      incoterms: props.document.incoterms ?? 'FOB',
+      reason: '',
+      approver: getDefaultApprover(),
+      items: props.document.items?.map((item, index) => ({
+        id: item.id ?? index + 1,
+        name: item.name ?? '',
+        qty: String(item.qty ?? item.quantity ?? ''),
+        unit: item.unit ?? '',
+        unitPrice: String(item.unitPrice ?? ''),
+        amount: String(item.amount ?? '0').replace(/[^0-9.]/g, '') || '0',
+        remark: item.remark ?? item.remarks ?? '',
+        baseUnitPrice: null,
+      })) ?? [],
     }
-
-    form.value = createInitialForm()
+    form.value.items.forEach(updateItemAmount)
     await loadReferenceData()
     await loadBuyerOptions()
+    return
+  }
+
+  form.value = createInitialForm()
+  await loadReferenceData()
+  await loadBuyerOptions()
+}
+
+watch(
+  () => [props.open, props.mode, props.document],
+  async () => {
+    await initializeForm()
   },
   { immediate: true },
 )
@@ -573,7 +597,10 @@ watch(
     if (!client) return
     form.value.clientName = client.name
     form.value.buyerName = client.buyers?.[0] ?? ''
+    form.value.currency = client.currency ?? form.value.currency
     clearError('clientName')
+    clearError('buyerName')
+    clearError('currency')
     await loadBuyerOptions()
   },
 )
@@ -603,7 +630,7 @@ watch(
 
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label class="mb-1 block text-gray-600">거래처 *</label>
+          <label class="mb-1 block text-gray-600">거래처 <span class="text-red-500">*</span></label>
           <div class="relative">
             <BaseTextField
               v-model="form.clientName"
@@ -625,18 +652,30 @@ watch(
         </div>
 
         <div>
-          <label class="mb-1 block text-gray-600">바이어</label>
-          <BaseSelect v-model="form.buyerName" :options="buyerOptions" placeholder="바이어 선택" />
+          <label class="mb-1 block text-gray-600">바이어 <span class="text-red-500">*</span></label>
+          <BaseSelect
+            v-model="form.buyerName"
+            :options="buyerOptions"
+            placeholder="바이어 선택"
+            @update:modelValue="clearError('buyerName')"
+          />
+          <p v-if="getFieldError('buyerName')" class="mt-1 text-xs text-red-500">{{ getFieldError('buyerName') }}</p>
         </div>
 
         <div>
-          <label class="mb-1 block text-gray-600">통화</label>
-          <BaseSelect v-model="form.currency" :options="currencyOptions" placeholder="통화 선택" />
+          <label class="mb-1 block text-gray-600">통화 <span class="text-red-500">*</span></label>
+          <BaseSelect
+            v-model="form.currency"
+            :options="currencyOptions"
+            placeholder="통화 선택"
+            @update:modelValue="clearError('currency')"
+          />
           <p class="mt-1 text-xs text-slate-500">{{ exchangeRateHint }}</p>
+          <p v-if="getFieldError('currency')" class="mt-1 text-xs text-red-500">{{ getFieldError('currency') }}</p>
         </div>
 
         <div>
-          <label class="mb-1 block text-gray-600">발행일 *</label>
+          <label class="mb-1 block text-gray-600">발행일 <span class="text-red-500">*</span></label>
           <div class="relative">
             <BaseTextField
               v-model="form.issueDate"
@@ -652,7 +691,7 @@ watch(
         </div>
 
         <div>
-          <label class="mb-1 block text-gray-600">납기일 *</label>
+          <label class="mb-1 block text-gray-600">납기일 <span class="text-red-500">*</span></label>
           <div class="relative">
             <BaseTextField
               v-model="form.deliveryDate"
@@ -682,7 +721,7 @@ watch(
       </div>
 
       <div>
-        <label class="mb-1 block text-gray-600">인코텀즈</label>
+        <label class="mb-1 block text-gray-600">인코텀즈 <span class="text-red-500">*</span></label>
         <input v-model="form.incoterms" type="hidden">
         <div class="rounded-[10px] border border-slate-200 bg-slate-50 px-3 py-3 select-none">
           <div class="mb-2 flex items-center gap-1.5">
@@ -728,7 +767,7 @@ watch(
                   v-for="option in incotermsOptions"
                   :key="option"
                   class="flex flex-1 cursor-pointer flex-col items-center"
-                  @click="form.incoterms = option"
+                  @click="form.incoterms = option; clearError('incoterms')"
                 >
                   <div
                     :class="form.incoterms === option ? 'mt-[2px] flex h-6 w-6 items-center justify-center rounded-full border-[3px] border-white bg-emerald-500 text-[7px] font-extrabold text-white shadow-[0_2px_6px_#10B98144]' : 'mt-[9px] flex h-[10px] w-[10px] items-center justify-center rounded-full border-2 border-blue-500 bg-white'"
@@ -763,11 +802,12 @@ watch(
             </div>
           </div>
         </div>
+        <p v-if="getFieldError('incoterms')" class="mt-2 text-xs text-red-500">{{ getFieldError('incoterms') }}</p>
       </div>
 
       <div>
         <div class="mb-2 flex items-center justify-between">
-          <label class="font-medium text-gray-700">품목 목록</label>
+          <label class="font-medium text-gray-700">품목 목록 <span class="text-red-500">*</span></label>
           <button type="button" class="text-xs text-brand-500 hover:underline" @click="addItem">
             <i class="fas fa-plus mr-1"></i>품목 추가
           </button>
@@ -818,7 +858,9 @@ watch(
                 v-model="row.unit"
                 placeholder="EA"
                 class="text-center"
+                @update:modelValue="clearItemError(row.id, 'unit')"
               />
+              <p v-if="getItemError(row.id, 'unit')" class="mt-1 text-[11px] text-red-500">{{ getItemError(row.id, 'unit') }}</p>
             </div>
           </template>
 
@@ -852,7 +894,9 @@ watch(
               <BaseTextField
                 v-model="row.remark"
                 placeholder="비고 입력"
+                @update:modelValue="clearItemError(row.id, 'remark')"
               />
+              <p v-if="getItemError(row.id, 'remark')" class="mt-1 text-[11px] text-red-500">{{ getItemError(row.id, 'remark') }}</p>
             </div>
           </template>
         </BaseTable>

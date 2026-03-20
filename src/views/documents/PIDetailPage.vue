@@ -40,10 +40,10 @@ const detailMap = {
       { id: 'PO26001', status: '생산중' },
     ],
     items: [
-      { name: 'H-Beam 482x300x11x15', quantity: '30', unitPrice: '$850', amount: '$25,500' },
-      { name: 'Lubricant Oil SAE 10W-40', quantity: '200', unitPrice: '$30', amount: '$6,000' },
-      { name: 'Industrial Grease EP-2', quantity: '100', unitPrice: '$45', amount: '$4,500' },
-      { name: 'Hydraulic Oil ISO VG 46', quantity: '32', unitPrice: '$200', amount: '$6,400' },
+      { name: 'H-Beam 482x300x11x15', quantity: '30', unit: 'EA', unitPrice: '$850', amount: '$25,500', remark: '' },
+      { name: 'Lubricant Oil SAE 10W-40', quantity: '200', unit: 'EA', unitPrice: '$30', amount: '$6,000', remark: '' },
+      { name: 'Industrial Grease EP-2', quantity: '100', unit: 'EA', unitPrice: '$45', amount: '$4,500', remark: '' },
+      { name: 'Hydraulic Oil ISO VG 46', quantity: '32', unit: 'EA', unitPrice: '$200', amount: '$6,400', remark: '' },
     ],
     totalAmount: '$42,400',
     revisionHistory: [],
@@ -62,7 +62,7 @@ const detailMap = {
       { id: 'PO26002', status: '생산중' },
     ],
     items: [
-      { name: 'H-Beam 482x300x11x15', quantity: '80', unitPrice: '€855', amount: '€68,400' },
+      { name: 'H-Beam 482x300x11x15', quantity: '80', unit: 'EA', unitPrice: '€855', amount: '€68,400', remark: '' },
     ],
     totalAmount: '€68,400',
     revisionHistory: [],
@@ -79,7 +79,7 @@ const detailMap = {
     manager: '정영업',
     linkedDocuments: [],
     items: [
-      { name: 'Lubricant Oil SAE 10W-40', quantity: '520', unitPrice: '$30', amount: '$15,600' },
+      { name: 'Lubricant Oil SAE 10W-40', quantity: '520', unit: 'EA', unitPrice: '$30', amount: '$15,600', remark: '' },
     ],
     totalAmount: '$15,600',
     revisionHistory: [],
@@ -411,8 +411,10 @@ function confirmDelete() {
         items: detail.items.map((item) => ({
           name: item.name,
           qty: item.quantity,
+          unit: item.unit ?? 'EA',
           unitPrice: item.unitPrice.replace(/[^0-9.]/g, ''),
           amount: item.amount,
+          remark: item.remark ?? '',
         })),
       }"
       :selected-client="selectedClient"
