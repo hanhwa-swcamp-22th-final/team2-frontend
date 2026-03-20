@@ -12,7 +12,8 @@ import PIDocumentTemplate from '@/components/domain/document/PIDocumentTemplate.
 import PIFormModal from '@/components/domain/document/PIFormModal.vue'
 import { fetchBuyers, fetchClients, fetchCountries } from '@/api/master'
 import { useToast } from '@/composables/useToast'
-import { openDocumentOutput } from '@/utils/documentOutput'
+import { openDocumentOutputByType } from '@/utils/documentOutput'
+import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
 
 const route = useRoute()
 const router = useRouter()
@@ -25,14 +26,15 @@ const clientSearchOpen = ref(false)
 const clientSearchKeyword = ref('')
 const selectedClient = ref(null)
 
-const detailMap = {
+const detailMap = ref({
   PI26001: {
     id: 'PI26001',
     status: '확정',
     clientName: 'COOLSAY SDN BHD',
     buyer: 'Mr. Ahmad Razak (Purchasing Manager)',
     currency: 'USD',
-    incoterms: 'FOB BUSAN',
+    incoterms: 'FOB',
+    namedPlace: 'BUSAN',
     deliveryDate: '2026/04/15',
     issueDate: '2026/02/01',
     manager: '김영업',
@@ -54,7 +56,8 @@ const detailMap = {
     clientName: 'TechBridge GmbH',
     buyer: 'Ms. Hanna Schneider (Procurement Lead)',
     currency: 'EUR',
-    incoterms: 'CIF HAMBURG',
+    incoterms: 'CIF',
+    namedPlace: 'HAMBURG',
     deliveryDate: '2026/05/20',
     issueDate: '2026/02/15',
     manager: '김영업',
@@ -73,7 +76,8 @@ const detailMap = {
     clientName: 'Pacific Trading Inc.',
     buyer: 'Mr. Jacob Miller (Import Manager)',
     currency: 'USD',
-    incoterms: 'CFR LOS ANGELES',
+    incoterms: 'CFR',
+    namedPlace: 'LOS ANGELES',
     deliveryDate: '2026/06/01',
     issueDate: '2026/03/01',
     manager: '정영업',
@@ -84,9 +88,9 @@ const detailMap = {
     totalAmount: '$15,600',
     revisionHistory: [],
   },
-}
+})
 
-const detail = computed(() => detailMap[route.params.id] ?? null)
+const detail = computed(() => detailMap.value[route.params.id] ?? null)
 
 const fallbackClientRowsSource = [
   { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아', buyers: ['Mr. Ahmad Razak (Purchasing Manager)', 'Ms. Siti Nurhaliza (Director)'] },
@@ -101,6 +105,10 @@ const clientRows = computed(() => {
   return clientRowsSource.value.filter((client) => [client.id, client.name, client.country].some((value) => value.toLowerCase().includes(keyword)))
 })
 
+const incotermsLabel = computed(() => (
+  detail.value ? formatIncotermsLabel(detail.value.incoterms, detail.value.namedPlace) : '-'
+))
+
 const previewFields = computed(() => {
   if (!detail.value) return []
 
@@ -108,11 +116,47 @@ const previewFields = computed(() => {
     { label: '거래처', value: detail.value.clientName },
     { label: '바이어', value: detail.value.buyer },
     { label: '통화', value: detail.value.currency },
-    { label: '인코텀즈', value: detail.value.incoterms },
+    { label: '인코텀즈', value: incotermsLabel.value },
     { label: '납기일', value: detail.value.deliveryDate },
     { label: '발행일', value: detail.value.issueDate },
   ]
 })
+
+const currencySymbolMap = {
+  KRW: '₩',
+  USD: '$',
+  EUR: '€',
+  JPY: '¥',
+  GBP: '£',
+  AUD: 'A$',
+  CAD: 'C$',
+  SGD: 'S$',
+  AED: 'AED ',
+  CNY: '¥',
+  MYR: 'RM ',
+  THB: '฿',
+  VND: '₫',
+  IDR: 'Rp ',
+  INR: '₹',
+  SAR: 'SAR ',
+  BRL: 'R$',
+  SEK: 'kr ',
+  CHF: 'CHF ',
+}
+
+function parseNumericValue(value) {
+  const numeric = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function formatCurrencyValue(currency, value) {
+  const symbol = currencySymbolMap[currency] ?? `${currency} `
+  return `${symbol}${Math.round(value).toLocaleString('en-US')}`
+}
+
+function formatSlashDate(value) {
+  return value ? value.replaceAll('-', '/') : '-'
+}
 
 async function loadClientRows() {
   try {
@@ -165,48 +209,14 @@ function handleDelete() {
   deleteOpen.value = true
 }
 
-function buildLegacyOutputFields() {
-  if (!detail.value) return []
-
-  return [
-    { label: '거래처', value: detail.value.clientName },
-    { label: '바이어', value: detail.value.buyer },
-    { label: '통화', value: detail.value.currency },
-    { label: '인코텀즈', value: detail.value.incoterms },
-    { label: '납기일', value: detail.value.deliveryDate },
-    { label: '발행일', value: detail.value.issueDate },
-  ]
-}
-
-function buildLegacyLineItems() {
-  return detail.value?.items?.map((item) => ({
-    name: item.name,
-    quantity: item.quantity,
-    unitPrice: item.unitPrice,
-    amount: item.amount,
-  })) ?? []
-}
-
 function handlePrint() {
   if (!detail.value) return
-  openDocumentOutput({
-    title: 'PROFORMA INVOICE',
-    documentId: detail.value.id,
-    fields: buildLegacyOutputFields(),
-    lineItems: buildLegacyLineItems(),
-    autoPrint: true,
-  })
+  openDocumentOutputByType('PI', detail.value, true)
 }
 
 function handlePdfDownload() {
   if (!detail.value) return
-  const opened = openDocumentOutput({
-    title: 'PROFORMA INVOICE',
-    documentId: detail.value.id,
-    fields: buildLegacyOutputFields(),
-    lineItems: buildLegacyLineItems(),
-    autoPrint: false,
-  })
+  const opened = openDocumentOutputByType('PI', detail.value, false)
   if (opened) {
     info('브라우저 인쇄 창에서 "PDF로 저장"을 선택하세요.', 'PDF')
   }
@@ -217,7 +227,43 @@ function handlePreviewPrint() {
   handlePrint()
 }
 
-function handleSave() {
+function handleSave(formValue) {
+  if (!detail.value) return
+
+  const normalizedIncoterms = resolveIncotermState(formValue.incoterms, formValue.namedPlace)
+  const normalizedItems = (formValue.items ?? []).map((item) => {
+    const quantity = String(item.qty ?? item.quantity ?? '')
+    const unitPriceValue = parseNumericValue(item.unitPrice)
+    const amountValue = parseNumericValue(item.amount)
+
+    return {
+      name: item.name ?? '',
+      quantity,
+      unit: item.unit ?? '',
+      unitPrice: formatCurrencyValue(formValue.currency, unitPriceValue),
+      amount: formatCurrencyValue(formValue.currency, amountValue),
+      remark: item.remark ?? '',
+    }
+  })
+
+  const totalAmount = normalizedItems.reduce((sum, item) => sum + parseNumericValue(item.amount), 0)
+
+  detailMap.value = {
+    ...detailMap.value,
+    [detail.value.id]: {
+      ...detail.value,
+      clientName: formValue.clientName,
+      buyer: formValue.buyerName,
+      currency: formValue.currency,
+      incoterms: normalizedIncoterms.code,
+      namedPlace: normalizedIncoterms.namedPlace,
+      issueDate: formatSlashDate(formValue.issueDate),
+      deliveryDate: formatSlashDate(formValue.deliveryDate),
+      items: normalizedItems,
+      totalAmount: formatCurrencyValue(formValue.currency, totalAmount),
+    },
+  }
+
   formOpen.value = false
   success(`${detail.value?.id} 수정 폼이 연결되었습니다.`)
 }
@@ -302,7 +348,7 @@ function confirmDelete() {
             </div>
             <div>
               <span class="text-slate-500">인코텀즈</span>
-              <div class="mt-0.5">{{ detail.incoterms }}</div>
+              <div class="mt-0.5">{{ incotermsLabel }}</div>
             </div>
             <div>
               <span class="text-slate-500">납기일</span>
@@ -406,6 +452,7 @@ function confirmDelete() {
         country: selectedClient?.country ?? '',
         currency: detail.currency,
         incoterms: detail.incoterms,
+        namedPlace: detail.namedPlace,
         issueDate: detail.issueDate,
         deliveryDate: detail.deliveryDate,
         items: detail.items.map((item) => ({

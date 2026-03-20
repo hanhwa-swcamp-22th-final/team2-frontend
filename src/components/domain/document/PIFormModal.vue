@@ -6,16 +6,25 @@ import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
+import BaseTextarea from '@/components/common/BaseTextarea.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import {
   fetchBuyersByClient,
   fetchClients,
   fetchCountries,
   fetchCurrencies,
+  fetchIncoterms,
   fetchItems,
   fetchUsers,
 } from '@/api/master'
 import { useToast } from '@/composables/useToast'
+import {
+  fallbackIncotermsCatalog,
+  formatIncotermsLabel,
+  getIncotermMeta,
+  resolveIncotermState,
+  shippingStageDefinitions,
+} from '@/utils/incoterms'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -28,7 +37,6 @@ const emit = defineEmits(['close', 'save', 'open-client-search'])
 const { error, success } = useToast()
 
 const defaultCurrencyOptions = ['USD', 'EUR', 'JPY', 'GBP', 'AUD', 'CAD', 'SGD', 'AED', 'CNY', 'MYR', 'THB', 'VND', 'IDR', 'INR', 'SAR', 'BRL', 'SEK', 'CHF']
-const incotermsOptions = ['EXW', 'FCA', 'FAS', 'FOB', 'CFR', 'CIF', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP']
 const defaultBuyerOptions = [
   'Mr. Ahmad Razak (Purchasing Manager)',
   'Ms. Siti Nurhaliza (Director)',
@@ -152,6 +160,7 @@ function createInitialForm() {
     issueDate: getTodayDateInput(),
     deliveryDate: '',
     incoterms: 'FOB',
+    namedPlace: 'BUSAN',
     reason: '',
     approver: defaultApproverOptions[0],
     items: [],
@@ -178,10 +187,33 @@ const buyerRows = ref([...defaultBuyerOptions])
 const currencyOptions = ref([...defaultCurrencyOptions])
 const approverOptions = ref([...defaultApproverOptions])
 const productCatalog = ref([...defaultProductCatalog])
+const incotermCatalog = ref([...fallbackIncotermsCatalog])
 const exchangeRateHint = ref(createExchangeRateHint('USD', getTodayDateInput()))
 const currentCurrency = computed(() => form.value.currency || 'USD')
 
 const currentCurrencySymbol = computed(() => currencySymbolMap[currentCurrency.value] ?? currentCurrency.value)
+
+const selectedIncotermState = computed(() => resolveIncotermState(
+  form.value.incoterms,
+  form.value.namedPlace,
+  incotermCatalog.value,
+))
+
+const selectedIncotermMeta = computed(() => selectedIncotermState.value.meta)
+const sellerSegments = computed(() => selectedIncotermMeta.value?.sellerSegments ?? 6)
+const buyerSegments = computed(() => Math.max(0, shippingStageDefinitions.length - sellerSegments.value))
+const selectedIncotermIndex = computed(() => {
+  const index = incotermCatalog.value.findIndex((item) => item.code === selectedIncotermState.value.code)
+  return index >= 0 ? index : 0
+})
+const incotermProgressStyle = computed(() => {
+  const denominator = Math.max(incotermCatalog.value.length - 1, 1)
+  const ratio = selectedIncotermIndex.value / denominator
+  return {
+    width: `calc((100% - 28px) * ${ratio})`,
+  }
+})
+const selectedIncotermLabel = computed(() => formatIncotermsLabel(form.value.incoterms, form.value.namedPlace))
 
 const itemTableColumns = computed(() => [
   { key: 'name', label: '품목명', width: '32%' },
@@ -229,12 +261,13 @@ function mapBuyerLabel(buyer) {
 
 async function loadReferenceData() {
   try {
-    const [clientsData, countriesData, currenciesData, itemsData, usersData] = await Promise.all([
+    const [clientsData, countriesData, currenciesData, itemsData, usersData, incotermsData] = await Promise.all([
       fetchClients(),
       fetchCountries(),
       fetchCurrencies(),
       fetchItems(),
       fetchUsers(),
+      fetchIncoterms(),
     ])
 
     const countryMap = new Map(
@@ -259,6 +292,19 @@ async function loadReferenceData() {
         unitPrice: Number(item.unitPrice ?? 0),
       }))
       .filter((item) => item.name)
+    incotermCatalog.value = incotermsData
+      .map((item) => ({
+        id: String(item.id),
+        code: item.code,
+        name: item.name,
+        nameKr: item.nameKr,
+        description: item.description,
+        transportMode: item.transportMode,
+        sellerSegments: Number(item.sellerSegments ?? 6),
+        defaultNamedPlace: item.defaultNamedPlace ?? '',
+        namedPlacePlaceholder: item.namedPlacePlaceholder ?? '',
+      }))
+      .filter((item) => item.code)
 
     const activeUsers = usersData
       .filter((user) => user.status === '재직')
@@ -274,6 +320,7 @@ async function loadReferenceData() {
     }
   } catch {
     // json-server가 내려가 있어도 폼이 열리도록 기본값 유지
+    incotermCatalog.value = [...fallbackIncotermsCatalog]
   }
 }
 
@@ -424,6 +471,22 @@ function refreshAutoPricedItems() {
   }
 }
 
+function selectIncoterm(code) {
+  const previousMeta = getIncotermMeta(form.value.incoterms, incotermCatalog.value)
+  const meta = getIncotermMeta(code, incotermCatalog.value)
+  const currentNamedPlace = String(form.value.namedPlace ?? '').trim()
+  const shouldReplaceNamedPlace = !currentNamedPlace || currentNamedPlace === (previousMeta.defaultNamedPlace ?? '')
+
+  form.value.incoterms = code
+
+  if (shouldReplaceNamedPlace) {
+    form.value.namedPlace = meta.defaultNamedPlace ?? ''
+  }
+
+  clearError('incoterms')
+  clearError('namedPlace')
+}
+
 function validateForm() {
   const errors = {}
 
@@ -449,6 +512,10 @@ function validateForm() {
 
   if (!form.value.incoterms.trim()) {
     errors.incoterms = '인코텀즈를 선택하세요.'
+  }
+
+  if (!form.value.namedPlace.trim()) {
+    errors.namedPlace = 'Named Place를 입력하세요.'
   }
 
   if (!form.value.items.length) {
@@ -518,13 +585,20 @@ async function initializeForm() {
   validationErrors.value = {}
 
   if (props.mode === 'edit' && props.document) {
+    const normalizedIncoterms = resolveIncotermState(
+      props.document.incoterms,
+      props.document.namedPlace,
+      incotermCatalog.value,
+    )
+
     form.value = {
       clientName: props.document.clientName ?? '',
       buyerName: props.document.buyerName ?? 'Mr. Ahmad Razak (Purchasing Manager)',
       currency: props.document.currency ?? 'USD',
       issueDate: props.document.issueDate?.replaceAll('/', '-') ?? getTodayDateInput(),
       deliveryDate: props.document.deliveryDate?.replaceAll('/', '-') ?? '',
-      incoterms: props.document.incoterms ?? 'FOB',
+      incoterms: normalizedIncoterms.code || 'FOB',
+      namedPlace: normalizedIncoterms.namedPlace || getIncotermMeta(normalizedIncoterms.code, incotermCatalog.value).defaultNamedPlace || '',
       reason: '',
       approver: getDefaultApprover(),
       items: props.document.items?.map((item, index) => ({
@@ -546,6 +620,9 @@ async function initializeForm() {
 
   form.value = createInitialForm()
   await loadReferenceData()
+  if (!form.value.namedPlace) {
+    form.value.namedPlace = getIncotermMeta(form.value.incoterms, incotermCatalog.value).defaultNamedPlace ?? ''
+  }
   await loadBuyerOptions()
 }
 
@@ -725,57 +802,52 @@ watch(
         <input v-model="form.incoterms" type="hidden">
         <div class="rounded-[10px] border border-slate-200 bg-slate-50 px-3 py-3 select-none">
           <div class="mb-2 flex items-center gap-1.5">
-            <span class="text-[10px] font-bold text-emerald-500"><i class="fas fa-building mr-0.5"></i>매도인</span>
+            <span class="text-[10px] font-bold text-emerald-500"><i class="fas fa-building mr-0.5"></i>인도자</span>
             <span class="h-px flex-1 bg-gradient-to-r from-emerald-500 to-blue-500"></span>
-            <span class="text-[10px] font-bold text-blue-500">매수인 <i class="fas fa-user ml-0.5"></i></span>
+            <span class="text-[10px] font-bold text-blue-500">인수자 <i class="fas fa-user ml-0.5"></i></span>
           </div>
 
           <div class="mb-1.5 flex h-[18px] gap-px overflow-hidden rounded-md">
-            <div class="flex flex-1 items-center justify-center bg-emerald-500" title="포장"><i class="fas fa-box text-[7px] text-white/90"></i></div>
-            <div class="flex flex-1 items-center justify-center bg-emerald-500" title="적하"><i class="fas fa-dolly text-[7px] text-white/90"></i></div>
-            <div class="flex flex-1 items-center justify-center bg-emerald-500" title="내륙운송"><i class="fas fa-truck text-[7px] text-white/90"></i></div>
-            <div class="flex flex-1 items-center justify-center bg-emerald-500" title="수출통관"><i class="fas fa-stamp text-[7px] text-white/90"></i></div>
-            <div class="flex flex-1 items-center justify-center bg-emerald-500" title="선적터미널"><i class="fas fa-warehouse text-[7px] text-white/90"></i></div>
-            <div class="flex flex-1 items-center justify-center bg-emerald-500" title="본선적재"><i class="fas fa-ship text-[7px] text-white/90"></i></div>
-            <div class="flex flex-1 items-center justify-center bg-blue-500" title="해상운송"><i class="fas fa-water text-[7px] text-white/90"></i></div>
-            <div class="flex flex-1 items-center justify-center bg-blue-500" title="도착터미널"><i class="fas fa-anchor text-[7px] text-white/90"></i></div>
-            <div class="flex flex-1 items-center justify-center bg-blue-500" title="수입통관"><i class="fas fa-passport text-[7px] text-white/90"></i></div>
-            <div class="flex flex-1 items-center justify-center bg-blue-500" title="내륙운송"><i class="fas fa-truck-moving text-[7px] text-white/90"></i></div>
-            <div class="flex flex-1 items-center justify-center bg-blue-500" title="양하"><i class="fas fa-boxes-stacked text-[7px] text-white/90"></i></div>
+            <div
+              v-for="(stage, index) in shippingStageDefinitions"
+              :key="stage.key"
+              class="flex flex-1 items-center justify-center"
+              :class="index < sellerSegments ? 'bg-emerald-500' : 'bg-blue-500'"
+              :title="stage.label"
+            >
+              <i :class="['fas', stage.icon, 'text-[7px] text-white/90']" aria-hidden="true"></i>
+            </div>
           </div>
 
           <div class="mb-2 flex gap-px">
-            <div class="flex-1 overflow-hidden whitespace-nowrap text-center text-[6px] font-semibold leading-tight text-emerald-500">포장</div>
-            <div class="flex-1 overflow-hidden whitespace-nowrap text-center text-[6px] font-semibold leading-tight text-emerald-500">적하</div>
-            <div class="flex-1 overflow-hidden whitespace-nowrap text-center text-[6px] font-semibold leading-tight text-emerald-500">내륙운송</div>
-            <div class="flex-1 overflow-hidden whitespace-nowrap text-center text-[6px] font-semibold leading-tight text-emerald-500">수출통관</div>
-            <div class="flex-1 overflow-hidden whitespace-nowrap text-center text-[6px] font-semibold leading-tight text-emerald-500">선적터미널</div>
-            <div class="flex-1 overflow-hidden whitespace-nowrap text-center text-[6px] font-semibold leading-tight text-emerald-500">본선적재</div>
-            <div class="flex-1 overflow-hidden whitespace-nowrap text-center text-[6px] font-semibold leading-tight text-blue-500">해상운송</div>
-            <div class="flex-1 overflow-hidden whitespace-nowrap text-center text-[6px] font-semibold leading-tight text-blue-500">도착터미널</div>
-            <div class="flex-1 overflow-hidden whitespace-nowrap text-center text-[6px] font-semibold leading-tight text-blue-500">수입통관</div>
-            <div class="flex-1 overflow-hidden whitespace-nowrap text-center text-[6px] font-semibold leading-tight text-blue-500">내륙운송</div>
-            <div class="flex-1 overflow-hidden whitespace-nowrap text-center text-[6px] font-semibold leading-tight text-blue-500">양하</div>
+            <div
+              v-for="(stage, index) in shippingStageDefinitions"
+              :key="`${stage.key}-label`"
+              class="flex-1 overflow-hidden whitespace-nowrap text-center text-[6px] font-semibold leading-tight"
+              :class="index < sellerSegments ? 'text-emerald-500' : 'text-blue-500'"
+            >
+              {{ stage.label }}
+            </div>
           </div>
 
           <div class="mb-2 px-1">
-            <div class="relative cursor-pointer">
+            <div class="relative cursor-pointer touch-none">
               <div class="absolute left-[14px] right-[14px] top-3 h-[5px] rounded bg-slate-200"></div>
-              <div class="absolute left-[14px] top-3 h-[5px] w-[30%] rounded bg-emerald-500 transition-all"></div>
+              <div class="absolute left-[14px] top-3 h-[5px] rounded bg-emerald-500 transition-all duration-150" :style="incotermProgressStyle"></div>
               <div class="relative z-[1] flex justify-between">
                 <div
-                  v-for="option in incotermsOptions"
-                  :key="option"
+                  v-for="option in incotermCatalog"
+                  :key="option.code"
                   class="flex flex-1 cursor-pointer flex-col items-center"
-                  @click="form.incoterms = option; clearError('incoterms')"
+                  @click="selectIncoterm(option.code)"
                 >
                   <div
-                    :class="form.incoterms === option ? 'mt-[2px] flex h-6 w-6 items-center justify-center rounded-full border-[3px] border-white bg-emerald-500 text-[7px] font-extrabold text-white shadow-[0_2px_6px_#10B98144]' : 'mt-[9px] flex h-[10px] w-[10px] items-center justify-center rounded-full border-2 border-blue-500 bg-white'"
+                    :class="selectedIncotermState.code === option.code ? 'mt-[2px] flex h-6 w-6 items-center justify-center rounded-full border-[3px] border-white bg-emerald-500 text-[7px] font-extrabold text-white shadow-[0_2px_6px_#10B98144]' : 'mt-[9px] flex h-[10px] w-[10px] items-center justify-center rounded-full border-2 border-blue-500 bg-white'"
                   >
-                    <span v-if="form.incoterms === option">{{ option[0] }}</span>
+                    <span v-if="selectedIncotermState.code === option.code">{{ option.code[0] }}</span>
                   </div>
-                  <div :class="form.incoterms === option ? 'mt-0.5 whitespace-nowrap text-[9px] font-extrabold text-emerald-500' : 'mt-0.5 whitespace-nowrap text-[7px] font-medium text-slate-400'">
-                    {{ option }}
+                  <div :class="selectedIncotermState.code === option.code ? 'mt-0.5 whitespace-nowrap text-[9px] font-extrabold text-emerald-500' : 'mt-0.5 whitespace-nowrap text-[7px] font-medium text-slate-400'">
+                    {{ option.code }}
                   </div>
                 </div>
               </div>
@@ -784,25 +856,43 @@ watch(
 
           <div class="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-2">
             <div class="flex h-12 min-w-12 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-blue-500">
-              <span class="text-sm font-black text-white">{{ form.incoterms }}</span>
+              <span class="text-sm font-black text-white">{{ selectedIncotermState.code }}</span>
             </div>
             <div class="min-w-0 flex-1">
               <div class="text-xs font-bold text-slate-800">
-                본선인도
-                <span class="ml-1 text-[10px] font-normal text-slate-500">Free On Board</span>
+                {{ selectedIncotermMeta.nameKr }}
+                <span class="ml-1 text-[10px] font-normal text-slate-500">{{ selectedIncotermMeta.name }}</span>
               </div>
               <div class="mt-0.5 line-clamp-2 text-[9px] leading-[1.3] text-slate-500">
-                매도인이 본선 갑판에 물품을 적재하여 인도. 해상/내수로 전용.
+                {{ selectedIncotermMeta.description }}
               </div>
               <div class="mt-1 flex items-center gap-1.5">
-                <span class="text-[8px] font-bold text-emerald-500">매도인 6구간</span>
-                <span class="text-[8px] font-bold text-blue-500">매수인 5구간</span>
-                <span class="text-[8px] text-slate-400"><i class="fas fa-ship mr-0.5"></i>해상</span>
+                <span class="text-[8px] font-bold text-emerald-500">인도자 {{ sellerSegments }}구간</span>
+                <span class="text-[8px] font-bold text-blue-500">인수자 {{ buyerSegments }}구간</span>
+                <span class="text-[8px] text-slate-400"><i class="fas fa-ship mr-0.5"></i>{{ selectedIncotermMeta.transportMode }}</span>
               </div>
+            </div>
+          </div>
+
+          <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+            <div>
+              <label class="mb-1 block text-[11px] font-semibold text-slate-600">적용 조건</label>
+              <div class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700">
+                {{ selectedIncotermLabel }}
+              </div>
+            </div>
+            <div>
+              <label class="mb-1 block text-[11px] font-semibold text-slate-600">Named Place <span class="text-red-500">*</span></label>
+              <BaseTextField
+                v-model="form.namedPlace"
+                :placeholder="selectedIncotermMeta.namedPlacePlaceholder || '예: BUSAN'"
+                @update:modelValue="clearError('namedPlace')"
+              />
             </div>
           </div>
         </div>
         <p v-if="getFieldError('incoterms')" class="mt-2 text-xs text-red-500">{{ getFieldError('incoterms') }}</p>
+        <p v-if="getFieldError('namedPlace')" class="mt-1 text-xs text-red-500">{{ getFieldError('namedPlace') }}</p>
       </div>
 
       <div>
@@ -908,12 +998,13 @@ watch(
           {{ reasonFieldLabel }}
           <span v-if="isReasonRequired" class="text-red-500">*</span>
         </label>
-        <textarea
+        <BaseTextarea
           v-model="form.reason"
-          class="h-24 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink transition placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15"
           :placeholder="reasonFieldPlaceholder"
-          @input="clearError('reason')"
-        ></textarea>
+          :rows="4"
+          resize="none"
+          @update:modelValue="clearError('reason')"
+        />
         <p v-if="getFieldError('reason')" class="mt-2 text-xs text-red-500">{{ getFieldError('reason') }}</p>
       </div>
     </div>
