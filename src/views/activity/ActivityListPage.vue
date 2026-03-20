@@ -11,7 +11,7 @@ import BasePagination from '@/components/common/BasePagination.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
-import DateRangeField from '@/components/common/DateRangeField.vue'
+import DateField from '@/components/common/DateField.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
@@ -103,8 +103,10 @@ const filteredActivities = computed(() => {
       || client?.name.includes(applied.value.title) || client?.nameKr.includes(applied.value.title)
     const matchAuthor = !applied.value.author || a.author === applied.value.author
     const matchPo     = !applied.value.po     || (a.poId ?? '').includes(applied.value.po)
-    const matchFrom   = !applied.value.dateFrom || a.date >= applied.value.dateFrom
-    const matchTo     = !applied.value.dateTo   || a.date <= applied.value.dateTo
+    const dateFrom = applied.value.dateFrom.replaceAll('-', '/')
+    const dateTo   = applied.value.dateTo.replaceAll('-', '/')
+    const matchFrom   = !dateFrom || a.date >= dateFrom
+    const matchTo     = !dateTo   || a.date <= dateTo
     return matchType && matchTitle && matchAuthor && matchPo && matchFrom && matchTo
   })
 })
@@ -231,21 +233,15 @@ const columns = [
 
     <!-- 상세검색 패널 -->
     <CollapsibleFilterCard :open="isFilterOpen" @toggle="isFilterOpen = !isFilterOpen">
-      <div class="grid grid-cols-2 gap-x-4 gap-y-4 md:grid-cols-4">
-        <!-- 날짜 기간 -->
-        <div class="col-span-2">
-          <FormField label="날짜 기간">
-            <DateRangeField
-              :start="filterDateFrom"
-              :end="filterDateTo"
-              @update:start="filterDateFrom = $event"
-              @update:end="filterDateTo = $event"
-              @reset="filterDateFrom = ''; filterDateTo = ''"
-            />
-          </FormField>
-        </div>
+      <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-4">
+        <FormField label="날짜 기간" class="col-span-2">
+          <div class="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
+            <DateField v-model="filterDateFrom" />
+            <span class="text-center text-sm text-slate-400 sm:pb-2">~</span>
+            <DateField v-model="filterDateTo" />
+          </div>
+        </FormField>
 
-        <!-- 작성자 -->
         <FormField label="작성자">
           <SearchableCombobox
             v-model="filterAuthor"
@@ -254,7 +250,6 @@ const columns = [
           />
         </FormField>
 
-        <!-- PO -->
         <FormField label="PO">
           <SearchTriggerField
             v-model="filterPo"
@@ -263,7 +258,6 @@ const columns = [
           />
         </FormField>
 
-        <!-- 유형 -->
         <FormField label="유형">
           <SearchableCombobox
             v-model="filterType"
@@ -273,9 +267,19 @@ const columns = [
         </FormField>
       </div>
 
-      <div class="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-3">
-        <BaseButton variant="secondary" size="sm" @click="resetFilters">초기화</BaseButton>
-        <BaseButton size="sm" @click="applySearch">검색</BaseButton>
+      <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+        <BaseButton variant="secondary" size="sm" @click="resetFilters">
+          <template #leading>
+            <i class="fas fa-undo text-xs" aria-hidden="true"></i>
+          </template>
+          초기화
+        </BaseButton>
+        <BaseButton size="sm" @click="applySearch">
+          <template #leading>
+            <i class="fas fa-search text-xs" aria-hidden="true"></i>
+          </template>
+          검색
+        </BaseButton>
       </div>
     </CollapsibleFilterCard>
 
