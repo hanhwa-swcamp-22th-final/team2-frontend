@@ -24,7 +24,7 @@ import { resolveIncotermState } from '@/utils/incoterms'
 const router = useRouter()
 const { success } = useToast()
 
-const isAdvancedOpen = ref(true)
+const isAdvancedOpen = ref(false)
 const formOpen = ref(false)
 const formMode = ref('create')
 const selectedRow = ref(null)

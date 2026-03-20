@@ -22,7 +22,7 @@ import { useToast } from '@/composables/useToast'
 const router = useRouter()
 const { success } = useToast()
 
-const isAdvancedOpen = ref(true)
+const isAdvancedOpen = ref(false)
 const formOpen = ref(false)
 const formMode = ref('create')
 const selectedRow = ref(null)

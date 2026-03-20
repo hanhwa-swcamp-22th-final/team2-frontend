@@ -16,7 +16,7 @@ import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
 
-const isAdvancedOpen = ref(true)
+const isAdvancedOpen = ref(false)
 const previewTarget = ref(null)
 const clientSearchOpen = ref(false)
 const clientSearchKeyword = ref('')
