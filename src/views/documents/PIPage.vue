@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
@@ -7,14 +7,17 @@ import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DateField from '@/components/common/DateField.vue'
-import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import TableActions from '@/components/common/TableActions.vue'
 import PIFormModal from '@/components/domain/document/PIFormModal.vue'
+import { fetchBuyers, fetchClients, fetchCountries, fetchCurrencies } from '@/api/master'
+import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
@@ -33,24 +36,6 @@ const codeSearchKeyword = ref('')
 const productSearchOpen = ref(false)
 const productSearchKeyword = ref('')
 const clientSearchContext = ref('filter')
-
-const filters = ref({
-  keyword: '',
-  registeredFrom: '',
-  registeredTo: '',
-  manager: '',
-  clientName: '',
-  code: '',
-  productName: '',
-  country: '',
-  status: '',
-  deliveryFrom: '',
-  deliveryTo: '',
-})
-
-const appliedFilters = ref({
-  ...filters.value,
-})
 
 const managerOptions = [
   { value: '김영업', label: '김영업' },
@@ -74,11 +59,12 @@ const statusOptions = [
   { value: '확정', label: '확정' },
   { value: '취소', label: '취소' },
 ]
-const clientRowsSource = [
-  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아', buyers: ['Mr. Ahmad Razak (Purchasing Manager)', 'Ms. Siti Nurhaliza (Director)'] },
-  { id: 'CL002', name: 'TechBridge GmbH', country: '독일', buyers: ['Ms. Hanna Schneider (Procurement Lead)'] },
-  { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국', buyers: ['Mr. Jacob Miller (Import Manager)'] },
+const fallbackClientRowsSource = [
+  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아', currency: 'USD', buyers: ['Mr. Ahmad Razak (Purchasing Manager)', 'Ms. Siti Nurhaliza (Director)'] },
+  { id: 'CL002', name: 'TechBridge GmbH', country: '독일', currency: 'EUR', buyers: ['Ms. Hanna Schneider (Procurement Lead)'] },
+  { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국', currency: 'USD', buyers: ['Mr. Jacob Miller (Import Manager)'] },
 ]
+const clientRowsSource = ref([...fallbackClientRowsSource])
 
 const columns = [
   { key: 'id', label: 'PI번호', align: 'center', width: '140px' },
@@ -98,101 +84,157 @@ const initialRows = [
     id: 'PI26001',
     issueDate: '2026/02/01',
     clientName: 'COOLSAY SDN BHD',
+    buyerName: 'Mr. Ahmad Razak (Purchasing Manager)',
+    currency: 'USD',
     country: '말레이시아',
     itemName: 'H-Beam 482x300x11x15',
     amount: '$42,400',
+    incoterms: 'FOB',
     manager: '김영업',
     status: '확정',
     deliveryDate: '2026/04/15',
+    items: [
+      { name: 'H-Beam 482x300x11x15', qty: '30', unit: 'EA', unitPrice: '850', amount: '25500', remark: '' },
+      { name: 'Lubricant Oil SAE 10W-40', qty: '200', unit: 'EA', unitPrice: '30', amount: '6000', remark: '' },
+      { name: 'Industrial Grease EP-2', qty: '100', unit: 'EA', unitPrice: '45', amount: '4500', remark: '' },
+      { name: 'Hydraulic Oil ISO VG 46', qty: '32', unit: 'EA', unitPrice: '200', amount: '6400', remark: '' },
+    ],
   },
   {
     id: 'PI26002',
     issueDate: '2026/02/15',
     clientName: 'TechBridge GmbH',
+    buyerName: 'Ms. Hanna Schneider (Procurement Lead)',
+    currency: 'EUR',
     country: '독일',
     itemName: 'H-Beam 482x300x11x15',
     amount: '€68,400',
+    incoterms: 'FOB',
     manager: '김영업',
     status: '발송',
     deliveryDate: '2026/05/20',
+    items: [
+      { name: 'H-Beam 482x300x11x15', qty: '40', unit: 'EA', unitPrice: '900', amount: '36000', remark: '' },
+      { name: 'Steel Girder 340x250x9x14', qty: '18', unit: 'EA', unitPrice: '1800', amount: '32400', remark: '' },
+    ],
   },
   {
     id: 'PI26003',
     issueDate: '2026/03/01',
     clientName: 'Pacific Trading Inc.',
+    buyerName: 'Mr. Jacob Miller (Import Manager)',
+    currency: 'USD',
     country: '미국',
     itemName: 'Lubricant Oil SAE 10W-40',
     amount: '$15,600',
+    incoterms: 'FOB',
     manager: '정영업',
     status: '초안',
     deliveryDate: '2026/06/01',
+    items: [
+      { name: 'Lubricant Oil SAE 10W-40', qty: '320', unit: 'EA', unitPrice: '30', amount: '9600', remark: '' },
+      { name: 'Industrial Grease EP-2', qty: '120', unit: 'EA', unitPrice: '50', amount: '6000', remark: '' },
+    ],
   },
   {
     id: 'PI26004',
     issueDate: '2025/12/10',
     clientName: 'Viet Steel JSC',
+    buyerName: 'Purchasing Team',
+    currency: 'USD',
     country: '베트남',
     itemName: 'H-Beam 482x300x11x15',
     amount: '$53,600',
+    incoterms: 'FOB',
     manager: '정영업',
     status: '확정',
     deliveryDate: '2026/04/30',
+    items: [
+      { name: 'H-Beam 482x300x11x15', qty: '40', unit: 'EA', unitPrice: '1340', amount: '53600', remark: '' },
+    ],
   },
   {
     id: 'PI26005',
     issueDate: '2026/01/15',
     clientName: 'Siam Industrial Co., Ltd.',
+    buyerName: 'Purchasing Team',
+    currency: 'USD',
     country: '태국',
     itemName: 'H-Beam 488x300x11x18',
     amount: '$38,850',
+    incoterms: 'FOB',
     manager: '김영업',
     status: '확정',
     deliveryDate: '2026/05/15',
+    items: [
+      { name: 'H-Beam 488x300x11x18', qty: '21', unit: 'EA', unitPrice: '1850', amount: '38850', remark: '' },
+    ],
   },
   {
     id: 'PI26006',
     issueDate: '2026/03/05',
     clientName: 'Meridian Engineering Pte Ltd',
+    buyerName: 'Procurement Team',
+    currency: 'USD',
     country: '싱가포르',
     itemName: 'Seamless Steel Pipe 168x7',
     amount: '$29,700',
+    incoterms: 'FOB',
     manager: '정영업',
     status: '발송',
     deliveryDate: '2026/06/10',
+    items: [
+      { name: 'Seamless Steel Pipe 168x7', qty: '90', unit: 'EA', unitPrice: '330', amount: '29700', remark: '' },
+    ],
   },
   {
     id: 'PI26007',
     issueDate: '2026/01/20',
     clientName: 'Tata Steel Traders Pvt Ltd',
+    buyerName: 'Procurement Team',
+    currency: 'USD',
     country: '인도',
     itemName: 'H-Beam 482x300x11x15',
     amount: '$76,400',
+    incoterms: 'FOB',
     manager: '김영업',
     status: '확정',
     deliveryDate: '2026/05/30',
+    items: [
+      { name: 'H-Beam 482x300x11x15', qty: '40', unit: 'EA', unitPrice: '1910', amount: '76400', remark: '' },
+    ],
   },
   {
     id: 'PI26008',
     issueDate: '2026/03/10',
     clientName: 'OzSteel Supplies Pty Ltd',
+    buyerName: 'Procurement Team',
+    currency: 'USD',
     country: '호주',
     itemName: 'Hydraulic Cylinder 100x500',
     amount: '$23,960',
+    incoterms: 'FOB',
     manager: '정영업',
     status: '초안',
     deliveryDate: '2026/06/30',
+    items: [
+      { name: 'Hydraulic Cylinder 100x500', qty: '28', unit: 'EA', unitPrice: '820', amount: '22960', remark: '' },
+      { name: 'Gear Pump GP-20', qty: '4', unit: 'EA', unitPrice: '250', amount: '1000', remark: '' },
+    ],
   },
 ]
 
-function normalizeDate(value) {
-  return String(value ?? '').replaceAll('/', '-')
-}
-
 const rowsData = ref([...initialRows])
+const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
+  keywordFields: ['id', 'clientName', 'country', 'itemName', 'amount', 'manager', 'status', 'issueDate', 'deliveryDate'],
+  issueDateField: 'issueDate',
+  deliveryDateField: 'deliveryDate',
+})
+
 const clientRows = computed(() => {
   const keyword = clientSearchKeyword.value.trim().toLowerCase()
-  if (!keyword) return clientRowsSource
-  return clientRowsSource.filter((client) => [client.id, client.name, client.country].some((value) => value.toLowerCase().includes(keyword)))
+  if (!keyword) return clientRowsSource.value
+  return clientRowsSource.value.filter((client) => [client.id, client.name, client.country].some((value) => value.toLowerCase().includes(keyword)))
 })
 
 const codeRows = computed(() => {
@@ -209,64 +251,66 @@ const productRows = computed(() => {
   return rows.filter((row) => [row.name, row.country, row.manager].some((value) => String(value).toLowerCase().includes(keyword)))
 })
 
-const filteredRows = computed(() => {
-  return rowsData.value.filter((row) => {
-    const keyword = appliedFilters.value.keyword.trim().toLowerCase()
+const currencySymbolMap = {
+  USD: '$',
+  EUR: '€',
+  JPY: '¥',
+  GBP: '£',
+  AUD: 'A$',
+  CAD: 'C$',
+  SGD: 'S$',
+  AED: 'AED ',
+  CNY: '¥',
+  MYR: 'RM ',
+  THB: '฿',
+  VND: '₫',
+  IDR: 'Rp ',
+  INR: '₹',
+  SAR: 'SAR ',
+  BRL: 'R$',
+  SEK: 'kr ',
+  CHF: 'CHF ',
+}
 
-    if (keyword) {
-      const keywordMatched = [
-        row.id,
-        row.clientName,
-        row.country,
-        row.itemName,
-        row.amount,
-        row.manager,
-        row.status,
-        row.issueDate,
-        row.deliveryDate,
-      ].some((value) => String(value).toLowerCase().includes(keyword))
+async function loadClientRows() {
+  try {
+    const [clientsData, countriesData, buyersData, currenciesData] = await Promise.all([
+      fetchClients(),
+      fetchCountries(),
+      fetchBuyers(),
+      fetchCurrencies(),
+    ])
 
-      if (!keywordMatched) return false
-    }
+    const countryMap = new Map(
+      countriesData.map((country) => [String(country.id), country.nameKr ?? country.name ?? '-']),
+    )
+    const currencyMap = new Map(
+      currenciesData.map((currency) => [String(currency.id), currency.code ?? 'USD']),
+    )
 
-    if (appliedFilters.value.manager && row.manager !== appliedFilters.value.manager) return false
-    if (appliedFilters.value.clientName && !row.clientName.toLowerCase().includes(appliedFilters.value.clientName.toLowerCase())) return false
-    if (appliedFilters.value.code && !row.id.toLowerCase().includes(appliedFilters.value.code.toLowerCase())) return false
-    if (appliedFilters.value.productName && !row.itemName.toLowerCase().includes(appliedFilters.value.productName.toLowerCase())) return false
-    if (appliedFilters.value.country && row.country !== appliedFilters.value.country) return false
-    if (appliedFilters.value.status && row.status !== appliedFilters.value.status) return false
+    const buyersByClientId = buyersData.reduce((map, buyer) => {
+      const clientId = String(buyer.clientId)
+      const label = buyer.position ? `${buyer.name} (${buyer.position})` : buyer.name
+      const rows = map.get(clientId) ?? []
+      rows.push(label)
+      map.set(clientId, rows)
+      return map
+    }, new Map())
 
-    const issueDate = normalizeDate(row.issueDate)
-    const deliveryDate = normalizeDate(row.deliveryDate)
-
-    if (appliedFilters.value.registeredFrom && issueDate < appliedFilters.value.registeredFrom) return false
-    if (appliedFilters.value.registeredTo && issueDate > appliedFilters.value.registeredTo) return false
-    if (appliedFilters.value.deliveryFrom && deliveryDate < appliedFilters.value.deliveryFrom) return false
-    if (appliedFilters.value.deliveryTo && deliveryDate > appliedFilters.value.deliveryTo) return false
-
-    return true
-  })
-})
-
-function resetFilters() {
-  filters.value = {
-    keyword: '',
-    registeredFrom: '',
-    registeredTo: '',
-    manager: '',
-    clientName: '',
-    code: '',
-    productName: '',
-    country: '',
-    status: '',
-    deliveryFrom: '',
-    deliveryTo: '',
-  }
-
-  appliedFilters.value = {
-    ...filters.value,
+    clientRowsSource.value = clientsData.map((client) => ({
+      id: String(client.id),
+      code: client.code,
+      name: client.name,
+      country: countryMap.get(String(client.countryId)) ?? '-',
+      currency: currencyMap.get(String(client.currencyId)) ?? 'USD',
+      buyers: buyersByClientId.get(String(client.id)) ?? [],
+    }))
+  } catch {
+    clientRowsSource.value = [...fallbackClientRowsSource]
   }
 }
+
+onMounted(loadClientRows)
 
 function openClientSearch(context = 'filter') {
   clientSearchContext.value = context
@@ -282,51 +326,87 @@ function openProductSearch() {
 }
 
 function searchRows() {
-  appliedFilters.value = {
-    ...filters.value,
-  }
+  applyFilters()
 }
 
 function openCreateForm() {
   formMode.value = 'create'
   selectedRow.value = null
+  selectedClient.value = null
   formOpen.value = true
 }
 
 function openEditForm(row) {
+  const matchedClient = clientRowsSource.value.find((client) => client.name === row.clientName) ?? null
+  selectedClient.value = matchedClient
   formMode.value = 'edit'
   selectedRow.value = {
     id: row.id,
     clientName: row.clientName,
-    buyerId: 'buyer-1',
-    currency: row.amount.startsWith('€') ? 'EUR' : 'USD',
-    incoterms: 'FOB BUSAN',
+    buyerName: row.buyerName ?? matchedClient?.buyers?.[0] ?? '',
+    currency: row.currency ?? matchedClient?.currency ?? (row.amount.startsWith('€') ? 'EUR' : 'USD'),
+    country: row.country,
+    incoterms: row.incoterms ?? 'FOB',
+    issueDate: row.issueDate,
     deliveryDate: row.deliveryDate,
-    items: [
-      {
-        name: row.itemName,
-        qty: 1,
-        unitPrice: row.amount.replace(/[^0-9.]/g, ''),
-        amount: row.amount,
-      },
-    ],
+    items: (row.items ?? []).map((item) => ({
+      ...item,
+    })),
   }
   formOpen.value = true
 }
 
+function parseAmount(value) {
+  const normalized = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))
+  return Number.isFinite(normalized) ? normalized : 0
+}
+
+function formatAmount(currency, value) {
+  const symbol = currencySymbolMap[currency] ?? `${currency} `
+  return `${symbol}${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+}
+
+function formatSlashDate(value) {
+  return value ? value.replaceAll('-', '/') : '-'
+}
+
 function handleSave(formValue) {
+  const currency = formValue.currency || 'USD'
+  const totalAmount = (formValue.items ?? []).reduce((sum, item) => {
+    const qty = Number.parseFloat(String(item.qty ?? '0'))
+    const unitPrice = Number.parseFloat(String(item.unitPrice ?? '0'))
+    const amount = Number.parseFloat(String(item.amount ?? '0'))
+    const calculatedAmount = Number.isFinite(amount) ? amount : (Number.isFinite(qty) && Number.isFinite(unitPrice) ? qty * unitPrice : 0)
+    return sum + calculatedAmount
+  }, 0)
+  const matchedClient = clientRowsSource.value.find((client) => client.name === formValue.clientName)
+  const nextRow = {
+    clientName: formValue.clientName || '거래처 미선택',
+    buyerName: formValue.buyerName || '',
+    currency,
+    country: formValue.country || matchedClient?.country || selectedClient.value?.country || '-',
+    itemName: formValue.items?.[0]?.name || '품목 미입력',
+    amount: formatAmount(currency, totalAmount),
+    issueDate: formatSlashDate(formValue.issueDate),
+    deliveryDate: formatSlashDate(formValue.deliveryDate),
+    incoterms: formValue.incoterms || 'FOB',
+    items: (formValue.items ?? []).map((item) => ({
+      name: item.name ?? '',
+      qty: String(item.qty ?? ''),
+      unit: item.unit ?? '',
+      unitPrice: String(item.unitPrice ?? ''),
+      amount: String(item.amount ?? '0'),
+      remark: item.remark ?? '',
+    })),
+  }
+
   if (formMode.value === 'create') {
     rowsData.value = [
       {
         id: `PI26${String(rowsData.value.length + 1).padStart(3, '0')}`,
-        issueDate: '2026/03/19',
-        clientName: formValue.clientName || '거래처 미선택',
-        country: '말레이시아',
-        itemName: formValue.items?.[0]?.name || '품목 미입력',
-        amount: '$0',
+        ...nextRow,
         manager: '김영업',
         status: '초안',
-        deliveryDate: formValue.deliveryDate ? formValue.deliveryDate.replaceAll('-', '/') : '-',
       },
       ...rowsData.value,
     ]
@@ -338,9 +418,7 @@ function handleSave(formValue) {
     row.id === selectedRow.value?.id
       ? {
         ...row,
-        clientName: formValue.clientName || row.clientName,
-        itemName: formValue.items?.[0]?.name || row.itemName,
-        deliveryDate: formValue.deliveryDate ? formValue.deliveryDate.replaceAll('-', '/') : row.deliveryDate,
+        ...nextRow,
       }
       : row
   ))
@@ -388,16 +466,16 @@ function handleProductSelect(product) {
 
 <template>
   <div class="fade-in space-y-5">
-    <DocumentPageHeader title="PI 관리" icon-class="fas fa-file-invoice">
+    <PageHeader title="PI 관리" icon-class="fas fa-file-invoice">
       <template #actions>
-      <BaseButton @click="openCreateForm">
-        <template #leading>
-          <i class="fas fa-plus text-xs" aria-hidden="true"></i>
-        </template>
-        PI 작성
-      </BaseButton>
+        <BaseButton @click="openCreateForm">
+          <template #leading>
+            <i class="fas fa-plus text-xs" aria-hidden="true"></i>
+          </template>
+          PI 작성
+        </BaseButton>
       </template>
-    </DocumentPageHeader>
+    </PageHeader>
 
     <FilterToolbarCard
       v-model="filters.keyword"
@@ -515,14 +593,7 @@ function handleProductSelect(product) {
       </template>
 
       <template #cell-actions="{ row }">
-        <div class="flex items-center gap-1.5">
-          <button type="button" class="text-xs text-slate-500 transition hover:text-slate-700" :title="`${row.id} 수정`" @click.stop="openEditForm(row)">
-            <i class="fas fa-edit" aria-hidden="true"></i>
-          </button>
-          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} 삭제`" @click.stop="openDeleteModal(row)">
-            <i class="fas fa-trash" aria-hidden="true"></i>
-          </button>
-        </div>
+        <TableActions @edit="openEditForm(row)" @delete="openDeleteModal(row)" />
       </template>
     </BaseTable>
 
