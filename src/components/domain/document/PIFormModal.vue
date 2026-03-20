@@ -253,6 +253,7 @@ const reasonFieldPlaceholder = computed(() => (
 ))
 
 const isReasonRequired = computed(() => props.mode === 'edit')
+const showApproverField = computed(() => props.mode === 'edit')
 
 function mapBuyerLabel(buyer) {
   if (!buyer?.name) return ''
@@ -545,7 +546,7 @@ function validateForm() {
     errors.reason = reasonFieldPlaceholder.value
   }
 
-  if (!form.value.approver) {
+  if (showApproverField.value && !form.value.approver) {
     errors.approver = '결재자를 선택하세요.'
   }
 
@@ -662,7 +663,6 @@ function handleSave() {
     ...form.value,
     items: form.value.items.map(({ baseUnitPrice, ...item }) => ({ ...item })),
   })
-  emit('close')
 }
 
 watch(
@@ -780,7 +780,7 @@ watch(
           <p v-if="getFieldError('deliveryDate')" class="mt-1 text-xs text-red-500">{{ getFieldError('deliveryDate') }}</p>
         </div>
 
-        <div>
+        <div v-if="showApproverField">
           <label class="mb-1 block text-gray-600">
             결재자 <span class="text-red-500">*</span>
           </label>

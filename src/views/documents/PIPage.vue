@@ -19,7 +19,7 @@ import PIFormModal from '@/components/domain/document/PIFormModal.vue'
 import { fetchBuyers, fetchClients, fetchCountries, fetchCurrencies } from '@/api/master'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { useToast } from '@/composables/useToast'
-import { resolveIncotermState } from '@/utils/incoterms'
+import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
 
 const router = useRouter()
 const { success } = useToast()
@@ -29,6 +29,7 @@ const formOpen = ref(false)
 const formMode = ref('create')
 const selectedRow = ref(null)
 const deleteOpen = ref(false)
+const createConfirmOpen = ref(false)
 const clientSearchOpen = ref(false)
 const clientSearchKeyword = ref('')
 const selectedClient = ref(null)
@@ -37,6 +38,7 @@ const codeSearchKeyword = ref('')
 const productSearchOpen = ref(false)
 const productSearchKeyword = ref('')
 const clientSearchContext = ref('filter')
+const pendingCreateFormValue = ref(null)
 
 const managerOptions = [
   { value: '김영업', label: '김영업' },
@@ -342,7 +344,15 @@ function openCreateForm() {
   formMode.value = 'create'
   selectedRow.value = null
   selectedClient.value = null
+  pendingCreateFormValue.value = null
   formOpen.value = true
+}
+
+function closeForm() {
+  formOpen.value = false
+  if (formMode.value === 'create') {
+    pendingCreateFormValue.value = null
+  }
 }
 
 function openEditForm(row) {
@@ -381,13 +391,13 @@ function formatSlashDate(value) {
   return value ? value.replaceAll('-', '/') : '-'
 }
 
-function handleSave(formValue) {
+function buildRowPayload(formValue) {
   const currency = formValue.currency || 'USD'
   const totalAmount = (formValue.items ?? []).reduce((sum, item) => {
-    const qty = Number.parseFloat(String(item.qty ?? '0'))
-    const unitPrice = Number.parseFloat(String(item.unitPrice ?? '0'))
-    const amount = Number.parseFloat(String(item.amount ?? '0'))
-    const calculatedAmount = Number.isFinite(amount) ? amount : (Number.isFinite(qty) && Number.isFinite(unitPrice) ? qty * unitPrice : 0)
+    const qty = parseAmount(item.qty)
+    const unitPrice = parseAmount(item.unitPrice)
+    const amount = parseAmount(item.amount)
+    const calculatedAmount = amount > 0 ? amount : (qty > 0 && unitPrice > 0 ? qty * unitPrice : 0)
     return sum + calculatedAmount
   }, 0)
   const matchedClient = clientRowsSource.value.find((client) => client.name === formValue.clientName)
@@ -412,17 +422,100 @@ function handleSave(formValue) {
     })),
   }
 
+  return {
+    currency,
+    totalAmount,
+    nextRow,
+  }
+}
+
+const createConfirmRows = computed(() => {
+  if (!pendingCreateFormValue.value) return []
+
+  const { nextRow } = buildRowPayload(pendingCreateFormValue.value)
+
+  return [
+    { label: '거래처', value: nextRow.clientName },
+    { label: '바이어', value: nextRow.buyerName || '-' },
+    { label: '통화', value: nextRow.currency },
+    { label: '발행일', value: nextRow.issueDate },
+    { label: '납기일', value: nextRow.deliveryDate },
+    { label: '인코텀즈', value: formatIncotermsLabel(nextRow.incoterms, nextRow.namedPlace) || '-' },
+  ]
+})
+
+const createConfirmTableColumns = [
+  { key: 'name', label: '품목명' },
+  { key: 'qty', label: '수량', align: 'right' },
+  { key: 'unit', label: '단위', align: 'center' },
+  { key: 'unitPrice', label: '단가', align: 'right' },
+  { key: 'amount', label: '금액', align: 'right' },
+  { key: 'remark', label: '비고' },
+]
+
+const createConfirmTableRows = computed(() => {
+  if (!pendingCreateFormValue.value) return []
+
+  const currency = pendingCreateFormValue.value.currency || 'USD'
+
+  return (pendingCreateFormValue.value.items ?? []).map((item, index) => ({
+    id: item.id ?? index,
+    name: item.name || '-',
+    qty: parseAmount(item.qty).toLocaleString(),
+    unit: item.unit || '-',
+    unitPrice: formatAmount(currency, parseAmount(item.unitPrice)),
+    amount: formatAmount(currency, parseAmount(item.amount)),
+    remark: item.remark || '-',
+  }))
+})
+
+const createConfirmSummaryRows = computed(() => {
+  if (!pendingCreateFormValue.value) return []
+
+  const { nextRow } = buildRowPayload(pendingCreateFormValue.value)
+  const itemCount = pendingCreateFormValue.value.items?.length ?? 0
+
+  return [
+    { label: '품목 건수', value: `${itemCount}건` },
+    { label: '총액', value: nextRow.amount },
+  ]
+})
+
+function confirmCreate() {
+  if (!pendingCreateFormValue.value) return
+
+  const { nextRow } = buildRowPayload(pendingCreateFormValue.value)
+
+  rowsData.value = [
+    {
+      id: `PI26${String(rowsData.value.length + 1).padStart(3, '0')}`,
+      ...nextRow,
+      manager: '김영업',
+      status: '초안',
+    },
+    ...rowsData.value,
+  ]
+
+  createConfirmOpen.value = false
+  pendingCreateFormValue.value = null
+  formOpen.value = false
+  selectedClient.value = null
+  success('PI가 등록되었습니다.')
+}
+
+function cancelCreateConfirm() {
+  createConfirmOpen.value = false
+}
+
+function handleSave(formValue) {
+  const { nextRow } = buildRowPayload(formValue)
+
   if (formMode.value === 'create') {
-    rowsData.value = [
-      {
-        id: `PI26${String(rowsData.value.length + 1).padStart(3, '0')}`,
-        ...nextRow,
-        manager: '김영업',
-        status: '초안',
-      },
-      ...rowsData.value,
-    ]
-    success('PI 작성 폼이 연결되었습니다.')
+    pendingCreateFormValue.value = {
+      ...formValue,
+      items: (formValue.items ?? []).map((item) => ({ ...item })),
+    }
+    createConfirmOpen.value = true
     return
   }
 
@@ -606,8 +699,25 @@ function handleProductSelect(product) {
       :document="selectedRow"
       :selected-client="selectedClient"
       @open-client-search="openClientSearch('form')"
-      @close="formOpen = false"
+      @close="closeForm"
       @save="handleSave"
+    />
+
+    <ConfirmModal
+      :open="createConfirmOpen"
+      title="PI 등록 확인"
+      message="입력한 정보로 PI를 등록하시겠습니까?"
+      :detail-rows="createConfirmRows"
+      :table-columns="createConfirmTableColumns"
+      :table-rows="createConfirmTableRows"
+      :summary-rows="createConfirmSummaryRows"
+      confirm-label="등록"
+      cancel-label="취소"
+      helper-text="입력한 내용을 다시 확인한 뒤 등록하세요."
+      width="max-w-4xl"
+      :z-index="60"
+      @confirm="confirmCreate"
+      @cancel="cancelCreateConfirm"
     />
 
     <ConfirmModal
