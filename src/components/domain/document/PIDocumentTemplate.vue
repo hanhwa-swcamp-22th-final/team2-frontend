@@ -7,6 +7,7 @@
  */
 import DocumentPrintLayout from './DocumentPrintLayout.vue'
 import { resolveConsigneeAddress } from '@/utils/ciplTemplate'
+import { normalizeIncoterms } from '@/utils/incoterms'
 
 defineProps({
   // 문서 전체 데이터 객체
@@ -16,14 +17,20 @@ defineProps({
   },
 })
 
-function extractIncotermCode(value) {
-  const [code = ''] = String(value ?? '').trim().split(/\s+/)
-  return code || '-'
+function extractIncotermCode(value, namedPlace) {
+  return normalizeIncoterms(value, namedPlace).code || '-'
 }
 
-function extractIncotermPlace(value) {
-  const parts = String(value ?? '').trim().split(/\s+/)
-  return parts.slice(1).join(' ') || '-'
+function extractIncotermPlace(value, namedPlace) {
+  return normalizeIncoterms(value, namedPlace).namedPlace || '-'
+}
+
+function resolveBuyer(document) {
+  return document.buyerName || document.buyer || '-'
+}
+
+function resolveItemQuantity(item) {
+  return item.quantity ?? item.qty ?? '-'
 }
 </script>
 
@@ -59,7 +66,7 @@ function extractIncotermPlace(value) {
         </tr>
         <tr>
           <td class="info-label">Attn.</td>
-          <td class="info-value">{{ document.buyer || '-' }}</td>
+          <td class="info-value">{{ resolveBuyer(document) }}</td>
           <td class="info-label">Delivery Date</td>
           <td class="info-value">{{ document.deliveryDate }}</td>
         </tr>
@@ -77,9 +84,9 @@ function extractIncotermPlace(value) {
       <tbody>
         <tr>
           <td class="info-label" style="width:120px">Incoterms</td>
-          <td class="info-value">{{ extractIncotermCode(document.incoterms) }}</td>
+          <td class="info-value">{{ extractIncotermCode(document.incoterms, document.namedPlace) }}</td>
           <td class="info-label">Named Place</td>
-          <td class="info-value">{{ extractIncotermPlace(document.incoterms) }}</td>
+          <td class="info-value">{{ extractIncotermPlace(document.incoterms, document.namedPlace) }}</td>
         </tr>
         <tr>
           <td class="info-label">Terms of Payment</td>
@@ -105,7 +112,7 @@ function extractIncotermPlace(value) {
         <tr v-for="(item, index) in document.items" :key="index" class="item-row">
           <td class="text-center">{{ index + 1 }}</td>
           <td>{{ item.name }}</td>
-          <td class="text-center">{{ item.quantity }}</td>
+          <td class="text-center">{{ resolveItemQuantity(item) }}</td>
           <td class="text-right">{{ item.unitPrice }}</td>
           <td class="text-right font-semibold">{{ item.amount }}</td>
         </tr>

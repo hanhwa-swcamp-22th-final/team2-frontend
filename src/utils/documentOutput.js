@@ -27,6 +27,7 @@ import {
   resolveShipperAddress,
   resolveShipperName,
 } from '@/utils/ciplTemplate'
+import { normalizeIncoterms } from '@/utils/incoterms'
 import { buildInstructionSheetDocument } from '@/utils/instructionSheetTemplate'
 
 // ────────────────────────────────────────────
@@ -77,13 +78,21 @@ function esc(value) {
     .replaceAll("'", '&#39;')
 }
 
-function parseIncoterms(value) {
-  const parts = String(value ?? '').trim().split(/\s+/).filter(Boolean)
+function parseIncoterms(value, namedPlace = '') {
+  const normalized = normalizeIncoterms(value, namedPlace)
 
   return {
-    code: parts[0] || '-',
-    place: parts.slice(1).join(' ') || '-',
+    code: normalized.code || '-',
+    place: normalized.namedPlace || '-',
   }
+}
+
+function resolveBuyerName(doc) {
+  return doc.buyerName || doc.buyer || '-'
+}
+
+function resolveItemQuantity(item) {
+  return item.quantity ?? item.qty ?? '-'
 }
 
 // 빈 행 생성 (최소 행 수 확보용)
@@ -313,12 +322,12 @@ function renderInstructionSheetOutputHtml(doc, kind) {
 // PI 빌더
 // ════════════════════════════════════════════
 export function buildPIOutputHtml(doc) {
-  const { code: incotermCode, place: incotermPlace } = parseIncoterms(doc.incoterms)
+  const { code: incotermCode, place: incotermPlace } = parseIncoterms(doc.incoterms, doc.namedPlace)
   const itemRows = doc.items.map((item, i) => `
     <tr>
       <td class="text-center">${i + 1}</td>
       <td>${esc(item.name)}</td>
-      <td class="text-center">${esc(item.quantity)}</td>
+      <td class="text-center">${esc(resolveItemQuantity(item))}</td>
       <td class="text-right">${esc(item.unitPrice)}</td>
       <td class="text-right font-semibold">${esc(item.amount)}</td>
     </tr>`).join('')
@@ -333,7 +342,7 @@ export function buildPIOutputHtml(doc) {
       </colgroup>
       <tr><td class="info-label">From</td><td class="info-value company-cell"><div class="company-name">SalesBoost Inc.</div><div class="company-address">123 Teheran-ro, Gangnam-gu</div><div class="company-address">Seoul, Republic of Korea</div></td><td class="info-label">PI No.</td><td class="info-value">${esc(doc.id)}</td></tr>
       <tr><td class="info-label">To</td><td class="info-value party-cell"><div class="party-name">${esc(doc.clientName)}</div><div class="party-address">${esc(resolveConsigneeAddress(doc))}</div></td><td class="info-label">Issue Date</td><td class="info-value">${esc(doc.issueDate)}</td></tr>
-      <tr><td class="info-label">Attn.</td><td class="info-value">${esc(doc.buyer || '-')}</td><td class="info-label">Requested Delivery</td><td class="info-value">${esc(doc.deliveryDate)}</td></tr>
+      <tr><td class="info-label">Attn.</td><td class="info-value">${esc(resolveBuyerName(doc))}</td><td class="info-label">Requested Delivery</td><td class="info-value">${esc(doc.deliveryDate)}</td></tr>
     </table>
     <table class="info-table shipping-info-table" style="margin-top:-1px">
       <colgroup>
@@ -359,7 +368,7 @@ export function buildPIOutputHtml(doc) {
 // PO 빌더
 // ════════════════════════════════════════════
 export function buildPOOutputHtml(doc) {
-  const { code: incotermCode, place: incotermPlace } = parseIncoterms(doc.incoterms)
+  const { code: incotermCode, place: incotermPlace } = parseIncoterms(doc.incoterms, doc.namedPlace)
   const itemRows = doc.items.map((item, i) => `
     <tr>
       <td class="text-center">${String(i + 1).padStart(3, '0')}</td>

@@ -19,6 +19,7 @@ import PIFormModal from '@/components/domain/document/PIFormModal.vue'
 import { fetchBuyers, fetchClients, fetchCountries, fetchCurrencies } from '@/api/master'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { useToast } from '@/composables/useToast'
+import { resolveIncotermState } from '@/utils/incoterms'
 
 const router = useRouter()
 const { success } = useToast()
@@ -90,6 +91,7 @@ const initialRows = [
     itemName: 'H-Beam 482x300x11x15',
     amount: '$42,400',
     incoterms: 'FOB',
+    namedPlace: 'BUSAN',
     manager: '김영업',
     status: '확정',
     deliveryDate: '2026/04/15',
@@ -109,7 +111,8 @@ const initialRows = [
     country: '독일',
     itemName: 'H-Beam 482x300x11x15',
     amount: '€68,400',
-    incoterms: 'FOB',
+    incoterms: 'CIF',
+    namedPlace: 'HAMBURG',
     manager: '김영업',
     status: '발송',
     deliveryDate: '2026/05/20',
@@ -127,7 +130,8 @@ const initialRows = [
     country: '미국',
     itemName: 'Lubricant Oil SAE 10W-40',
     amount: '$15,600',
-    incoterms: 'FOB',
+    incoterms: 'CFR',
+    namedPlace: 'LOS ANGELES',
     manager: '정영업',
     status: '초안',
     deliveryDate: '2026/06/01',
@@ -146,6 +150,7 @@ const initialRows = [
     itemName: 'H-Beam 482x300x11x15',
     amount: '$53,600',
     incoterms: 'FOB',
+    namedPlace: 'BUSAN',
     manager: '정영업',
     status: '확정',
     deliveryDate: '2026/04/30',
@@ -163,6 +168,7 @@ const initialRows = [
     itemName: 'H-Beam 488x300x11x18',
     amount: '$38,850',
     incoterms: 'FOB',
+    namedPlace: 'BUSAN',
     manager: '김영업',
     status: '확정',
     deliveryDate: '2026/05/15',
@@ -180,6 +186,7 @@ const initialRows = [
     itemName: 'Seamless Steel Pipe 168x7',
     amount: '$29,700',
     incoterms: 'FOB',
+    namedPlace: 'BUSAN',
     manager: '정영업',
     status: '발송',
     deliveryDate: '2026/06/10',
@@ -197,6 +204,7 @@ const initialRows = [
     itemName: 'H-Beam 482x300x11x15',
     amount: '$76,400',
     incoterms: 'FOB',
+    namedPlace: 'BUSAN',
     manager: '김영업',
     status: '확정',
     deliveryDate: '2026/05/30',
@@ -214,6 +222,7 @@ const initialRows = [
     itemName: 'Hydraulic Cylinder 100x500',
     amount: '$23,960',
     incoterms: 'FOB',
+    namedPlace: 'BUSAN',
     manager: '정영업',
     status: '초안',
     deliveryDate: '2026/06/30',
@@ -338,6 +347,7 @@ function openCreateForm() {
 
 function openEditForm(row) {
   const matchedClient = clientRowsSource.value.find((client) => client.name === row.clientName) ?? null
+  const normalizedIncoterms = resolveIncotermState(row.incoterms, row.namedPlace)
   selectedClient.value = matchedClient
   formMode.value = 'edit'
   selectedRow.value = {
@@ -346,7 +356,8 @@ function openEditForm(row) {
     buyerName: row.buyerName ?? matchedClient?.buyers?.[0] ?? '',
     currency: row.currency ?? matchedClient?.currency ?? (row.amount.startsWith('€') ? 'EUR' : 'USD'),
     country: row.country,
-    incoterms: row.incoterms ?? 'FOB',
+    incoterms: normalizedIncoterms.code || 'FOB',
+    namedPlace: normalizedIncoterms.namedPlace,
     issueDate: row.issueDate,
     deliveryDate: row.deliveryDate,
     items: (row.items ?? []).map((item) => ({
@@ -390,6 +401,7 @@ function handleSave(formValue) {
     issueDate: formatSlashDate(formValue.issueDate),
     deliveryDate: formatSlashDate(formValue.deliveryDate),
     incoterms: formValue.incoterms || 'FOB',
+    namedPlace: formValue.namedPlace || '',
     items: (formValue.items ?? []).map((item) => ({
       name: item.name ?? '',
       qty: String(item.qty ?? ''),
