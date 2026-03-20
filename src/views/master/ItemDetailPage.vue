@@ -34,7 +34,6 @@ const infoFields = computed(() => {
     { label: '단가 (KRW)', value: item.value.unitPrice?.toLocaleString() ?? '-' },
     { label: '중량 (kg)', value: item.value.weight?.toLocaleString() ?? '-' },
     { label: 'HS Code', value: item.value.hsCode },
-    { label: '상태', value: item.value.status },
     { label: '등록일', value: item.value.regDate },
   ]
 })

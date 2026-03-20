@@ -201,6 +201,7 @@ function goToDetail(row) {
 
     <BaseTable v-else :columns="columns" :rows="paginatedClients" row-key="id"
       :empty-text="searchKeyword || statusFilter ? '검색 결과가 없습니다.' : '등록된 거래처가 없습니다.'"
+      :footer-text="`총 ${filteredClients.length}건`"
       clickable-rows
       @row-click="goToDetail"
     >
@@ -216,7 +217,7 @@ function goToDetail(row) {
       </template>
 
       <template #cell-location="{ row }">
-        {{ row.countryName }}, {{ row.city }}
+        {{ [row.countryName, row.city].filter(v => v && v !== '-').join(', ') || '-' }}
       </template>
 
       <template #cell-port="{ row }">
@@ -240,17 +241,10 @@ function goToDetail(row) {
       </template>
     </BaseTable>
 
-    <div>
-      <div class="mt-2 px-1 text-xs text-slate-500">
-        <span>총 {{ filteredClients.length }}건</span>
-      </div>
-      <div class="mt-4">
-        <BasePagination
-          v-model:current-page="currentPage"
-          :total-pages="totalPages"
-        />
-      </div>
-    </div>
+    <BasePagination
+      v-model:current-page="currentPage"
+      :total-pages="totalPages"
+    />
 
     <ClientFormModal
       :open="showFormModal"

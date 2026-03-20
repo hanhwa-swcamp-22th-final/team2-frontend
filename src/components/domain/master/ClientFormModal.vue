@@ -179,7 +179,7 @@ function handleSave() {
     <form class="space-y-6" @submit.prevent="handleSave">
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <FormField label="코드" required>
-          <BaseTextField v-model="form.code" placeholder="예) CLI011" />
+          <BaseTextField v-model="form.code" placeholder="예) CLI011" :disabled="mode === 'edit'" />
           <p v-if="errors.code" class="mt-1 text-xs text-red-500">{{ errors.code }}</p>
         </FormField>
 
