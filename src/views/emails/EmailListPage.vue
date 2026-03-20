@@ -4,10 +4,9 @@ import { fetchActivityEmails } from '@/api/emails'
 import { useToast } from '@/composables/useToast'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
-import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
-import DateRangeField from '@/components/common/DateRangeField.vue'
+import DateField from '@/components/common/DateField.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
 import InfoField from '@/components/common/InfoField.vue'
@@ -34,9 +33,10 @@ const isFilterOpen = ref(false)
 const filterKeyword = ref('')
 const filterType    = ref('')
 const filterStatus  = ref('')
-const filterSender  = ref('')
-const filterDateFrom = ref('')
-const filterDateTo   = ref('')
+const filterSender    = ref('')
+const filterRecipient = ref('')
+const filterDateFrom  = ref('')
+const filterDateTo    = ref('')
 
 const typeOptions = [
   { label: 'PI', value: 'PI' },
@@ -51,44 +51,56 @@ const statusOptions = [
 ]
 
 const senderOptions = computed(() => {
-  const unique = [...new Set(emails.value.map((e) => e.sender))]
+  const unique = [...new Set(emails.value.map((e) => e.sender).filter(Boolean))]
   return unique.map((s) => ({ label: s, value: s }))
 })
 
+const recipientOptions = computed(() => {
+  const unique = [...new Set(emails.value.map((e) => e.recipient).filter(Boolean))]
+  return unique.map((r) => ({ label: r, value: r }))
+})
+
 // 실제 적용된 필터 (검색 버튼 클릭 시에만 반영)
-const applied = ref({ keyword: '', type: '', status: '', sender: '', dateFrom: '', dateTo: '' })
+const applied = ref({ keyword: '', type: '', status: '', sender: '', recipient: '', dateFrom: '', dateTo: '' })
+const recipientKey = ref(0)
 
 function applySearch() {
   applied.value = {
-    keyword:  filterKeyword.value,
-    type:     filterType.value,
-    status:   filterStatus.value,
-    sender:   filterSender.value,
-    dateFrom: filterDateFrom.value,
-    dateTo:   filterDateTo.value,
+    keyword:   filterKeyword.value,
+    type:      filterType.value,
+    status:    filterStatus.value,
+    sender:    filterSender.value,
+    recipient: filterRecipient.value,
+    dateFrom:  filterDateFrom.value,
+    dateTo:    filterDateTo.value,
   }
 }
 
 function resetFilters() {
-  filterKeyword.value  = ''
-  filterType.value     = ''
-  filterStatus.value   = ''
-  filterSender.value   = ''
-  filterDateFrom.value = ''
-  filterDateTo.value   = ''
-  applied.value = { keyword: '', type: '', status: '', sender: '', dateFrom: '', dateTo: '' }
+  filterKeyword.value   = ''
+  filterType.value      = ''
+  filterStatus.value    = ''
+  filterSender.value    = ''
+  filterRecipient.value = ''
+  filterDateFrom.value  = ''
+  filterDateTo.value    = ''
+  applied.value = { keyword: '', type: '', status: '', sender: '', recipient: '', dateFrom: '', dateTo: '' }
+  recipientKey.value++
 }
 
 const filteredEmails = computed(() => {
   return emails.value.filter((e) => {
     const q = applied.value.keyword.trim().toLowerCase()
-    const matchKeyword = !q || e.title.toLowerCase().includes(q) || e.client.toLowerCase().includes(q)
-    const matchType    = !applied.value.type   || e.type === applied.value.type
-    const matchStatus  = !applied.value.status || e.status === applied.value.status
-    const matchSender  = !applied.value.sender || e.sender === applied.value.sender
-    const matchFrom    = !applied.value.dateFrom || e.sentAt >= applied.value.dateFrom
-    const matchTo      = !applied.value.dateTo   || e.sentAt <= applied.value.dateTo
-    return matchKeyword && matchType && matchStatus && matchSender && matchFrom && matchTo
+    const matchKeyword   = !q || e.title.toLowerCase().includes(q) || e.client.toLowerCase().includes(q)
+    const matchType      = !applied.value.type      || e.type === applied.value.type
+    const matchStatus    = !applied.value.status    || e.status === applied.value.status
+    const matchSender    = !applied.value.sender    || e.sender === applied.value.sender
+    const matchRecipient = !applied.value.recipient || e.recipient === applied.value.recipient
+    const dateFrom = applied.value.dateFrom.replaceAll('-', '/')
+    const dateTo   = applied.value.dateTo.replaceAll('-', '/')
+    const matchFrom = !dateFrom || e.sentAt >= dateFrom
+    const matchTo   = !dateTo   || e.sentAt <= dateTo
+    return matchKeyword && matchType && matchStatus && matchSender && matchRecipient && matchFrom && matchTo
   })
 })
 
@@ -136,35 +148,31 @@ const columns = [
 
     <!-- 상세검색 패널 -->
     <CollapsibleFilterCard :open="isFilterOpen" @toggle="isFilterOpen = !isFilterOpen">
-      <div class="grid grid-cols-2 gap-x-4 gap-y-4 md:grid-cols-4">
+      <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-4">
         <!-- 기간 -->
-        <div class="col-span-2">
-          <FormField label="발송일 기간">
-            <DateRangeField
-              :start="filterDateFrom"
-              :end="filterDateTo"
-              @update:start="filterDateFrom = $event"
-              @update:end="filterDateTo = $event"
-              @reset="filterDateFrom = ''; filterDateTo = ''"
-            />
-          </FormField>
-        </div>
+        <FormField label="발송일 기간" class="col-span-2">
+          <div class="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
+            <DateField v-model="filterDateFrom" />
+            <span class="text-center text-sm text-slate-400 sm:pb-2">~</span>
+            <DateField v-model="filterDateTo" />
+          </div>
+        </FormField>
 
         <!-- 유형 -->
         <FormField label="유형">
-          <BaseSelect
+          <SearchableCombobox
             v-model="filterType"
             :options="typeOptions"
-            placeholder="유형 선택"
+            placeholder="유형 선택..."
           />
         </FormField>
 
         <!-- 상태 -->
         <FormField label="상태">
-          <BaseSelect
+          <SearchableCombobox
             v-model="filterStatus"
             :options="statusOptions"
-            placeholder="상태 선택"
+            placeholder="상태 선택..."
           />
         </FormField>
 
@@ -176,11 +184,31 @@ const columns = [
             placeholder="발송자 검색..."
           />
         </FormField>
+
+        <!-- 수신자 -->
+        <FormField label="수신자">
+          <SearchableCombobox
+            :key="recipientKey"
+            v-model="filterRecipient"
+            :options="recipientOptions"
+            placeholder="수신자 검색..."
+          />
+        </FormField>
       </div>
 
-      <div class="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-3">
-        <BaseButton variant="secondary" size="sm" @click="resetFilters">초기화</BaseButton>
-        <BaseButton size="sm" @click="applySearch">검색</BaseButton>
+      <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+        <BaseButton variant="secondary" size="sm" @click="resetFilters">
+          <template #leading>
+            <i class="fas fa-undo text-xs" aria-hidden="true"></i>
+          </template>
+          초기화
+        </BaseButton>
+        <BaseButton size="sm" @click="applySearch">
+          <template #leading>
+            <i class="fas fa-search text-xs" aria-hidden="true"></i>
+          </template>
+          검색
+        </BaseButton>
       </div>
     </CollapsibleFilterCard>
 

@@ -1164,7 +1164,7 @@
       "unit": "EA",
       "packUnit": "BOX",
       "unitPrice": 1200000,
-      "weight": 22.0,
+      "weight": 22,
       "hsCode": "8443.32",
       "category": "Electronics",
       "status": "활성",
@@ -1224,7 +1224,7 @@
       "unit": "EA",
       "packUnit": "LOOSE",
       "unitPrice": 3500000,
-      "weight": 38.0,
+      "weight": 38,
       "hsCode": "8528.52",
       "category": "Electronics",
       "status": "활성",
@@ -5039,7 +5039,7 @@
       "clientName": "Global Steel Corp.",
       "country": "USA",
       "itemName": "Business Laptop 15\"",
-      "grossWeight": 90.0
+      "grossWeight": 90
     },
     {
       "id": "PL2025002",
@@ -5048,7 +5048,7 @@
       "clientName": "Hamburg Metal GmbH",
       "country": "Germany",
       "itemName": "LED Monitor 27\"",
-      "grossWeight": 126.0
+      "grossWeight": 126
     },
     {
       "id": "PL2025003",
@@ -5057,7 +5057,7 @@
       "clientName": "Tokyo Trading Co.",
       "country": "Japan",
       "itemName": "Laser Printer A4",
-      "grossWeight": 156.0
+      "grossWeight": 156
     },
     {
       "id": "PL2025004",
@@ -5084,7 +5084,7 @@
       "clientName": "Paris Acier SA",
       "country": "France",
       "itemName": "Smart Projector FHD",
-      "grossWeight": 70.0
+      "grossWeight": 70
     },
     {
       "id": "PL2025007",
@@ -5093,7 +5093,7 @@
       "clientName": "Mumbai Steel Works",
       "country": "India",
       "itemName": "UPS 1000VA",
-      "grossWeight": 380.0
+      "grossWeight": 380
     },
     {
       "id": "PL2025008",
@@ -5111,7 +5111,7 @@
       "clientName": "Singapore Pipe Pte",
       "country": "Singapore",
       "itemName": "Mechanical Keyboard",
-      "grossWeight": 85.0
+      "grossWeight": 85
     },
     {
       "id": "PL2025010",
@@ -5120,7 +5120,7 @@
       "clientName": "Hanoi Industries",
       "country": "Vietnam",
       "itemName": "Wireless Mouse",
-      "grossWeight": 18.0
+      "grossWeight": 18
     },
     {
       "id": "PL2025011",
@@ -5129,7 +5129,7 @@
       "clientName": "Dtech Electronics Inc.",
       "country": "USA",
       "itemName": "All-in-One PC 24\"",
-      "grossWeight": 126.0
+      "grossWeight": 126
     },
     {
       "id": "PL2025012",
@@ -5138,7 +5138,7 @@
       "clientName": "Berlin Digital AG",
       "country": "Germany",
       "itemName": "Multifunction Printer A3",
-      "grossWeight": 330.0
+      "grossWeight": 330
     },
     {
       "id": "PL2025013",
@@ -5147,7 +5147,7 @@
       "clientName": "Osaka Tech Corp.",
       "country": "Japan",
       "itemName": "NAS Storage 4-Bay",
-      "grossWeight": 21.0
+      "grossWeight": 21
     },
     {
       "id": "PL2025014",
@@ -5156,7 +5156,7 @@
       "clientName": "Shenzhen Gadgets Co.",
       "country": "China",
       "itemName": "USB-C Hub 7-in-1",
-      "grossWeight": 60.0
+      "grossWeight": 60
     },
     {
       "id": "PL2025015",
@@ -5174,7 +5174,7 @@
       "clientName": "Paris Digital SAS",
       "country": "France",
       "itemName": "Smart Whiteboard 65\"",
-      "grossWeight": 190.0
+      "grossWeight": 190
     },
     {
       "id": "PL2025017",
@@ -5183,7 +5183,7 @@
       "clientName": "Singapore Electronics Pte",
       "country": "Singapore",
       "itemName": "Network Switch 24Port",
-      "grossWeight": 105.0
+      "grossWeight": 105
     },
     {
       "id": "PL2025018",
@@ -5192,7 +5192,7 @@
       "clientName": "Sydney Tech Pty",
       "country": "Australia",
       "itemName": "Wireless Presenter",
-      "grossWeight": 9.0
+      "grossWeight": 9
     },
     {
       "id": "PL2025019",
@@ -5210,7 +5210,7 @@
       "clientName": "Hanoi Digital JSC",
       "country": "Vietnam",
       "itemName": "External SSD 1TB",
-      "grossWeight": 15.0
+      "grossWeight": 15
     }
   ],
   "productionOrders": [
