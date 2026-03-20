@@ -66,7 +66,7 @@ const rowsData = ref([
     salesAmount: 42400,
     issueDate: '2026/02/10',
     collectionDate: '2026/03/10',
-    status: '수금완료',
+    status: '미수금',
   },
   {
     poId: 'PO26003',
@@ -77,7 +77,7 @@ const rowsData = ref([
     salesAmount: 8388000,
     issueDate: '2026/02/20',
     collectionDate: '2026/05/05',
-    status: '수금완료',
+    status: '미수금',
   },
   {
     poId: 'PO26004',
@@ -88,7 +88,7 @@ const rowsData = ref([
     salesAmount: 53600,
     issueDate: '2025/12/20',
     collectionDate: '2026/04/10',
-    status: '수금완료',
+    status: '미수금',
   },
   {
     poId: 'PO26006',
@@ -99,7 +99,7 @@ const rowsData = ref([
     salesAmount: 28500,
     issueDate: '2025/08/15',
     collectionDate: '2025/08/20',
-    status: '수금완료',
+    status: '미수금',
   },
   {
     poId: 'PO26008',
@@ -110,7 +110,7 @@ const rowsData = ref([
     salesAmount: 18400,
     issueDate: '2025/09/20',
     collectionDate: '2025/12/20',
-    status: '수금완료',
+    status: '미수금',
   },
 ])
 
