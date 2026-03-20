@@ -14,7 +14,7 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DateRangeField from '@/components/common/DateRangeField.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
-import PageHeader from '@/components/common/PageHeader.vue'
+import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
@@ -126,7 +126,11 @@ const selectedActivity = ref(null)
 const isDetailOpen = ref(false)
 
 function openDetail(activity) {
-  selectedActivity.value = activity
+  const client = clientMap.value[activity.clientId]
+  selectedActivity.value = {
+    ...activity,
+    client: client ? `${client.name} (${client.nameKr})` : '-',
+  }
   isDetailOpen.value = true
 }
 
@@ -141,6 +145,7 @@ const isEditOpen = ref(false)
 
 function openEdit(activity) {
   editActivity.value = activity
+  isDetailOpen.value = false
   isEditOpen.value = true
 }
 
@@ -203,7 +208,7 @@ const columns = [
 <template>
   <div class="space-y-4">
     <!-- 페이지 타이틀 -->
-    <PageHeader title="기록 관리" icon-class="fas fa-list-check">
+    <DocumentPageHeader title="기록 관리" icon-class="fas fa-list-check">
       <template #actions>
         <BaseButton @click="router.push('/activities/manage')">
           <template #leading>
@@ -214,7 +219,7 @@ const columns = [
           기록 등록
         </BaseButton>
       </template>
-    </PageHeader>
+    </DocumentPageHeader>
 
     <!-- 키워드 검색 + 상세검색 토글 -->
     <FilterToolbarCard

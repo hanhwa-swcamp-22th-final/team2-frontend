@@ -9,7 +9,7 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import DateField from '@/components/common/DateField.vue'
-import PageHeader from '@/components/common/PageHeader.vue'
+import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 
 const router = useRouter()
@@ -68,15 +68,6 @@ const poDisplay   = ref('')
 const dateFrom    = ref('')
 const dateTo      = ref(new Date().toISOString().slice(0, 10))
 
-// 탭/필터와 무관하게 실제 선택된 활동기록 전체
-const selectedActivities = computed(() =>
-  activities.value.filter((a) => selectedActivityIds.value.includes(a.id)),
-)
-
-const includedTypes = computed(() =>
-  [...new Set(selectedActivities.value.map((a) => a.type))],
-)
-
 // ── 유효성 검사 ────────────────────────────────────────────
 const errors = ref({})
 
@@ -106,6 +97,15 @@ const typeTabs = [
 ]
 
 const selectedActivityIds = ref([])
+
+// 탭/필터와 무관하게 실제 선택된 활동기록 전체
+const selectedActivities = computed(() =>
+  activities.value.filter((a) => selectedActivityIds.value.includes(a.id)),
+)
+
+const includedTypes = computed(() =>
+  [...new Set(selectedActivities.value.map((a) => a.type))],
+)
 
 const filteredActivities = computed(() => {
   let list = activities.value
@@ -302,7 +302,7 @@ function generatePdf() {
 <template>
   <div class="space-y-6">
     <!-- 페이지 타이틀 -->
-    <PageHeader title="활동기록 패키지" icon-class="fas fa-cube">
+    <DocumentPageHeader title="활동기록 패키지" icon-class="fas fa-cube">
       <template #actions>
         <BaseButton variant="secondary" @click="router.push('/activities')">
           <template #leading>
@@ -313,7 +313,7 @@ function generatePdf() {
           기록 관리
         </BaseButton>
       </template>
-    </PageHeader>
+    </DocumentPageHeader>
 
     <!-- 본문 2컬럼 그리드 -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">

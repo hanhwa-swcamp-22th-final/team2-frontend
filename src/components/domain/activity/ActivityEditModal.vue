@@ -40,6 +40,9 @@ watch(
   { immediate: true },
 )
 
+watch(formDate,  (val) => { if (val) errors.value.date  = undefined })
+watch(formTitle, (val) => { if (val.trim()) errors.value.title = undefined })
+
 function handleSave() {
   const e = {}
   if (!formDate.value)         e.date  = '날짜 값이 누락되었습니다.'
