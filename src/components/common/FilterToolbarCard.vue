@@ -33,6 +33,9 @@ const emit = defineEmits(['update:modelValue', 'toggleAdvanced'])
       />
     </div>
 
+    <!-- Extra controls (e.g. filter selects) -->
+    <slot />
+
     <BaseButton
       variant="secondary"
       size="sm"
