@@ -298,11 +298,11 @@ function handleProductSelect(product) {
           </div>
         </FormField>
 
-        <FormField label="담당자">
+        <FormField label="영업담당자">
           <SearchableCombobox
             v-model="filters.manager"
             :options="managerOptions"
-            placeholder="담당자 검색..."
+            placeholder="영업담당자 검색..."
           />
         </FormField>
 
