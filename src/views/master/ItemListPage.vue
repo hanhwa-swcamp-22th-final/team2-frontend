@@ -181,6 +181,7 @@ function goToDetail(row) {
     <BaseTable v-else :columns="columns" :rows="paginatedItems" row-key="id"
       :empty-text="searchKeyword || categoryFilter ? '검색 결과가 없습니다.' : '등록된 품목이 없습니다.'"
       clickable-rows
+      :footer-text="`총 ${filteredItems.length}건`"
       @row-click="goToDetail"
     >
       <template #cell-code="{ row }">
@@ -190,7 +191,7 @@ function goToDetail(row) {
       <template #cell-name="{ row }">
         <div>
           <p class="font-medium text-ink">{{ row.name }}</p>
-          <p class="text-xs text-slate-500">{{ row.nameKr }}</p>
+          <p class="text-xs text-slate-500">{{ [row.nameKr, row.category].filter(Boolean).join(' · ') }}</p>
         </div>
       </template>
 
@@ -211,17 +212,10 @@ function goToDetail(row) {
       </template>
     </BaseTable>
 
-    <div>
-      <div class="mt-2 px-1 text-xs text-slate-500">
-        <span>총 {{ filteredItems.length }}건</span>
-      </div>
-      <div class="mt-4">
-        <BasePagination
-          v-model:current-page="currentPage"
-          :total-pages="totalPages"
-        />
-      </div>
-    </div>
+    <BasePagination
+      v-model:current-page="currentPage"
+      :total-pages="totalPages"
+    />
 
     <ItemFormModal
       :open="showFormModal"
