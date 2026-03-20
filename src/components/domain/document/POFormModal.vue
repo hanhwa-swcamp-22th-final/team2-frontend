@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
@@ -73,7 +73,7 @@ watch(
     form.value.linkedPiId = pi.id
     form.value.linkedPiDisplay = pi.id
     form.value.clientName = pi.clientName
-    form.value.deliveryDate = pi.deliveryDate.replaceAll('/', '-')
+    form.value.deliveryDate = pi.deliveryDate?.replaceAll('/', '-') ?? ''
   },
 )
 

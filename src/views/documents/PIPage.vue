@@ -7,14 +7,16 @@ import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DateField from '@/components/common/DateField.vue'
-import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import TableActions from '@/components/common/TableActions.vue'
 import PIFormModal from '@/components/domain/document/PIFormModal.vue'
+import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
@@ -33,24 +35,6 @@ const codeSearchKeyword = ref('')
 const productSearchOpen = ref(false)
 const productSearchKeyword = ref('')
 const clientSearchContext = ref('filter')
-
-const filters = ref({
-  keyword: '',
-  registeredFrom: '',
-  registeredTo: '',
-  manager: '',
-  clientName: '',
-  code: '',
-  productName: '',
-  country: '',
-  status: '',
-  deliveryFrom: '',
-  deliveryTo: '',
-})
-
-const appliedFilters = ref({
-  ...filters.value,
-})
 
 const managerOptions = [
   { value: '김영업', label: '김영업' },
@@ -184,11 +168,13 @@ const initialRows = [
   },
 ]
 
-function normalizeDate(value) {
-  return String(value ?? '').replaceAll('/', '-')
-}
-
 const rowsData = ref([...initialRows])
+const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
+  keywordFields: ['id', 'clientName', 'country', 'itemName', 'amount', 'manager', 'status', 'issueDate', 'deliveryDate'],
+  issueDateField: 'issueDate',
+  deliveryDateField: 'deliveryDate',
+})
+
 const clientRows = computed(() => {
   const keyword = clientSearchKeyword.value.trim().toLowerCase()
   if (!keyword) return clientRowsSource
@@ -209,63 +195,25 @@ const productRows = computed(() => {
   return rows.filter((row) => [row.name, row.country, row.manager].some((value) => String(value).toLowerCase().includes(keyword)))
 })
 
-const filteredRows = computed(() => {
-  return rowsData.value.filter((row) => {
-    const keyword = appliedFilters.value.keyword.trim().toLowerCase()
-
-    if (keyword) {
-      const keywordMatched = [
-        row.id,
-        row.clientName,
-        row.country,
-        row.itemName,
-        row.amount,
-        row.manager,
-        row.status,
-        row.issueDate,
-        row.deliveryDate,
-      ].some((value) => String(value).toLowerCase().includes(keyword))
-
-      if (!keywordMatched) return false
-    }
-
-    if (appliedFilters.value.manager && row.manager !== appliedFilters.value.manager) return false
-    if (appliedFilters.value.clientName && !row.clientName.toLowerCase().includes(appliedFilters.value.clientName.toLowerCase())) return false
-    if (appliedFilters.value.code && !row.id.toLowerCase().includes(appliedFilters.value.code.toLowerCase())) return false
-    if (appliedFilters.value.productName && !row.itemName.toLowerCase().includes(appliedFilters.value.productName.toLowerCase())) return false
-    if (appliedFilters.value.country && row.country !== appliedFilters.value.country) return false
-    if (appliedFilters.value.status && row.status !== appliedFilters.value.status) return false
-
-    const issueDate = normalizeDate(row.issueDate)
-    const deliveryDate = normalizeDate(row.deliveryDate)
-
-    if (appliedFilters.value.registeredFrom && issueDate < appliedFilters.value.registeredFrom) return false
-    if (appliedFilters.value.registeredTo && issueDate > appliedFilters.value.registeredTo) return false
-    if (appliedFilters.value.deliveryFrom && deliveryDate < appliedFilters.value.deliveryFrom) return false
-    if (appliedFilters.value.deliveryTo && deliveryDate > appliedFilters.value.deliveryTo) return false
-
-    return true
-  })
-})
-
-function resetFilters() {
-  filters.value = {
-    keyword: '',
-    registeredFrom: '',
-    registeredTo: '',
-    manager: '',
-    clientName: '',
-    code: '',
-    productName: '',
-    country: '',
-    status: '',
-    deliveryFrom: '',
-    deliveryTo: '',
-  }
-
-  appliedFilters.value = {
-    ...filters.value,
-  }
+const currencySymbolMap = {
+  USD: '$',
+  EUR: '€',
+  JPY: '¥',
+  GBP: '£',
+  AUD: 'A$',
+  CAD: 'C$',
+  SGD: 'S$',
+  AED: 'AED ',
+  CNY: '¥',
+  MYR: 'RM ',
+  THB: '฿',
+  VND: '₫',
+  IDR: 'Rp ',
+  INR: '₹',
+  SAR: 'SAR ',
+  BRL: 'R$',
+  SEK: 'kr ',
+  CHF: 'CHF ',
 }
 
 function openClientSearch(context = 'filter') {
@@ -282,51 +230,76 @@ function openProductSearch() {
 }
 
 function searchRows() {
-  appliedFilters.value = {
-    ...filters.value,
-  }
+  applyFilters()
 }
 
 function openCreateForm() {
   formMode.value = 'create'
   selectedRow.value = null
+  selectedClient.value = null
   formOpen.value = true
 }
 
 function openEditForm(row) {
+  const matchedClient = clientRowsSource.find((client) => client.name === row.clientName) ?? null
+  selectedClient.value = matchedClient
   formMode.value = 'edit'
   selectedRow.value = {
     id: row.id,
     clientName: row.clientName,
-    buyerId: 'buyer-1',
+    buyerName: matchedClient?.buyers?.[0] ?? '',
     currency: row.amount.startsWith('€') ? 'EUR' : 'USD',
-    incoterms: 'FOB BUSAN',
+    country: row.country,
+    incoterms: 'FOB',
     deliveryDate: row.deliveryDate,
     items: [
       {
         name: row.itemName,
-        qty: 1,
+        qty: '1',
         unitPrice: row.amount.replace(/[^0-9.]/g, ''),
-        amount: row.amount,
+        amount: row.amount.replace(/[^0-9.]/g, ''),
       },
     ],
   }
   formOpen.value = true
 }
 
+function parseAmount(value) {
+  const normalized = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))
+  return Number.isFinite(normalized) ? normalized : 0
+}
+
+function formatAmount(currency, value) {
+  const symbol = currencySymbolMap[currency] ?? `${currency} `
+  return `${symbol}${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+}
+
 function handleSave(formValue) {
+  const currency = formValue.currency || 'USD'
+  const totalAmount = (formValue.items ?? []).reduce((sum, item) => {
+    const qty = Number.parseFloat(String(item.qty ?? '0'))
+    const unitPrice = Number.parseFloat(String(item.unitPrice ?? '0'))
+    const amount = Number.parseFloat(String(item.amount ?? '0'))
+    const calculatedAmount = Number.isFinite(amount) ? amount : (Number.isFinite(qty) && Number.isFinite(unitPrice) ? qty * unitPrice : 0)
+    return sum + calculatedAmount
+  }, 0)
+  const matchedClient = clientRowsSource.find((client) => client.name === formValue.clientName)
+  const nextRow = {
+    clientName: formValue.clientName || '거래처 미선택',
+    country: formValue.country || matchedClient?.country || selectedClient.value?.country || '-',
+    itemName: formValue.items?.[0]?.name || '품목 미입력',
+    amount: formatAmount(currency, totalAmount),
+    deliveryDate: formValue.deliveryDate ? formValue.deliveryDate.replaceAll('-', '/') : '-',
+  }
+
   if (formMode.value === 'create') {
     rowsData.value = [
       {
         id: `PI26${String(rowsData.value.length + 1).padStart(3, '0')}`,
         issueDate: '2026/03/19',
-        clientName: formValue.clientName || '거래처 미선택',
-        country: '말레이시아',
-        itemName: formValue.items?.[0]?.name || '품목 미입력',
-        amount: '$0',
+        ...nextRow,
         manager: '김영업',
         status: '초안',
-        deliveryDate: formValue.deliveryDate ? formValue.deliveryDate.replaceAll('-', '/') : '-',
       },
       ...rowsData.value,
     ]
@@ -338,9 +311,7 @@ function handleSave(formValue) {
     row.id === selectedRow.value?.id
       ? {
         ...row,
-        clientName: formValue.clientName || row.clientName,
-        itemName: formValue.items?.[0]?.name || row.itemName,
-        deliveryDate: formValue.deliveryDate ? formValue.deliveryDate.replaceAll('-', '/') : row.deliveryDate,
+        ...nextRow,
       }
       : row
   ))
@@ -388,16 +359,16 @@ function handleProductSelect(product) {
 
 <template>
   <div class="fade-in space-y-5">
-    <DocumentPageHeader title="PI 관리" icon-class="fas fa-file-invoice">
+    <PageHeader title="PI 관리" icon-class="fas fa-file-invoice">
       <template #actions>
-      <BaseButton @click="openCreateForm">
-        <template #leading>
-          <i class="fas fa-plus text-xs" aria-hidden="true"></i>
-        </template>
-        PI 작성
-      </BaseButton>
+        <BaseButton @click="openCreateForm">
+          <template #leading>
+            <i class="fas fa-plus text-xs" aria-hidden="true"></i>
+          </template>
+          PI 작성
+        </BaseButton>
       </template>
-    </DocumentPageHeader>
+    </PageHeader>
 
     <FilterToolbarCard
       v-model="filters.keyword"
@@ -515,14 +486,7 @@ function handleProductSelect(product) {
       </template>
 
       <template #cell-actions="{ row }">
-        <div class="flex items-center gap-1.5">
-          <button type="button" class="text-xs text-slate-500 transition hover:text-slate-700" :title="`${row.id} 수정`" @click.stop="openEditForm(row)">
-            <i class="fas fa-edit" aria-hidden="true"></i>
-          </button>
-          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} 삭제`" @click.stop="openDeleteModal(row)">
-            <i class="fas fa-trash" aria-hidden="true"></i>
-          </button>
-        </div>
+        <TableActions @edit="openEditForm(row)" @delete="openDeleteModal(row)" />
       </template>
     </BaseTable>
 
