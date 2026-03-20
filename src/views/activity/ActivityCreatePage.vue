@@ -92,7 +92,7 @@ async function openPoSearch() {
     return
   }
   try {
-    poList.value = await fetchPOsByClient(formClient.value, authStore.currentUser?.id)
+    poList.value = await fetchPOsByClient(formClient.value)
     poKeyword.value = ''
     isPoSearchOpen.value = true
   } catch (e) {
