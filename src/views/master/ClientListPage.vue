@@ -15,22 +15,17 @@ import {
   createClient,
   deleteClient,
   fetchClients,
-  fetchCountries,
-  fetchCurrencies,
-  fetchPaymentTerms,
-  fetchPorts,
   updateClient,
 } from '@/api/master'
+import { useMasterLookup } from '@/composables/useMasterLookup'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const { success, error } = useToast()
 
+const { countries, ports, currencies, paymentTerms, loadReferenceData, getCountryName, getPortName, getPaymentTermsLabel, getCurrencyLabel } = useMasterLookup()
+
 const clients = ref([])
-const countries = ref([])
-const ports = ref([])
-const currencies = ref([])
-const paymentTerms = ref([])
 const loading = ref(false)
 const saving = ref(false)
 const deleting = ref(false)
@@ -66,33 +61,13 @@ const columns = [
   { key: 'actions', label: '액션', width: '120px', align: 'center' },
 ]
 
-function getCountryName(countryId) {
-  const found = countries.value.find((c) => String(c.id) === String(countryId))
-  return found ? found.name : '-'
-}
-
-function getPortName(portId) {
-  const found = ports.value.find((p) => String(p.id) === String(portId))
-  return found ? found.name : '-'
-}
-
-function getPaymentTermsCode(paymentTermsId) {
-  const found = paymentTerms.value.find((p) => String(p.id) === String(paymentTermsId))
-  return found ? found.code : '-'
-}
-
-function getCurrencyCode(currencyId) {
-  const found = currencies.value.find((c) => String(c.id) === String(currencyId))
-  return found ? found.code : '-'
-}
-
 const enrichedClients = computed(() =>
   clients.value.map((c) => ({
     ...c,
     countryName: getCountryName(c.countryId),
     portName: getPortName(c.portId),
-    paymentTermsCode: getPaymentTermsCode(c.paymentTermsId),
-    currencyCode: getCurrencyCode(c.currencyId),
+    paymentTermsCode: getPaymentTermsLabel(c.paymentTermsId),
+    currencyCode: getCurrencyLabel(c.currencyId),
   })),
 )
 
@@ -131,19 +106,11 @@ watch([searchKeyword, statusFilter], () => {
 async function loadData() {
   loading.value = true
   try {
-    const [clientsData, countriesData, portsData, currenciesData, paymentTermsData] =
-      await Promise.all([
-        fetchClients(),
-        fetchCountries(),
-        fetchPorts(),
-        fetchCurrencies(),
-        fetchPaymentTerms(),
-      ])
+    const [clientsData] = await Promise.all([
+      fetchClients(),
+      loadReferenceData(),
+    ])
     clients.value = clientsData
-    countries.value = countriesData
-    ports.value = portsData
-    currencies.value = currenciesData
-    paymentTerms.value = paymentTermsData
   } catch {
     error('데이터를 불러오는 중 오류가 발생했습니다.')
   } finally {
