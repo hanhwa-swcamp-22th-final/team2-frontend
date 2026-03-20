@@ -6,6 +6,7 @@ import BaseTextField from '@/components/common/BaseTextField.vue'
 import FormField from '@/components/common/FormField.vue'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
+import { isValidEmail } from '@/utils/validators'
 
 const router = useRouter()
 const route = useRoute()
@@ -24,11 +25,10 @@ function validate() {
   passwordError.value = ''
   let valid = true
 
-  const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
   if (!email.value.trim()) {
     emailError.value = '이메일을 입력해주세요.'
     valid = false
-  } else if (!EMAIL_REGEX.test(email.value.trim())) {
+  } else if (!isValidEmail(email.value)) {
     emailError.value = '올바른 이메일 형식을 입력해주세요.'
     valid = false
   }
@@ -112,7 +112,7 @@ async function handleLogin() {
         </FormField>
 
         <!-- 로그인 버튼 -->
-        <BaseButton variant="primary" type="submit" block size="lg" :disabled="loading">
+        <BaseButton variant="primary" type="submit" block size="lg" :disabled="loading" :aria-busy="loading">
           {{ loading ? '로그인 중...' : '로그인' }}
         </BaseButton>
       </form>

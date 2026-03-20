@@ -4,10 +4,12 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import FileUploadField from '@/components/common/FileUploadField.vue'
 import FormField from '@/components/common/FormField.vue'
 import { useToast } from '@/composables/useToast'
 import { changePassword } from '@/api/auth'
+import { isValidEmail } from '@/utils/validators'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -24,8 +26,7 @@ const { success, error, warning } = useToast()
 
 const form = ref(getInitialForm())
 const errors = ref({})
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const showResetConfirm = ref(false)
 
 const roleOptions = [
   { label: '영업', value: 'sales' },
@@ -84,7 +85,7 @@ function validate() {
 
   if (!form.value.email.trim()) {
     e.email = '이메일을 입력해주세요.'
-  } else if (!EMAIL_REGEX.test(form.value.email.trim())) {
+  } else if (!isValidEmail(form.value.email)) {
     e.email = '올바른 이메일 형식을 입력해주세요.'
   } else {
     // 중복 이메일 체크
@@ -110,6 +111,10 @@ function validate() {
     e.departmentId = '팀을 선택해주세요.'
   }
 
+  if (form.value.transferDepartmentId && !form.value.transferReason.trim()) {
+    e.transferReason = '이동 사유를 입력해주세요.'
+  }
+
   errors.value = e
   return Object.keys(e).length === 0
 }
@@ -122,6 +127,10 @@ function handleSave() {
   emit('save', { ...form.value })
 }
 
+function confirmResetPassword() {
+  showResetConfirm.value = true
+}
+
 async function handleResetPassword() {
   if (!props.user?.id) return
   try {
@@ -129,6 +138,8 @@ async function handleResetPassword() {
     success('비밀번호가 1234로 초기화되었습니다.')
   } catch (e) {
     error('비밀번호 초기화 중 오류가 발생했습니다.')
+  } finally {
+    showResetConfirm.value = false
   }
 }
 
@@ -178,7 +189,7 @@ const currentDepartmentName = computed(() => {
           </FormField>
 
           <FormField label="초기 비밀번호">
-            <BaseTextField model-value="1234" readonly />
+            <BaseTextField model-value="1234" type="password" readonly />
           </FormField>
         </template>
       </div>
@@ -208,7 +219,7 @@ const currentDepartmentName = computed(() => {
                 :options="[{ label: '변경안함', value: '' }, ...departments.map((d) => ({ label: d.name, value: String(d.id) }))]"
               />
             </FormField>
-            <FormField label="이동 사유">
+            <FormField label="이동 사유" :required="!!form.transferDepartmentId" :error="errors.transferReason">
               <BaseTextField v-model="form.transferReason" placeholder="이동 사유를 입력하세요" />
             </FormField>
           </div>
@@ -229,11 +240,22 @@ const currentDepartmentName = computed(() => {
           <p class="text-sm font-medium text-ink">비밀번호 초기화</p>
           <p class="text-xs text-slate-500">비밀번호를 초기값(1234)으로 재설정합니다.</p>
         </div>
-        <BaseButton variant="secondary" size="sm" type="button" @click="handleResetPassword">
+        <BaseButton variant="secondary" size="sm" type="button" @click="confirmResetPassword">
           초기화
         </BaseButton>
       </div>
     </form>
+
+    <!-- 비밀번호 초기화 확인 모달 -->
+    <ConfirmModal
+      :open="showResetConfirm"
+      title="비밀번호 초기화"
+      :message="`${user?.name} 사용자의 비밀번호를 초기값(1234)으로 초기화하시겠습니까?`"
+      confirm-label="초기화"
+      confirm-variant="danger"
+      @confirm="handleResetPassword"
+      @cancel="showResetConfirm = false"
+    />
 
     <template #footer>
       <BaseButton variant="secondary" @click="emit('close')">취소</BaseButton>

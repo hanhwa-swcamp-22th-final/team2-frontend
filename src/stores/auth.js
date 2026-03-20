@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, readonly, ref } from 'vue'
 import { defineStore } from 'pinia'
 import {
   decodeToken,
@@ -100,7 +100,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    accessToken,
+    accessToken: readonly(accessToken),
     isLoggedIn,
     currentUser,
     login,

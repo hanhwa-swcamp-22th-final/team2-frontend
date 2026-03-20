@@ -6,10 +6,10 @@ import FileUploadField from '@/components/common/FileUploadField.vue'
 import FormField from '@/components/common/FormField.vue'
 import { useToast } from '@/composables/useToast'
 import { fetchCompany, updateCompany } from '@/api/auth'
+import { isValidEmail } from '@/utils/validators'
 
 const { success, error, warning } = useToast()
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const form = ref({
   nameEn: '',
@@ -51,7 +51,7 @@ function validate() {
   if (!form.value.nameEn.trim()) {
     e.nameEn = '영문 회사명을 입력해주세요.'
   }
-  if (form.value.email && !EMAIL_REGEX.test(form.value.email.trim())) {
+  if (form.value.email && !isValidEmail(form.value.email)) {
     e.email = '올바른 이메일 형식을 입력해주세요.'
   }
   errors.value = e
@@ -133,6 +133,12 @@ async function handleSave() {
 
       <!-- 회사 도장 이미지 -->
       <div class="space-y-3">
+        <img
+          v-if="form.sealImageUrl && !form.sealImage"
+          :src="form.sealImageUrl"
+          alt="현재 등록된 도장 이미지"
+          class="h-20 w-20 rounded-lg border border-slate-200 object-contain"
+        />
         <FileUploadField
           v-model="form.sealImage"
           label="회사 도장 이미지"
