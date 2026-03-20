@@ -6,7 +6,7 @@ import BasePagination from '@/components/common/BasePagination.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
-import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
+import SearchInput from '@/components/common/SearchInput.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
@@ -165,15 +165,14 @@ function goToDetail(row) {
       </template>
     </PageHeader>
 
-    <FilterToolbarCard
-      v-model="searchKeyword"
-      placeholder="코드, 품목명으로 검색"
-      :advanced-open="false"
-    >
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="min-w-0 flex-1">
+        <SearchInput v-model="searchKeyword" placeholder="코드, 품목명으로 검색" />
+      </div>
       <div class="w-40">
         <BaseSelect v-model="categoryFilter" :options="categoryOptions" placeholder="전체 카테고리" />
       </div>
-    </FilterToolbarCard>
+    </div>
 
     <div v-if="loading" class="flex items-center justify-center py-20 text-slate-400">
       데이터를 불러오는 중입니다...
