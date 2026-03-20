@@ -94,6 +94,11 @@ async function loadData() {
         fetchPaymentTerms(),
         fetchBuyersByClient(route.params.id),
       ])
+    if (!clientData) {
+      error('거래처를 찾을 수 없습니다.')
+      router.push({ name: 'client-list' })
+      return
+    }
     client.value = clientData
     countries.value = countriesData
     ports.value = portsData
@@ -152,7 +157,7 @@ async function handleDelete() {
 }
 
 function goBack() {
-  if (window.history.length > 1) router.back()
+  if (router.options.history.state?.back) router.back()
   else router.push({ name: 'client-list' })
 }
 

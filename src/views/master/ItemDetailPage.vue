@@ -38,7 +38,7 @@ const infoFields = computed(() => {
   ]
 })
 
-const usageHistory = []
+const usageHistory = ref([])
 
 async function loadData() {
   const rawId = route.params.id
@@ -53,6 +53,11 @@ async function loadData() {
       fetchItem(route.params.id),
       fetchItems(),
     ])
+    if (!itemData) {
+      error('품목을 찾을 수 없습니다.')
+      router.push({ name: 'item-list' })
+      return
+    }
     item.value = itemData
     allItems.value = itemsData
   } catch {
@@ -102,7 +107,7 @@ async function handleDelete() {
 }
 
 function goBack() {
-  if (window.history.length > 1) router.back()
+  if (router.options.history.state?.back) router.back()
   else router.push({ name: 'item-list' })
 }
 </script>

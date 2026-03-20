@@ -116,11 +116,12 @@ function validate() {
 
   if (!form.value.code?.trim()) {
     e.code = '코드를 입력하세요.'
-  } else if (props.mode === 'create') {
-    const duplicate = props.allItems.some(
-      (i) => i.code.toLowerCase() === form.value.code.trim().toLowerCase(),
+  } else if (
+    props.allItems.some(
+      (i) => i.code.toLowerCase() === form.value.code.trim().toLowerCase() && i.id !== props.item?.id,
     )
-    if (duplicate) e.code = '이미 사용 중인 코드입니다.'
+  ) {
+    e.code = '이미 사용 중인 코드입니다.'
   }
 
   if (!form.value.name?.trim()) {
