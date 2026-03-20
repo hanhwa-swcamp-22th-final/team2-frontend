@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
+import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
@@ -187,69 +188,55 @@ function handleClientSelect(client) {
   clientSearchKeyword.value = ''
 }
 
+function goToLinkedDocument(documentId) {
+  if (documentId?.startsWith('PI')) {
+    router.push({ name: 'pi-detail', params: { id: documentId } })
+    return
+  }
+
+  if (documentId?.startsWith('SO')) {
+    router.push({ name: 'shipment-order-detail', params: { id: documentId } })
+  }
+}
+
 function confirmDelete() {
   deleteOpen.value = false
-  success(`${detail.value?.id} 삭제 확인이 연결되었습니다.`)
+  success(`${detail.value?.id}가 삭제되었습니다.`)
   router.push({ name: 'po' })
 }
 </script>
 
 <template>
   <div v-if="detail" class="fade-in">
-    <div class="mb-6 flex flex-wrap items-center gap-3">
-      <button
-        type="button"
-        class="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-        @click="goBack"
-      >
-        <i class="fas fa-arrow-left" aria-hidden="true"></i>
-      </button>
-      <h2 class="text-xl font-bold text-slate-900">{{ detail.id }}</h2>
-      <StatusBadge :value="detail.status" />
-      <div class="flex-1"></div>
-
-      <BaseButton class="!h-auto !rounded-xl !px-4 !py-2.5" @click="handleEdit">
-        <template #leading>
-          <i class="fas fa-edit text-xs" aria-hidden="true"></i>
+    <div class="mb-6">
+      <DetailPageHeader :title="detail.id" :status="detail.status" @back="goBack">
+        <template #actions>
+          <BaseButton size="sm" @click="handleEdit">
+            <template #leading>
+              <i class="fas fa-edit text-xs" aria-hidden="true"></i>
+            </template>
+            수정
+          </BaseButton>
+          <BaseButton variant="secondary" size="sm" @click="handleDelete">
+            <template #leading>
+              <i class="fas fa-trash text-xs" aria-hidden="true"></i>
+            </template>
+            삭제
+          </BaseButton>
+          <BaseButton variant="secondary" size="sm" @click="openPreview">
+            <template #leading>
+              <i class="fas fa-eye text-xs text-brand-500" aria-hidden="true"></i>
+            </template>
+            미리보기
+          </BaseButton>
+          <BaseButton size="sm" @click="handlePdfDownload">
+            <template #leading>
+              <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
+            </template>
+            PDF 다운로드
+          </BaseButton>
         </template>
-        수정
-      </BaseButton>
-      <BaseButton
-        variant="secondary"
-        class="!h-auto !rounded-xl !px-4 !py-2.5"
-        @click="handleDelete"
-      >
-        <template #leading>
-          <i class="fas fa-trash text-xs" aria-hidden="true"></i>
-        </template>
-        삭제
-      </BaseButton>
-      <BaseButton
-        variant="secondary"
-        class="!h-auto !rounded-xl !px-4 !py-2.5"
-        @click="openPreview"
-      >
-        <template #leading>
-          <i class="fas fa-eye text-xs text-brand-500" aria-hidden="true"></i>
-        </template>
-        미리보기
-      </BaseButton>
-      <BaseButton
-        variant="secondary"
-        class="!h-auto !rounded-xl !px-4 !py-2.5"
-        @click="handlePrint"
-      >
-        <template #leading>
-          <i class="fas fa-print text-xs text-slate-400" aria-hidden="true"></i>
-        </template>
-        인쇄
-      </BaseButton>
-      <BaseButton class="!h-auto !rounded-xl !px-4 !py-2.5" @click="handlePdfDownload">
-        <template #leading>
-          <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
-        </template>
-        PDF 다운로드
-      </BaseButton>
+      </DetailPageHeader>
     </div>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -321,12 +308,12 @@ function confirmDelete() {
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 class="mb-3 font-bold text-slate-800">연결 문서</h3>
           <div class="space-y-2 text-sm">
-            <a
+            <button
               v-for="document in detail.linkedDocuments"
               :key="document.id"
-              href="#"
+              type="button"
               class="flex items-center gap-2 rounded-lg p-2.5 text-brand-500 transition hover:bg-slate-50"
-              @click.prevent
+              @click="goToLinkedDocument(document.id)"
             >
               <i
                 :class="document.id.startsWith('PI') ? 'fas fa-file-invoice' : 'fas fa-file-export'"
@@ -334,7 +321,7 @@ function confirmDelete() {
               ></i>
               {{ document.id }}
               <StatusBadge :value="document.status" />
-            </a>
+            </button>
           </div>
         </div>
 

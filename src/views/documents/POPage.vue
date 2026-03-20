@@ -7,20 +7,22 @@ import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DateField from '@/components/common/DateField.vue'
-import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import TableActions from '@/components/common/TableActions.vue'
 import POFormModal from '@/components/domain/document/POFormModal.vue'
+import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const { success } = useToast()
 
-const isAdvancedOpen = ref(true)
+const isAdvancedOpen = ref(false)
 const formOpen = ref(false)
 const formMode = ref('create')
 const selectedRow = ref(null)
@@ -36,24 +38,6 @@ const codeSearchKeyword = ref('')
 const productSearchOpen = ref(false)
 const productSearchKeyword = ref('')
 const clientSearchContext = ref('filter')
-
-const filters = ref({
-  keyword: '',
-  registeredFrom: '',
-  registeredTo: '',
-  manager: '',
-  clientName: '',
-  code: '',
-  productName: '',
-  country: '',
-  status: '',
-  deliveryFrom: '',
-  deliveryTo: '',
-})
-
-const appliedFilters = ref({
-  ...filters.value,
-})
 
 const managerOptions = [
   { value: '김영업', label: '김영업' },
@@ -137,11 +121,13 @@ const initialRows = [
   },
 ]
 
-function normalizeDate(value) {
-  return String(value ?? '').replaceAll('/', '-')
-}
-
 const rowsData = ref([...initialRows])
+const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
+  keywordFields: ['id', 'clientName', 'country', 'itemName', 'amount', 'manager', 'status', 'issueDate', 'deliveryDate'],
+  issueDateField: 'issueDate',
+  deliveryDateField: 'deliveryDate',
+})
+
 const piRows = computed(() => {
   const keyword = piSearchKeyword.value.trim().toLowerCase()
   if (!keyword) return piRowsSource
@@ -168,65 +154,6 @@ const productRows = computed(() => {
   return rows.filter((row) => [row.name, row.country, row.manager].some((value) => String(value).toLowerCase().includes(keyword)))
 })
 
-const filteredRows = computed(() => {
-  return rowsData.value.filter((row) => {
-    const keyword = appliedFilters.value.keyword.trim().toLowerCase()
-
-    if (keyword) {
-      const keywordMatched = [
-        row.id,
-        row.clientName,
-        row.country,
-        row.itemName,
-        row.amount,
-        row.manager,
-        row.status,
-        row.issueDate,
-        row.deliveryDate,
-      ].some((value) => String(value).toLowerCase().includes(keyword))
-
-      if (!keywordMatched) return false
-    }
-
-    if (appliedFilters.value.manager && row.manager !== appliedFilters.value.manager) return false
-    if (appliedFilters.value.clientName && !row.clientName.toLowerCase().includes(appliedFilters.value.clientName.toLowerCase())) return false
-    if (appliedFilters.value.code && !row.id.toLowerCase().includes(appliedFilters.value.code.toLowerCase())) return false
-    if (appliedFilters.value.productName && !row.itemName.toLowerCase().includes(appliedFilters.value.productName.toLowerCase())) return false
-    if (appliedFilters.value.country && row.country !== appliedFilters.value.country) return false
-    if (appliedFilters.value.status && row.status !== appliedFilters.value.status) return false
-
-    const issueDate = normalizeDate(row.issueDate)
-    const deliveryDate = normalizeDate(row.deliveryDate)
-
-    if (appliedFilters.value.registeredFrom && issueDate < appliedFilters.value.registeredFrom) return false
-    if (appliedFilters.value.registeredTo && issueDate > appliedFilters.value.registeredTo) return false
-    if (appliedFilters.value.deliveryFrom && deliveryDate < appliedFilters.value.deliveryFrom) return false
-    if (appliedFilters.value.deliveryTo && deliveryDate > appliedFilters.value.deliveryTo) return false
-
-    return true
-  })
-})
-
-function resetFilters() {
-  filters.value = {
-    keyword: '',
-    registeredFrom: '',
-    registeredTo: '',
-    manager: '',
-    clientName: '',
-    code: '',
-    productName: '',
-    country: '',
-    status: '',
-    deliveryFrom: '',
-    deliveryTo: '',
-  }
-
-  appliedFilters.value = {
-    ...filters.value,
-  }
-}
-
 function openClientSearch(context = 'filter') {
   clientSearchContext.value = context
   clientSearchOpen.value = true
@@ -241,18 +168,20 @@ function openProductSearch() {
 }
 
 function searchRows() {
-  appliedFilters.value = {
-    ...filters.value,
-  }
+  applyFilters()
 }
 
 function openCreateForm() {
   formMode.value = 'create'
   selectedRow.value = null
+  selectedPi.value = null
+  selectedClient.value = null
   formOpen.value = true
 }
 
 function openEditForm(row) {
+  selectedPi.value = piRowsSource.find((pi) => pi.id === (row.id === 'PO26001' ? 'PI26001' : '')) ?? null
+  selectedClient.value = clientRowsSource.find((client) => client.name === row.clientName) ?? null
   formMode.value = 'edit'
   selectedRow.value = {
     id: row.id,
@@ -342,16 +271,16 @@ function handleProductSelect(product) {
 
 <template>
   <div class="fade-in space-y-5">
-    <DocumentPageHeader title="PO 관리" icon-class="fas fa-file-contract">
+    <PageHeader title="PO 관리" icon-class="fas fa-file-contract">
       <template #actions>
-      <BaseButton @click="openCreateForm">
-        <template #leading>
-          <i class="fas fa-plus text-xs" aria-hidden="true"></i>
-        </template>
-        PO 작성
-      </BaseButton>
+        <BaseButton @click="openCreateForm">
+          <template #leading>
+            <i class="fas fa-plus text-xs" aria-hidden="true"></i>
+          </template>
+          PO 작성
+        </BaseButton>
       </template>
-    </DocumentPageHeader>
+    </PageHeader>
 
     <FilterToolbarCard
       v-model="filters.keyword"
@@ -369,11 +298,11 @@ function handleProductSelect(product) {
           </div>
         </FormField>
 
-        <FormField label="담당자">
+        <FormField label="영업담당자">
           <SearchableCombobox
             v-model="filters.manager"
             :options="managerOptions"
-            placeholder="담당자 검색..."
+            placeholder="영업담당자 검색..."
           />
         </FormField>
 
@@ -383,15 +312,6 @@ function handleProductSelect(product) {
             placeholder="거래처 검색..."
             title="거래처 검색"
             @trigger="openClientSearch"
-          />
-        </FormField>
-
-        <FormField label="PO번호">
-          <SearchTriggerField
-            v-model="filters.code"
-            placeholder="PO번호"
-            title="PO번호 검색"
-            @trigger="openCodeSearch"
           />
         </FormField>
 
@@ -465,14 +385,7 @@ function handleProductSelect(product) {
       </template>
 
       <template #cell-actions="{ row }">
-        <div class="flex items-center justify-center gap-1.5">
-          <button type="button" class="text-xs text-slate-500 transition hover:text-slate-700" :title="`${row.id} 수정`" @click.stop="openEditForm(row)">
-            <i class="fas fa-edit" aria-hidden="true"></i>
-          </button>
-          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} 삭제`" @click.stop="openDeleteModal(row)">
-            <i class="fas fa-trash" aria-hidden="true"></i>
-          </button>
-        </div>
+        <TableActions @edit="openEditForm(row)" @delete="openDeleteModal(row)" />
       </template>
     </BaseTable>
 

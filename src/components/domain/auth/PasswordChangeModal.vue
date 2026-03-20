@@ -38,6 +38,13 @@ watch(
   },
 )
 
+watch(confirmPassword, () => {
+  if (errors.value.confirmPassword) {
+    const { confirmPassword: _, ...rest } = errors.value
+    errors.value = rest
+  }
+})
+
 function validate() {
   const e = {}
   if (!currentPassword.value) {
@@ -108,7 +115,7 @@ async function handleSave() {
       <FormField
         label="새 비밀번호 확인"
         required
-        :error="errors.confirmPassword || (isMismatch ? '새 비밀번호가 일치하지 않습니다.' : '')"
+        :error="errors.confirmPassword"
       >
         <BaseTextField v-model="confirmPassword" type="password" placeholder="새 비밀번호를 다시 입력하세요" />
       </FormField>

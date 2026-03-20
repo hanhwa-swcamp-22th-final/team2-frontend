@@ -6,20 +6,21 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
-import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import ShipmentOrderTemplate from '@/components/domain/document/ShipmentOrderTemplate.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { useToast } from '@/composables/useToast'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
 
 const router = useRouter()
-const isAdvancedOpen = ref(true)
+const isAdvancedOpen = ref(false)
 const previewTarget = ref(null)
 const toast = useToast()
 const clientSearchOpen = ref(false)
@@ -28,24 +29,6 @@ const codeSearchOpen = ref(false)
 const codeSearchKeyword = ref('')
 const productSearchOpen = ref(false)
 const productSearchKeyword = ref('')
-
-const filters = ref({
-  keyword: '',
-  registeredFrom: '',
-  registeredTo: '',
-  manager: '',
-  clientName: '',
-  code: '',
-  productName: '',
-  country: '',
-  status: '',
-  deliveryFrom: '',
-  deliveryTo: '',
-})
-
-const appliedFilters = ref({
-  ...filters.value,
-})
 
 const managerOptions = [
   { value: '김영업', label: '김영업' },
@@ -80,7 +63,7 @@ const columns = [
   { key: 'actions', label: '', align: 'center', width: '120px' },
 ]
 
-const rows = [
+const rowsData = ref([
   {
     id: 'SO2026001',
     issueDate: '2026/02/24',
@@ -114,7 +97,7 @@ const rows = [
     status: '준비완료',
     dueDate: '2026/06/05',
   },
-]
+])
 
 const clientRowsSource = [
   { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
@@ -122,47 +105,10 @@ const clientRowsSource = [
   { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국' },
 ]
 
-function normalizeDate(value) {
-  return String(value ?? '').replaceAll('/', '-')
-}
-
-const filteredRows = computed(() => {
-  return rows.filter((row) => {
-    const keyword = appliedFilters.value.keyword.trim().toLowerCase()
-
-    if (keyword) {
-      const keywordMatched = [
-        row.id,
-        row.issueDate,
-        row.poId,
-        row.clientName,
-        row.country,
-        row.itemName,
-        row.manager,
-        row.status,
-        row.dueDate,
-      ].some((value) => String(value).toLowerCase().includes(keyword))
-
-      if (!keywordMatched) return false
-    }
-
-    if (appliedFilters.value.manager && row.manager !== appliedFilters.value.manager) return false
-    if (appliedFilters.value.clientName && !row.clientName.toLowerCase().includes(appliedFilters.value.clientName.toLowerCase())) return false
-    if (appliedFilters.value.code && !row.id.toLowerCase().includes(appliedFilters.value.code.toLowerCase())) return false
-    if (appliedFilters.value.productName && !row.itemName.toLowerCase().includes(appliedFilters.value.productName.toLowerCase())) return false
-    if (appliedFilters.value.country && row.country !== appliedFilters.value.country) return false
-    if (appliedFilters.value.status && row.status !== appliedFilters.value.status) return false
-
-    const issueDate = normalizeDate(row.issueDate)
-    const dueDate = normalizeDate(row.dueDate)
-
-    if (appliedFilters.value.registeredFrom && issueDate < appliedFilters.value.registeredFrom) return false
-    if (appliedFilters.value.registeredTo && issueDate > appliedFilters.value.registeredTo) return false
-    if (appliedFilters.value.deliveryFrom && dueDate < appliedFilters.value.deliveryFrom) return false
-    if (appliedFilters.value.deliveryTo && dueDate > appliedFilters.value.deliveryTo) return false
-
-    return true
-  })
+const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
+  keywordFields: ['id', 'issueDate', 'poId', 'clientName', 'country', 'itemName', 'manager', 'status', 'dueDate'],
+  issueDateField: 'issueDate',
+  deliveryDateField: 'dueDate',
 })
 
 const previewFields = computed(() => {
@@ -190,39 +136,19 @@ const clientRows = computed(() => {
 
 const codeRows = computed(() => {
   const keyword = codeSearchKeyword.value.trim().toLowerCase()
-  const source = rows.map((row) => ({ id: row.id, issueDate: row.issueDate, clientName: row.clientName }))
+  const source = rowsData.value.map((row) => ({ id: row.id, issueDate: row.issueDate, clientName: row.clientName }))
   if (!keyword) return source
   return source.filter((row) => [row.id, row.issueDate, row.clientName].some((value) => String(value).toLowerCase().includes(keyword)))
 })
 
 const productRows = computed(() => {
   const keyword = productSearchKeyword.value.trim().toLowerCase()
-  const source = [...new Map(rows.map((row) => [row.itemName, { name: row.itemName, country: row.country, manager: row.manager }])).values()]
+  const source = [...new Map(rowsData.value.map((row) => [row.itemName, { name: row.itemName, country: row.country, manager: row.manager }])).values()]
   if (!keyword) return source
   return source.filter((row) => [row.name, row.country, row.manager].some((value) => String(value).toLowerCase().includes(keyword)))
 })
 
 const currentOutputTarget = computed(() => previewTarget.value ?? filteredRows.value[0] ?? null)
-
-function resetFilters() {
-  filters.value = {
-    keyword: '',
-    registeredFrom: '',
-    registeredTo: '',
-    manager: '',
-    clientName: '',
-    code: '',
-    productName: '',
-    country: '',
-    status: '',
-    deliveryFrom: '',
-    deliveryTo: '',
-  }
-
-  appliedFilters.value = {
-    ...filters.value,
-  }
-}
 
 function openClientSearch() {
   clientSearchOpen.value = true
@@ -237,9 +163,7 @@ function openProductSearch() {
 }
 
 function searchRows() {
-  appliedFilters.value = {
-    ...filters.value,
-  }
+  applyFilters()
 }
 
 function openPreview(row) {
@@ -286,7 +210,7 @@ function downloadPdf(row) {
 
 <template>
   <div class="fade-in space-y-5">
-    <DocumentPageHeader title="출하지시서" icon-class="fas fa-truck-loading">
+    <PageHeader title="출하지시서" icon-class="fas fa-truck-loading">
       <template #actions>
         <BaseButton variant="secondary" size="sm" @click="currentOutputTarget ? printDocument(currentOutputTarget) : toast.info('출력할 출하지시서가 없습니다.', '인쇄')">
           <template #leading>
@@ -301,7 +225,7 @@ function downloadPdf(row) {
           PDF 다운로드
         </BaseButton>
       </template>
-    </DocumentPageHeader>
+    </PageHeader>
 
     <FilterToolbarCard
       v-model="filters.keyword"

@@ -5,31 +5,25 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
-import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import PLDocumentTemplate from '@/components/domain/document/PLDocumentTemplate.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
+import SearchModal from '@/components/common/SearchModal.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
+import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
 
-const isAdvancedOpen = ref(true)
+const isAdvancedOpen = ref(false)
 const previewTarget = ref(null)
-
-const filters = ref({
-  keyword: '',
-  registeredFrom: '',
-  registeredTo: '',
-  clientName: '',
-  code: '',
-  productName: '',
-  country: '',
-})
-
-const appliedFilters = ref({
-  ...filters.value,
-})
+const clientSearchOpen = ref(false)
+const clientSearchKeyword = ref('')
+const codeSearchOpen = ref(false)
+const codeSearchKeyword = ref('')
+const productSearchOpen = ref(false)
+const productSearchKeyword = ref('')
 
 const countryOptions = [
   { value: '말레이시아', label: '말레이시아' },
@@ -49,7 +43,7 @@ const columns = [
   { key: 'actions', label: '', align: 'center', width: '120px' },
 ]
 
-const rows = [
+const rowsData = ref([
   {
     id: 'PL26001',
     invoiceDate: '2026/02/18',
@@ -74,41 +68,32 @@ const rows = [
     itemName: 'Lubricant Oil SAE 10W-40',
     grossWeight: '7,430',
   },
-]
+])
 
-function normalizeDate(value) {
-  return String(value ?? '').replaceAll('/', '-')
-}
+const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
+  keywordFields: ['id', 'invoiceDate', 'clientName', 'country', 'itemName', 'grossWeight'],
+  issueDateField: 'invoiceDate',
+})
 
-const filteredRows = computed(() => {
-  return rows.filter((row) => {
-    const keyword = appliedFilters.value.keyword.trim().toLowerCase()
+const clientRows = computed(() => {
+  const keyword = clientSearchKeyword.value.trim().toLowerCase()
+  const source = [...new Map(rowsData.value.map((row) => [row.clientName, { id: row.id, name: row.clientName, country: row.country }])).values()]
+  if (!keyword) return source
+  return source.filter((row) => [row.id, row.name, row.country].some((value) => String(value).toLowerCase().includes(keyword)))
+})
 
-    if (keyword) {
-      const keywordMatched = [
-        row.id,
-        row.invoiceDate,
-        row.clientName,
-        row.country,
-        row.itemName,
-        row.grossWeight,
-      ].some((value) => String(value).toLowerCase().includes(keyword))
+const codeRows = computed(() => {
+  const keyword = codeSearchKeyword.value.trim().toLowerCase()
+  const source = rowsData.value.map((row) => ({ id: row.id, invoiceDate: row.invoiceDate, clientName: row.clientName }))
+  if (!keyword) return source
+  return source.filter((row) => [row.id, row.invoiceDate, row.clientName].some((value) => String(value).toLowerCase().includes(keyword)))
+})
 
-      if (!keywordMatched) return false
-    }
-
-    if (appliedFilters.value.clientName && !row.clientName.toLowerCase().includes(appliedFilters.value.clientName.toLowerCase())) return false
-    if (appliedFilters.value.code && !row.id.toLowerCase().includes(appliedFilters.value.code.toLowerCase())) return false
-    if (appliedFilters.value.productName && !row.itemName.toLowerCase().includes(appliedFilters.value.productName.toLowerCase())) return false
-    if (appliedFilters.value.country && row.country !== appliedFilters.value.country) return false
-
-    const invoiceDate = normalizeDate(row.invoiceDate)
-
-    if (appliedFilters.value.registeredFrom && invoiceDate < appliedFilters.value.registeredFrom) return false
-    if (appliedFilters.value.registeredTo && invoiceDate > appliedFilters.value.registeredTo) return false
-
-    return true
-  })
+const productRows = computed(() => {
+  const keyword = productSearchKeyword.value.trim().toLowerCase()
+  const source = [...new Map(rowsData.value.map((row) => [row.itemName, { name: row.itemName, country: row.country, clientName: row.clientName }])).values()]
+  if (!keyword) return source
+  return source.filter((row) => [row.name, row.country, row.clientName].some((value) => String(value).toLowerCase().includes(keyword)))
 })
 
 /**
@@ -155,32 +140,20 @@ function handlePrint() {
   }
 }
 
-function resetFilters() {
-  filters.value = {
-    keyword: '',
-    registeredFrom: '',
-    registeredTo: '',
-    clientName: '',
-    code: '',
-    productName: '',
-    country: '',
-  }
-
-  appliedFilters.value = {
-    ...filters.value,
-  }
+function openClientSearch() {
+  clientSearchOpen.value = true
 }
 
-function openClientSearch() {}
+function openCodeSearch() {
+  codeSearchOpen.value = true
+}
 
-function openCodeSearch() {}
-
-function openProductSearch() {}
+function openProductSearch() {
+  productSearchOpen.value = true
+}
 
 function searchRows() {
-  appliedFilters.value = {
-    ...filters.value,
-  }
+  applyFilters()
 }
 
 function openPreview(row) {
@@ -190,11 +163,29 @@ function openPreview(row) {
 function closePreview() {
   previewTarget.value = null
 }
+
+function handleClientSelect(client) {
+  filters.value.clientName = client.name
+  clientSearchOpen.value = false
+  clientSearchKeyword.value = ''
+}
+
+function handleCodeSelect(row) {
+  filters.value.code = row.id
+  codeSearchOpen.value = false
+  codeSearchKeyword.value = ''
+}
+
+function handleProductSelect(row) {
+  filters.value.productName = row.name
+  productSearchOpen.value = false
+  productSearchKeyword.value = ''
+}
 </script>
 
 <template>
   <div class="fade-in space-y-5">
-    <DocumentPageHeader title="PL (Packing List)" icon-class="fas fa-box-open">
+    <PageHeader title="PL (Packing List)" icon-class="fas fa-box-open">
       <template #actions>
         <BaseButton variant="secondary" size="sm">
           <template #leading>
@@ -209,7 +200,7 @@ function closePreview() {
           PDF 다운로드
         </BaseButton>
       </template>
-    </DocumentPageHeader>
+    </PageHeader>
 
     <FilterToolbarCard
       v-model="filters.keyword"
@@ -313,5 +304,50 @@ function closePreview() {
     >
       <PLDocumentTemplate v-if="previewDoc" :document="previewDoc" />
     </DocumentPreviewModal>
+
+    <SearchModal
+      :open="clientSearchOpen"
+      title="거래처 검색"
+      :columns="[
+        { key: 'id', label: '코드' },
+        { key: 'name', label: '거래처명' },
+        { key: 'country', label: '국가' },
+      ]"
+      :rows="clientRows"
+      :search-keyword="clientSearchKeyword"
+      @update:search-keyword="clientSearchKeyword = $event"
+      @close="clientSearchOpen = false"
+      @select="handleClientSelect"
+    />
+
+    <SearchModal
+      :open="codeSearchOpen"
+      title="PL번호 검색"
+      :columns="[
+        { key: 'id', label: 'PL번호' },
+        { key: 'invoiceDate', label: '발행일' },
+        { key: 'clientName', label: '거래처명' },
+      ]"
+      :rows="codeRows"
+      :search-keyword="codeSearchKeyword"
+      @update:search-keyword="codeSearchKeyword = $event"
+      @close="codeSearchOpen = false"
+      @select="handleCodeSelect"
+    />
+
+    <SearchModal
+      :open="productSearchOpen"
+      title="품목명 검색"
+      :columns="[
+        { key: 'name', label: '품목명' },
+        { key: 'country', label: '국가' },
+        { key: 'clientName', label: '거래처명' },
+      ]"
+      :rows="productRows"
+      :search-keyword="productSearchKeyword"
+      @update:search-keyword="productSearchKeyword = $event"
+      @close="productSearchOpen = false"
+      @select="handleProductSelect"
+    />
   </div>
 </template>

@@ -7,36 +7,21 @@ import BaseCard from '@/components/common/BaseCard.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
-import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import { useDocumentFilter } from '@/composables/useDocumentFilter'
 
 const router = useRouter()
-const isAdvancedOpen = ref(true)
+const isAdvancedOpen = ref(false)
 const clientSearchOpen = ref(false)
 const clientSearchKeyword = ref('')
 const shipmentSearchOpen = ref(false)
 const shipmentSearchKeyword = ref('')
-
-const filters = ref({
-  keyword: '',
-  requestFrom: '',
-  requestTo: '',
-  clientName: '',
-  country: '',
-  shipmentCode: '',
-  status: '',
-  dueFrom: '',
-  dueTo: '',
-})
-
-const appliedFilters = ref({
-  ...filters.value,
-})
 
 const countryOptions = [
   { value: '말레이시아', label: '말레이시아' },
@@ -60,7 +45,7 @@ const columns = [
   { key: 'status', label: '상태', align: 'center', width: '120px' },
 ]
 
-const rows = [
+const rowsData = ref([
   {
     id: 'SH26001',
     clientName: 'COOLSAY SDN BHD',
@@ -88,7 +73,7 @@ const rows = [
     dueDate: '2026/06/05',
     status: '출하완료',
   },
-]
+])
 
 const clientRowsSource = [
   { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
@@ -96,43 +81,11 @@ const clientRowsSource = [
   { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국' },
 ]
 
-function normalizeDate(value) {
-  return String(value ?? '').replaceAll('/', '-')
-}
-
-const filteredRows = computed(() => {
-  return rows.filter((row) => {
-    const keyword = appliedFilters.value.keyword.trim().toLowerCase()
-
-    if (keyword) {
-      const keywordMatched = [
-        row.id,
-        row.clientName,
-        row.country,
-        row.poId,
-        row.requestDate,
-        row.dueDate,
-        row.status,
-      ].some((value) => String(value).toLowerCase().includes(keyword))
-
-      if (!keywordMatched) return false
-    }
-
-    if (appliedFilters.value.clientName && !row.clientName.toLowerCase().includes(appliedFilters.value.clientName.toLowerCase())) return false
-    if (appliedFilters.value.country && row.country !== appliedFilters.value.country) return false
-    if (appliedFilters.value.shipmentCode && !row.id.toLowerCase().includes(appliedFilters.value.shipmentCode.toLowerCase())) return false
-    if (appliedFilters.value.status && row.status !== appliedFilters.value.status) return false
-
-    const requestDate = normalizeDate(row.requestDate)
-    const dueDate = normalizeDate(row.dueDate)
-
-    if (appliedFilters.value.requestFrom && requestDate < appliedFilters.value.requestFrom) return false
-    if (appliedFilters.value.requestTo && requestDate > appliedFilters.value.requestTo) return false
-    if (appliedFilters.value.dueFrom && dueDate < appliedFilters.value.dueFrom) return false
-    if (appliedFilters.value.dueTo && dueDate > appliedFilters.value.dueTo) return false
-
-    return true
-  })
+const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
+  keywordFields: ['id', 'clientName', 'country', 'poId', 'requestDate', 'dueDate', 'status'],
+  issueDateField: 'requestDate',
+  deliveryDateField: 'dueDate',
+  codeField: 'id',
 })
 
 const preparingCount = computed(() => filteredRows.value.filter((row) => row.status === '출하준비').length)
@@ -145,7 +98,7 @@ const clientRows = computed(() => {
 
 const shipmentRows = computed(() => {
   const keyword = shipmentSearchKeyword.value.trim().toLowerCase()
-  const source = rows.map((row) => ({
+  const source = rowsData.value.map((row) => ({
     id: row.id,
     clientName: row.clientName,
     requestDate: row.requestDate,
@@ -153,24 +106,6 @@ const shipmentRows = computed(() => {
   if (!keyword) return source
   return source.filter((row) => [row.id, row.clientName, row.requestDate].some((value) => String(value).toLowerCase().includes(keyword)))
 })
-
-function resetFilters() {
-  filters.value = {
-    keyword: '',
-    requestFrom: '',
-    requestTo: '',
-    clientName: '',
-    country: '',
-    shipmentCode: '',
-    status: '',
-    dueFrom: '',
-    dueTo: '',
-  }
-
-  appliedFilters.value = {
-    ...filters.value,
-  }
-}
 
 function openClientSearch() {
   clientSearchOpen.value = true
@@ -187,7 +122,7 @@ function openShipmentSearch() {
 }
 
 function handleShipmentSelect(row) {
-  filters.value.shipmentCode = row.id
+  filters.value.code = row.id
   shipmentSearchOpen.value = false
   shipmentSearchKeyword.value = ''
 }
@@ -197,15 +132,13 @@ function goToDetail(id) {
 }
 
 function searchRows() {
-  appliedFilters.value = {
-    ...filters.value,
-  }
+  applyFilters()
 }
 </script>
 
 <template>
   <div class="fade-in space-y-6">
-    <DocumentPageHeader title="출하 현황" icon-class="fas fa-truck" />
+    <PageHeader title="출하 현황" icon-class="fas fa-truck" />
 
     <FilterToolbarCard
       v-model="filters.keyword"
@@ -214,12 +147,12 @@ function searchRows() {
     />
 
     <CollapsibleFilterCard :open="isAdvancedOpen">
-        <div class="grid grid-cols-2 gap-x-4 gap-y-3 md:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-4">
           <FormField label="출하요청일" class="col-span-2">
             <div class="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
-              <DateField v-model="filters.requestFrom" />
-              <span class="text-center text-xs text-slate-400 sm:pb-2">~</span>
-              <DateField v-model="filters.requestTo" />
+              <DateField v-model="filters.registeredFrom" />
+              <span class="text-center text-sm text-slate-400 sm:pb-2">~</span>
+              <DateField v-model="filters.registeredTo" />
             </div>
           </FormField>
 
@@ -242,15 +175,15 @@ function searchRows() {
 
           <FormField label="납기일" class="col-span-2">
             <div class="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
-              <DateField v-model="filters.dueFrom" />
-              <span class="text-center text-xs text-slate-400 sm:pb-2">~</span>
-              <DateField v-model="filters.dueTo" />
+              <DateField v-model="filters.deliveryFrom" />
+              <span class="text-center text-sm text-slate-400 sm:pb-2">~</span>
+              <DateField v-model="filters.deliveryTo" />
             </div>
           </FormField>
 
           <FormField label="출하번호">
             <SearchTriggerField
-              v-model="filters.shipmentCode"
+              v-model="filters.code"
               placeholder="출하번호"
               title="출하번호 검색"
               @trigger="openShipmentSearch"
@@ -269,13 +202,13 @@ function searchRows() {
         <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
           <BaseButton variant="secondary" size="sm" @click="resetFilters">
             <template #leading>
-              <i class="fas fa-undo text-[10px]" aria-hidden="true"></i>
+              <i class="fas fa-undo text-xs" aria-hidden="true"></i>
             </template>
             초기화
           </BaseButton>
           <BaseButton size="sm" @click="searchRows">
             <template #leading>
-              <i class="fas fa-search text-[10px]" aria-hidden="true"></i>
+              <i class="fas fa-search text-xs" aria-hidden="true"></i>
             </template>
             검색
           </BaseButton>
@@ -309,7 +242,7 @@ function searchRows() {
       @row-click="goToDetail($event.id)"
     >
       <template #cell-id="{ value }">
-        <button type="button" class="font-mono text-xs font-semibold text-slate-700 hover:underline" @click.stop="goToDetail(value)">
+        <button type="button" class="font-mono text-xs font-semibold text-brand-600 hover:underline" @click.stop="goToDetail(value)">
           {{ value }}
         </button>
       </template>

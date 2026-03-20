@@ -36,7 +36,12 @@ router.beforeEach(async (to) => {
 
   // AT 없으면 RT로 세션 복구 시도
   const restored = await authStore.restoreSession()
-  if (restored) return true
+  if (restored) {
+    if (to.meta.requiredRole && authStore.currentUser?.role !== to.meta.requiredRole) {
+      return { name: 'dashboard' }
+    }
+    return true
+  }
 
   // 복구 실패 → 로그인 페이지
   return { name: 'login', query: { redirect: to.fullPath } }

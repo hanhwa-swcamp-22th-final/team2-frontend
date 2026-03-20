@@ -1,7 +1,7 @@
 <script setup>
 import BaseTextField from '@/components/common/BaseTextField.vue'
 
-defineProps({
+const props = defineProps({
   modelValue: {
     type: [String, Number],
     default: '',
@@ -20,17 +20,22 @@ defineProps({
   },
 })
 
-defineEmits(['update:modelValue', 'trigger'])
+const emit = defineEmits(['update:modelValue', 'trigger'])
+
+function handleTrigger() {
+  if (props.disabled) return
+  emit('trigger')
+}
 </script>
 
 <template>
-  <div class="relative">
+  <div class="relative" @click="handleTrigger">
     <BaseTextField
       :model-value="modelValue"
       :placeholder="placeholder"
       :disabled="disabled"
       readonly
-      class="pr-9"
+      class="cursor-pointer pr-9"
       @update:model-value="$emit('update:modelValue', $event)"
     />
     <button
@@ -38,7 +43,7 @@ defineEmits(['update:modelValue', 'trigger'])
       class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-brand-500 disabled:cursor-not-allowed disabled:text-slate-300"
       :disabled="disabled"
       :title="title"
-      @click="$emit('trigger')"
+      @click.stop="handleTrigger"
     >
       <i class="fas fa-search text-xs" aria-hidden="true"></i>
     </button>

@@ -7,7 +7,6 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
 import ClientBuyerCard from '@/components/domain/master/ClientBuyerCard.vue'
 import ClientFormModal from '@/components/domain/master/ClientFormModal.vue'
-import LinkedDocumentList from '@/components/domain/document/LinkedDocumentList.vue'
 import {
   deleteClient,
   fetchBuyersByClient,
@@ -57,8 +56,6 @@ function getCurrencyCode(currencyId) {
 
 const buyers = ref([])
 
-const linkedDocuments = ref([])
-
 const infoFields = computed(() => {
   if (!client.value) return []
   return [
@@ -94,6 +91,11 @@ async function loadData() {
         fetchPaymentTerms(),
         fetchBuyersByClient(route.params.id),
       ])
+    if (!clientData) {
+      error('거래처를 찾을 수 없습니다.')
+      router.push({ name: 'client-list' })
+      return
+    }
     client.value = clientData
     countries.value = countriesData
     ports.value = portsData
@@ -152,18 +154,10 @@ async function handleDelete() {
 }
 
 function goBack() {
-  if (window.history.length > 1) router.back()
+  if (router.options.history.state?.back) router.back()
   else router.push({ name: 'client-list' })
 }
 
-function handleDocumentSelect(doc) {
-  // Navigate to the relevant document based on its code prefix
-  const code = doc.code ?? ''
-  if (code.startsWith('PI')) router.push({ path: '/pi', query: { code } })
-  else if (code.startsWith('PO')) router.push({ path: '/po', query: { code } })
-  else if (code.startsWith('CI')) router.push({ path: '/ci', query: { code } })
-  else if (code.startsWith('PL')) router.push({ path: '/pl', query: { code } })
-}
 </script>
 
 <template>
@@ -181,66 +175,57 @@ function handleDocumentSelect(doc) {
       </template>
     </DetailPageHeader>
 
-    <!-- 2열 레이아웃 -->
-    <div class="grid gap-6 xl:grid-cols-[1fr_360px]">
-      <!-- 좌측 -->
-      <div class="space-y-6">
-        <BaseCard title="기본 정보" subtitle="거래처의 상세 정보입니다.">
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div v-for="field in infoFields" :key="field.label">
-              <p class="text-xs font-medium text-slate-500">{{ field.label }}</p>
-              <p
-                class="mt-1 text-sm text-ink"
-                :class="field.label === '코드' ? 'font-mono font-semibold text-brand-600' : ''"
-              >{{ field.value || '-' }}</p>
-            </div>
+    <div class="space-y-6">
+      <BaseCard title="기본 정보" subtitle="거래처의 상세 정보입니다.">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div v-for="field in infoFields" :key="field.label">
+            <p class="text-xs font-medium text-slate-500">{{ field.label }}</p>
+            <p
+              class="mt-1 text-sm text-ink"
+              :class="field.label === '코드' ? 'font-mono font-semibold text-brand-600' : ''"
+            >{{ field.value || '-' }}</p>
           </div>
-        </BaseCard>
+        </div>
+      </BaseCard>
 
-        <BaseCard title="바이어 / 담당자" subtitle="거래처 담당자 정보입니다.">
-          <div v-if="buyers.length" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <ClientBuyerCard v-for="buyer in buyers" :key="buyer.name" :buyer="buyer" />
-          </div>
-          <div v-else class="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-400">
-            등록된 바이어가 없습니다.
-          </div>
-        </BaseCard>
+      <BaseCard title="바이어 / 담당자" subtitle="거래처 담당자 정보입니다.">
+        <div v-if="buyers.length" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <ClientBuyerCard v-for="buyer in buyers" :key="buyer.name" :buyer="buyer" />
+        </div>
+        <div v-else class="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-400">
+          등록된 바이어가 없습니다.
+        </div>
+      </BaseCard>
 
-        <!-- 연결 문서 링크 -->
-        <BaseCard title="관련 문서 바로가기" subtitle="이 거래처의 관련 문서를 조회합니다.">
-          <div class="flex flex-wrap gap-2">
-            <RouterLink
-              :to="{ path: '/pi', query: { clientId: client.id } }"
-              class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
-            >
-              PI 조회
-            </RouterLink>
-            <RouterLink
-              :to="{ path: '/po', query: { clientId: client.id } }"
-              class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
-            >
-              PO 조회
-            </RouterLink>
-            <RouterLink
-              :to="{ path: '/ci', query: { clientId: client.id } }"
-              class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
-            >
-              CI 조회
-            </RouterLink>
-            <RouterLink
-              :to="{ path: '/pl', query: { clientId: client.id } }"
-              class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
-            >
-              PL 조회
-            </RouterLink>
-          </div>
-        </BaseCard>
-      </div>
-
-      <!-- 우측 -->
-      <div>
-        <LinkedDocumentList :documents="linkedDocuments" @select="handleDocumentSelect" />
-      </div>
+      <!-- 연결 문서 링크 -->
+      <BaseCard title="관련 문서 바로가기" subtitle="이 거래처의 관련 문서를 조회합니다.">
+        <div class="flex flex-wrap gap-2">
+          <RouterLink
+            :to="{ path: '/pi', query: { clientId: client.id } }"
+            class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
+          >
+            PI 조회
+          </RouterLink>
+          <RouterLink
+            :to="{ path: '/po', query: { clientId: client.id } }"
+            class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
+          >
+            PO 조회
+          </RouterLink>
+          <RouterLink
+            :to="{ path: '/ci', query: { clientId: client.id } }"
+            class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
+          >
+            CI 조회
+          </RouterLink>
+          <RouterLink
+            :to="{ path: '/pl', query: { clientId: client.id } }"
+            class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
+          >
+            PL 조회
+          </RouterLink>
+        </div>
+      </BaseCard>
     </div>
 
     <ClientFormModal

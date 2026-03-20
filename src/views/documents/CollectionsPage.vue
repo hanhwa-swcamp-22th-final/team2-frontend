@@ -5,36 +5,21 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
-import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
+import { useDocumentFilter } from '@/composables/useDocumentFilter'
 
-const isAdvancedOpen = ref(true)
+const isAdvancedOpen = ref(false)
 const clientSearchOpen = ref(false)
 const clientSearchKeyword = ref('')
 const poSearchOpen = ref(false)
 const poSearchKeyword = ref('')
-
-const filters = ref({
-  keyword: '',
-  issueFrom: '',
-  issueTo: '',
-  collectionFrom: '',
-  collectionTo: '',
-  clientName: '',
-  country: '',
-  currency: '',
-  poId: '',
-  manager: '',
-  status: '',
-})
-
-const appliedFilters = ref({
-  ...filters.value,
-})
+const currencyFilter = ref('')
+const appliedCurrencyFilter = ref('')
 
 const countryOptions = [
   { value: '말레이시아', label: '말레이시아' },
@@ -81,7 +66,7 @@ const rowsData = ref([
     salesAmount: 42400,
     issueDate: '2026/02/10',
     collectionDate: '2026/03/10',
-    status: '수금완료',
+    status: '미수금',
   },
   {
     poId: 'PO26003',
@@ -92,7 +77,7 @@ const rowsData = ref([
     salesAmount: 8388000,
     issueDate: '2026/02/20',
     collectionDate: '2026/05/05',
-    status: '수금완료',
+    status: '미수금',
   },
   {
     poId: 'PO26004',
@@ -103,7 +88,7 @@ const rowsData = ref([
     salesAmount: 53600,
     issueDate: '2025/12/20',
     collectionDate: '2026/04/10',
-    status: '수금완료',
+    status: '미수금',
   },
   {
     poId: 'PO26006',
@@ -114,7 +99,7 @@ const rowsData = ref([
     salesAmount: 28500,
     issueDate: '2025/08/15',
     collectionDate: '2025/08/20',
-    status: '수금완료',
+    status: '미수금',
   },
   {
     poId: 'PO26008',
@@ -125,7 +110,7 @@ const rowsData = ref([
     salesAmount: 18400,
     issueDate: '2025/09/20',
     collectionDate: '2025/12/20',
-    status: '수금완료',
+    status: '미수금',
   },
 ])
 
@@ -136,63 +121,24 @@ const clientRowsSource = [
   { id: 'CL004', name: 'Al Baraka Trading LLC', country: 'UAE' },
 ]
 
-function resetFilters() {
-  filters.value = {
-    keyword: '',
-    issueFrom: '',
-    issueTo: '',
-    collectionFrom: '',
-    collectionTo: '',
-    clientName: '',
-    country: '',
-    currency: '',
-    poId: '',
-    manager: '',
-    status: '',
-  }
-
-  appliedFilters.value = {
-    ...filters.value,
-  }
-}
-
 function openClientSearch() {
   clientSearchOpen.value = true
 }
 
-function normalizeDate(value) {
-  return String(value ?? '').replaceAll('/', '-')
-}
+const {
+  filters,
+  filteredRows: baseFilteredRows,
+  resetFilters: resetBaseFilters,
+  applyFilters,
+} = useDocumentFilter(rowsData, {
+  keywordFields: ['poId', 'clientName', 'manager', 'country', 'currency', 'status', 'issueDate', 'collectionDate'],
+  issueDateField: 'issueDate',
+  deliveryDateField: 'collectionDate',
+  codeField: 'poId',
+})
 
 const filteredRows = computed(() => {
-  return rowsData.value.filter((row) => {
-    if (appliedFilters.value.currency && row.currency !== appliedFilters.value.currency) return false
-    if (appliedFilters.value.country && row.country !== appliedFilters.value.country) return false
-    if (appliedFilters.value.manager && row.manager !== appliedFilters.value.manager) return false
-    if (appliedFilters.value.status && row.status !== appliedFilters.value.status) return false
-    if (appliedFilters.value.poId && !row.poId.toLowerCase().includes(appliedFilters.value.poId.toLowerCase())) return false
-    if (appliedFilters.value.clientName && !row.clientName.toLowerCase().includes(appliedFilters.value.clientName.toLowerCase())) return false
-
-    if (appliedFilters.value.keyword) {
-      const kw = appliedFilters.value.keyword.toLowerCase()
-      const matchesKeyword = row.poId.toLowerCase().includes(kw)
-        || row.clientName.toLowerCase().includes(kw)
-        || row.manager.toLowerCase().includes(kw)
-        || row.country.toLowerCase().includes(kw)
-        || row.currency.toLowerCase().includes(kw)
-      if (!matchesKeyword) return false
-    }
-
-    const issueDate = normalizeDate(row.issueDate)
-    const collectionDate = normalizeDate(row.collectionDate)
-
-    if (appliedFilters.value.issueFrom && issueDate < appliedFilters.value.issueFrom) return false
-    if (appliedFilters.value.issueTo && issueDate > appliedFilters.value.issueTo) return false
-    if (appliedFilters.value.collectionFrom && collectionDate < appliedFilters.value.collectionFrom) return false
-    if (appliedFilters.value.collectionTo && collectionDate > appliedFilters.value.collectionTo) return false
-
-    return true
-  })
+  return baseFilteredRows.value.filter((row) => !appliedCurrencyFilter.value || row.currency === appliedCurrencyFilter.value)
 })
 
 const clientRows = computed(() => {
@@ -246,10 +192,15 @@ function formatAmount(value, currency) {
   return `${symbol}${value}`
 }
 
+function resetFilters() {
+  resetBaseFilters()
+  currencyFilter.value = ''
+  appliedCurrencyFilter.value = ''
+}
+
 function searchRows() {
-  appliedFilters.value = {
-    ...filters.value,
-  }
+  appliedCurrencyFilter.value = currencyFilter.value
+  applyFilters()
 }
 
 function handleClientSelect(client) {
@@ -263,7 +214,7 @@ function openPoSearch() {
 }
 
 function handlePoSelect(row) {
-  filters.value.poId = row.poId
+  filters.value.code = row.poId
   poSearchOpen.value = false
   poSearchKeyword.value = ''
 }
@@ -282,7 +233,7 @@ function updateStatus(poId, value) {
 
 <template>
   <div class="fade-in space-y-5">
-    <DocumentPageHeader title="매출·수금 현황" icon-class="fas fa-chart-bar" />
+    <PageHeader title="매출·수금 현황" icon-class="fas fa-chart-bar" />
 
     <FilterToolbarCard
       v-model="filters.keyword"
@@ -291,20 +242,20 @@ function updateStatus(poId, value) {
     />
 
     <CollapsibleFilterCard :open="isAdvancedOpen">
-        <div class="grid grid-cols-2 gap-x-4 gap-y-3 md:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-4">
           <FormField label="발행일" class="col-span-2">
             <div class="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
-              <DateField v-model="filters.issueFrom" />
-              <span class="text-center text-xs text-slate-400 sm:pb-2">~</span>
-              <DateField v-model="filters.issueTo" />
+              <DateField v-model="filters.registeredFrom" />
+              <span class="text-center text-sm text-slate-400 sm:pb-2">~</span>
+              <DateField v-model="filters.registeredTo" />
             </div>
           </FormField>
 
           <FormField label="수금일" class="col-span-2">
             <div class="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
-              <DateField v-model="filters.collectionFrom" />
-              <span class="text-center text-xs text-slate-400 sm:pb-2">~</span>
-              <DateField v-model="filters.collectionTo" />
+              <DateField v-model="filters.deliveryFrom" />
+              <span class="text-center text-sm text-slate-400 sm:pb-2">~</span>
+              <DateField v-model="filters.deliveryTo" />
             </div>
           </FormField>
 
@@ -327,18 +278,9 @@ function updateStatus(poId, value) {
 
           <FormField label="통화">
             <SearchableCombobox
-              v-model="filters.currency"
+              v-model="currencyFilter"
               :options="currencyOptions"
               placeholder="통화 선택..."
-            />
-          </FormField>
-
-          <FormField label="PO 번호">
-            <SearchTriggerField
-              v-model="filters.poId"
-              placeholder="PO26001"
-              title="PO 번호 검색"
-              @trigger="openPoSearch"
             />
           </FormField>
 
@@ -362,13 +304,13 @@ function updateStatus(poId, value) {
         <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
           <BaseButton variant="secondary" size="sm" @click="resetFilters">
             <template #leading>
-              <i class="fas fa-undo text-[10px]" aria-hidden="true"></i>
+              <i class="fas fa-undo text-xs" aria-hidden="true"></i>
             </template>
             초기화
           </BaseButton>
           <BaseButton size="sm" @click="searchRows">
             <template #leading>
-              <i class="fas fa-search text-[10px]" aria-hidden="true"></i>
+              <i class="fas fa-search text-xs" aria-hidden="true"></i>
             </template>
             검색
           </BaseButton>

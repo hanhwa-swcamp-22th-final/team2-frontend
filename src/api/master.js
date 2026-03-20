@@ -15,11 +15,16 @@ export const updateItem = (id, item) => api.put(`/items/${id}`, item).then((r) =
 export const deleteItem = (id) => api.delete(`/items/${id}`).then((r) => r.data)
 
 // Buyers
+export const fetchBuyers = () => api.get('/buyers').then((r) => r.data)
 export const fetchBuyersByClient = (clientId) =>
   api.get('/buyers', { params: { clientId } }).then((r) => r.data)
+
+// Users
+export const fetchUsers = () => api.get('/users').then((r) => r.data)
 
 // Reference data
 export const fetchCountries = () => api.get('/countries').then((r) => r.data)
 export const fetchPorts = () => api.get('/ports').then((r) => r.data)
 export const fetchCurrencies = () => api.get('/currencies').then((r) => r.data)
+export const fetchIncoterms = () => api.get('/incoterms').then((r) => r.data)
 export const fetchPaymentTerms = () => api.get('/paymentTerms').then((r) => r.data)

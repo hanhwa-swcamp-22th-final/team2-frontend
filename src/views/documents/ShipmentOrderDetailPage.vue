@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
-import StatusBadge from '@/components/common/StatusBadge.vue'
+import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import ShipmentOrderTemplate from '@/components/domain/document/ShipmentOrderTemplate.vue'
 import { useToast } from '@/composables/useToast'
@@ -91,7 +91,7 @@ function handlePrint() {
 
 function handlePdfDownload() {
   if (!detail.value) return
-  const opened = openDocumentOutputByType('SHIPMENT', detail.value, true)
+  const opened = openDocumentOutputByType('SHIPMENT', detail.value, false)
   if (opened) {
     toast.info('브라우저 인쇄 창에서 "PDF로 저장"을 선택하세요.', 'PDF')
   }
@@ -105,36 +105,23 @@ function handlePreviewPrint() {
 
 <template>
   <div v-if="detail" class="fade-in">
-    <div class="mb-6 flex flex-wrap items-center gap-3">
-      <button
-        type="button"
-        class="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-        @click="goBack"
-      >
-        <i class="fas fa-arrow-left" aria-hidden="true"></i>
-      </button>
-      <h2 class="text-xl font-bold text-slate-900">{{ detail.id }}</h2>
-      <StatusBadge :value="detail.status" />
-      <div class="flex-1"></div>
-
-      <BaseButton variant="secondary" class="!h-auto !rounded-xl !px-4 !py-2.5" @click="openPreview">
-        <template #leading>
-          <i class="fas fa-eye text-xs text-brand-500" aria-hidden="true"></i>
+    <div class="mb-6">
+      <DetailPageHeader :title="detail.id" :status="detail.status" @back="goBack">
+        <template #actions>
+          <BaseButton variant="secondary" size="sm" @click="openPreview">
+            <template #leading>
+              <i class="fas fa-eye text-xs text-brand-500" aria-hidden="true"></i>
+            </template>
+            미리보기
+          </BaseButton>
+          <BaseButton size="sm" @click="handlePdfDownload">
+            <template #leading>
+              <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
+            </template>
+            PDF 다운로드
+          </BaseButton>
         </template>
-        미리보기
-      </BaseButton>
-      <BaseButton variant="secondary" class="!h-auto !rounded-xl !px-4 !py-2.5" @click="handlePrint">
-        <template #leading>
-          <i class="fas fa-print text-xs text-slate-400" aria-hidden="true"></i>
-        </template>
-        인쇄
-      </BaseButton>
-      <BaseButton class="!h-auto !rounded-xl !px-4 !py-2.5" @click="handlePdfDownload">
-        <template #leading>
-          <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
-        </template>
-        PDF 다운로드
-      </BaseButton>
+      </DetailPageHeader>
     </div>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">

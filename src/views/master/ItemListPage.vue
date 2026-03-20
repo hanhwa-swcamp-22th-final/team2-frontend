@@ -1,7 +1,8 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
+import BasePagination from '@/components/common/BasePagination.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
@@ -24,6 +25,9 @@ const deleting = ref(false)
 const searchKeyword = ref('')
 const categoryFilter = ref('')
 
+const PAGE_SIZE = 10
+const currentPage = ref(1)
+
 const showFormModal = ref(false)
 const formMode = ref('create')
 const selectedItem = ref(null)
@@ -44,7 +48,7 @@ const columns = [
   { key: 'unit', label: '단위', width: '80px', align: 'center' },
   { key: 'unitPrice', label: '단가 (KRW)', width: '140px', align: 'right' },
   { key: 'weight', label: '중량 (kg)', width: '110px', align: 'right' },
-  { key: 'hsCode', label: '관세코드', width: '100px', align: 'center' },
+  { key: 'hsCode', label: 'HS Code', width: '100px', align: 'center' },
   { key: 'status', label: '상태', width: '80px', align: 'center' },
   { key: 'actions', label: '액션', width: '120px', align: 'center' },
 ]
@@ -67,6 +71,18 @@ const filteredItems = computed(() => {
   }
 
   return result
+})
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredItems.value.length / PAGE_SIZE)))
+
+const paginatedItems = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return filteredItems.value.slice(start, start + PAGE_SIZE)
+})
+
+// Reset to page 1 when filters change
+watch([searchKeyword, categoryFilter], () => {
+  currentPage.value = 1
 })
 
 async function loadData() {
@@ -162,7 +178,7 @@ function goToDetail(row) {
       데이터를 불러오는 중입니다...
     </div>
 
-    <BaseTable v-else :columns="columns" :rows="filteredItems" row-key="id"
+    <BaseTable v-else :columns="columns" :rows="paginatedItems" row-key="id"
       :empty-text="searchKeyword || categoryFilter ? '검색 결과가 없습니다.' : '등록된 품목이 없습니다.'"
       clickable-rows
       @row-click="goToDetail"
@@ -195,8 +211,16 @@ function goToDetail(row) {
       </template>
     </BaseTable>
 
-    <div class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-      <span>총 {{ filteredItems.length }}건</span>
+    <div>
+      <div class="mt-2 px-1 text-xs text-slate-500">
+        <span>총 {{ filteredItems.length }}건</span>
+      </div>
+      <div class="mt-4">
+        <BasePagination
+          v-model:current-page="currentPage"
+          :total-pages="totalPages"
+        />
+      </div>
     </div>
 
     <ItemFormModal

@@ -61,9 +61,9 @@ watch(
       form.value = {
         name: props.user.name ?? '',
         email: props.user.email ?? '',
-        positionId: props.user.positionId ?? '',
+        positionId: String(props.user.positionId ?? ''),
         role: props.user.role ?? '',
-        departmentId: props.user.departmentId ?? '',
+        departmentId: String(props.user.departmentId ?? ''),
         status: props.user.status ?? '재직',
         transferDepartmentId: '',
         transferReason: '',
@@ -159,7 +159,7 @@ const currentDepartmentName = computed(() => {
         <FormField label="직급" required :error="errors.positionId">
           <BaseSelect
             v-model="form.positionId"
-            :options="positions.map((p) => ({ label: p.name, value: p.id }))"
+            :options="positions.map((p) => ({ label: p.name, value: String(p.id) }))"
             placeholder="직급을 선택하세요"
           />
         </FormField>
@@ -172,7 +172,7 @@ const currentDepartmentName = computed(() => {
           <FormField label="팀" required :error="errors.departmentId">
             <BaseSelect
               v-model="form.departmentId"
-              :options="departments.map((d) => ({ label: d.name, value: d.id }))"
+              :options="departments.map((d) => ({ label: d.name, value: String(d.id) }))"
               placeholder="팀을 선택하세요"
             />
           </FormField>
@@ -205,7 +205,7 @@ const currentDepartmentName = computed(() => {
             <FormField label="이동할 팀">
               <BaseSelect
                 v-model="form.transferDepartmentId"
-                :options="[{ label: '변경안함', value: '' }, ...departments.map((d) => ({ label: d.name, value: d.id }))]"
+                :options="[{ label: '변경안함', value: '' }, ...departments.map((d) => ({ label: d.name, value: String(d.id) }))]"
               />
             </FormField>
             <FormField label="이동 사유">

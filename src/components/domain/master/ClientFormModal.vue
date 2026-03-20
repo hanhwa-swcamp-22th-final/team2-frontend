@@ -43,9 +43,9 @@ const paymentTermsOptions = computed(() =>
 
 const currencyOptions = computed(() => {
   if (!form.value.countryId) return []
-  const cid = Number(form.value.countryId)
+  const cid = String(form.value.countryId)
   return props.currencies
-    .filter((c) => c.countryIds?.includes(cid))
+    .filter((c) => c.countryIds?.map(String).includes(cid))
     .map((c) => ({ label: `${c.code} (${c.symbol})`, value: c.id }))
 })
 
@@ -119,8 +119,7 @@ watch(
     const cid = String(newId)
     const portBelongs = props.ports.some((p) => String(p.countryId) === cid && String(p.id) === String(form.value.portId))
     if (!portBelongs) form.value.portId = null
-    const numId = Number(newId)
-    const currBelongs = props.currencies.some((c) => c.countryIds?.includes(numId) && String(c.id) === String(form.value.currencyId))
+    const currBelongs = props.currencies.some((c) => c.countryIds?.map(String).includes(cid) && String(c.id) === String(form.value.currencyId))
     if (!currBelongs) form.value.currencyId = null
   },
 )
@@ -130,11 +129,12 @@ function validate() {
 
   if (!form.value.code?.trim()) {
     e.code = '코드를 입력하세요.'
-  } else if (props.mode === 'create') {
-    const duplicate = props.allClients.some(
-      (c) => c.code.toLowerCase() === form.value.code.trim().toLowerCase(),
+  } else if (
+    props.allClients.some(
+      (c) => c.code.toLowerCase() === form.value.code.trim().toLowerCase() && c.id !== props.client?.id,
     )
-    if (duplicate) e.code = '이미 사용 중인 코드입니다.'
+  ) {
+    e.code = '이미 사용 중인 코드입니다.'
   }
 
   if (!form.value.name?.trim()) {
@@ -163,6 +163,7 @@ function validate() {
 function handleSave() {
   if (!validate()) return
   const payload = { ...form.value }
+  // TODO: 백엔드 파일 업로드 API 연동 시 sealImage 전송 활성화
   delete payload.sealImage
   emit('save', payload)
 }

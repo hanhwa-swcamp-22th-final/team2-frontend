@@ -1,7 +1,8 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
+import BasePagination from '@/components/common/BasePagination.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
@@ -36,6 +37,9 @@ const deleting = ref(false)
 
 const searchKeyword = ref('')
 const statusFilter = ref('')
+
+const PAGE_SIZE = 10
+const currentPage = ref(1)
 
 const showFormModal = ref(false)
 const formMode = ref('create')
@@ -110,6 +114,18 @@ const filteredClients = computed(() => {
   }
 
   return result
+})
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredClients.value.length / PAGE_SIZE)))
+
+const paginatedClients = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return filteredClients.value.slice(start, start + PAGE_SIZE)
+})
+
+// Reset to page 1 when filters change
+watch([searchKeyword, statusFilter], () => {
+  currentPage.value = 1
 })
 
 async function loadData() {
@@ -216,7 +232,7 @@ function goToDetail(row) {
       데이터를 불러오는 중입니다...
     </div>
 
-    <BaseTable v-else :columns="columns" :rows="filteredClients" row-key="id"
+    <BaseTable v-else :columns="columns" :rows="paginatedClients" row-key="id"
       :empty-text="searchKeyword || statusFilter ? '검색 결과가 없습니다.' : '등록된 거래처가 없습니다.'"
       clickable-rows
       @row-click="goToDetail"
@@ -257,8 +273,16 @@ function goToDetail(row) {
       </template>
     </BaseTable>
 
-    <div class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-      <span>총 {{ filteredClients.length }}건</span>
+    <div>
+      <div class="mt-2 px-1 text-xs text-slate-500">
+        <span>총 {{ filteredClients.length }}건</span>
+      </div>
+      <div class="mt-4">
+        <BasePagination
+          v-model:current-page="currentPage"
+          :total-pages="totalPages"
+        />
+      </div>
     </div>
 
     <ClientFormModal
