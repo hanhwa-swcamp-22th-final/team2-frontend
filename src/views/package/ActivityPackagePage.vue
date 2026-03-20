@@ -2,16 +2,18 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchActivities, fetchAllActivityPOs } from '@/api/activity'
+import { useToast } from '@/composables/useToast'
 import { jsPDF } from 'jspdf'
 import ActivityTypeBadge from '@/components/domain/activity/ActivityTypeBadge.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
-import DateRangeField from '@/components/common/DateRangeField.vue'
+import DateField from '@/components/common/DateField.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 
 const router = useRouter()
+const { warning, error } = useToast()
 
 // ── 데이터 ─────────────────────────────────────────────────
 const activities = ref([])
@@ -24,6 +26,7 @@ onMounted(async () => {
     poList.value = poData
   } catch (e) {
     console.error('데이터 로드 실패', e)
+    error('데이터를 불러오지 못했습니다. 페이지를 새로고침해주세요.')
   }
 })
 
@@ -56,31 +59,39 @@ function selectPo(po) {
 function clearPo() {
   selectedPoId.value = ''
   poDisplay.value = ''
+  selectedActivityIds.value = []
 }
 
 // ── 패키지 생성 폼 상태 ────────────────────────────────────
 const keyword     = ref('')
 const poDisplay   = ref('')
-const dateFrom    = ref(`${new Date().getFullYear()}-01-01`)
+const dateFrom    = ref('')
 const dateTo      = ref(new Date().toISOString().slice(0, 10))
 
-const includes = ref({
-  meetings:    true,
-  notes:       true,
-  issues:      true,
-  comments:    true,
-  emails:      true,
-  collections: true,
-})
+// 탭/필터와 무관하게 실제 선택된 활동기록 전체
+const selectedActivities = computed(() =>
+  activities.value.filter((a) => selectedActivityIds.value.includes(a.id)),
+)
 
-const includeItems = [
-  { key: 'meetings',    label: '미팅/협의' },
-  { key: 'notes',       label: '메모/노트' },
-  { key: 'issues',      label: '이슈'      },
-  { key: 'comments',    label: '코멘트/일정' },
-  { key: 'emails',      label: '이메일'    },
-  { key: 'collections', label: '수금'      },
-]
+const includedTypes = computed(() =>
+  [...new Set(selectedActivities.value.map((a) => a.type))],
+)
+
+// ── 유효성 검사 ────────────────────────────────────────────
+const errors = ref({})
+
+watch(poDisplay,  (val) => { if (val) errors.value.po       = undefined })
+watch(dateFrom,   (val) => { if (val) errors.value.dateFrom = undefined })
+watch(dateTo,     (val) => { if (val) errors.value.dateTo   = undefined })
+
+function validate() {
+  const e = {}
+  if (!poDisplay.value)  e.po       = '수주건 값이 누락되었습니다.'
+  if (!dateFrom.value)   e.dateFrom = '기간 시작일 값이 누락되었습니다.'
+  if (!dateTo.value)     e.dateTo   = '기간 종료일 값이 누락되었습니다.'
+  errors.value = e
+  return Object.keys(e).length === 0
+}
 
 // ── 활동기록 필터 ──────────────────────────────────────────
 const activeTypeTab = ref('전체')
@@ -106,7 +117,9 @@ const filteredActivities = computed(() => {
   }
   if (keyword.value.trim()) {
     const q = keyword.value.trim().toLowerCase()
-    list = list.filter((a) => a.title.toLowerCase().includes(q))
+    list = list.filter((a) =>
+      a.title.toLowerCase().includes(q) || (a.content ?? '').toLowerCase().includes(q),
+    )
   }
   if (dateFrom.value) list = list.filter((a) => a.date >= dateFrom.value)
   if (dateTo.value)   list = list.filter((a) => a.date <= dateTo.value)
@@ -143,14 +156,20 @@ function toggleActivity(id) {
 
 // ── 미리보기 요약 ──────────────────────────────────────────
 const summaryText = computed(() => {
-  if (!poDisplay.value) return '수주건을 선택하면 포함 건수가 표시됩니다.'
-  const actCount = filteredActivities.value.length
-  const emailCount = 3 // 더미
-  const colCount = 2   // 더미
-  return `미리보기: 활동기록 ${actCount}건, 이메일 ${emailCount}건, 수금 ${colCount}건이 포함됩니다.`
+  if (selectedActivities.value.length === 0) return '활동기록 목록에서 항목을 선택하면 포함 건수가 표시됩니다.'
+  const countByType = selectedActivities.value.reduce((acc, a) => {
+    acc[a.type] = (acc[a.type] ?? 0) + 1
+    return acc
+  }, {})
+  const parts = Object.entries(countByType).map(([type, count]) => `${type} ${count}건`)
+  return `미리보기: ${parts.join(', ')}이 포함됩니다.`
 })
 
 function generatePdf() {
+  if (!validate()) {
+    warning('입력 내용을 확인해주세요.')
+    return
+  }
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageW = doc.internal.pageSize.getWidth()
   const margin = 20
@@ -172,7 +191,7 @@ function generatePdf() {
     doc.text(`PO: ${poDisplay.value}`, pageW / 2, y, { align: 'center' })
     y += 4
   }
-  doc.text(`Period: ${dateFrom.value} ~ ${dateTo.value}`, pageW / 2, y, { align: 'center' })
+  doc.text(`Period: ${dateFrom.value || '전체'} ~ ${dateTo.value || '전체'}`, pageW / 2, y, { align: 'center' })
   y += 8
 
   // 구분선
@@ -181,9 +200,7 @@ function generatePdf() {
   y += 8
 
   // ── 선택된 활동기록 목록 ───────────────────────────────────
-  const selected = filteredActivities.value.filter((a) =>
-    selectedActivityIds.value.includes(a.id),
-  )
+  const selected = selectedActivities.value
 
   doc.setFontSize(13)
   doc.setFont('helvetica', 'bold')
@@ -255,11 +272,15 @@ function generatePdf() {
   doc.setFontSize(9)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(60)
-  const includeLabels = includeItems.map((item) => `${item.label}: ${includes.value[item.key] ? 'YES' : 'NO'}`)
-  includeLabels.forEach((txt) => {
-    doc.text(`• ${txt}`, margin + 4, y)
+  if (includedTypes.value.length === 0) {
+    doc.text('• 선택된 항목 없음', margin + 4, y)
     y += 5
-  })
+  } else {
+    includedTypes.value.forEach((type) => {
+      doc.text(`• ${type}`, margin + 4, y)
+      y += 5
+    })
+  }
 
   // ── 푸터 ──────────────────────────────────────────────────
   const totalPages = doc.internal.pages.length - 1
@@ -322,6 +343,7 @@ function generatePdf() {
                   placeholder="수주건을 선택하세요 (PO 검색 클릭)"
                   :readonly="true"
                   class="flex-1"
+                  :class="errors.po ? 'border-red-400' : ''"
                 />
                 <BaseButton variant="ghost" @click="isPoModalOpen = true">
                   <template #leading>
@@ -337,6 +359,7 @@ function generatePdf() {
                   </svg>
                 </BaseButton>
               </div>
+              <p v-if="errors.po" class="mt-1 text-xs text-red-500">{{ errors.po }}</p>
             </div>
 
             <!-- 기간 -->
@@ -344,31 +367,33 @@ function generatePdf() {
               <p class="text-sm font-semibold text-slate-700">
                 기간 <span class="text-red-500">*</span>
               </p>
-              <DateRangeField
-                :start="dateFrom"
-                :end="dateTo"
-                @update:start="dateFrom = $event"
-                @update:end="dateTo = $event"
-                @reset="dateFrom = ''; dateTo = ''"
-              />
+              <div class="grid gap-3 md:grid-cols-[1fr_auto_1fr] md:items-start">
+                <div>
+                  <DateField v-model="dateFrom" />
+                  <p v-if="errors.dateFrom" class="mt-1 text-xs text-red-500">{{ errors.dateFrom }}</p>
+                </div>
+                <span class="hidden pt-2 text-center text-sm text-slate-400 md:block">~</span>
+                <div>
+                  <DateField v-model="dateTo" />
+                  <p v-if="errors.dateTo" class="mt-1 text-xs text-red-500">{{ errors.dateTo }}</p>
+                </div>
+              </div>
+              <div class="flex justify-end">
+                <BaseButton variant="secondary" size="sm" @click="dateFrom = ''; dateTo = ''">기간 초기화</BaseButton>
+              </div>
             </div>
 
             <!-- 포함 항목 -->
             <div class="space-y-2">
               <p class="text-sm font-semibold text-slate-700">포함 항목</p>
-              <div class="grid grid-cols-2 gap-2">
-                <label
-                  v-for="item in includeItems"
-                  :key="item.key"
-                  class="flex cursor-pointer items-center gap-2 rounded-lg bg-slate-50 p-2.5 transition hover:bg-slate-100"
-                >
-                  <input
-                    v-model="includes[item.key]"
-                    type="checkbox"
-                    class="rounded border-slate-300 text-brand-500"
-                  />
-                  <span class="text-sm text-slate-700">{{ item.label }}</span>
-                </label>
+              <div
+                v-if="includedTypes.length > 0"
+                class="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3"
+              >
+                <ActivityTypeBadge v-for="type in includedTypes" :key="type" :value="type" />
+              </div>
+              <div v-else class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-400">
+                우측 활동기록 목록에서 항목을 선택하면 여기에 표시됩니다.
               </div>
             </div>
 
