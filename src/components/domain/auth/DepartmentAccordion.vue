@@ -68,11 +68,11 @@ function getActiveCount() {
     <!-- 본문 테이블 -->
     <div v-show="expanded" :id="`dept-panel-${department}`" class="border-t border-slate-100">
       <BaseTable :columns="columns" :rows="users" empty-text="사용자가 없습니다.">
-        <template #cell-name="{ row, value }">
+        <template #cell-name="{ row, index, value }">
           <div class="flex items-center gap-2.5">
             <span
               class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-              :class="getAvatarColor(row.id)"
+              :class="getAvatarColor(index)"
             >
               {{ value?.charAt(0) }}
             </span>

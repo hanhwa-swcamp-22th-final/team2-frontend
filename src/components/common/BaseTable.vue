@@ -202,7 +202,7 @@ onBeforeUnmount(() => {
       </thead>
       <tbody v-if="rows.length > 0" class="bg-white">
         <tr
-          v-for="row in rows"
+          v-for="(row, rowIndex) in rows"
           :key="row?.[rowKey] ?? JSON.stringify(row)"
           class="transition hover:bg-slate-50/70"
           :class="props.clickableRows ? 'cursor-pointer' : ''"
@@ -219,6 +219,7 @@ onBeforeUnmount(() => {
             <slot
               :name="`cell-${column.key}`"
               :row="row"
+              :index="rowIndex"
               :value="getCellValue(row, column.key)"
             >
               {{ getCellValue(row, column.key) ?? '-' }}
