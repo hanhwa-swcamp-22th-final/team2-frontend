@@ -114,12 +114,6 @@ function handlePreviewPrint() {
             </template>
             미리보기
           </BaseButton>
-          <BaseButton variant="secondary" size="sm" @click="handlePrint">
-            <template #leading>
-              <i class="fas fa-print text-xs text-slate-400" aria-hidden="true"></i>
-            </template>
-            인쇄
-          </BaseButton>
           <BaseButton size="sm" @click="handlePdfDownload">
             <template #leading>
               <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
