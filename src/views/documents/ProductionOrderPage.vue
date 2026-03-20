@@ -20,7 +20,7 @@ import { useToast } from '@/composables/useToast'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
 
 const router = useRouter()
-const isAdvancedOpen = ref(true)
+const isAdvancedOpen = ref(false)
 const previewTarget = ref(null)
 const toast = useToast()
 const clientSearchOpen = ref(false)

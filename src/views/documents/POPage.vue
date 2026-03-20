@@ -22,7 +22,7 @@ import { useToast } from '@/composables/useToast'
 const router = useRouter()
 const { success } = useToast()
 
-const isAdvancedOpen = ref(true)
+const isAdvancedOpen = ref(false)
 const formOpen = ref(false)
 const formMode = ref('create')
 const selectedRow = ref(null)
@@ -298,11 +298,11 @@ function handleProductSelect(product) {
           </div>
         </FormField>
 
-        <FormField label="담당자">
+        <FormField label="영업담당자">
           <SearchableCombobox
             v-model="filters.manager"
             :options="managerOptions"
-            placeholder="담당자 검색..."
+            placeholder="영업담당자 검색..."
           />
         </FormField>
 
@@ -312,15 +312,6 @@ function handleProductSelect(product) {
             placeholder="거래처 검색..."
             title="거래처 검색"
             @trigger="openClientSearch"
-          />
-        </FormField>
-
-        <FormField label="PO번호">
-          <SearchTriggerField
-            v-model="filters.code"
-            placeholder="PO번호"
-            title="PO번호 검색"
-            @trigger="openCodeSearch"
           />
         </FormField>
 

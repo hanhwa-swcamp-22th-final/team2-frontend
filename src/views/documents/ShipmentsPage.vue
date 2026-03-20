@@ -17,7 +17,7 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 
 const router = useRouter()
-const isAdvancedOpen = ref(true)
+const isAdvancedOpen = ref(false)
 const clientSearchOpen = ref(false)
 const clientSearchKeyword = ref('')
 const shipmentSearchOpen = ref(false)
