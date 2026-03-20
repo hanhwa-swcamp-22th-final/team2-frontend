@@ -315,15 +315,6 @@ function handleProductSelect(product) {
           />
         </FormField>
 
-        <FormField label="PO번호">
-          <SearchTriggerField
-            v-model="filters.code"
-            placeholder="PO번호"
-            title="PO번호 검색"
-            @trigger="openCodeSearch"
-          />
-        </FormField>
-
         <FormField label="품목명">
           <SearchTriggerField
             v-model="filters.productName"

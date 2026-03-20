@@ -284,15 +284,6 @@ function updateStatus(poId, value) {
             />
           </FormField>
 
-          <FormField label="PO 번호">
-            <SearchTriggerField
-              v-model="filters.code"
-              placeholder="PO26001"
-              title="PO 번호 검색"
-              @trigger="openPoSearch"
-            />
-          </FormField>
-
           <FormField label="영업담당자">
             <SearchableCombobox
               v-model="filters.manager"

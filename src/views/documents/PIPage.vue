@@ -522,15 +522,6 @@ function handleProductSelect(product) {
           />
         </FormField>
 
-        <FormField label="PI번호">
-          <SearchTriggerField
-            v-model="filters.code"
-            placeholder="PI번호"
-            title="PI번호 검색"
-            @trigger="openCodeSearch"
-          />
-        </FormField>
-
         <FormField label="품목명">
           <SearchTriggerField
             v-model="filters.productName"
