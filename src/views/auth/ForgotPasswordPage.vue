@@ -4,6 +4,7 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import FormField from '@/components/common/FormField.vue'
 import { useToast } from '@/composables/useToast'
+import { isValidEmail } from '@/utils/validators'
 
 const { success, error } = useToast()
 
@@ -12,15 +13,13 @@ const emailError = ref('')
 const loading = ref(false)
 const submitted = ref(false)
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
 function validate() {
   emailError.value = ''
   if (!email.value.trim()) {
     emailError.value = '이메일을 입력해주세요.'
     return false
   }
-  if (!EMAIL_REGEX.test(email.value.trim())) {
+  if (!isValidEmail(email.value)) {
     emailError.value = '올바른 이메일 형식을 입력해주세요.'
     return false
   }
@@ -35,11 +34,14 @@ async function handleSubmit() {
     // TODO: 백엔드 연동 시 await sendPasswordResetEmail(email.value.trim())
     submitted.value = true
     success('등록된 이메일이라면 재설정 링크가 발송됩니다.')
-  } catch {
-    error('이메일 확인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
   } finally {
     loading.value = false
   }
+}
+
+function handleRetry() {
+  submitted.value = false
+  email.value = ''
 }
 </script>
 
@@ -69,12 +71,19 @@ async function handleSubmit() {
       </div>
 
       <!-- 발송 완료 메시지 -->
-      <div v-if="submitted" class="rounded-xl bg-green-50 px-4 py-4 text-center text-sm text-green-700">
+      <div v-if="submitted" role="alert" aria-live="polite" class="rounded-xl bg-green-50 px-4 py-4 text-center text-sm text-green-700">
         <p class="font-semibold">이메일이 발송되었습니다.</p>
         <p class="mt-1 text-xs text-green-600">
           <strong>{{ email }}</strong> 으로 비밀번호 재설정 링크를 발송했습니다.<br />
           이메일을 확인해 주세요.
         </p>
+        <button
+          type="button"
+          class="mt-3 text-xs font-medium text-green-700 underline transition hover:text-green-900"
+          @click="handleRetry"
+        >
+          다른 이메일로 다시 시도
+        </button>
       </div>
 
       <form v-else class="space-y-5" @submit.prevent="handleSubmit">

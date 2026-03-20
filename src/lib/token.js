@@ -35,8 +35,8 @@ export function generateTokens(user) {
     exp: now + RT_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
   }
 
-  const accessToken = btoa(unescape(encodeURIComponent(JSON.stringify(accessPayload))))
-  const refreshToken = btoa(unescape(encodeURIComponent(JSON.stringify(refreshPayload))))
+  const accessToken = btoa(encodeURIComponent(JSON.stringify(accessPayload)))
+  const refreshToken = btoa(encodeURIComponent(JSON.stringify(refreshPayload)))
 
   return { accessToken, refreshToken }
 }
@@ -44,7 +44,7 @@ export function generateTokens(user) {
 /** AT 페이로드 디코딩 */
 export function decodeToken(token) {
   try {
-    return JSON.parse(decodeURIComponent(escape(atob(token))))
+    return JSON.parse(decodeURIComponent(atob(token)))
   } catch {
     return null
   }
@@ -60,7 +60,7 @@ export function isTokenExpired(token) {
 /** RT를 쿠키에 저장 */
 export function setRefreshTokenCookie(token) {
   const expires = new Date(Date.now() + RT_EXPIRY_DAYS * 24 * 60 * 60 * 1000).toUTCString()
-  document.cookie = `${RT_COOKIE_NAME}=${token}; expires=${expires}; path=/; SameSite=Strict`
+  document.cookie = `${RT_COOKIE_NAME}=${token}; expires=${expires}; path=/; SameSite=Strict; Secure`
 }
 
 /** RT를 쿠키에서 읽기 */
@@ -71,5 +71,5 @@ export function getRefreshTokenCookie() {
 
 /** RT 쿠키 삭제 */
 export function removeRefreshTokenCookie() {
-  document.cookie = `${RT_COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Strict`
+  document.cookie = `${RT_COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Strict; Secure`
 }
