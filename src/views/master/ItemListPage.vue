@@ -48,7 +48,7 @@ const columns = [
   { key: 'unit', label: '단위', width: '80px', align: 'center' },
   { key: 'unitPrice', label: '단가 (KRW)', width: '140px', align: 'right' },
   { key: 'weight', label: '중량 (kg)', width: '110px', align: 'right' },
-  { key: 'hsCode', label: '관세코드', width: '100px', align: 'center' },
+  { key: 'hsCode', label: 'HS Code', width: '100px', align: 'center' },
   { key: 'status', label: '상태', width: '80px', align: 'center' },
   { key: 'actions', label: '액션', width: '120px', align: 'center' },
 ]
