@@ -54,6 +54,7 @@ function normalizeColumn(column) {
     @close="$emit('close')"
   >
     <div class="space-y-4">
+      <slot name="filter" />
       <SearchInput
         :model-value="searchKeyword"
         placeholder="검색어를 입력하세요"

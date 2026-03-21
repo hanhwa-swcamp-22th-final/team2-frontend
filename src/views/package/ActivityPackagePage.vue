@@ -42,9 +42,15 @@ const poSearchKeyword = ref('')
 const selectedPoId = ref('')
 
 const filteredPoList = computed(() => {
+  if (!dateFrom.value) return []
+  let list = poList.value
+  const from = dateFrom.value.replaceAll('-', '/')
+  const to   = dateTo.value.replaceAll('-', '/')
+  if (from) list = list.filter((p) => p.date >= from)
+  if (to)   list = list.filter((p) => p.date <= to)
   const q = poSearchKeyword.value.trim().toLowerCase()
-  if (!q) return poList.value
-  return poList.value.filter(
+  if (!q) return list
+  return list.filter(
     (p) => p.id.toLowerCase().includes(q) || p.title.toLowerCase().includes(q),
   )
 })
@@ -66,7 +72,7 @@ function clearPo() {
 const keyword     = ref('')
 const poDisplay   = ref('')
 const dateFrom    = ref('')
-const dateTo      = ref(new Date().toISOString().slice(0, 10))
+const dateTo      = ref(new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '-').replace('.', ''))
 
 // ── 유효성 검사 ────────────────────────────────────────────
 const errors = ref({})
@@ -85,6 +91,8 @@ function validate() {
 }
 
 // ── 활동기록 필터 ──────────────────────────────────────────
+const actDateFrom = ref('')
+const actDateTo   = ref(new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '-').replace('.', ''))
 const activeTypeTab = ref('전체')
 
 const typeTabs = [
@@ -108,10 +116,8 @@ const includedTypes = computed(() =>
 )
 
 const filteredActivities = computed(() => {
-  let list = activities.value
-  if (selectedPoId.value) {
-    list = list.filter((a) => a.poId === selectedPoId.value)
-  }
+  if (!selectedPoId.value) return []
+  let list = activities.value.filter((a) => a.poId === selectedPoId.value)
   if (activeTypeTab.value !== '전체') {
     list = list.filter((a) => a.type === activeTypeTab.value)
   }
@@ -121,9 +127,17 @@ const filteredActivities = computed(() => {
       a.title.toLowerCase().includes(q) || (a.content ?? '').toLowerCase().includes(q),
     )
   }
-  if (dateFrom.value) list = list.filter((a) => a.date >= dateFrom.value)
-  if (dateTo.value)   list = list.filter((a) => a.date <= dateTo.value)
+  const aFrom = actDateFrom.value.replaceAll('-', '/')
+  const aTo   = actDateTo.value.replaceAll('-', '/')
+  if (aFrom) list = list.filter((a) => a.date >= aFrom)
+  if (aTo)   list = list.filter((a) => a.date <= aTo)
   return list
+})
+
+// 활동기록 기간 변경 시 필터 결과 전체 선택
+watch([actDateFrom, actDateTo], async () => {
+  await nextTick()
+  selectedActivityIds.value = filteredActivities.value.map((a) => a.id)
 })
 
 // PO 변경 시 전체 선택으로 리셋
@@ -362,27 +376,6 @@ function generatePdf() {
               <p v-if="errors.po" class="mt-1 text-xs text-red-500">{{ errors.po }}</p>
             </div>
 
-            <!-- 기간 -->
-            <div class="space-y-1.5">
-              <p class="text-sm font-semibold text-slate-700">
-                기간 <span class="text-red-500">*</span>
-              </p>
-              <div class="grid gap-3 md:grid-cols-[1fr_auto_1fr] md:items-start">
-                <div>
-                  <DateField v-model="dateFrom" />
-                  <p v-if="errors.dateFrom" class="mt-1 text-xs text-red-500">{{ errors.dateFrom }}</p>
-                </div>
-                <span class="hidden pt-2 text-center text-sm text-slate-400 md:block">~</span>
-                <div>
-                  <DateField v-model="dateTo" />
-                  <p v-if="errors.dateTo" class="mt-1 text-xs text-red-500">{{ errors.dateTo }}</p>
-                </div>
-              </div>
-              <div class="flex justify-end">
-                <BaseButton variant="secondary" size="sm" @click="dateFrom = ''; dateTo = ''">기간 초기화</BaseButton>
-              </div>
-            </div>
-
             <!-- 포함 항목 -->
             <div class="space-y-2">
               <p class="text-sm font-semibold text-slate-700">포함 항목</p>
@@ -420,6 +413,19 @@ function generatePdf() {
       <!-- ── 우측: 활동기록 목록 ─────────────────────────────── -->
       <div>
         <BaseCard title="활동기록 목록">
+          <!-- 활동기록 기간 필터 -->
+          <div class="mb-3 space-y-1.5">
+            <p class="text-xs font-semibold text-slate-600">기간 필터</p>
+            <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5">
+              <DateField v-model="actDateFrom" />
+              <span class="text-center text-xs text-slate-400">~</span>
+              <DateField v-model="actDateTo" />
+            </div>
+            <div class="flex justify-end">
+              <BaseButton variant="secondary" size="sm" @click="actDateFrom = ''; actDateTo = ''">초기화</BaseButton>
+            </div>
+          </div>
+
           <!-- 전체 선택 -->
           <div class="mb-3 flex items-center justify-between">
             <span class="text-xs text-slate-400">
@@ -498,11 +504,25 @@ function generatePdf() {
       :columns="poColumns"
       :rows="filteredPoList"
       :search-keyword="poSearchKeyword"
-      empty-text="검색된 PO가 없습니다."
+      :empty-text="dateFrom ? '검색된 PO가 없습니다.' : '기간을 먼저 설정해주세요.'"
       @close="isPoModalOpen = false"
       @update:search-keyword="poSearchKeyword = $event"
       @select="selectPo"
-    />
+    >
+      <template #filter>
+        <div class="space-y-1.5">
+          <p class="text-sm font-semibold text-slate-700">기간</p>
+          <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+            <DateField v-model="dateFrom" />
+            <span class="text-center text-sm text-slate-400">~</span>
+            <DateField v-model="dateTo" />
+          </div>
+          <div class="flex justify-end">
+            <BaseButton variant="secondary" size="sm" @click="dateFrom = ''; dateTo = ''">기간 초기화</BaseButton>
+          </div>
+        </div>
+      </template>
+    </SearchModal>
 
   </div>
 </template>
