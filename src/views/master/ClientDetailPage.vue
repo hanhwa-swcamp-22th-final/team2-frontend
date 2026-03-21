@@ -7,52 +7,30 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
 import ClientBuyerCard from '@/components/domain/master/ClientBuyerCard.vue'
 import ClientFormModal from '@/components/domain/master/ClientFormModal.vue'
+import DocumentLinkButton from '@/components/domain/master/DocumentLinkButton.vue'
 import {
   deleteClient,
   fetchBuyersByClient,
   fetchClient,
-  fetchCountries,
-  fetchCurrencies,
-  fetchPaymentTerms,
-  fetchPorts,
+  fetchClients,
   updateClient,
 } from '@/api/master'
+import { useMasterLookup } from '@/composables/useMasterLookup'
 import { useToast } from '@/composables/useToast'
 
 const route = useRoute()
 const router = useRouter()
 const { success, error } = useToast()
 
+const { countries, ports, currencies, paymentTerms, loadReferenceData, getCountryName, getPortName, getPaymentTermsLabel, getCurrencyLabel } = useMasterLookup()
+
 const client = ref(null)
-const countries = ref([])
-const ports = ref([])
-const currencies = ref([])
-const paymentTerms = ref([])
+const allClients = ref([])
 const loading = ref(false)
 const saving = ref(false)
 
 const showFormModal = ref(false)
 const showConfirmModal = ref(false)
-
-function getCountryName(countryId) {
-  const found = countries.value.find((c) => String(c.id) === String(countryId))
-  return found ? `${found.nameKr} (${found.name})` : '-'
-}
-
-function getPortName(portId) {
-  const found = ports.value.find((p) => String(p.id) === String(portId))
-  return found ? found.name : '-'
-}
-
-function getPaymentTermsLabel(paymentTermsId) {
-  const found = paymentTerms.value.find((p) => String(p.id) === String(paymentTermsId))
-  return found ? `${found.code} (${found.description})` : '-'
-}
-
-function getCurrencyCode(currencyId) {
-  const found = currencies.value.find((c) => String(c.id) === String(currencyId))
-  return found ? `${found.code} (${found.symbol})` : '-'
-}
 
 const buyers = ref([])
 
@@ -61,14 +39,14 @@ const infoFields = computed(() => {
   return [
     { label: '코드', value: client.value.code },
     { label: '한글명', value: client.value.nameKr },
-    { label: '국가', value: getCountryName(client.value.countryId) },
+    { label: '국가', value: getCountryName(client.value.countryId, { detailed: true }) },
     { label: '도시', value: client.value.city },
     { label: '도착항', value: getPortName(client.value.portId) },
     { label: '주소', value: client.value.address },
     { label: 'TEL', value: client.value.tel },
     { label: 'Email', value: client.value.email },
-    { label: '결제조건', value: getPaymentTermsLabel(client.value.paymentTermsId) },
-    { label: '통화', value: getCurrencyCode(client.value.currencyId) },
+    { label: '결제조건', value: getPaymentTermsLabel(client.value.paymentTermsId, { detailed: true }) },
+    { label: '통화', value: getCurrencyLabel(client.value.currencyId, { detailed: true }) },
     { label: '담당자', value: client.value.manager },
     { label: '등록일', value: client.value.regDate },
   ]
@@ -82,14 +60,12 @@ async function loadData() {
   }
   loading.value = true
   try {
-    const [clientData, countriesData, portsData, currenciesData, paymentTermsData, buyersData] =
+    const [clientData, buyersData, clientsData] =
       await Promise.all([
         fetchClient(route.params.id),
-        fetchCountries(),
-        fetchPorts(),
-        fetchCurrencies(),
-        fetchPaymentTerms(),
         fetchBuyersByClient(route.params.id),
+        fetchClients(),
+        loadReferenceData(),
       ])
     if (!clientData) {
       error('거래처를 찾을 수 없습니다.')
@@ -97,10 +73,7 @@ async function loadData() {
       return
     }
     client.value = clientData
-    countries.value = countriesData
-    ports.value = portsData
-    currencies.value = currenciesData
-    paymentTerms.value = paymentTermsData
+    allClients.value = clientsData
     buyers.value = buyersData.map((b) => ({
       name: b.name,
       position: b.position,
@@ -170,8 +143,6 @@ function goBack() {
       <template #actions>
         <BaseButton variant="secondary" size="sm" @click="openEditModal">수정</BaseButton>
         <BaseButton variant="ghost" size="sm" @click="showConfirmModal = true">삭제</BaseButton>
-        <BaseButton variant="ghost" size="sm" :disabled="true" title="준비 중">인쇄</BaseButton>
-        <BaseButton variant="ghost" size="sm" :disabled="true" title="준비 중">PDF</BaseButton>
       </template>
     </DetailPageHeader>
 
@@ -200,30 +171,18 @@ function goBack() {
       <!-- 연결 문서 링크 -->
       <BaseCard title="관련 문서 바로가기" subtitle="이 거래처의 관련 문서를 조회합니다.">
         <div class="flex flex-wrap gap-2">
-          <RouterLink
-            :to="{ path: '/pi', query: { clientId: client.id } }"
-            class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
-          >
+          <DocumentLinkButton :to="{ path: '/pi', query: { clientId: client.id } }">
             PI 조회
-          </RouterLink>
-          <RouterLink
-            :to="{ path: '/po', query: { clientId: client.id } }"
-            class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
-          >
+          </DocumentLinkButton>
+          <DocumentLinkButton :to="{ path: '/po', query: { clientId: client.id } }">
             PO 조회
-          </RouterLink>
-          <RouterLink
-            :to="{ path: '/ci', query: { clientId: client.id } }"
-            class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
-          >
+          </DocumentLinkButton>
+          <DocumentLinkButton :to="{ path: '/ci', query: { clientId: client.id } }">
             CI 조회
-          </RouterLink>
-          <RouterLink
-            :to="{ path: '/pl', query: { clientId: client.id } }"
-            class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
-          >
+          </DocumentLinkButton>
+          <DocumentLinkButton :to="{ path: '/pl', query: { clientId: client.id } }">
             PL 조회
-          </RouterLink>
+          </DocumentLinkButton>
         </div>
       </BaseCard>
     </div>
@@ -236,7 +195,7 @@ function goBack() {
       :ports="ports"
       :currencies="currencies"
       :payment-terms="paymentTerms"
-      :all-clients="[]"
+      :all-clients="allClients"
       :saving="saving"
       @close="showFormModal = false"
       @save="handleSave"
