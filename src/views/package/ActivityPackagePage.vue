@@ -42,6 +42,7 @@ const poSearchKeyword = ref('')
 const selectedPoId = ref('')
 
 const filteredPoList = computed(() => {
+  if (!dateFrom.value) return []
   let list = poList.value
   const from = dateFrom.value.replaceAll('-', '/')
   const to   = dateTo.value.replaceAll('-', '/')
@@ -71,7 +72,7 @@ function clearPo() {
 const keyword     = ref('')
 const poDisplay   = ref('')
 const dateFrom    = ref('')
-const dateTo      = ref(new Date().toISOString().slice(0, 10))
+const dateTo      = ref(new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '-').replace('.', ''))
 
 // ── 유효성 검사 ────────────────────────────────────────────
 const errors = ref({})
@@ -345,27 +346,6 @@ function generatePdf() {
               />
             </div>
 
-            <!-- 기간 -->
-            <div class="space-y-1.5">
-              <p class="text-sm font-semibold text-slate-700">
-                기간 <span class="text-red-500">*</span>
-              </p>
-              <div class="grid gap-3 md:grid-cols-[1fr_auto_1fr] md:items-start">
-                <div>
-                  <DateField v-model="dateFrom" />
-                  <p v-if="errors.dateFrom" class="mt-1 text-xs text-red-500">{{ errors.dateFrom }}</p>
-                </div>
-                <span class="hidden pt-2 text-center text-sm text-slate-400 md:block">~</span>
-                <div>
-                  <DateField v-model="dateTo" />
-                  <p v-if="errors.dateTo" class="mt-1 text-xs text-red-500">{{ errors.dateTo }}</p>
-                </div>
-              </div>
-              <div class="flex justify-end">
-                <BaseButton variant="secondary" size="sm" @click="dateFrom = ''; dateTo = ''">기간 초기화</BaseButton>
-              </div>
-            </div>
-
             <!-- 수주건 (PO) -->
             <div class="space-y-1.5">
               <p class="text-sm font-semibold text-slate-700">
@@ -524,11 +504,25 @@ function generatePdf() {
       :columns="poColumns"
       :rows="filteredPoList"
       :search-keyword="poSearchKeyword"
-      empty-text="검색된 PO가 없습니다."
+      :empty-text="dateFrom ? '검색된 PO가 없습니다.' : '기간을 먼저 설정해주세요.'"
       @close="isPoModalOpen = false"
       @update:search-keyword="poSearchKeyword = $event"
       @select="selectPo"
-    />
+    >
+      <template #filter>
+        <div class="space-y-1.5">
+          <p class="text-sm font-semibold text-slate-700">기간</p>
+          <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+            <DateField v-model="dateFrom" />
+            <span class="text-center text-sm text-slate-400">~</span>
+            <DateField v-model="dateTo" />
+          </div>
+          <div class="flex justify-end">
+            <BaseButton variant="secondary" size="sm" @click="dateFrom = ''; dateTo = ''">기간 초기화</BaseButton>
+          </div>
+        </div>
+      </template>
+    </SearchModal>
 
   </div>
 </template>
