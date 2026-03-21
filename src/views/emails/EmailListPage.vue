@@ -1,6 +1,14 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { fetchActivityEmails } from '@/api/emails'
+import { api } from '@/lib/api'
+import {
+  buildPIOutputHtml,
+  buildCIOutputHtml,
+  buildPLOutputHtml,
+  buildProductionOrderOutputHtml,
+  buildShipmentOrderOutputHtml,
+} from '@/utils/documentOutput'
 import { useToast } from '@/composables/useToast'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
@@ -40,9 +48,10 @@ const filterDateTo    = ref('')
 
 const typeOptions = [
   { label: 'PI', value: 'PI' },
-  { label: 'PO', value: 'PO' },
   { label: 'CI', value: 'CI' },
   { label: 'PL', value: 'PL' },
+  { label: '생산지시서', value: '생산지시서' },
+  { label: '출하지시서', value: '출하지시서' },
 ]
 
 const statusOptions = [
@@ -92,7 +101,7 @@ const filteredEmails = computed(() => {
   return emails.value.filter((e) => {
     const q = applied.value.keyword.trim().toLowerCase()
     const matchKeyword   = !q || e.title.toLowerCase().includes(q) || e.client.toLowerCase().includes(q)
-    const matchType      = !applied.value.type      || e.type === applied.value.type
+    const matchType      = !applied.value.type      || (e.types ?? []).includes(applied.value.type)
     const matchStatus    = !applied.value.status    || e.status === applied.value.status
     const matchSender    = !applied.value.sender    || e.sender === applied.value.sender
     const matchRecipient = !applied.value.recipient || e.recipient === applied.value.recipient
@@ -103,6 +112,39 @@ const filteredEmails = computed(() => {
     return matchKeyword && matchType && matchStatus && matchSender && matchRecipient && matchFrom && matchTo
   })
 })
+
+// ── 첨부파일 열기 ───────────────────────────────────────────
+const ATTACHMENT_CONFIG = {
+  PI: { endpoint: 'pi',               builder: buildPIOutputHtml               },
+  CI: { endpoint: 'ci',               builder: buildCIOutputHtml               },
+  PL: { endpoint: 'pl',               builder: buildPLOutputHtml               },
+  MO: { endpoint: 'productionOrders', builder: buildProductionOrderOutputHtml  },
+  SO: { endpoint: 'shipmentOrders',   builder: buildShipmentOrderOutputHtml    },
+}
+
+const attachmentHtml = ref('')
+const isAttachmentOpen = ref(false)
+
+async function openAttachment(filename) {
+  const id = filename.replace('.pdf', '')
+  const prefix = id.match(/^[A-Z]+/)?.[0] ?? ''
+  const config = ATTACHMENT_CONFIG[prefix]
+  if (!config) return
+  try {
+    const { data } = await api.get(`/${config.endpoint}/${id}`)
+    if (!Array.isArray(data.items)) {
+      data.items = data.itemName
+        ? [{ name: data.itemName, quantity: '-', unitPrice: '-', amount: data.amount ?? '-' }]
+        : []
+    }
+    if (!data.totalAmount && data.amount != null) data.totalAmount = String(data.amount)
+    attachmentHtml.value = config.builder(data)
+    isAttachmentOpen.value = true
+  } catch (e) {
+    console.error('문서 로드 실패', e)
+    error('문서를 불러오지 못했습니다.')
+  }
+}
 
 // ── 상세 모달 ──────────────────────────────────────────────
 const selectedEmail = ref(null)
@@ -125,7 +167,7 @@ const columns = [
   { key: 'title',     label: '제목'                                      },
   { key: 'recipient', label: '수신자',  width: '110px'                  },
   { key: 'email',     label: '이메일',  width: '210px'                  },
-  { key: 'type',      label: '유형',   width: '100px'                  },
+  { key: 'types',      label: '유형',   width: '120px'                  },
   { key: 'attachment', label: '첨부',  width: '60px',  align: 'center' },
   { key: 'status',    label: '상태',   width: '80px',  align: 'center' },
   { key: 'sentAt',    label: '발송일',  width: '110px', align: 'center' },
@@ -238,21 +280,29 @@ const columns = [
         <span class="break-all text-slate-600">{{ row.email }}</span>
       </template>
 
+      <!-- 유형 배지 -->
+      <template #cell-types="{ row }">
+        <span class="text-sm text-slate-700">{{ (row.types ?? []).join(' · ') }}</span>
+      </template>
+
       <!-- 첨부 -->
       <template #cell-attachment="{ row }">
-        <div v-if="row.hasAttachment" class="group relative mx-auto flex items-center justify-center" @click.stop>
+        <div v-if="row.attachments?.length" class="group relative mx-auto flex items-center justify-center" @click.stop>
           <svg class="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path d="M9.25 13.25a.75.75 0 0 0 1.5 0V4.636l2.955 3.129a.75.75 0 0 0 1.09-1.03l-4.25-4.5a.75.75 0 0 0-1.09 0l-4.25 4.5a.75.75 0 1 0 1.09 1.03L9.25 4.636v8.614Z" />
             <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
           </svg>
-          <a
-            v-if="row.poId"
-            href="/Purchase Order.pdf"
-            target="_blank"
-            class="absolute bottom-full left-1/2 z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-slate-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 hover:underline"
-          >
-            {{ row.poId }}
-          </a>
+          <div class="absolute bottom-full left-1/2 z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-slate-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+            <button
+              v-for="file in row.attachments"
+              :key="file"
+              type="button"
+              class="block hover:underline"
+              @click="openAttachment(file)"
+            >
+              {{ file }}
+            </button>
+          </div>
         </div>
         <span v-else class="text-slate-300">—</span>
       </template>
@@ -269,6 +319,23 @@ const columns = [
       총 {{ filteredEmails.length }}건
     </div>
 
+    <!-- 첨부파일 문서 미리보기 모달 -->
+    <BaseModal
+      :open="isAttachmentOpen"
+      title="문서 미리보기"
+      width="max-w-4xl"
+      @close="isAttachmentOpen = false"
+    >
+      <iframe
+        :srcdoc="attachmentHtml"
+        class="w-full rounded"
+        style="height: 70vh; border: none;"
+      />
+      <template #footer>
+        <BaseButton variant="secondary" @click="isAttachmentOpen = false">닫기</BaseButton>
+      </template>
+    </BaseModal>
+
     <!-- 메일 상세 모달 -->
     <BaseModal
       :open="isDetailOpen"
@@ -282,21 +349,24 @@ const columns = [
         <InfoField label="수신자"  :value="selectedEmail?.recipient || '-'" />
         <InfoField label="발송일시" :value="selectedEmail?.sentAt" />
         <InfoField label="제목"    :value="selectedEmail?.title" />
-        <InfoField label="유형"    :value="selectedEmail?.type" />
+        <InfoField label="유형"    :value="(selectedEmail?.types ?? []).join(' · ')" />
         <InfoField label="연결 PO" :value="selectedEmail?.poId || '-'" />
         <InfoField label="첨부파일">
-          <a
-            v-if="selectedEmail?.hasAttachment"
-            href="/Purchase Order.pdf"
-            target="_blank"
-            class="flex items-center gap-1.5 text-sm text-brand-600 hover:underline"
-          >
-            <svg class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path d="M9.25 13.25a.75.75 0 0 0 1.5 0V4.636l2.955 3.129a.75.75 0 0 0 1.09-1.03l-4.25-4.5a.75.75 0 0 0-1.09 0l-4.25 4.5a.75.75 0 1 0 1.09 1.03L9.25 4.636v8.614Z" />
-              <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
-            </svg>
-            <span>{{ selectedEmail?.title?.replace('[SalesBoost] ', '').replace(' 발송', '').replace(/-/g, '') }}.pdf</span>
-          </a>
+          <div v-if="selectedEmail?.attachments?.length" class="flex flex-col gap-1">
+            <button
+              v-for="file in selectedEmail.attachments"
+              :key="file"
+              type="button"
+              class="flex items-center gap-1.5 text-sm text-brand-600 hover:underline"
+              @click="openAttachment(file)"
+            >
+              <svg class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M9.25 13.25a.75.75 0 0 0 1.5 0V4.636l2.955 3.129a.75.75 0 0 0 1.09-1.03l-4.25-4.5a.75.75 0 0 0-1.09 0l-4.25 4.5a.75.75 0 1 0 1.09 1.03L9.25 4.636v8.614Z" />
+                <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
+              </svg>
+              <span>{{ file }}</span>
+            </button>
+          </div>
           <span v-else class="text-sm text-slate-400">없음</span>
         </InfoField>
       </div>
