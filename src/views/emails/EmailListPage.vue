@@ -22,7 +22,7 @@ import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 
-const { error } = useToast()
+const { success, error } = useToast()
 
 // ── 데이터 ─────────────────────────────────────────────────
 const emails = ref([])
@@ -143,6 +143,37 @@ async function openAttachment(filename) {
   } catch (e) {
     console.error('문서 로드 실패', e)
     error('문서를 불러오지 못했습니다.')
+  }
+}
+
+// ── 재전송 ────────────────────────────────────────────────
+async function resendEmail() {
+  const email = selectedEmail.value
+  if (!email) return
+  // 이미 발송 성공 이력이 존재하면 중복 방지
+  const alreadySent = emails.value.some(
+    (e) => e.id !== email.id && e.title === email.title && e.status === '발송',
+  )
+  if (alreadySent) {
+    error('이미 발송된 메일입니다.')
+    return
+  }
+  try {
+    await api.delete(`/activityEmails/${email.id}`)
+    const { id: _removed, ...rest } = email
+    const newRecord = {
+      ...rest,
+      status: '발송',
+      sentAt: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })
+        .replace(/\. /g, '/').replace('.', ''),
+    }
+    await api.post('/activityEmails', newRecord)
+    closeDetail()
+    emails.value = await fetchActivityEmails()
+    success('메일을 발송했습니다.')
+  } catch (e) {
+    console.error('재전송 실패', e)
+    error('재전송에 실패했습니다.')
   }
 }
 
@@ -324,6 +355,7 @@ const columns = [
       :open="isAttachmentOpen"
       title="문서 미리보기"
       width="max-w-4xl"
+      :z-index="60"
       @close="isAttachmentOpen = false"
     >
       <iframe
@@ -371,6 +403,13 @@ const columns = [
         </InfoField>
       </div>
       <template #footer>
+        <BaseButton
+          v-if="selectedEmail?.status === '실패'"
+          variant="primary"
+          @click="resendEmail"
+        >
+          재전송
+        </BaseButton>
         <BaseButton variant="secondary" @click="closeDetail">닫기</BaseButton>
       </template>
     </BaseModal>
