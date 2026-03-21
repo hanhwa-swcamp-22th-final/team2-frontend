@@ -34,21 +34,41 @@ const showConfirmModal = ref(false)
 
 const buyers = ref([])
 
-const infoFields = computed(() => {
+const infoGroups = computed(() => {
   if (!client.value) return []
   return [
-    { label: '코드', value: client.value.code },
-    { label: '한글명', value: client.value.nameKr },
-    { label: '국가', value: getCountryName(client.value.countryId, { detailed: true }) },
-    { label: '도시', value: client.value.city },
-    { label: '도착항', value: getPortName(client.value.portId) },
-    { label: '주소', value: client.value.address },
-    { label: 'TEL', value: client.value.tel },
-    { label: 'Email', value: client.value.email },
-    { label: '결제조건', value: getPaymentTermsLabel(client.value.paymentTermsId, { detailed: true }) },
-    { label: '통화', value: getCurrencyLabel(client.value.currencyId, { detailed: true }) },
-    { label: '담당자', value: client.value.manager },
-    { label: '등록일', value: client.value.regDate },
+    {
+      title: '기본 정보',
+      fields: [
+        { label: '코드', value: client.value.code, highlight: true },
+        { label: '한글명', value: client.value.nameKr },
+      ],
+    },
+    {
+      title: '위치 정보',
+      fields: [
+        { label: '국가', value: getCountryName(client.value.countryId, { detailed: true }) },
+        { label: '도시', value: client.value.city },
+        { label: '도착항', value: getPortName(client.value.portId) },
+        { label: '주소', value: client.value.address, wide: true },
+      ],
+    },
+    {
+      title: '연락처',
+      fields: [
+        { label: '담당자', value: client.value.manager },
+        { label: 'TEL', value: client.value.tel },
+        { label: 'Email', value: client.value.email },
+      ],
+    },
+    {
+      title: '거래 조건',
+      fields: [
+        { label: '결제조건', value: getPaymentTermsLabel(client.value.paymentTermsId, { detailed: true }) },
+        { label: '통화', value: getCurrencyLabel(client.value.currencyId, { detailed: true }) },
+        { label: '등록일', value: client.value.regDate },
+      ],
+    },
   ]
 })
 
@@ -139,7 +159,7 @@ function goBack() {
   </div>
 
   <div v-else-if="client" class="space-y-6">
-    <DetailPageHeader :title="client.name" :status="client.status" @back="goBack">
+    <DetailPageHeader :title="`${client.code} · ${client.name}`" :status="client.status" @back="goBack">
       <template #actions>
         <BaseButton variant="secondary" size="sm" @click="openEditModal">수정</BaseButton>
         <BaseButton variant="ghost" size="sm" @click="showConfirmModal = true">삭제</BaseButton>
@@ -148,13 +168,15 @@ function goBack() {
 
     <div class="space-y-6">
       <BaseCard title="기본 정보" subtitle="거래처의 상세 정보입니다.">
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div v-for="field in infoFields" :key="field.label">
-            <p class="text-xs font-medium text-slate-500">{{ field.label }}</p>
-            <p
-              class="mt-1 text-sm text-ink"
-              :class="field.label === '코드' ? 'font-mono font-semibold text-brand-600' : ''"
-            >{{ field.value || '-' }}</p>
+        <div class="space-y-6">
+          <div v-for="group in infoGroups" :key="group.title">
+            <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{{ group.title }}</h4>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div v-for="field in group.fields" :key="field.label" :class="field.wide ? 'sm:col-span-2' : ''">
+                <p class="text-xs font-medium text-slate-500">{{ field.label }}</p>
+                <p class="mt-1 text-sm text-ink" :class="field.highlight ? 'font-mono font-semibold text-brand-600' : ''">{{ field.value || '-' }}</p>
+              </div>
+            </div>
           </div>
         </div>
       </BaseCard>

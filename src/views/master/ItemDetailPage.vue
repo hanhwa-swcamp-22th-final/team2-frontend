@@ -22,19 +22,34 @@ const saving = ref(false)
 const showFormModal = ref(false)
 const showConfirmModal = ref(false)
 
-const infoFields = computed(() => {
+const infoGroups = computed(() => {
   if (!item.value) return []
   return [
-    { label: '코드', value: item.value.code },
-    { label: '한글명', value: item.value.nameKr },
-    { label: '카테고리', value: item.value.category },
-    { label: '규격', value: item.value.spec },
-    { label: '단위', value: item.value.unit },
-    { label: '포장단위', value: item.value.packUnit },
-    { label: '단가 (KRW)', value: item.value.unitPrice?.toLocaleString() ?? '-' },
-    { label: '중량 (kg)', value: item.value.weight?.toLocaleString() ?? '-' },
-    { label: 'HS Code', value: item.value.hsCode },
-    { label: '등록일', value: item.value.regDate },
+    {
+      title: '기본 정보',
+      fields: [
+        { label: '코드', value: item.value.code, highlight: true },
+        { label: '한글명', value: item.value.nameKr },
+        { label: '카테고리', value: item.value.category },
+      ],
+    },
+    {
+      title: '규격 / 단위',
+      fields: [
+        { label: '규격', value: item.value.spec, wide: true },
+        { label: '단위', value: item.value.unit },
+        { label: '포장단위', value: item.value.packUnit },
+      ],
+    },
+    {
+      title: '가격 / 기타',
+      fields: [
+        { label: '단가 (KRW)', value: item.value.unitPrice?.toLocaleString() ?? '-' },
+        { label: '중량 (kg)', value: item.value.weight?.toLocaleString() ?? '-' },
+        { label: 'HS Code', value: item.value.hsCode },
+        { label: '등록일', value: item.value.regDate },
+      ],
+    },
   ]
 })
 
@@ -116,7 +131,7 @@ function goBack() {
   </div>
 
   <div v-else-if="item" class="space-y-6">
-    <DetailPageHeader :title="item.name" :status="item.status" @back="goBack">
+    <DetailPageHeader :title="`${item.code} · ${item.name}`" :status="item.status" @back="goBack">
       <template #actions>
         <BaseButton variant="secondary" size="sm" @click="openEditModal">수정</BaseButton>
         <BaseButton variant="ghost" size="sm" @click="showConfirmModal = true">삭제</BaseButton>
@@ -125,13 +140,15 @@ function goBack() {
 
     <div class="space-y-6">
       <BaseCard title="품목 정보" subtitle="품목의 상세 정보입니다.">
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div v-for="field in infoFields" :key="field.label">
-            <p class="text-xs font-medium text-slate-500">{{ field.label }}</p>
-            <p
-              class="mt-1 text-sm text-ink"
-              :class="field.label === '코드' ? 'font-mono font-semibold text-brand-600' : ''"
-            >{{ field.value || '-' }}</p>
+        <div class="space-y-6">
+          <div v-for="group in infoGroups" :key="group.title">
+            <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{{ group.title }}</h4>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div v-for="field in group.fields" :key="field.label" :class="field.wide ? 'sm:col-span-2' : ''">
+                <p class="text-xs font-medium text-slate-500">{{ field.label }}</p>
+                <p class="mt-1 text-sm text-ink" :class="field.highlight ? 'font-mono font-semibold text-brand-600' : ''">{{ field.value || '-' }}</p>
+              </div>
+            </div>
           </div>
         </div>
       </BaseCard>

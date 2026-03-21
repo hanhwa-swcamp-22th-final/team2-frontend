@@ -177,67 +177,76 @@ function handleSave() {
     @close="emit('close')"
   >
     <form class="space-y-6" @submit.prevent="handleSave">
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <FormField label="코드" required>
-          <BaseTextField v-model="form.code" placeholder="예) CLI011" :disabled="mode === 'edit'" />
-          <p v-if="errors.code" class="mt-1 text-xs text-red-500">{{ errors.code }}</p>
-        </FormField>
+      <!-- 기본 정보 -->
+      <div>
+        <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</h4>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <FormField label="코드" required>
+            <BaseTextField v-model="form.code" placeholder="예) CLI011" :disabled="mode === 'edit'" />
+            <p v-if="errors.code" class="mt-1 text-xs text-red-500">{{ errors.code }}</p>
+          </FormField>
+          <FormField label="영문 거래처명" required>
+            <BaseTextField v-model="form.name" placeholder="영문 거래처명을 입력하세요" />
+            <p v-if="errors.name" class="mt-1 text-xs text-red-500">{{ errors.name }}</p>
+          </FormField>
+          <FormField label="한글 거래처명">
+            <BaseTextField v-model="form.nameKr" placeholder="한글 거래처명을 입력하세요" />
+          </FormField>
+        </div>
+      </div>
 
-        <FormField label="영문 거래처명" required>
-          <BaseTextField v-model="form.name" placeholder="영문 거래처명을 입력하세요" />
-          <p v-if="errors.name" class="mt-1 text-xs text-red-500">{{ errors.name }}</p>
-        </FormField>
+      <!-- 위치 정보 -->
+      <div>
+        <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">위치 정보</h4>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <FormField label="국가" required>
+            <SearchableCombobox v-model="form.countryId" :options="countryOptions" placeholder="국가를 검색하세요" />
+            <p v-if="errors.countryId" class="mt-1 text-xs text-red-500">{{ errors.countryId }}</p>
+          </FormField>
+          <FormField label="도시">
+            <BaseTextField v-model="form.city" placeholder="도시를 입력하세요" />
+          </FormField>
+          <FormField label="도착항">
+            <SearchableCombobox v-model="form.portId" :options="portOptions" :disabled="!form.countryId" :placeholder="form.countryId ? '도착항을 검색하세요' : '국가를 먼저 선택하세요'" />
+          </FormField>
+          <FormField label="주소">
+            <BaseTextField v-model="form.address" placeholder="영문 주소를 입력하세요" />
+          </FormField>
+        </div>
+      </div>
 
-        <FormField label="한글 거래처명">
-          <BaseTextField v-model="form.nameKr" placeholder="한글 거래처명을 입력하세요" />
-        </FormField>
+      <!-- 연락처 -->
+      <div>
+        <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">연락처</h4>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <FormField label="담당자">
+            <BaseTextField v-model="form.manager" placeholder="담당자명을 입력하세요" />
+          </FormField>
+          <FormField label="TEL" required>
+            <BaseTextField v-model="form.tel" placeholder="전화번호를 입력하세요" />
+            <p v-if="errors.tel" class="mt-1 text-xs text-red-500">{{ errors.tel }}</p>
+          </FormField>
+          <FormField label="Email">
+            <BaseTextField v-model="form.email" type="email" placeholder="이메일을 입력하세요" />
+            <p v-if="errors.email" class="mt-1 text-xs text-red-500">{{ errors.email }}</p>
+          </FormField>
+        </div>
+      </div>
 
-        <FormField label="국가" required>
-          <SearchableCombobox v-model="form.countryId" :options="countryOptions" placeholder="국가를 검색하세요" />
-          <p v-if="errors.countryId" class="mt-1 text-xs text-red-500">{{ errors.countryId }}</p>
-        </FormField>
-
-        <FormField label="도시">
-          <BaseTextField v-model="form.city" placeholder="도시를 입력하세요" />
-        </FormField>
-
-        <FormField label="도착항">
-          <SearchableCombobox v-model="form.portId" :options="portOptions" :disabled="!form.countryId" :placeholder="form.countryId ? '도착항을 검색하세요' : '국가를 먼저 선택하세요'" />
-        </FormField>
-
-        <FormField label="주소">
-          <BaseTextField v-model="form.address" placeholder="영문 주소를 입력하세요" />
-        </FormField>
-
-        <FormField label="담당자">
-          <BaseTextField v-model="form.manager" placeholder="담당자명을 입력하세요" />
-        </FormField>
-
-        <FormField label="TEL" required>
-          <BaseTextField v-model="form.tel" placeholder="전화번호를 입력하세요" />
-          <p v-if="errors.tel" class="mt-1 text-xs text-red-500">{{ errors.tel }}</p>
-        </FormField>
-
-        <FormField label="Email">
-          <BaseTextField v-model="form.email" type="email" placeholder="이메일을 입력하세요" />
-          <p v-if="errors.email" class="mt-1 text-xs text-red-500">{{ errors.email }}</p>
-        </FormField>
-
-        <FormField label="결제조건">
-          <BaseSelect v-model="form.paymentTermsId" :options="paymentTermsOptions" placeholder="결제조건을 선택하세요" />
-        </FormField>
-
-        <FormField label="통화">
-          <BaseSelect v-model="form.currencyId" :options="currencyOptions" :disabled="!form.countryId" :placeholder="form.countryId ? '통화를 선택하세요' : '국가를 먼저 선택하세요'" />
-        </FormField>
-
-        <FormField label="상태">
-          <BaseSelect
-            v-model="form.status"
-            :options="statusOptions"
-            placeholder="상태를 선택하세요"
-          />
-        </FormField>
+      <!-- 거래 조건 -->
+      <div>
+        <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">거래 조건</h4>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <FormField label="결제조건">
+            <BaseSelect v-model="form.paymentTermsId" :options="paymentTermsOptions" placeholder="결제조건을 선택하세요" />
+          </FormField>
+          <FormField label="통화">
+            <BaseSelect v-model="form.currencyId" :options="currencyOptions" :disabled="!form.countryId" :placeholder="form.countryId ? '통화를 선택하세요' : '국가를 먼저 선택하세요'" />
+          </FormField>
+          <FormField label="상태">
+            <BaseSelect v-model="form.status" :options="statusOptions" placeholder="상태를 선택하세요" />
+          </FormField>
+        </div>
       </div>
 
       <FileUploadField
