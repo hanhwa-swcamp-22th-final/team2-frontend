@@ -52,8 +52,8 @@ function validate() {
   }
   if (!newPassword.value) {
     e.newPassword = '새 비밀번호를 입력해주세요.'
-  } else if (newPassword.value.length < 4) {
-    e.newPassword = '비밀번호는 최소 4자 이상이어야 합니다.'
+  } else if (newPassword.value.length < 8) {
+    e.newPassword = '비밀번호는 최소 8자 이상이어야 합니다.'
   }
   if (!confirmPassword.value) {
     e.confirmPassword = '새 비밀번호 확인을 입력해주세요.'
@@ -105,11 +105,11 @@ async function handleSave() {
   >
     <form class="space-y-4" @submit.prevent="handleSave">
       <FormField label="현재 비밀번호" required :error="errors.currentPassword">
-        <BaseTextField v-model="currentPassword" type="password" placeholder="현재 비밀번호를 입력하세요" />
+        <BaseTextField v-model="currentPassword" type="password" placeholder="현재 비밀번호를 입력하세요" autocomplete="current-password" />
       </FormField>
 
       <FormField label="새 비밀번호" required :error="errors.newPassword">
-        <BaseTextField v-model="newPassword" type="password" placeholder="새 비밀번호를 입력하세요" />
+        <BaseTextField v-model="newPassword" type="password" placeholder="새 비밀번호를 입력하세요" autocomplete="new-password" />
       </FormField>
 
       <FormField
@@ -117,7 +117,7 @@ async function handleSave() {
         required
         :error="errors.confirmPassword"
       >
-        <BaseTextField v-model="confirmPassword" type="password" placeholder="새 비밀번호를 다시 입력하세요" />
+        <BaseTextField v-model="confirmPassword" type="password" placeholder="새 비밀번호를 다시 입력하세요" autocomplete="new-password" />
       </FormField>
     </form>
 

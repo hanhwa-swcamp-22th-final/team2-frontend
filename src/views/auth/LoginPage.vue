@@ -6,6 +6,7 @@ import BaseTextField from '@/components/common/BaseTextField.vue'
 import FormField from '@/components/common/FormField.vue'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
+import { isValidEmail } from '@/utils/validators'
 
 const router = useRouter()
 const route = useRoute()
@@ -19,16 +20,29 @@ const emailError = ref('')
 const passwordError = ref('')
 const loading = ref(false)
 
+const demoAccounts = [
+  { label: '관리자', email: 'admin@salesboost.com', pw: 'test1234' },
+  { label: '영업', email: 'kim@salesboost.com', pw: 'test1234' },
+  { label: '생산', email: 'lee@salesboost.com', pw: 'test1234' },
+  { label: '출하', email: 'park@salesboost.com', pw: 'test1234' },
+]
+
+function fillDemoAccount(account) {
+  email.value = account.email
+  password.value = account.pw
+  emailError.value = ''
+  passwordError.value = ''
+}
+
 function validate() {
   emailError.value = ''
   passwordError.value = ''
   let valid = true
 
-  const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
   if (!email.value.trim()) {
     emailError.value = '이메일을 입력해주세요.'
     valid = false
-  } else if (!EMAIL_REGEX.test(email.value.trim())) {
+  } else if (!isValidEmail(email.value)) {
     emailError.value = '올바른 이메일 형식을 입력해주세요.'
     valid = false
   }
@@ -112,7 +126,7 @@ async function handleLogin() {
         </FormField>
 
         <!-- 로그인 버튼 -->
-        <BaseButton variant="primary" type="submit" block size="lg" :disabled="loading">
+        <BaseButton variant="primary" type="submit" block size="lg" :disabled="loading" :aria-busy="loading">
           {{ loading ? '로그인 중...' : '로그인' }}
         </BaseButton>
       </form>
@@ -127,12 +141,18 @@ async function handleLogin() {
 
     <!-- Demo 계정 안내 -->
     <div v-if="isDev" class="w-full rounded-2xl bg-white p-4 shadow-panel">
-      <p class="mb-2 text-xs font-semibold text-slate-600">Demo 계정 안내</p>
-      <div class="space-y-1 text-xs text-slate-500">
-        <p>관리자: admin@salesboost.com / 1234</p>
-        <p>영업: kim@salesboost.com / 1234</p>
-        <p>생산: lee@salesboost.com / 1234</p>
-        <p>출하: park@salesboost.com / 1234</p>
+      <p class="mb-2 text-xs font-semibold text-slate-600">Demo 계정 (클릭하면 자동 입력)</p>
+      <div class="grid grid-cols-2 gap-2">
+        <button
+          v-for="account in demoAccounts"
+          :key="account.email"
+          type="button"
+          class="rounded-lg border border-slate-200 px-3 py-2 text-left text-xs text-slate-600 transition hover:border-brand hover:bg-blue-50 hover:text-brand"
+          @click="fillDemoAccount(account)"
+        >
+          <span class="font-semibold">{{ account.label }}</span>
+          <span class="mt-0.5 block truncate text-slate-400">{{ account.email }}</span>
+        </button>
       </div>
     </div>
   </div>

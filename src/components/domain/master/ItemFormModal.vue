@@ -205,66 +205,74 @@ function handleSave() {
     @close="emit('close')"
   >
     <form class="space-y-6" @submit.prevent="handleSave">
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <FormField label="코드" required>
-          <BaseTextField v-model="form.code" placeholder="예) ITM011" />
-          <p v-if="errors.code" class="mt-1 text-xs text-red-500">{{ errors.code }}</p>
-        </FormField>
+      <!-- 기본 정보 -->
+      <div>
+        <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</h4>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <FormField label="코드" required>
+            <BaseTextField v-model="form.code" placeholder="예) ITM011" :disabled="mode === 'edit'" />
+            <p v-if="errors.code" class="mt-1 text-xs text-red-500">{{ errors.code }}</p>
+          </FormField>
+          <FormField label="품목명 (영문)" required>
+            <BaseTextField v-model="form.name" placeholder="영문 품목명을 입력하세요" />
+            <p v-if="errors.name" class="mt-1 text-xs text-red-500">{{ errors.name }}</p>
+          </FormField>
+          <FormField label="한글명">
+            <BaseTextField v-model="form.nameKr" placeholder="한글 품목명을 입력하세요" />
+          </FormField>
+          <FormField label="카테고리">
+            <BaseSelect v-model="form.category" :options="categoryOptions" placeholder="카테고리를 선택하세요" />
+          </FormField>
+        </div>
+      </div>
 
-        <FormField label="품목명 (영문)" required>
-          <BaseTextField v-model="form.name" placeholder="영문 품목명을 입력하세요" />
-          <p v-if="errors.name" class="mt-1 text-xs text-red-500">{{ errors.name }}</p>
-        </FormField>
+      <!-- 규격 / 단위 -->
+      <div>
+        <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">규격 / 단위</h4>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <FormField label="규격 (W × D × H)" class="md:col-span-2">
+            <div class="flex items-center gap-2">
+              <BaseTextField v-model="form.specWidth" placeholder="W" />
+              <span class="text-xs text-slate-400">×</span>
+              <BaseTextField v-model="form.specDepth" placeholder="D" />
+              <span class="text-xs text-slate-400">×</span>
+              <BaseTextField v-model="form.specHeight" placeholder="H" />
+              <span class="text-xs text-slate-500">mm</span>
+            </div>
+            <p v-if="errors.specWidth" class="mt-1 text-xs text-red-500">{{ errors.specWidth }}</p>
+            <p v-if="errors.specDepth" class="mt-1 text-xs text-red-500">{{ errors.specDepth }}</p>
+            <p v-if="errors.specHeight" class="mt-1 text-xs text-red-500">{{ errors.specHeight }}</p>
+          </FormField>
+          <FormField label="단위" required>
+            <BaseSelect v-model="form.unit" :options="unitOptions" placeholder="단위를 선택하세요" />
+            <p v-if="errors.unit" class="mt-1 text-xs text-red-500">{{ errors.unit }}</p>
+          </FormField>
+          <FormField label="포장단위">
+            <BaseSelect v-model="form.packUnit" :options="packUnitOptions" placeholder="포장단위를 선택하세요" />
+          </FormField>
+        </div>
+      </div>
 
-        <FormField label="한글명">
-          <BaseTextField v-model="form.nameKr" placeholder="한글 품목명을 입력하세요" />
-        </FormField>
-
-        <FormField label="카테고리">
-          <BaseSelect v-model="form.category" :options="categoryOptions" placeholder="카테고리를 선택하세요" />
-        </FormField>
-
-        <FormField label="규격 (W × D × H)" class="md:col-span-2">
-          <div class="flex items-center gap-2">
-            <BaseTextField v-model="form.specWidth" placeholder="W" />
-            <span class="text-xs text-slate-400">×</span>
-            <BaseTextField v-model="form.specDepth" placeholder="D" />
-            <span class="text-xs text-slate-400">×</span>
-            <BaseTextField v-model="form.specHeight" placeholder="H" />
-            <span class="text-xs text-slate-500">mm</span>
-          </div>
-          <p v-if="errors.specWidth" class="mt-1 text-xs text-red-500">{{ errors.specWidth }}</p>
-          <p v-if="errors.specDepth" class="mt-1 text-xs text-red-500">{{ errors.specDepth }}</p>
-          <p v-if="errors.specHeight" class="mt-1 text-xs text-red-500">{{ errors.specHeight }}</p>
-        </FormField>
-
-        <FormField label="단위" required>
-          <BaseSelect v-model="form.unit" :options="unitOptions" placeholder="단위를 선택하세요" />
-          <p v-if="errors.unit" class="mt-1 text-xs text-red-500">{{ errors.unit }}</p>
-        </FormField>
-
-        <FormField label="포장단위">
-          <BaseSelect v-model="form.packUnit" :options="packUnitOptions" placeholder="포장단위를 선택하세요" />
-        </FormField>
-
-        <FormField label="단가 (KRW)" required>
-          <BaseTextField v-model="form.unitPrice" type="number" placeholder="단가를 입력하세요" />
-          <p v-if="errors.unitPrice" class="mt-1 text-xs text-red-500">{{ errors.unitPrice }}</p>
-        </FormField>
-
-        <FormField label="중량 (kg)">
-          <BaseTextField v-model="form.weight" type="number" placeholder="중량을 입력하세요" />
-          <p v-if="errors.weight" class="mt-1 text-xs text-red-500">{{ errors.weight }}</p>
-        </FormField>
-
-        <FormField label="HS Code">
-          <BaseTextField v-model="form.hsCode" placeholder="HS Code를 입력하세요" />
-          <p v-if="errors.hsCode" class="mt-1 text-xs text-red-500">{{ errors.hsCode }}</p>
-        </FormField>
-
-        <FormField label="상태">
-          <BaseSelect v-model="form.status" :options="statusOptions" placeholder="상태를 선택하세요" />
-        </FormField>
+      <!-- 가격 / 기타 -->
+      <div>
+        <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">가격 / 기타</h4>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <FormField label="단가 (KRW)" required>
+            <BaseTextField v-model="form.unitPrice" type="number" placeholder="단가를 입력하세요" />
+            <p v-if="errors.unitPrice" class="mt-1 text-xs text-red-500">{{ errors.unitPrice }}</p>
+          </FormField>
+          <FormField label="중량 (kg)">
+            <BaseTextField v-model="form.weight" type="number" placeholder="중량을 입력하세요" />
+            <p v-if="errors.weight" class="mt-1 text-xs text-red-500">{{ errors.weight }}</p>
+          </FormField>
+          <FormField label="HS Code">
+            <BaseTextField v-model="form.hsCode" placeholder="HS Code를 입력하세요" />
+            <p v-if="errors.hsCode" class="mt-1 text-xs text-red-500">{{ errors.hsCode }}</p>
+          </FormField>
+          <FormField label="상태">
+            <BaseSelect v-model="form.status" :options="statusOptions" placeholder="상태를 선택하세요" />
+          </FormField>
+        </div>
       </div>
     </form>
 

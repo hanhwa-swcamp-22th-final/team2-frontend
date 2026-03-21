@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTabs from '@/components/common/BaseTabs.vue'
-import PageTitleBar from '@/components/layout/PageTitleBar.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import CompanyInfoTab from '@/components/domain/auth/CompanyInfoTab.vue'
 import UserListTab from '@/components/domain/auth/UserListTab.vue'
 
@@ -23,7 +23,7 @@ function handleCreateUser() {
 <template>
   <div class="space-y-6">
     <!-- 페이지 헤더 -->
-    <PageTitleBar title="사용자 관리">
+    <PageHeader title="사용자 관리" icon-class="fas fa-users-gear">
       <template #actions>
         <BaseButton v-if="activeTab === 'users'" variant="primary" @click="handleCreateUser">
           <template #leading>
@@ -34,7 +34,7 @@ function handleCreateUser() {
           사용자 등록
         </BaseButton>
       </template>
-    </PageTitleBar>
+    </PageHeader>
 
     <BaseTabs v-model="activeTab" :tabs="tabs" />
 
