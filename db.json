@@ -4067,11 +4067,15 @@
     {
       "id": "1",
       "client": "Global Steel Corp.",
-      "title": "[SalesBoost] PI-2025-001 발송",
+      "title": "[SalesBoost] PI2025001 발송",
       "recipient": "James Carter",
       "email": "james.carter@globalsteel.com",
-      "type": "PI",
-      "hasAttachment": true,
+      "types": [
+        "PI"
+      ],
+      "attachments": [
+        "PI2025001.pdf"
+      ],
       "poId": "PO2025001",
       "status": "발송",
       "sentAt": "2025/03/10",
@@ -4080,249 +4084,335 @@
     {
       "id": "2",
       "client": "Hamburg Metal GmbH",
-      "title": "[SalesBoost] PO2025003 발송",
-      "recipient": "Hans Müller",
-      "email": "hans.muller@hamburgmetal.de",
-      "type": "PO",
-      "hasAttachment": true,
-      "poId": "PO2025003",
+      "title": "[SalesBoost] PI2025002 발송",
+      "recipient": "Anna Schmidt",
+      "email": "anna.schmidt@hamburgmetal.de",
+      "types": [
+        "PI"
+      ],
+      "attachments": [
+        "PI2025002.pdf"
+      ],
+      "poId": null,
       "status": "발송",
-      "sentAt": "2025/03/09",
+      "sentAt": "2025/03/15",
       "sender": "정영업"
     },
     {
       "id": "3",
       "client": "Tokyo Trading Co.",
-      "title": "[SalesBoost] CI-2025-001 발송",
+      "title": "[SalesBoost] PI2025003 발송",
       "recipient": "Tanaka Yuki",
       "email": "yuki.tanaka@tokyotrading.jp",
-      "type": "CI",
-      "hasAttachment": false,
+      "types": [
+        "PI"
+      ],
+      "attachments": [
+        "PI2025003.pdf"
+      ],
       "poId": null,
       "status": "실패",
-      "sentAt": "2025/03/08",
+      "sentAt": "2025/03/20",
       "sender": "김영업"
     },
     {
       "id": "4",
-      "client": "Global Steel Corp.",
-      "title": "[SalesBoost] PL-2025-001 발송",
-      "recipient": "Sarah Johnson",
-      "email": "sarah.johnson@globalsteel.com",
-      "type": "PL",
-      "hasAttachment": true,
-      "poId": "PO2025002",
+      "client": "Shanghai Import Ltd.",
+      "title": "[SalesBoost] PI2025004 발송",
+      "recipient": "Wang Lei",
+      "email": "wang.lei@shanghaiimport.cn",
+      "types": [
+        "PI"
+      ],
+      "attachments": [
+        "PI2025004.pdf"
+      ],
+      "poId": "PO2025004",
       "status": "발송",
-      "sentAt": "2025/03/07",
+      "sentAt": "2025/04/02",
       "sender": "정영업"
     },
     {
       "id": "5",
-      "client": "Hamburg Metal GmbH",
-      "title": "[SalesBoost] PI-2025-002 발송",
-      "recipient": "Anna Schmidt",
-      "email": "anna.schmidt@hamburgmetal.de",
-      "type": "PI",
-      "hasAttachment": false,
-      "poId": null,
+      "client": "London Metals Plc",
+      "title": "[SalesBoost] PI2025005 발송",
+      "recipient": "James Brown",
+      "email": "james.brown@londonmetals.co.uk",
+      "types": [
+        "PI"
+      ],
+      "attachments": [
+        "PI2025005.pdf"
+      ],
+      "poId": "PO2025005",
       "status": "발송",
-      "sentAt": "2025/03/06",
+      "sentAt": "2025/04/08",
       "sender": "김영업"
     },
     {
       "id": "6",
-      "client": "Tokyo Trading Co.",
-      "title": "[SalesBoost] PO2025004 발송",
-      "recipient": "Kenji Sato",
-      "email": "kenji.sato@tokyotrading.jp",
-      "type": "PO",
-      "hasAttachment": true,
-      "poId": "PO2025004",
-      "status": "발송",
-      "sentAt": "2025/03/05",
-      "sender": "정영업"
-    },
-    {
-      "id": "7",
       "client": "Global Steel Corp.",
-      "title": "[SalesBoost] CI-2025-002 발송",
-      "recipient": "Michael Brown",
-      "email": "michael.brown@globalsteel.com",
-      "type": "CI",
-      "hasAttachment": false,
-      "poId": null,
+      "title": "[SalesBoost] CI2025001·PL2025001 발송",
+      "recipient": "James Carter",
+      "email": "james.carter@globalsteel.com",
+      "types": [
+        "CI",
+        "PL"
+      ],
+      "attachments": [
+        "CI2025001.pdf",
+        "PL2025001.pdf"
+      ],
+      "poId": "PO2025001",
       "status": "발송",
-      "sentAt": "2025/03/04",
+      "sentAt": "2025/03/25",
       "sender": "김영업"
     },
     {
-      "id": "8",
+      "id": "7",
       "client": "Hamburg Metal GmbH",
-      "title": "[SalesBoost] PL-2025-002 발송",
+      "title": "[SalesBoost] CI2025002·PL2025002 발송",
       "recipient": "Hans Müller",
       "email": "hans.muller@hamburgmetal.de",
-      "type": "PL",
-      "hasAttachment": true,
+      "types": [
+        "CI",
+        "PL"
+      ],
+      "attachments": [
+        "CI2025002.pdf",
+        "PL2025002.pdf"
+      ],
+      "poId": "PO2025002",
+      "status": "발송",
+      "sentAt": "2025/04/12",
+      "sender": "정영업"
+    },
+    {
+      "id": "8",
+      "client": "Tokyo Trading Co.",
+      "title": "[SalesBoost] CI2025003·PL2025003 발송",
+      "recipient": "Kenji Sato",
+      "email": "kenji.sato@tokyotrading.jp",
+      "types": [
+        "CI",
+        "PL"
+      ],
+      "attachments": [
+        "CI2025003.pdf",
+        "PL2025003.pdf"
+      ],
       "poId": "PO2025003",
       "status": "실패",
-      "sentAt": "2025/03/03",
-      "sender": "정영업"
+      "sentAt": "2025/04/18",
+      "sender": "김영업"
     },
     {
       "id": "9",
       "client": "Shanghai Import Ltd.",
-      "title": "[SalesBoost] PI-2025-003 발송",
+      "title": "[SalesBoost] CI2025004·PL2025004 발송",
       "recipient": "Wang Lei",
       "email": "wang.lei@shanghaiimport.cn",
-      "type": "PI",
-      "hasAttachment": true,
-      "poId": "PO2025007",
+      "types": [
+        "CI",
+        "PL"
+      ],
+      "attachments": [
+        "CI2025004.pdf",
+        "PL2025004.pdf"
+      ],
+      "poId": "PO2025004",
       "status": "발송",
-      "sentAt": "2025/04/03",
-      "sender": "김영업"
-    },
-    {
-      "id": "10",
-      "client": "London Metals Plc",
-      "title": "[SalesBoost] PO2025008 발송",
-      "recipient": "James Brown",
-      "email": "james.brown@londonmetals.co.uk",
-      "type": "PO",
-      "hasAttachment": true,
-      "poId": "PO2025008",
-      "status": "실패",
-      "sentAt": "2025/04/07",
+      "sentAt": "2025/05/05",
       "sender": "정영업"
     },
     {
-      "id": "11",
+      "id": "10",
       "client": "Paris Acier SA",
-      "title": "[SalesBoost] CI-2025-003 발송",
+      "title": "[SalesBoost] CI2025006·PL2025006 발송",
       "recipient": "Pierre Dupont",
       "email": "pierre.dupont@parisacier.fr",
-      "type": "CI",
-      "hasAttachment": false,
-      "poId": null,
+      "types": [
+        "CI",
+        "PL"
+      ],
+      "attachments": [
+        "CI2025006.pdf",
+        "PL2025006.pdf"
+      ],
+      "poId": "PO2025006",
       "status": "발송",
-      "sentAt": "2025/04/12",
+      "sentAt": "2025/05/14",
+      "sender": "김영업"
+    },
+    {
+      "id": "11",
+      "client": "Global Steel Corp.",
+      "title": "[SalesBoost] MO2025001 생산지시서 발송",
+      "recipient": "이생산",
+      "email": "lee@salesboost.com",
+      "types": [
+        "생산지시서"
+      ],
+      "attachments": [
+        "MO2025001.pdf"
+      ],
+      "poId": "PO2025001",
+      "status": "발송",
+      "sentAt": "2025/03/12",
       "sender": "김영업"
     },
     {
       "id": "12",
-      "client": "Mumbai Steel Works",
-      "title": "[SalesBoost] PL-2025-003 발송",
-      "recipient": "Raj Patel",
-      "email": "raj.patel@mumbaisteel.in",
-      "type": "PL",
-      "hasAttachment": true,
-      "poId": "PO2025010",
+      "client": "Hamburg Metal GmbH",
+      "title": "[SalesBoost] MO2025002 생산지시서 발송",
+      "recipient": "이생산",
+      "email": "lee@salesboost.com",
+      "types": [
+        "생산지시서"
+      ],
+      "attachments": [
+        "MO2025002.pdf"
+      ],
+      "poId": "PO2025002",
       "status": "발송",
-      "sentAt": "2025/04/17",
+      "sentAt": "2025/04/05",
       "sender": "정영업"
     },
     {
       "id": "13",
-      "client": "São Paulo Metals",
-      "title": "[SalesBoost] PI-2025-004 발송",
-      "recipient": "Carlos Silva",
-      "email": "carlos.silva@spmetals.br",
-      "type": "PI",
-      "hasAttachment": true,
-      "poId": "PO2025011",
+      "client": "Tokyo Trading Co.",
+      "title": "[SalesBoost] MO2025003 생산지시서 발송",
+      "recipient": "이생산",
+      "email": "lee@salesboost.com",
+      "types": [
+        "생산지시서"
+      ],
+      "attachments": [
+        "MO2025003.pdf"
+      ],
+      "poId": "PO2025003",
       "status": "발송",
-      "sentAt": "2025/04/22",
+      "sentAt": "2025/04/10",
       "sender": "김영업"
     },
     {
       "id": "14",
-      "client": "Dtech Electronics Inc.",
-      "title": "[SalesBoost] PO2025014 발송",
-      "recipient": "David Kim",
-      "email": "info@dtech.com",
-      "type": "PO",
-      "hasAttachment": true,
-      "poId": "PO2025014",
+      "client": "Shanghai Import Ltd.",
+      "title": "[SalesBoost] MO2025004 생산지시서 발송",
+      "recipient": "이생산",
+      "email": "lee@salesboost.com",
+      "types": [
+        "생산지시서"
+      ],
+      "attachments": [
+        "MO2025004.pdf"
+      ],
+      "poId": "PO2025004",
       "status": "발송",
-      "sentAt": "2025/05/06",
+      "sentAt": "2025/05/02",
       "sender": "정영업"
     },
     {
       "id": "15",
-      "client": "Berlin Digital AG",
-      "title": "[SalesBoost] CI-2025-004 발송",
-      "recipient": "Lukas Weber",
-      "email": "info@berlindgital.de",
-      "type": "CI",
-      "hasAttachment": false,
-      "poId": null,
-      "status": "발송",
-      "sentAt": "2025/05/12",
+      "client": "Paris Acier SA",
+      "title": "[SalesBoost] MO2025006 생산지시서 발송",
+      "recipient": "이생산",
+      "email": "lee@salesboost.com",
+      "types": [
+        "생산지시서"
+      ],
+      "attachments": [
+        "MO2025006.pdf"
+      ],
+      "poId": "PO2025006",
+      "status": "실패",
+      "sentAt": "2025/05/20",
       "sender": "김영업"
     },
     {
       "id": "16",
-      "client": "Osaka Tech Corp.",
-      "title": "[SalesBoost] PL-2025-004 발송",
-      "recipient": "Suzuki Ichiro",
-      "email": "contact@osaktech.jp",
-      "type": "PL",
-      "hasAttachment": true,
-      "poId": "PO2025016",
-      "status": "실패",
-      "sentAt": "2025/05/17",
-      "sender": "정영업"
+      "client": "Global Steel Corp.",
+      "title": "[SalesBoost] SO2025001 출하지시서 발송",
+      "recipient": "박출하",
+      "email": "park@salesboost.com",
+      "types": [
+        "출하지시서"
+      ],
+      "attachments": [
+        "SO2025001.pdf"
+      ],
+      "poId": "PO2025001",
+      "status": "발송",
+      "sentAt": "2025/03/28",
+      "sender": "김영업"
     },
     {
       "id": "17",
-      "client": "Shenzhen Gadgets Co.",
-      "title": "[SalesBoost] PI-2025-005 발송",
-      "recipient": "Li Fang",
-      "email": "sales@szgadgets.cn",
-      "type": "PI",
-      "hasAttachment": true,
-      "poId": "PO2025017",
+      "client": "Hamburg Metal GmbH",
+      "title": "[SalesBoost] SO2025002 출하지시서 발송",
+      "recipient": "박출하",
+      "email": "park@salesboost.com",
+      "types": [
+        "출하지시서"
+      ],
+      "attachments": [
+        "SO2025002.pdf"
+      ],
+      "poId": "PO2025002",
       "status": "발송",
-      "sentAt": "2025/05/22",
-      "sender": "김영업"
+      "sentAt": "2025/04/15",
+      "sender": "정영업"
     },
     {
       "id": "18",
-      "client": "London Tech Ltd",
-      "title": "[SalesBoost] PO2025018 발송",
-      "recipient": "Emma Wilson",
-      "email": "hello@londontech.co.uk",
-      "type": "PO",
-      "hasAttachment": true,
-      "poId": "PO2025018",
+      "client": "Tokyo Trading Co.",
+      "title": "[SalesBoost] SO2025003 출하지시서 발송",
+      "recipient": "박출하",
+      "email": "park@salesboost.com",
+      "types": [
+        "출하지시서"
+      ],
+      "attachments": [
+        "SO2025003.pdf"
+      ],
+      "poId": "PO2025003",
       "status": "발송",
-      "sentAt": "2025/05/27",
-      "sender": "정영업"
-    },
-    {
-      "id": "19",
-      "client": "Paris Digital SAS",
-      "title": "[SalesBoost] CI-2025-005 발송",
-      "recipient": "Sophie Martin",
-      "email": "contact@parisdigital.fr",
-      "type": "CI",
-      "hasAttachment": false,
-      "poId": null,
-      "status": "발송",
-      "sentAt": "2025/06/02",
+      "sentAt": "2025/04/20",
       "sender": "김영업"
     },
     {
-      "id": "20",
-      "client": "Singapore Electronics Pte",
-      "title": "[SalesBoost] PO2025020 발송",
-      "recipient": "Tan Ah Kow",
-      "email": "info@sgelec.sg",
-      "type": "PO",
-      "hasAttachment": true,
-      "poId": "PO2025020",
+      "id": "19",
+      "client": "Shanghai Import Ltd.",
+      "title": "[SalesBoost] SO2025004 출하지시서 발송",
+      "recipient": "박출하",
+      "email": "park@salesboost.com",
+      "types": [
+        "출하지시서"
+      ],
+      "attachments": [
+        "SO2025004.pdf"
+      ],
+      "poId": "PO2025004",
       "status": "발송",
-      "sentAt": "2025/06/06",
+      "sentAt": "2025/05/08",
       "sender": "정영업"
+    },
+    {
+      "id": "20",
+      "client": "Paris Acier SA",
+      "title": "[SalesBoost] SO2025006 출하지시서 발송",
+      "recipient": "박출하",
+      "email": "park@salesboost.com",
+      "types": [
+        "출하지시서"
+      ],
+      "attachments": [
+        "SO2025006.pdf"
+      ],
+      "poId": "PO2025006",
+      "status": "실패",
+      "sentAt": "2025/06/01",
+      "sender": "김영업"
     }
   ],
   "pi": [
