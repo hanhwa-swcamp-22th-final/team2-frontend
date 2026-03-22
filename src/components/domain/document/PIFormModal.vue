@@ -72,34 +72,6 @@ const fallbackProductCatalog = [
   { id: '19', code: 'ITM019', name: 'UPS 1000VA', spec: '1000VA / 600W / 8 Outlet / LCD Display', unit: 'EA', unitPrice: 185000 },
   { id: '20', code: 'ITM020', name: 'Video Conference Camera', spec: '4K / 120° FOV / Built-in Mic / USB-C', unit: 'EA', unitPrice: 320000 },
 ]
-const defaultProductCatalog = defaultProductOptions.map((name, index) => ({
-  id: `default-${index + 1}`,
-  code: `DEF${String(index + 1).padStart(3, '0')}`,
-  name,
-  spec: '',
-  unit: 'EA',
-  unitPrice: 0,
-}))
-const exchangeRateRangeMap = {
-  USD: { unitLabel: '1 USD', quoteAmount: 1, min: 1430, max: 1490 },
-  EUR: { unitLabel: '1 EUR', quoteAmount: 1, min: 1560, max: 1640 },
-  JPY: { unitLabel: '100 JPY', quoteAmount: 100, min: 900, max: 950 },
-  GBP: { unitLabel: '1 GBP', quoteAmount: 1, min: 1830, max: 1910 },
-  AUD: { unitLabel: '1 AUD', quoteAmount: 1, min: 930, max: 980 },
-  CAD: { unitLabel: '1 CAD', quoteAmount: 1, min: 1030, max: 1080 },
-  SGD: { unitLabel: '1 SGD', quoteAmount: 1, min: 1070, max: 1130 },
-  AED: { unitLabel: '1 AED', quoteAmount: 1, min: 390, max: 410 },
-  CNY: { unitLabel: '1 CNY', quoteAmount: 1, min: 197, max: 208 },
-  MYR: { unitLabel: '1 MYR', quoteAmount: 1, min: 300, max: 340 },
-  THB: { unitLabel: '1 THB', quoteAmount: 1, min: 41, max: 45 },
-  VND: { unitLabel: '1000 VND', quoteAmount: 1000, min: 56, max: 62 },
-  IDR: { unitLabel: '100 IDR', quoteAmount: 100, min: 8, max: 10 },
-  INR: { unitLabel: '1 INR', quoteAmount: 1, min: 16, max: 18 },
-  SAR: { unitLabel: '1 SAR', quoteAmount: 1, min: 381, max: 398 },
-  BRL: { unitLabel: '1 BRL', quoteAmount: 1, min: 255, max: 290 },
-  SEK: { unitLabel: '1 SEK', quoteAmount: 1, min: 136, max: 145 },
-  CHF: { unitLabel: '1 CHF', quoteAmount: 1, min: 1620, max: 1690 },
-}
 const currencySymbolMap = {
   KRW: '₩',
   USD: '$',

@@ -51,15 +51,24 @@ const statusOptions = [
 ]
 
 const columns = [
-  { key: 'poId', label: 'PO 번호', align: 'center', width: '140px' },
-  { key: 'clientName', label: '거래처', align: 'center', width: '220px' },
-  { key: 'currency', label: '통화', align: 'center', width: '90px' },
-  { key: 'salesAmount', label: '원문매출액', align: 'right', width: '150px' },
-  { key: 'salesAmountKrw', label: '환산매출액(KRW)', align: 'right', width: '170px' },
-  { key: 'issueDate', label: '발행일', align: 'center', width: '130px' },
-  { key: 'collectionDate', label: '수금일', align: 'center', width: '130px' },
-  { key: 'status', label: '상태', align: 'center', width: '120px' },
+  { key: 'poId', label: 'PO 번호', width: '140px' },
+  { key: 'clientName', label: '거래처', width: '220px' },
+  { key: 'country', label: '국가', width: '110px' },
+  { key: 'manager', label: '영업담당자', width: '120px' },
+  { key: 'currency', label: '통화', width: '90px' },
+  { key: 'salesAmount', label: '원문매출액', width: '150px' },
+  { key: 'salesAmountKrw', label: '환산매출액(KRW)', width: '170px' },
+  { key: 'issueDate', label: '발행일', width: '130px' },
+  { key: 'collectionDate', label: '수금일', width: '130px' },
+  { key: 'status', label: '상태', width: '120px' },
 ]
+
+function normalizeCollectionRow(row) {
+  return {
+    ...row,
+    collectionDate: row.status === '수금완료' ? row.collectionDate || null : null,
+  }
+}
 
 const rowsData = ref([
   {
@@ -126,10 +135,6 @@ const clientRowsSource = [
   { id: 'CL004', name: 'Al Baraka Trading LLC', country: 'UAE' },
 ]
 
-function openClientSearch() {
-  clientSearchOpen.value = true
-}
-
 const {
   filters,
   filteredRows: baseFilteredRows,
@@ -154,12 +159,10 @@ const filteredRows = computed(() => {
   return rows.filter((row) => !appliedCurrencyFilter.value || row.currency === appliedCurrencyFilter.value)
 })
 
-const enrichedRows = computed(() => {
-  return filteredRows.value.map((row) => ({
-    ...row,
-    salesAmountKrw: convertCurrencyAmountToKrw(row.salesAmount, row.currency, row.issueDate?.replaceAll('/', '-')),
-  }))
-})
+const enrichedRows = computed(() => filteredRows.value.map((row) => ({
+  ...row,
+  salesAmountKrw: convertCurrencyAmountToKrw(row.salesAmount, row.currency, row.issueDate?.replaceAll('/', '-')),
+})))
 
 const sortedRows = computed(() => {
   return [...enrichedRows.value].sort((left, right) => {
@@ -174,7 +177,7 @@ const sortedRows = computed(() => {
 })
 
 const { currentPage, totalPages, paginatedRows } = usePagination(sortedRows)
-const totalKrwAmount = computed(() => sortedRows.value.reduce((sum, row) => sum + row.salesAmountKrw, 0))
+
 const tableRows = computed(() => {
   const rows = []
   let currentCurrency = ''
@@ -224,6 +227,8 @@ const tableRows = computed(() => {
   return rows
 })
 
+const totalKrwAmount = computed(() => sortedRows.value.reduce((sum, row) => sum + row.salesAmountKrw, 0))
+
 const clientRows = computed(() => {
   const keyword = clientSearchKeyword.value.trim().toLowerCase()
   if (!keyword) return clientRowsSource
@@ -239,27 +244,6 @@ const poRows = computed(() => {
   }))
   if (!keyword) return source
   return source.filter((row) => [row.poId, row.clientName, row.issueDate].some((value) => String(value).toLowerCase().includes(keyword)))
-})
-
-const summaryRows = computed(() => {
-  const currencyMap = {}
-
-  filteredRows.value.forEach((row) => {
-    if (!currencyMap[row.currency]) {
-      currencyMap[row.currency] = { count: 0, total: 0 }
-    }
-    currencyMap[row.currency].count += 1
-    currencyMap[row.currency].total += row.salesAmount
-  })
-
-  return Object.entries(currencyMap)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([currency, data]) => ({
-      currency,
-      count: data.count,
-      total: data.total,
-      totalFormatted: data.total.toLocaleString(),
-    }))
 })
 
 const statusConfirmRows = computed(() => {
@@ -284,7 +268,9 @@ const currencySymbols = {
 
 function formatAmount(value, currency) {
   const symbol = currencySymbols[currency] || ''
-  if (typeof value === 'number') return `${symbol}${value.toLocaleString()}`
+  if (typeof value === 'number') {
+    return `${symbol}${value.toLocaleString()}`
+  }
   return `${symbol}${value}`
 }
 
@@ -308,13 +294,6 @@ function resolveNextCollectionDate(row, nextStatusValue) {
   return null
 }
 
-function normalizeCollectionRow(row) {
-  return {
-    ...row,
-    collectionDate: row.status === '수금완료' ? row.collectionDate || null : null,
-  }
-}
-
 function resetFilters() {
   resetBaseFilters()
   currencyFilter.value = ''
@@ -324,6 +303,10 @@ function resetFilters() {
 function searchRows() {
   appliedCurrencyFilter.value = currencyFilter.value
   applyFilters()
+}
+
+function openClientSearch() {
+  clientSearchOpen.value = true
 }
 
 function handleClientSelect(client) {
@@ -398,62 +381,62 @@ function cancelStatusChange() {
 
     <CollapsibleFilterCard :open="isAdvancedOpen">
       <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-4">
-          <FormField label="발행일" class="col-span-2">
-            <div class="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
-              <DateField v-model="filters.registeredFrom" />
-              <span class="text-center text-sm text-slate-400 sm:pb-2">~</span>
-              <DateField v-model="filters.registeredTo" />
-            </div>
-          </FormField>
+        <FormField label="발행일" class="col-span-2">
+          <div class="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
+            <DateField v-model="filters.registeredFrom" />
+            <span class="text-center text-sm text-slate-400 sm:pb-2">~</span>
+            <DateField v-model="filters.registeredTo" />
+          </div>
+        </FormField>
 
-          <FormField label="수금일" class="col-span-2">
-            <div class="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
-              <DateField v-model="filters.deliveryFrom" />
-              <span class="text-center text-sm text-slate-400 sm:pb-2">~</span>
-              <DateField v-model="filters.deliveryTo" />
-            </div>
-          </FormField>
+        <FormField label="수금일" class="col-span-2">
+          <div class="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
+            <DateField v-model="filters.deliveryFrom" />
+            <span class="text-center text-sm text-slate-400 sm:pb-2">~</span>
+            <DateField v-model="filters.deliveryTo" />
+          </div>
+        </FormField>
 
-          <FormField label="거래처">
-            <SearchTriggerField
-              v-model="filters.clientName"
-              placeholder="거래처 검색..."
-              title="거래처 검색"
-              @trigger="openClientSearch"
-            />
-          </FormField>
+        <FormField label="거래처">
+          <SearchTriggerField
+            v-model="filters.clientName"
+            placeholder="거래처 검색..."
+            title="거래처 검색"
+            @trigger="openClientSearch"
+          />
+        </FormField>
 
-          <FormField label="국가">
-            <SearchableCombobox
-              v-model="filters.country"
-              :options="countryOptions"
-              placeholder="국가 검색..."
-            />
-          </FormField>
+        <FormField label="국가">
+          <SearchableCombobox
+            v-model="filters.country"
+            :options="countryOptions"
+            placeholder="국가 검색..."
+          />
+        </FormField>
 
-          <FormField label="통화">
-            <SearchableCombobox
-              v-model="currencyFilter"
-              :options="currencyOptions"
-              placeholder="통화 선택..."
-            />
-          </FormField>
+        <FormField label="통화">
+          <SearchableCombobox
+            v-model="currencyFilter"
+            :options="currencyOptions"
+            placeholder="통화 선택..."
+          />
+        </FormField>
 
-          <FormField label="영업담당자">
-            <SearchableCombobox
-              v-model="filters.manager"
-              :options="managerOptions"
-              placeholder="담당자 검색..."
-            />
-          </FormField>
+        <FormField label="영업담당자">
+          <SearchableCombobox
+            v-model="filters.manager"
+            :options="managerOptions"
+            placeholder="담당자 검색..."
+          />
+        </FormField>
 
-          <FormField label="상태">
-            <SearchableCombobox
-              v-model="filters.status"
-              :options="statusOptions"
-              placeholder="상태 선택..."
-            />
-          </FormField>
+        <FormField label="상태">
+          <SearchableCombobox
+            v-model="filters.status"
+            :options="statusOptions"
+            placeholder="상태 선택..."
+          />
+        </FormField>
       </div>
 
       <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
@@ -466,90 +449,6 @@ function cancelStatusChange() {
         <BaseButton size="sm" @click="searchRows">
           <template #leading>
             <i class="fas fa-search text-xs" aria-hidden="true"></i>
-        <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
-          <BaseButton variant="secondary" size="sm" @click="resetFilters">
-            <template #leading>
-              <i class="fas fa-undo text-xs" aria-hidden="true"></i>
-            </template>
-            초기화
-          </BaseButton>
-          <BaseButton size="sm" @click="searchRows">
-            <template #leading>
-              <i class="fas fa-search text-xs" aria-hidden="true"></i>
-            </template>
-            검색
-          </BaseButton>
-        </div>
-    </CollapsibleFilterCard>
-    <BaseTable
-      :columns="columns"
-      :rows="filteredRows"
-      empty-text="데이터가 없습니다."
-    >
-      <template #cell-poId="{ value }">
-        <span class="font-mono text-xs font-semibold text-brand-600">{{ value }}</span>
-      </template>
-
-      <template #cell-clientName="{ value }">
-        <span>{{ value }}</span>
-      </template>
-
-      <template #cell-country="{ value }">
-        <span class="text-xs text-slate-600">{{ value }}</span>
-      </template>
-
-      <template #cell-manager="{ value }">
-        <span class="text-xs text-slate-600">{{ value }}</span>
-      </template>
-
-      <template #cell-currency="{ value }">
-        <span class="text-xs font-semibold text-slate-700">{{ value }}</span>
-      </template>
-
-      <template #cell-salesAmount="{ value, row }">
-        <span class="text-sm font-semibold text-slate-800">{{ formatAmount(value, row.currency) }}</span>
-      </template>
-
-      <template #cell-issueDate="{ value }">
-        <span class="text-xs">{{ value }}</span>
-      </template>
-
-      <template #cell-collectionDate="{ value }">
-        <span class="text-xs">{{ formatCollectionDate(value) }}</span>
-      </template>
-
-      <template #cell-status="{ row }">
-        <select
-          :key="`${row.poId}-${row.status}`"
-          class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:border-brand-400 focus:outline-none"
-          :value="row.status === '수금완료' ? 'PAID' : 'UNPAID'"
-          @change="openStatusConfirm(row, $event.target.value)"
-        >
-          <option value="UNPAID">미수금</option>
-          <option value="PAID">수금완료</option>
-        </select>
-      </template>
-
-      <template #footer>
-        <tr
-          v-for="(summary, index) in summaryRows"
-          :key="summary.currency"
-          class="bg-slate-100/80"
-        >
-          <template v-if="index === 0">
-            <td
-              class="border-t-2 border-t-slate-300 border-r border-slate-200 px-4 py-3 text-center align-middle text-xs font-semibold text-slate-500"
-              :rowspan="summaryRows.length"
-            >
-              {{ filteredRows.length }}건
-            </td>
-            <td
-              class="border-t-2 border-t-slate-300 border-r border-slate-200 px-4 py-3 text-center align-middle text-base font-extrabold text-slate-800"
-              :rowspan="summaryRows.length"
-              colspan="3"
-            >
-              합계
-            </td>
           </template>
           검색
         </BaseButton>
@@ -586,8 +485,9 @@ function cancelStatusChange() {
           </button>
         </div>
       </div>
+
       <div class="text-xs text-slate-500">
-        통화별로 정렬된 행 뒤에 소계를 표시하고, 맨 아래에서 전체 환산 총액을 확인합니다.
+        통화별 소계와 맨 아래 KRW 총액을 한 테이블에서 확인합니다.
       </div>
     </section>
 
@@ -607,6 +507,7 @@ function cancelStatusChange() {
               </th>
             </tr>
           </thead>
+
           <tbody v-if="tableRows.length > 0" class="bg-white">
             <tr
               v-for="row in tableRows"
@@ -614,7 +515,7 @@ function cancelStatusChange() {
               :class="row.rowType === 'subtotal' ? 'bg-slate-50' : 'transition hover:bg-slate-50/70'"
             >
               <template v-if="row.rowType === 'subtotal'">
-                <td colspan="3" class="border-b border-r border-slate-200 px-4 py-3 text-left text-sm font-semibold text-slate-800">
+                <td colspan="5" class="border-b border-r border-slate-200 px-4 py-3 text-left text-sm font-semibold text-slate-800">
                   {{ row.currency }} 소계 ({{ row.rowCount }}건)
                 </td>
                 <td class="border-b border-r border-slate-200 px-4 py-3 text-right text-sm font-semibold text-slate-800">
@@ -635,10 +536,14 @@ function cancelStatusChange() {
                 <td class="border-b border-r border-slate-200 px-4 py-3 text-left text-sm">
                   <span class="font-medium text-slate-900">{{ row.clientName }}</span>
                 </td>
+                <td class="border-b border-r border-slate-200 px-4 py-3 text-center text-sm text-slate-700">
+                  {{ row.country }}
+                </td>
+                <td class="border-b border-r border-slate-200 px-4 py-3 text-center text-sm text-slate-700">
+                  {{ row.manager }}
+                </td>
                 <td class="border-b border-r border-slate-200 px-4 py-3 text-center text-sm">
-                  <span class="text-xs font-semibold text-slate-700">
-                    {{ row.currency }}
-                  </span>
+                  <span class="text-xs font-semibold text-slate-700">{{ row.currency }}</span>
                 </td>
                 <td class="border-b border-r border-slate-200 px-4 py-3 text-right text-sm">
                   <span class="font-semibold text-slate-800">
@@ -654,13 +559,13 @@ function cancelStatusChange() {
                   {{ row.issueDate }}
                 </td>
                 <td class="border-b border-r border-slate-200 px-4 py-3 text-center text-xs text-slate-700">
-                  {{ row.collectionDate }}
+                  {{ formatCollectionDate(row.collectionDate) }}
                 </td>
                 <td class="border-b border-slate-200 px-4 py-3 text-center text-sm">
                   <select
                     class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:border-brand-400 focus:outline-none"
                     :value="row.status === '수금완료' ? 'PAID' : 'UNPAID'"
-                    @change="updateStatus(row.poId, $event.target.value)"
+                    @change="openStatusConfirm(row, $event.target.value)"
                   >
                     <option value="UNPAID">미수금</option>
                     <option value="PAID">수금완료</option>
@@ -669,9 +574,10 @@ function cancelStatusChange() {
               </template>
             </tr>
           </tbody>
+
           <tfoot v-if="tableRows.length > 0" class="bg-slate-50">
             <tr>
-              <td colspan="4" class="border-t border-r border-slate-200 px-4 py-3 text-left text-sm font-bold text-slate-900">
+              <td colspan="6" class="border-t border-r border-slate-200 px-4 py-3 text-left text-sm font-bold text-slate-900">
                 전체 환산 총액
               </td>
               <td class="border-t border-r border-slate-200 px-4 py-3 text-right text-sm font-extrabold text-slate-900">
@@ -684,6 +590,7 @@ function cancelStatusChange() {
           </tfoot>
         </table>
       </div>
+
       <div
         v-if="tableRows.length === 0"
         class="flex min-h-[160px] items-center justify-center border-t border-slate-200 bg-white px-4 py-12 text-center text-sm text-slate-400"

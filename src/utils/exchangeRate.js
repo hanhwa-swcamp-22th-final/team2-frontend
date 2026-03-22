@@ -1,4 +1,4 @@
-const exchangeRateRangeMap = {
+export const exchangeRateRangeMap = {
   USD: { unitLabel: '1 USD', quoteAmount: 1, min: 1430, max: 1490 },
   EUR: { unitLabel: '1 EUR', quoteAmount: 1, min: 1560, max: 1640 },
   JPY: { unitLabel: '100 JPY', quoteAmount: 100, min: 900, max: 950 },
@@ -19,15 +19,7 @@ const exchangeRateRangeMap = {
   CHF: { unitLabel: '1 CHF', quoteAmount: 1, min: 1620, max: 1690 },
 }
 
-function getTodayDateInput() {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-function getDeterministicRate(seedText, min, max) {
+export function getDeterministicRate(seedText, min, max) {
   let hash = 0
 
   for (let index = 0; index < seedText.length; index += 1) {
@@ -37,7 +29,15 @@ function getDeterministicRate(seedText, min, max) {
   return min + (hash % (max - min + 1))
 }
 
-function resolveExchangeRateValue(currency, issueDate) {
+function getTodayDateInput() {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+export function resolveExchangeRateValue(currency, issueDate) {
   const range = exchangeRateRangeMap[currency]
 
   if (!range) {
@@ -48,7 +48,7 @@ function resolveExchangeRateValue(currency, issueDate) {
   return getDeterministicRate(seed, range.min, range.max)
 }
 
-function createExchangeRateHint(currency, issueDate) {
+export function createExchangeRateHint(currency, issueDate) {
   const range = exchangeRateRangeMap[currency]
 
   if (!range) {
@@ -59,7 +59,7 @@ function createExchangeRateHint(currency, issueDate) {
   return `참고 환율 ${range.unitLabel} = ${rate.toLocaleString('ko-KR')} KRW`
 }
 
-function convertCurrencyAmountToKrw(amount, currency, issueDate) {
+export function convertCurrencyAmountToKrw(amount, currency, issueDate) {
   const numericAmount = Number(amount)
 
   if (!Number.isFinite(numericAmount)) {
@@ -71,19 +71,11 @@ function convertCurrencyAmountToKrw(amount, currency, issueDate) {
   }
 
   const range = exchangeRateRangeMap[currency]
-  const exchangeRate = resolveExchangeRateValue(currency, issueDate)
+  const rate = resolveExchangeRateValue(currency, issueDate)
 
-  if (!range || !exchangeRate) {
+  if (!range || !rate) {
     return Math.round(numericAmount)
   }
 
-  return Math.round((numericAmount / range.quoteAmount) * exchangeRate)
-}
-
-export {
-  createExchangeRateHint,
-  convertCurrencyAmountToKrw,
-  exchangeRateRangeMap,
-  getDeterministicRate,
-  resolveExchangeRateValue,
+  return Math.round((numericAmount / range.quoteAmount) * rate)
 }
