@@ -22,7 +22,10 @@ import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { useToast } from '@/composables/useToast'
 import {
+  createEditApprovalMeta,
   createRegistrationApprovalMeta,
+  EDIT_REQUEST_DOCUMENT_STATUS,
+  EDIT_REQUEST_STATUS,
   REGISTRATION_DOCUMENT_STATUS,
   REGISTRATION_REQUEST_STATUS,
 } from '@/utils/documentApproval'
@@ -468,8 +471,8 @@ const editApprovalRequestRows = computed(() => {
     { label: '요청 유형', value: '수정 요청' },
     { label: '결재자', value: pendingEditRequest.value.approver || '-' },
     { label: '요청자', value: getCurrentRequesterName() },
-    { label: '문서 상태', value: '결재대기' },
-    { label: '요청 상태', value: '수정요청' },
+    { label: '문서 상태', value: EDIT_REQUEST_DOCUMENT_STATUS },
+    { label: '요청 상태', value: EDIT_REQUEST_STATUS },
     { label: '요청 시각', value: getRequestedAt() },
   ]
 })
@@ -581,13 +584,11 @@ function confirmEditApprovalRequest() {
       ? {
         ...row,
         ...pendingEditRequest.value.nextRow,
-        approver: pendingEditRequest.value.approver || row.approver || '',
-        status: '결재대기',
-        approvalStatus: '대기',
-        requestStatus: '수정요청',
-        approvalAction: '수정',
-        approvalRequestedBy: requesterName,
-        approvalRequestedAt: requestedAt,
+        ...createEditApprovalMeta({
+          approver: pendingEditRequest.value.approver || row.approver || '',
+          requesterName,
+          requestedAt,
+        }),
       }
       : row
   ))
