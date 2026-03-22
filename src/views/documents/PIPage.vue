@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 
 import ApprovalRequestModal from '@/components/common/ApprovalRequestModal.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
+import BasePagination from '@/components/common/BasePagination.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
@@ -18,6 +19,7 @@ import TableActions from '@/components/common/TableActions.vue'
 import PIFormModal from '@/components/domain/document/PIFormModal.vue'
 import { fetchBuyers, fetchClients, fetchCountries, fetchCurrencies } from '@/api/master'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
+import { usePagination } from '@/composables/usePagination'
 import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { useToast } from '@/composables/useToast'
@@ -150,6 +152,7 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
   issueDateField: 'issueDate',
   deliveryDateField: 'deliveryDate',
 })
+const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
 
 const clientRows = computed(() => {
   const keyword = clientSearchKeyword.value.trim().toLowerCase()
@@ -771,7 +774,7 @@ function handleProductSelect(product) {
 
 <template>
   <div class="fade-in space-y-5">
-    <PageHeader title="PI 관리" icon-class="fas fa-file-invoice">
+    <PageHeader title="Proforma Invoice" icon-class="fas fa-file-invoice">
       <template #actions>
         <BaseButton @click="openCreateForm">
           <template #leading>
@@ -872,7 +875,7 @@ function handleProductSelect(product) {
 
     <BaseTable
       :columns="columns"
-      :rows="filteredRows"
+      :rows="paginatedRows"
       clickable-rows
       empty-text="데이터가 없습니다."
       :footer-text="`총 ${filteredRows.length}건`"
@@ -892,6 +895,11 @@ function handleProductSelect(product) {
         <TableActions @edit="openEditForm(row)" @delete="openDeleteApprovalRequest(row)" />
       </template>
     </BaseTable>
+
+    <BasePagination
+      v-model:current-page="currentPage"
+      :total-pages="totalPages"
+    />
 
     <PIFormModal
       :open="formOpen"

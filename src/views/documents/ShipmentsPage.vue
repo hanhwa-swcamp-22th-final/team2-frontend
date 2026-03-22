@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
+import BasePagination from '@/components/common/BasePagination.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
@@ -15,6 +16,7 @@ import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
+import { usePagination } from '@/composables/usePagination'
 
 const router = useRouter()
 const isAdvancedOpen = ref(false)
@@ -87,6 +89,7 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
   deliveryDateField: 'dueDate',
   codeField: 'id',
 })
+const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
 
 const preparingCount = computed(() => filteredRows.value.filter((row) => row.status === '출하준비').length)
 const completedCount = computed(() => filteredRows.value.filter((row) => row.status === '출하완료').length)
@@ -235,7 +238,7 @@ function searchRows() {
 
     <BaseTable
       :columns="columns"
-      :rows="filteredRows"
+      :rows="paginatedRows"
       clickable-rows
       empty-text="데이터가 없습니다."
       :footer-text="`총 ${filteredRows.length}건`"
@@ -259,6 +262,11 @@ function searchRows() {
         <StatusBadge :value="value" />
       </template>
     </BaseTable>
+
+    <BasePagination
+      v-model:current-page="currentPage"
+      :total-pages="totalPages"
+    />
 
     <SearchModal
       :open="clientSearchOpen"
