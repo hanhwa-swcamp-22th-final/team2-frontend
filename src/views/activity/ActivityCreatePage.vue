@@ -186,7 +186,7 @@ const filteredPoList = computed(() => {
   if (!poKeyword.value) return poList.value
   const kw = poKeyword.value.toLowerCase()
   return poList.value.filter(
-    (p) => p.id.toLowerCase().includes(kw) || p.title.toLowerCase().includes(kw),
+    (p) => p.id.toLowerCase().includes(kw) || (p.title ?? '').toLowerCase().includes(kw),
   )
 })
 
