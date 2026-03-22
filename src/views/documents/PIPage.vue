@@ -43,8 +43,8 @@ const isAdvancedOpen = ref(false)
 const formOpen = ref(false)
 const formMode = ref('create')
 const selectedRow = ref(null)
-const deleteOpen = ref(false)
-const approvalRequestOpen = ref(false)
+const deleteApprovalRequestOpen = ref(false)
+const createApprovalRequestOpen = ref(false)
 const editApprovalRequestOpen = ref(false)
 const clientSearchOpen = ref(false)
 const clientSearchKeyword = ref('')
@@ -553,7 +553,7 @@ const editApprovalItemSummaryRows = computed(() => {
 })
 
 const deleteApprovalRequestRows = computed(() => {
-  if (!selectedRow.value || !deleteOpen.value) return []
+  if (!selectedRow.value || !deleteApprovalRequestOpen.value) return []
 
   return buildApprovalRequestRows({
     approver: getDefaultDeleteApprover(selectedRow.value),
@@ -567,7 +567,7 @@ const deleteApprovalRequestRows = computed(() => {
 })
 
 const deleteApprovalDocumentRows = computed(() => {
-  if (!selectedRow.value || !deleteOpen.value) return []
+  if (!selectedRow.value || !deleteApprovalRequestOpen.value) return []
 
   const snapshot = createComparableSnapshot(selectedRow.value)
 
@@ -585,7 +585,7 @@ const deleteApprovalDocumentRows = computed(() => {
 })
 
 const deleteApprovalItemRows = computed(() => {
-  if (!selectedRow.value || !deleteOpen.value) return []
+  if (!selectedRow.value || !deleteApprovalRequestOpen.value) return []
 
   const snapshot = createComparableSnapshot(selectedRow.value)
 
@@ -601,7 +601,7 @@ const deleteApprovalItemRows = computed(() => {
 })
 
 const deleteApprovalItemSummaryRows = computed(() => {
-  if (!selectedRow.value || !deleteOpen.value) return []
+  if (!selectedRow.value || !deleteApprovalRequestOpen.value) return []
 
   const snapshot = createComparableSnapshot(selectedRow.value)
 
@@ -632,7 +632,7 @@ function confirmCreateApprovalRequest() {
     ...rowsData.value,
   ]
 
-  approvalRequestOpen.value = false
+  createApprovalRequestOpen.value = false
   pendingCreateFormValue.value = null
   formOpen.value = false
   selectedClient.value = null
@@ -640,7 +640,7 @@ function confirmCreateApprovalRequest() {
 }
 
 function cancelCreateApprovalRequest() {
-  approvalRequestOpen.value = false
+  createApprovalRequestOpen.value = false
 }
 
 function confirmEditApprovalRequest() {
@@ -682,7 +682,7 @@ function handleSave(formValue) {
       ...formValue,
       items: (formValue.items ?? []).map((item) => ({ ...item })),
     }
-    approvalRequestOpen.value = true
+    createApprovalRequestOpen.value = true
     return
   }
 
@@ -709,12 +709,12 @@ function handleSave(formValue) {
   editApprovalRequestOpen.value = true
 }
 
-function openDeleteModal(row) {
+function openDeleteApprovalRequest(row) {
   selectedRow.value = row
-  deleteOpen.value = true
+  deleteApprovalRequestOpen.value = true
 }
 
-function confirmDelete() {
+function confirmDeleteApprovalRequest() {
   if (!selectedRow.value) return
 
   const requesterName = getCurrentRequesterName()
@@ -734,8 +734,12 @@ function confirmDelete() {
   ))
 
   success(`${selectedRow.value?.id} 삭제 결재 요청이 전송되었습니다.`)
-  deleteOpen.value = false
+  deleteApprovalRequestOpen.value = false
   selectedRow.value = null
+}
+
+function cancelDeleteApprovalRequest() {
+  deleteApprovalRequestOpen.value = false
 }
 
 function goToDetail(id) {
@@ -885,7 +889,7 @@ function handleProductSelect(product) {
       </template>
 
       <template #cell-actions="{ row }">
-        <TableActions @edit="openEditForm(row)" @delete="openDeleteModal(row)" />
+        <TableActions @edit="openEditForm(row)" @delete="openDeleteApprovalRequest(row)" />
       </template>
     </BaseTable>
 
@@ -900,7 +904,7 @@ function handleProductSelect(product) {
     />
 
     <ApprovalRequestModal
-      :open="approvalRequestOpen"
+      :open="createApprovalRequestOpen"
       title="PI 등록 결재 요청"
       message="선택한 결재자에게 PI 등록 결재 요청을 전송하시겠습니까?"
       :request-rows="createApprovalRequestRows"
@@ -941,7 +945,7 @@ function handleProductSelect(product) {
     />
 
     <ApprovalRequestModal
-      :open="deleteOpen"
+      :open="deleteApprovalRequestOpen"
       title="PI 삭제 결재 요청"
       message="선택한 PI 문서의 삭제 결재 요청을 전송하시겠습니까?"
       :request-rows="deleteApprovalRequestRows"
@@ -955,8 +959,8 @@ function handleProductSelect(product) {
       helper-text="요청 후 PI는 결재대기 상태가 되며, 승인 전까지 실제 삭제되지 않습니다."
       width="max-w-6xl"
       confirm-label="삭제 요청"
-      @confirm="confirmDelete"
-      @cancel="deleteOpen = false"
+      @confirm="confirmDeleteApprovalRequest"
+      @cancel="cancelDeleteApprovalRequest"
     />
 
     <SearchModal
