@@ -155,6 +155,9 @@ function getDefaultApprover() {
 function createInitialForm() {
   return {
     clientName: '',
+    clientAddress: '',
+    clientTel: '',
+    clientEmail: '',
     buyerName: '',
     currency: 'USD',
     issueDate: getTodayDateInput(),
@@ -253,7 +256,7 @@ const reasonFieldPlaceholder = computed(() => (
 ))
 
 const isReasonRequired = computed(() => props.mode === 'edit')
-const showApproverField = computed(() => props.mode === 'edit')
+const showApproverField = computed(() => true)
 
 function mapBuyerLabel(buyer) {
   if (!buyer?.name) return ''
@@ -279,6 +282,9 @@ async function loadReferenceData() {
       id: String(client.id),
       name: client.name,
       country: countryMap.get(String(client.countryId)) ?? '-',
+      address: client.address ?? '',
+      tel: client.tel ?? '',
+      email: client.email ?? '',
     }))
 
     currencyOptions.value = currenciesData.map((currency) => currency.code).filter(Boolean)
@@ -591,6 +597,9 @@ async function initializeForm() {
 
     form.value = {
       clientName: props.document.clientName ?? '',
+      clientAddress: props.document.clientAddress ?? '',
+      clientTel: props.document.clientTel ?? '',
+      clientEmail: props.document.clientEmail ?? '',
       buyerName: props.document.buyerName ?? 'Mr. Ahmad Razak (Purchasing Manager)',
       currency: props.document.currency ?? 'USD',
       issueDate: props.document.issueDate?.replaceAll('/', '-') ?? getTodayDateInput(),
@@ -670,6 +679,9 @@ watch(
   async (client) => {
     if (!client) return
     form.value.clientName = client.name
+    form.value.clientAddress = client.address ?? ''
+    form.value.clientTel = client.tel ?? ''
+    form.value.clientEmail = client.email ?? ''
     form.value.buyerName = client.buyers?.[0] ?? ''
     form.value.currency = client.currency ?? form.value.currency
     clearError('clientName')
@@ -699,7 +711,7 @@ watch(
     <div class="space-y-4 text-sm">
       <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-brand-700">
         <i class="fas fa-info-circle mr-1" aria-hidden="true"></i>
-        수정 내용을 입력한 후 저장하면 상급자에게 결재 요청이 전송됩니다.
+        저장하면 선택한 결재자에게 결재 요청이 전송됩니다.
       </div>
 
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -734,6 +746,32 @@ watch(
             @update:modelValue="clearError('buyerName')"
           />
           <p v-if="getFieldError('buyerName')" class="mt-1 text-xs text-red-500">{{ getFieldError('buyerName') }}</p>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="mb-1 block text-gray-600">거래처 영문주소</label>
+          <BaseTextarea
+            v-model="form.clientAddress"
+            placeholder="거래처 선택 시 주소가 자동 입력됩니다."
+            :rows="2"
+            resize="none"
+          />
+        </div>
+
+        <div>
+          <label class="mb-1 block text-gray-600">거래처 연락처</label>
+          <BaseTextField
+            v-model="form.clientTel"
+            placeholder="예: +60-3-555-0101"
+          />
+        </div>
+
+        <div>
+          <label class="mb-1 block text-gray-600">거래처 이메일</label>
+          <BaseTextField
+            v-model="form.clientEmail"
+            placeholder="예: contact@client.com"
+          />
         </div>
 
         <div>

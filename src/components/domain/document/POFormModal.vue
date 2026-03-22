@@ -1,8 +1,10 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
+import BaseSelect from '@/components/common/BaseSelect.vue'
+import { fetchUsers } from '@/api/master'
 import { useToast } from '@/composables/useToast'
 
 const props = defineProps({
@@ -15,29 +17,66 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'save', 'open-pi-search', 'open-client-search'])
 const { success } = useToast()
+const defaultApproverOptions = [
+  '최관리 (경영지원 · 관리자)',
+  '박리드 (영업지원 · 팀장)',
+]
 
 function createInitialForm() {
   return {
     linkedPiId: '',
     linkedPiDisplay: '',
     clientName: '',
+    currency: '',
     deliveryDate: '',
+    sourceDeliveryDate: '',
+    deliveryDateOverride: false,
+    approver: defaultApproverOptions[1],
   }
 }
 
 const form = ref(createInitialForm())
+const approverOptions = ref([...defaultApproverOptions])
+const isLinkedToPi = computed(() => Boolean(form.value.linkedPiId))
+const isDeliveryDateLocked = computed(() => isLinkedToPi.value && !form.value.deliveryDateOverride)
+
+async function loadApproverOptions() {
+  try {
+    const users = await fetchUsers()
+    const activeUsers = users
+      .filter((user) => user.status === '재직')
+      .map((user) => user.name)
+      .filter(Boolean)
+
+    if (activeUsers.length) {
+      approverOptions.value = activeUsers
+    }
+  } catch {
+    approverOptions.value = [...defaultApproverOptions]
+  }
+
+  if (!approverOptions.value.includes(form.value.approver)) {
+    form.value.approver = approverOptions.value[0] ?? defaultApproverOptions[1]
+  }
+}
 
 watch(
   () => props.open,
-  (isOpen) => {
+  async (isOpen) => {
     if (!isOpen) return
+
+    await loadApproverOptions()
 
     if (props.mode === 'edit' && props.document) {
       form.value = {
         linkedPiId: props.document.piId ?? '',
         linkedPiDisplay: props.document.piId ?? '',
         clientName: props.document.clientName ?? '',
+        currency: props.document.currency ?? '',
         deliveryDate: props.document.deliveryDate?.replaceAll('/', '-') ?? '',
+        sourceDeliveryDate: props.document.sourceDeliveryDate?.replaceAll('/', '-') ?? props.document.deliveryDate?.replaceAll('/', '-') ?? '',
+        deliveryDateOverride: Boolean(props.document.deliveryDateOverride),
+        approver: props.document.approver ?? approverOptions.value[0] ?? defaultApproverOptions[1],
       }
       return
     }
@@ -58,12 +97,14 @@ function openClientSearch() {
 function clearLinkedPi() {
   form.value.linkedPiId = ''
   form.value.linkedPiDisplay = ''
+  form.value.currency = ''
+  form.value.sourceDeliveryDate = ''
+  form.value.deliveryDateOverride = false
 }
 
 function handleSave() {
   success(props.mode === 'create' ? 'PO 작성 폼 구조가 준비되었습니다.' : 'PO 수정 폼 구조가 준비되었습니다.')
   emit('save', { ...form.value })
-  emit('close')
 }
 
 watch(
@@ -73,15 +114,27 @@ watch(
     form.value.linkedPiId = pi.id
     form.value.linkedPiDisplay = pi.id
     form.value.clientName = pi.clientName
+    form.value.currency = pi.currency
     form.value.deliveryDate = pi.deliveryDate?.replaceAll('/', '-') ?? ''
+    form.value.sourceDeliveryDate = pi.deliveryDate?.replaceAll('/', '-') ?? ''
+    form.value.deliveryDateOverride = false
   },
 )
 
 watch(
   () => props.selectedClient,
   (client) => {
-    if (!client) return
+    if (!client || isLinkedToPi.value) return
     form.value.clientName = client.name
+  },
+)
+
+watch(
+  () => form.value.deliveryDateOverride,
+  (enabled) => {
+    if (!enabled && form.value.sourceDeliveryDate) {
+      form.value.deliveryDate = form.value.sourceDeliveryDate
+    }
   },
 )
 </script>
@@ -94,6 +147,24 @@ watch(
     @close="emit('close')"
   >
     <div class="space-y-4 text-sm">
+      <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-brand-700">
+        <i class="fas fa-info-circle mr-1" aria-hidden="true"></i>
+        저장하면 선택한 결재자에게 결재 요청이 전송됩니다.
+      </div>
+
+      <div
+        v-if="isLinkedToPi"
+        class="rounded-xl border border-brand-100 bg-brand-50/60 px-4 py-3 text-sm text-slate-700"
+      >
+        <div class="flex items-center gap-2 text-sm font-semibold text-slate-800">
+          <i class="fas fa-link text-xs text-brand-600" aria-hidden="true"></i>
+          PI 기준 생성
+        </div>
+        <p class="mt-1 text-xs leading-5 text-slate-500">
+          거래처와 통화는 연결된 PI 기준으로 고정됩니다. 납기일만 별도 조정이 가능합니다.
+        </p>
+      </div>
+
       <div>
         <label class="mb-1 block text-slate-600">PI 연결 (선택)</label>
         <div class="flex gap-2">
@@ -129,33 +200,89 @@ watch(
               v-model="form.clientName"
               type="text"
               placeholder="거래처 검색..."
-              readonly
-              class="w-full cursor-pointer rounded-lg border border-slate-300 px-3 py-2 pr-9"
-              style="background: var(--bg-input);"
-              @click.stop.prevent="openClientSearch"
+              :readonly="isLinkedToPi"
+              :class="[
+                'w-full rounded-lg border border-slate-300 px-3 py-2 pr-9',
+                isLinkedToPi ? 'cursor-not-allowed bg-slate-100 text-slate-500' : 'cursor-pointer',
+              ]"
+              :style="isLinkedToPi ? undefined : 'background: var(--bg-input);'"
+              @click.stop.prevent="isLinkedToPi ? undefined : openClientSearch()"
             >
             <button
               type="button"
-              class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-brand-500"
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 transition"
+              :class="isLinkedToPi ? 'cursor-not-allowed' : 'hover:text-brand-500'"
+              :disabled="isLinkedToPi"
               @click.stop.prevent="openClientSearch"
             >
               <i class="fas fa-search text-xs" aria-hidden="true"></i>
             </button>
           </div>
+          <p v-if="isLinkedToPi" class="mt-1 text-xs text-slate-500">
+            연결된 PI의 거래처를 기준값으로 사용합니다.
+          </p>
         </div>
 
         <div>
-          <label class="mb-1 block text-slate-600">납기일 *</label>
+          <label class="mb-1 block text-slate-600">통화</label>
           <input
-            v-model="form.deliveryDate"
-            type="date"
-            class="w-full rounded-lg border border-slate-300 px-3 py-2"
+            :value="form.currency || '-'"
+            type="text"
+            readonly
+            class="w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-slate-500"
           >
         </div>
       </div>
 
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
+        <div>
+          <div class="mb-1 flex items-center justify-between gap-3">
+            <label class="block text-slate-600">납기일 *</label>
+            <label
+              v-if="isLinkedToPi"
+              class="inline-flex items-center gap-2 text-xs text-slate-500"
+            >
+              <input
+                v-model="form.deliveryDateOverride"
+                type="checkbox"
+                class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+              >
+              납기일 별도 조정
+            </label>
+          </div>
+          <input
+            v-model="form.deliveryDate"
+            type="date"
+            :disabled="isDeliveryDateLocked"
+            :class="[
+              'w-full rounded-lg border border-slate-300 px-3 py-2',
+              isDeliveryDateLocked ? 'cursor-not-allowed bg-slate-100 text-slate-500' : '',
+            ]"
+          >
+          <p v-if="isLinkedToPi && form.sourceDeliveryDate" class="mt-1 text-xs text-slate-500">
+            PI 기준 납기일: {{ form.sourceDeliveryDate }}
+          </p>
+        </div>
+
+        <div
+          v-if="isLinkedToPi && form.deliveryDateOverride && form.sourceDeliveryDate && form.deliveryDate !== form.sourceDeliveryDate"
+          class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-700"
+        >
+          PI 기준 납기일과 다르게 저장됩니다.
+        </div>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-slate-600">결재자</label>
+        <BaseSelect
+          v-model="form.approver"
+          :options="approverOptions"
+          placeholder="결재자 선택"
+        />
+      </div>
+
       <p class="text-xs text-gray-400">
-        * PI 연결 시 거래처·품목·수량·단가가 자동으로 채워집니다.
+        * PI 연결 시 거래처와 통화는 기준값으로 고정되며, 납기일만 별도 조정할 수 있습니다.
       </p>
     </div>
 

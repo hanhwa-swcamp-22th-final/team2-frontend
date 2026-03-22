@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import ApprovalRequestModal from '@/components/common/ApprovalRequestModal.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
@@ -18,10 +19,13 @@ import TableActions from '@/components/common/TableActions.vue'
 import PIFormModal from '@/components/domain/document/PIFormModal.vue'
 import { fetchBuyers, fetchClients, fetchCountries, fetchCurrencies } from '@/api/master'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
+import { useAuthStore } from '@/stores/auth'
+import { usePiDocuments } from '@/stores/piDocuments'
 import { useToast } from '@/composables/useToast'
 import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const { success } = useToast()
 
 const isAdvancedOpen = ref(false)
@@ -29,7 +33,7 @@ const formOpen = ref(false)
 const formMode = ref('create')
 const selectedRow = ref(null)
 const deleteOpen = ref(false)
-const createConfirmOpen = ref(false)
+const approvalRequestOpen = ref(false)
 const clientSearchOpen = ref(false)
 const clientSearchKeyword = ref('')
 const selectedClient = ref(null)
@@ -63,11 +67,42 @@ const statusOptions = [
   { value: '취소', label: '취소' },
 ]
 const fallbackClientRowsSource = [
-  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아', currency: 'USD', buyers: ['Mr. Ahmad Razak (Purchasing Manager)', 'Ms. Siti Nurhaliza (Director)'] },
-  { id: 'CL002', name: 'TechBridge GmbH', country: '독일', currency: 'EUR', buyers: ['Ms. Hanna Schneider (Procurement Lead)'] },
-  { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국', currency: 'USD', buyers: ['Mr. Jacob Miller (Import Manager)'] },
+  {
+    id: 'CL001',
+    code: 'CL001',
+    name: 'COOLSAY SDN BHD',
+    country: '말레이시아',
+    currency: 'USD',
+    address: 'Lot 18, Jalan Pelabuhan Utara 27, 42000 Port Klang, Selangor, Malaysia',
+    tel: '+60-3-555-0101',
+    email: 'contact@coolsay.com',
+    buyers: ['Mr. Ahmad Razak (Purchasing Manager)', 'Ms. Siti Nurhaliza (Director)'],
+  },
+  {
+    id: 'CL002',
+    code: 'CL002',
+    name: 'TechBridge GmbH',
+    country: '독일',
+    currency: 'EUR',
+    address: 'Am Sandtorkai 35, 20457 Hamburg, Germany',
+    tel: '+49-40-555-0202',
+    email: 'info@techbridge.de',
+    buyers: ['Ms. Hanna Schneider (Procurement Lead)'],
+  },
+  {
+    id: 'CL003',
+    code: 'CL003',
+    name: 'Pacific Trading Inc.',
+    country: '미국',
+    currency: 'USD',
+    address: '1201 Harbor Avenue SW, Seattle, WA 98134, USA',
+    tel: '+1-206-555-0303',
+    email: 'contact@pacifictrading.com',
+    buyers: ['Mr. Jacob Miller (Import Manager)'],
+  },
 ]
 const clientRowsSource = ref([...fallbackClientRowsSource])
+const rowsData = usePiDocuments()
 
 const columns = [
   { key: 'id', label: 'PI번호', align: 'center', width: '140px' },
@@ -82,160 +117,6 @@ const columns = [
   { key: 'actions', label: '', align: 'center', width: '90px' },
 ]
 
-const initialRows = [
-  {
-    id: 'PI26001',
-    issueDate: '2026/02/01',
-    clientName: 'COOLSAY SDN BHD',
-    buyerName: 'Mr. Ahmad Razak (Purchasing Manager)',
-    currency: 'USD',
-    country: '말레이시아',
-    itemName: 'H-Beam 482x300x11x15',
-    amount: '$42,400',
-    incoterms: 'FOB',
-    namedPlace: 'BUSAN',
-    manager: '김영업',
-    status: '확정',
-    deliveryDate: '2026/04/15',
-    items: [
-      { name: 'H-Beam 482x300x11x15', qty: '30', unit: 'EA', unitPrice: '850', amount: '25500', remark: '' },
-      { name: 'Lubricant Oil SAE 10W-40', qty: '200', unit: 'EA', unitPrice: '30', amount: '6000', remark: '' },
-      { name: 'Industrial Grease EP-2', qty: '100', unit: 'EA', unitPrice: '45', amount: '4500', remark: '' },
-      { name: 'Hydraulic Oil ISO VG 46', qty: '32', unit: 'EA', unitPrice: '200', amount: '6400', remark: '' },
-    ],
-  },
-  {
-    id: 'PI26002',
-    issueDate: '2026/02/15',
-    clientName: 'TechBridge GmbH',
-    buyerName: 'Ms. Hanna Schneider (Procurement Lead)',
-    currency: 'EUR',
-    country: '독일',
-    itemName: 'H-Beam 482x300x11x15',
-    amount: '€68,400',
-    incoterms: 'CIF',
-    namedPlace: 'HAMBURG',
-    manager: '김영업',
-    status: '발송',
-    deliveryDate: '2026/05/20',
-    items: [
-      { name: 'H-Beam 482x300x11x15', qty: '40', unit: 'EA', unitPrice: '900', amount: '36000', remark: '' },
-      { name: 'Steel Girder 340x250x9x14', qty: '18', unit: 'EA', unitPrice: '1800', amount: '32400', remark: '' },
-    ],
-  },
-  {
-    id: 'PI26003',
-    issueDate: '2026/03/01',
-    clientName: 'Pacific Trading Inc.',
-    buyerName: 'Mr. Jacob Miller (Import Manager)',
-    currency: 'USD',
-    country: '미국',
-    itemName: 'Lubricant Oil SAE 10W-40',
-    amount: '$15,600',
-    incoterms: 'CFR',
-    namedPlace: 'LOS ANGELES',
-    manager: '정영업',
-    status: '초안',
-    deliveryDate: '2026/06/01',
-    items: [
-      { name: 'Lubricant Oil SAE 10W-40', qty: '320', unit: 'EA', unitPrice: '30', amount: '9600', remark: '' },
-      { name: 'Industrial Grease EP-2', qty: '120', unit: 'EA', unitPrice: '50', amount: '6000', remark: '' },
-    ],
-  },
-  {
-    id: 'PI26004',
-    issueDate: '2025/12/10',
-    clientName: 'Viet Steel JSC',
-    buyerName: 'Purchasing Team',
-    currency: 'USD',
-    country: '베트남',
-    itemName: 'H-Beam 482x300x11x15',
-    amount: '$53,600',
-    incoterms: 'FOB',
-    namedPlace: 'BUSAN',
-    manager: '정영업',
-    status: '확정',
-    deliveryDate: '2026/04/30',
-    items: [
-      { name: 'H-Beam 482x300x11x15', qty: '40', unit: 'EA', unitPrice: '1340', amount: '53600', remark: '' },
-    ],
-  },
-  {
-    id: 'PI26005',
-    issueDate: '2026/01/15',
-    clientName: 'Siam Industrial Co., Ltd.',
-    buyerName: 'Purchasing Team',
-    currency: 'USD',
-    country: '태국',
-    itemName: 'H-Beam 488x300x11x18',
-    amount: '$38,850',
-    incoterms: 'FOB',
-    namedPlace: 'BUSAN',
-    manager: '김영업',
-    status: '확정',
-    deliveryDate: '2026/05/15',
-    items: [
-      { name: 'H-Beam 488x300x11x18', qty: '21', unit: 'EA', unitPrice: '1850', amount: '38850', remark: '' },
-    ],
-  },
-  {
-    id: 'PI26006',
-    issueDate: '2026/03/05',
-    clientName: 'Meridian Engineering Pte Ltd',
-    buyerName: 'Procurement Team',
-    currency: 'USD',
-    country: '싱가포르',
-    itemName: 'Seamless Steel Pipe 168x7',
-    amount: '$29,700',
-    incoterms: 'FOB',
-    namedPlace: 'BUSAN',
-    manager: '정영업',
-    status: '발송',
-    deliveryDate: '2026/06/10',
-    items: [
-      { name: 'Seamless Steel Pipe 168x7', qty: '90', unit: 'EA', unitPrice: '330', amount: '29700', remark: '' },
-    ],
-  },
-  {
-    id: 'PI26007',
-    issueDate: '2026/01/20',
-    clientName: 'Tata Steel Traders Pvt Ltd',
-    buyerName: 'Procurement Team',
-    currency: 'USD',
-    country: '인도',
-    itemName: 'H-Beam 482x300x11x15',
-    amount: '$76,400',
-    incoterms: 'FOB',
-    namedPlace: 'BUSAN',
-    manager: '김영업',
-    status: '확정',
-    deliveryDate: '2026/05/30',
-    items: [
-      { name: 'H-Beam 482x300x11x15', qty: '40', unit: 'EA', unitPrice: '1910', amount: '76400', remark: '' },
-    ],
-  },
-  {
-    id: 'PI26008',
-    issueDate: '2026/03/10',
-    clientName: 'OzSteel Supplies Pty Ltd',
-    buyerName: 'Procurement Team',
-    currency: 'USD',
-    country: '호주',
-    itemName: 'Hydraulic Cylinder 100x500',
-    amount: '$23,960',
-    incoterms: 'FOB',
-    namedPlace: 'BUSAN',
-    manager: '정영업',
-    status: '초안',
-    deliveryDate: '2026/06/30',
-    items: [
-      { name: 'Hydraulic Cylinder 100x500', qty: '28', unit: 'EA', unitPrice: '820', amount: '22960', remark: '' },
-      { name: 'Gear Pump GP-20', qty: '4', unit: 'EA', unitPrice: '250', amount: '1000', remark: '' },
-    ],
-  },
-]
-
-const rowsData = ref([...initialRows])
 const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
   keywordFields: ['id', 'clientName', 'country', 'itemName', 'amount', 'manager', 'status', 'issueDate', 'deliveryDate'],
   issueDateField: 'issueDate',
@@ -314,6 +195,9 @@ async function loadClientRows() {
       name: client.name,
       country: countryMap.get(String(client.countryId)) ?? '-',
       currency: currencyMap.get(String(client.currencyId)) ?? 'USD',
+      address: client.address ?? '',
+      tel: client.tel ?? '',
+      email: client.email ?? '',
       buyers: buyersByClientId.get(String(client.id)) ?? [],
     }))
   } catch {
@@ -344,15 +228,11 @@ function openCreateForm() {
   formMode.value = 'create'
   selectedRow.value = null
   selectedClient.value = null
-  pendingCreateFormValue.value = null
   formOpen.value = true
 }
 
 function closeForm() {
   formOpen.value = false
-  if (formMode.value === 'create') {
-    pendingCreateFormValue.value = null
-  }
 }
 
 function openEditForm(row) {
@@ -363,6 +243,10 @@ function openEditForm(row) {
   selectedRow.value = {
     id: row.id,
     clientName: row.clientName,
+    clientCode: row.clientCode ?? matchedClient?.code ?? '',
+    clientAddress: row.clientAddress ?? matchedClient?.address ?? '',
+    clientTel: row.clientTel ?? matchedClient?.tel ?? '',
+    clientEmail: row.clientEmail ?? matchedClient?.email ?? '',
     buyerName: row.buyerName ?? matchedClient?.buyers?.[0] ?? '',
     currency: row.currency ?? matchedClient?.currency ?? (row.amount.startsWith('€') ? 'EUR' : 'USD'),
     country: row.country,
@@ -403,6 +287,10 @@ function buildRowPayload(formValue) {
   const matchedClient = clientRowsSource.value.find((client) => client.name === formValue.clientName)
   const nextRow = {
     clientName: formValue.clientName || '거래처 미선택',
+    clientCode: matchedClient?.code || selectedRow.value?.clientCode || '',
+    clientAddress: matchedClient?.address || selectedRow.value?.clientAddress || '',
+    clientTel: matchedClient?.tel || selectedRow.value?.clientTel || '',
+    clientEmail: matchedClient?.email || selectedRow.value?.clientEmail || '',
     buyerName: formValue.buyerName || '',
     currency,
     country: formValue.country || matchedClient?.country || selectedClient.value?.country || '-',
@@ -429,82 +317,87 @@ function buildRowPayload(formValue) {
   }
 }
 
-const createConfirmRows = computed(() => {
+function getCurrentRequesterName() {
+  return authStore.currentUser?.name || '김영업'
+}
+
+function getRequestedAt() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  return `${year}/${month}/${day} ${hours}:${minutes}`
+}
+
+function buildNextPiId() {
+  return `PI26${String(rowsData.value.length + 1).padStart(3, '0')}`
+}
+
+const createApprovalRequestRows = computed(() => {
   if (!pendingCreateFormValue.value) return []
 
-  const { nextRow } = buildRowPayload(pendingCreateFormValue.value)
-
   return [
-    { label: '거래처', value: nextRow.clientName },
-    { label: '바이어', value: nextRow.buyerName || '-' },
-    { label: '통화', value: nextRow.currency },
-    { label: '발행일', value: nextRow.issueDate },
-    { label: '납기일', value: nextRow.deliveryDate },
-    { label: '인코텀즈', value: formatIncotermsLabel(nextRow.incoterms, nextRow.namedPlace) || '-' },
+    { label: '요청 유형', value: '등록 요청' },
+    { label: '결재자', value: pendingCreateFormValue.value.approver || '-' },
+    { label: '요청자', value: getCurrentRequesterName() },
+    { label: '문서 상태', value: '결재대기' },
+    { label: '요청 상태', value: '등록요청' },
+    { label: '요청 시각', value: getRequestedAt() },
   ]
 })
 
-const createConfirmTableColumns = [
-  { key: 'name', label: '품목명' },
-  { key: 'qty', label: '수량', align: 'right' },
-  { key: 'unit', label: '단위', align: 'center' },
-  { key: 'unitPrice', label: '단가', align: 'right' },
-  { key: 'amount', label: '금액', align: 'right' },
-  { key: 'remark', label: '비고' },
-]
-
-const createConfirmTableRows = computed(() => {
-  if (!pendingCreateFormValue.value) return []
-
-  const currency = pendingCreateFormValue.value.currency || 'USD'
-
-  return (pendingCreateFormValue.value.items ?? []).map((item, index) => ({
-    id: item.id ?? index,
-    name: item.name || '-',
-    qty: parseAmount(item.qty).toLocaleString(),
-    unit: item.unit || '-',
-    unitPrice: formatAmount(currency, parseAmount(item.unitPrice)),
-    amount: formatAmount(currency, parseAmount(item.amount)),
-    remark: item.remark || '-',
-  }))
-})
-
-const createConfirmSummaryRows = computed(() => {
+const createApprovalDocumentRows = computed(() => {
   if (!pendingCreateFormValue.value) return []
 
   const { nextRow } = buildRowPayload(pendingCreateFormValue.value)
   const itemCount = pendingCreateFormValue.value.items?.length ?? 0
 
   return [
+    { label: '예정 PI 번호', value: buildNextPiId() },
+    { label: '거래처', value: nextRow.clientName },
+    { label: '바이어', value: nextRow.buyerName || '-' },
+    { label: '통화', value: nextRow.currency },
+    { label: '발행일', value: nextRow.issueDate },
+    { label: '납기일', value: nextRow.deliveryDate },
+    { label: '인코텀즈', value: formatIncotermsLabel(nextRow.incoterms, nextRow.namedPlace) || '-' },
     { label: '품목 건수', value: `${itemCount}건` },
-    { label: '총액', value: nextRow.amount },
+    { label: '총액', value: nextRow.amount, emphasis: true, fullWidth: true },
   ]
 })
 
-function confirmCreate() {
+function confirmCreateApprovalRequest() {
   if (!pendingCreateFormValue.value) return
 
   const { nextRow } = buildRowPayload(pendingCreateFormValue.value)
+  const requesterName = getCurrentRequesterName()
 
   rowsData.value = [
     {
-      id: `PI26${String(rowsData.value.length + 1).padStart(3, '0')}`,
+      id: buildNextPiId(),
       ...nextRow,
-      manager: '김영업',
-      status: '초안',
+      manager: requesterName,
+      status: '결재대기',
+      approver: pendingCreateFormValue.value.approver || '',
+      approvalStatus: '대기',
+      requestStatus: '등록요청',
+      approvalAction: '등록',
+      approvalRequestedBy: requesterName,
+      approvalRequestedAt: getRequestedAt(),
     },
     ...rowsData.value,
   ]
 
-  createConfirmOpen.value = false
+  approvalRequestOpen.value = false
   pendingCreateFormValue.value = null
   formOpen.value = false
   selectedClient.value = null
-  success('PI가 등록되었습니다.')
+  success('PI 등록 결재 요청이 전송되었습니다.')
 }
 
-function cancelCreateConfirm() {
-  createConfirmOpen.value = false
+function cancelCreateApprovalRequest() {
+  approvalRequestOpen.value = false
 }
 
 function handleSave(formValue) {
@@ -515,7 +408,7 @@ function handleSave(formValue) {
       ...formValue,
       items: (formValue.items ?? []).map((item) => ({ ...item })),
     }
-    createConfirmOpen.value = true
+    approvalRequestOpen.value = true
     return
   }
 
@@ -703,21 +596,16 @@ function handleProductSelect(product) {
       @save="handleSave"
     />
 
-    <ConfirmModal
-      :open="createConfirmOpen"
-      title="PI 등록 확인"
-      message="입력한 정보로 PI를 등록하시겠습니까?"
-      :detail-rows="createConfirmRows"
-      :table-columns="createConfirmTableColumns"
-      :table-rows="createConfirmTableRows"
-      :summary-rows="createConfirmSummaryRows"
-      confirm-label="등록"
-      cancel-label="취소"
-      helper-text="입력한 내용을 다시 확인한 뒤 등록하세요."
-      width="max-w-4xl"
-      :z-index="60"
-      @confirm="confirmCreate"
-      @cancel="cancelCreateConfirm"
+    <ApprovalRequestModal
+      :open="approvalRequestOpen"
+      title="PI 등록 결재 요청"
+      message="선택한 결재자에게 PI 등록 결재 요청을 전송하시겠습니까?"
+      :request-rows="createApprovalRequestRows"
+      :document-rows="createApprovalDocumentRows"
+      helper-text="요청 후 PI는 결재대기 상태로 등록되며, 승인 전까지 확정 처리되지 않습니다."
+      confirm-label="결재 요청"
+      @confirm="confirmCreateApprovalRequest"
+      @cancel="cancelCreateApprovalRequest"
     />
 
     <ConfirmModal

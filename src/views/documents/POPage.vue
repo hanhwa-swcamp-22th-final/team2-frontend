@@ -17,6 +17,7 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import POFormModal from '@/components/domain/document/POFormModal.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
+import { usePiDocuments } from '@/stores/piDocuments'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
@@ -61,11 +62,7 @@ const statusOptions = [
   { value: '확정', label: '확정' },
   { value: '취소', label: '취소' },
 ]
-const piRowsSource = [
-  { id: 'PI26001', clientName: 'COOLSAY SDN BHD', currency: 'USD', deliveryDate: '2026/04/15' },
-  { id: 'PI26002', clientName: 'TechBridge GmbH', currency: 'EUR', deliveryDate: '2026/05/20' },
-  { id: 'PI26003', clientName: 'Pacific Trading Inc.', currency: 'USD', deliveryDate: '2026/06/01' },
-]
+const piRowsSource = usePiDocuments()
 const clientRowsSource = [
   { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
   { id: 'CL002', name: 'TechBridge GmbH', country: '독일' },
@@ -88,14 +85,18 @@ const columns = [
 const initialRows = [
   {
     id: 'PO26001',
+    piId: 'PI26001',
     issueDate: '2026/02/05',
     clientName: 'COOLSAY SDN BHD',
     country: '말레이시아',
     itemName: 'H-Beam 482x300x11x15',
     amount: '$42,400',
+    currency: 'USD',
     manager: '김영업',
     status: '확정',
     deliveryDate: '2026/04/20',
+    sourceDeliveryDate: '2026/04/15',
+    deliveryDateOverride: true,
   },
   {
     id: 'PO26002',
@@ -130,8 +131,8 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
 
 const piRows = computed(() => {
   const keyword = piSearchKeyword.value.trim().toLowerCase()
-  if (!keyword) return piRowsSource
-  return piRowsSource.filter((row) => [row.id, row.clientName, row.currency, row.deliveryDate].some((value) => value.toLowerCase().includes(keyword)))
+  if (!keyword) return piRowsSource.value
+  return piRowsSource.value.filter((row) => [row.id, row.clientName, row.currency, row.deliveryDate].some((value) => value.toLowerCase().includes(keyword)))
 })
 
 const clientRows = computed(() => {
@@ -179,35 +180,94 @@ function openCreateForm() {
   formOpen.value = true
 }
 
+function closeForm() {
+  formOpen.value = false
+}
+
 function openEditForm(row) {
-  selectedPi.value = piRowsSource.find((pi) => pi.id === (row.id === 'PO26001' ? 'PI26001' : '')) ?? null
+  selectedPi.value = piRowsSource.value.find((pi) => pi.id === (row.piId || row.linkedPiId || '')) ?? null
   selectedClient.value = clientRowsSource.find((client) => client.name === row.clientName) ?? null
   formMode.value = 'edit'
   selectedRow.value = {
     id: row.id,
-    piId: row.id === 'PO26001' ? 'PI26001' : '',
+    piId: row.piId || row.linkedPiId || '',
     clientName: row.clientName,
+    currency: row.currency || selectedPi.value?.currency || '',
     deliveryDate: row.deliveryDate,
+    sourceDeliveryDate: row.sourceDeliveryDate || selectedPi.value?.deliveryDate || row.deliveryDate,
+    deliveryDateOverride: Boolean(row.deliveryDateOverride),
   }
   formOpen.value = true
 }
 
+function getTodaySlashDate() {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}/${month}/${day}`
+}
+
+function parseAmount(value) {
+  const normalized = String(value ?? '').replace(/[^0-9.-]/g, '')
+  return Number.parseFloat(normalized || '0') || 0
+}
+
+function formatAmount(currency, value) {
+  const symbolMap = { USD: '$', EUR: '€', JPY: '¥', KRW: '₩' }
+  const symbol = symbolMap[currency] ?? ''
+  return `${symbol}${Number(value || 0).toLocaleString()}`
+}
+
+function getLinkedPiItems(linkedPi) {
+  return linkedPi?.items ?? []
+}
+
+function buildRowPayload(formValue) {
+  const matchedClient = clientRowsSource.find((client) => client.name === formValue.clientName)
+  const linkedPi = piRowsSource.value.find((pi) => pi.id === formValue.linkedPiId)
+  const linkedItems = getLinkedPiItems(linkedPi)
+  const totalAmount = linkedItems.reduce((sum, item) => sum + parseAmount(item.amount), 0)
+
+  return {
+    issueDate: getTodaySlashDate(),
+    clientName: formValue.clientName || '거래처 미선택',
+    country: linkedPi?.country || matchedClient?.country || selectedClient.value?.country || '-',
+    itemName: linkedItems[0]?.name || (linkedPi ? 'PI 연결 품목' : '품목 미입력'),
+    amount: formatAmount(linkedPi?.currency || formValue.currency || 'USD', totalAmount),
+    currency: linkedPi?.currency || formValue.currency || '',
+    clientAddress: linkedPi?.clientAddress || '',
+    clientCode: linkedPi?.clientCode || '',
+    clientEmail: linkedPi?.clientEmail || '',
+    clientTel: linkedPi?.clientTel || '',
+    buyerName: linkedPi?.buyerName || '',
+    incoterms: linkedPi?.incoterms || '',
+    namedPlace: linkedPi?.namedPlace || '',
+    deliveryDate: formValue.deliveryDate ? formValue.deliveryDate.replaceAll('-', '/') : '-',
+    sourceDeliveryDate: formValue.sourceDeliveryDate ? formValue.sourceDeliveryDate.replaceAll('-', '/') : '',
+    deliveryDateOverride: Boolean(formValue.linkedPiId && formValue.deliveryDateOverride),
+    items: linkedItems.map((item) => ({ ...item })),
+    linkedPiId: formValue.linkedPiId || '',
+    piId: formValue.linkedPiId || '',
+  }
+}
+
 function handleSave(formValue) {
   if (formMode.value === 'create') {
+    const nextRow = buildRowPayload(formValue)
+
     rowsData.value = [
       {
         id: `PO26${String(rowsData.value.length + 1).padStart(3, '0')}`,
-        issueDate: '2026/03/19',
-        clientName: formValue.clientName || '거래처 미선택',
-        country: '말레이시아',
-        itemName: formValue.linkedPiId ? 'PI 연결 품목' : '품목 미입력',
-        amount: '$0',
+        ...nextRow,
         manager: '김영업',
         status: '초안',
-        deliveryDate: formValue.deliveryDate ? formValue.deliveryDate.replaceAll('-', '/') : '-',
       },
       ...rowsData.value,
     ]
+    formOpen.value = false
+    selectedPi.value = null
+    selectedClient.value = null
     success('PO 작성 폼이 연결되었습니다.')
     return
   }
@@ -217,7 +277,12 @@ function handleSave(formValue) {
       ? {
         ...row,
         clientName: formValue.clientName || row.clientName,
+        currency: formValue.currency || row.currency,
         deliveryDate: formValue.deliveryDate ? formValue.deliveryDate.replaceAll('-', '/') : row.deliveryDate,
+        sourceDeliveryDate: formValue.sourceDeliveryDate ? formValue.sourceDeliveryDate.replaceAll('-', '/') : row.sourceDeliveryDate,
+        deliveryDateOverride: Boolean(formValue.deliveryDateOverride),
+        piId: formValue.linkedPiId || row.piId || '',
+        linkedPiId: formValue.linkedPiId || row.linkedPiId || '',
       }
       : row
   ))
@@ -397,7 +462,7 @@ function handleProductSelect(product) {
       :selected-client="selectedClient"
       @open-pi-search="piSearchOpen = true"
       @open-client-search="openClientSearch('form')"
-      @close="formOpen = false"
+      @close="closeForm"
       @save="handleSave"
     />
 
