@@ -204,6 +204,14 @@ function getTodaySlashDate() {
   return `${year}/${month}/${day}`
 }
 
+function resolveNextCollectionDate(row, nextStatusValue) {
+  if (nextStatusValue === 'PAID') {
+    return row.status === '수금완료' ? row.collectionDate : getTodaySlashDate()
+  }
+
+  return null
+}
+
 function resetFilters() {
   resetBaseFilters()
   currencyFilter.value = ''
@@ -237,9 +245,7 @@ function updateStatus(poId, value) {
       ? {
         ...row,
         status: value === 'PAID' ? '수금완료' : '미수금',
-        collectionDate: value === 'PAID' && row.status !== '수금완료'
-          ? getTodaySlashDate()
-          : row.collectionDate,
+        collectionDate: resolveNextCollectionDate(row, value),
       }
       : row
   ))
