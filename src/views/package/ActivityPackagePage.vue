@@ -37,9 +37,11 @@ onMounted(async () => {
 })
 
 const poColumns = [
-  { key: 'id',    label: 'PO번호' },
-  { key: 'title', label: '제목'   },
-  { key: 'date',  label: '날짜'   },
+  { key: 'id',           label: 'PO번호'  },
+  { key: 'issueDate',    label: '등록일'  },
+  { key: 'manager',      label: '담당자명' },
+  { key: 'country',      label: '나라'    },
+  { key: 'deliveryDate', label: '납기일'  },
 ]
 
 // ── PO 검색 모달 ───────────────────────────────────────────
