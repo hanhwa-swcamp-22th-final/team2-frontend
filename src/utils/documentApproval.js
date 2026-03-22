@@ -46,3 +46,23 @@ export function createDeleteApprovalMeta({ approver, requesterName, requestedAt 
     approvalRequestedAt: requestedAt,
   }
 }
+
+export function buildApprovalRequestRows({
+  approver,
+  requesterName,
+  requestedAt,
+  documentStatus,
+  requestStatus,
+  requestTypeLabel,
+  applyPolicy,
+}) {
+  return [
+    { label: '요청 유형', value: requestTypeLabel },
+    { label: '결재자', value: approver || '-' },
+    { label: '요청자', value: requesterName || '-' },
+    { label: '문서 상태', value: documentStatus || '-' },
+    { label: '요청 상태', value: requestStatus || '-' },
+    { label: '처리 방식', value: applyPolicy || '-', fullWidth: true },
+    { label: '요청 시각', value: requestedAt || '-' },
+  ]
+}

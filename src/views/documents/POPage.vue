@@ -21,6 +21,7 @@ import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { useToast } from '@/composables/useToast'
 import {
+  buildApprovalRequestRows,
   createDeleteApprovalMeta,
   createEditApprovalMeta,
   createRegistrationApprovalMeta,
@@ -399,14 +400,15 @@ function buildNextPoId() {
 const createApprovalRequestRows = computed(() => {
   if (!pendingCreateFormValue.value) return []
 
-  return [
-    { label: '요청 유형', value: '등록 요청' },
-    { label: '결재자', value: pendingCreateFormValue.value.approver || '-' },
-    { label: '요청자', value: getCurrentRequesterName() },
-    { label: '문서 상태', value: REGISTRATION_DOCUMENT_STATUS },
-    { label: '요청 상태', value: REGISTRATION_REQUEST_STATUS },
-    { label: '요청 시각', value: getRequestedAt() },
-  ]
+  return buildApprovalRequestRows({
+    approver: pendingCreateFormValue.value.approver,
+    requesterName: getCurrentRequesterName(),
+    requestedAt: getRequestedAt(),
+    documentStatus: REGISTRATION_DOCUMENT_STATUS,
+    requestStatus: REGISTRATION_REQUEST_STATUS,
+    requestTypeLabel: '등록 요청',
+    applyPolicy: '팀장 승인 후 PO가 신규 등록됩니다.',
+  })
 })
 
 const createApprovalDocumentRows = computed(() => {
@@ -473,14 +475,15 @@ const createApprovalItemSummaryRows = computed(() => {
 const editApprovalRequestRows = computed(() => {
   if (!pendingEditRequest.value) return []
 
-  return [
-    { label: '요청 유형', value: '수정 요청' },
-    { label: '결재자', value: pendingEditRequest.value.approver || '-' },
-    { label: '요청자', value: getCurrentRequesterName() },
-    { label: '문서 상태', value: EDIT_REQUEST_DOCUMENT_STATUS },
-    { label: '요청 상태', value: EDIT_REQUEST_STATUS },
-    { label: '요청 시각', value: getRequestedAt() },
-  ]
+  return buildApprovalRequestRows({
+    approver: pendingEditRequest.value.approver,
+    requesterName: getCurrentRequesterName(),
+    requestedAt: getRequestedAt(),
+    documentStatus: EDIT_REQUEST_DOCUMENT_STATUS,
+    requestStatus: EDIT_REQUEST_STATUS,
+    requestTypeLabel: '수정 요청',
+    applyPolicy: '팀장 승인 후 PO 수정 내용이 반영됩니다.',
+  })
 })
 
 const editApprovalDocumentRows = computed(() => {
@@ -549,14 +552,15 @@ const editApprovalItemSummaryRows = computed(() => {
 const deleteApprovalRequestRows = computed(() => {
   if (!selectedRow.value || !deleteOpen.value) return []
 
-  return [
-    { label: '요청 유형', value: '삭제 요청' },
-    { label: '결재자', value: getDefaultDeleteApprover(selectedRow.value) },
-    { label: '요청자', value: getCurrentRequesterName() },
-    { label: '문서 상태', value: DELETE_REQUEST_DOCUMENT_STATUS },
-    { label: '요청 상태', value: DELETE_REQUEST_STATUS },
-    { label: '요청 시각', value: getRequestedAt() },
-  ]
+  return buildApprovalRequestRows({
+    approver: getDefaultDeleteApprover(selectedRow.value),
+    requesterName: getCurrentRequesterName(),
+    requestedAt: getRequestedAt(),
+    documentStatus: DELETE_REQUEST_DOCUMENT_STATUS,
+    requestStatus: DELETE_REQUEST_STATUS,
+    requestTypeLabel: '삭제 요청',
+    applyPolicy: '팀장 승인 후 PO가 삭제 처리됩니다.',
+  })
 })
 
 const deleteApprovalDocumentRows = computed(() => {
@@ -923,6 +927,7 @@ function handleProductSelect(product) {
       title="PO 등록 결재 요청"
       message="선택한 결재자에게 PO 등록 결재 요청을 전송하시겠습니까?"
       :request-rows="createApprovalRequestRows"
+      request-section-title="팀장 결재 정보"
       :document-rows="createApprovalDocumentRows"
       :item-columns="approvalItemColumns"
       :item-rows="createApprovalItemRows"
@@ -943,6 +948,7 @@ function handleProductSelect(product) {
       title="PO 수정 결재 요청"
       message="변경 사항을 확인한 뒤 선택한 결재자에게 PO 수정 결재 요청을 전송하시겠습니까?"
       :request-rows="editApprovalRequestRows"
+      request-section-title="팀장 결재 정보"
       :document-rows="editApprovalDocumentRows"
       :change-columns="approvalChangeColumns"
       :change-rows="pendingEditRequest?.changeRows ?? []"
@@ -966,6 +972,7 @@ function handleProductSelect(product) {
       title="PO 삭제 결재 요청"
       message="선택한 PO 문서의 삭제 결재 요청을 전송하시겠습니까?"
       :request-rows="deleteApprovalRequestRows"
+      request-section-title="팀장 결재 정보"
       :document-rows="deleteApprovalDocumentRows"
       :item-columns="approvalItemColumns"
       :item-rows="deleteApprovalItemRows"
