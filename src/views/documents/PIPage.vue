@@ -31,7 +31,7 @@ import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const { success } = useToast()
+const { success, warning } = useToast()
 
 const isAdvancedOpen = ref(false)
 const formOpen = ref(false)
@@ -39,6 +39,7 @@ const formMode = ref('create')
 const selectedRow = ref(null)
 const deleteOpen = ref(false)
 const approvalRequestOpen = ref(false)
+const editApprovalRequestOpen = ref(false)
 const clientSearchOpen = ref(false)
 const clientSearchKeyword = ref('')
 const selectedClient = ref(null)
@@ -48,6 +49,7 @@ const productSearchOpen = ref(false)
 const productSearchKeyword = ref('')
 const clientSearchContext = ref('filter')
 const pendingCreateFormValue = ref(null)
+const pendingEditRequest = ref(null)
 
 const managerOptions = [
   { value: '김영업', label: '김영업' },
@@ -129,6 +131,12 @@ const approvalItemColumns = [
   { key: 'unitPrice', label: '단가', align: 'right' },
   { key: 'amount', label: '금액', align: 'right' },
   { key: 'remark', label: '비고', align: 'left' },
+]
+
+const approvalChangeColumns = [
+  { key: 'label', label: '변경 항목', align: 'left' },
+  { key: 'before', label: '원본값', align: 'left' },
+  { key: 'after', label: '변경값', align: 'left' },
 ]
 
 const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
@@ -242,11 +250,13 @@ function openCreateForm() {
   formMode.value = 'create'
   selectedRow.value = null
   selectedClient.value = null
+  pendingEditRequest.value = null
   formOpen.value = true
 }
 
 function closeForm() {
   formOpen.value = false
+  pendingEditRequest.value = null
 }
 
 function openEditForm(row) {
@@ -331,6 +341,75 @@ function buildRowPayload(formValue) {
   }
 }
 
+function createComparableItem(item) {
+  const quantity = parseAmount(item.qty ?? item.quantity)
+  const unitPrice = parseAmount(item.unitPrice)
+  const amount = parseAmount(item.amount) || quantity * unitPrice
+
+  return {
+    name: item.name ?? '',
+    qty: quantity,
+    unit: item.unit ?? '',
+    unitPrice,
+    amount,
+    remark: item.remark ?? '',
+  }
+}
+
+function createItemDigest(items) {
+  if (!items.length) return '없음'
+
+  const firstItem = items[0]
+  const quantityLabel = firstItem.qty > 0
+    ? ` / ${firstItem.qty.toLocaleString()}${firstItem.unit ? ` ${firstItem.unit}` : ''}`
+    : ''
+  const tailLabel = items.length > 1 ? ` 외 ${items.length - 1}건` : ''
+
+  return `${firstItem.name || '품목'}${quantityLabel}${tailLabel}`
+}
+
+function createComparableSnapshot(source) {
+  const currency = source.currency || 'USD'
+  const items = (source.items ?? []).map(createComparableItem)
+  const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
+
+  return {
+    id: source.id ?? '',
+    clientName: source.clientName ?? '',
+    clientAddress: source.clientAddress ?? '',
+    buyerName: source.buyerName ?? '',
+    currency,
+    issueDate: formatSlashDate(source.issueDate),
+    deliveryDate: formatSlashDate(source.deliveryDate),
+    incoterms: source.incoterms ?? '',
+    namedPlace: source.namedPlace ?? '',
+    items,
+    amount: formatAmount(currency, totalAmount),
+  }
+}
+
+function buildChangeRows(originalSnapshot, revisedSnapshot) {
+  return [
+    { label: '거래처', before: originalSnapshot.clientName || '-', after: revisedSnapshot.clientName || '-' },
+    { label: '영문주소', before: originalSnapshot.clientAddress || '-', after: revisedSnapshot.clientAddress || '-' },
+    { label: '바이어', before: originalSnapshot.buyerName || '-', after: revisedSnapshot.buyerName || '-' },
+    { label: '통화', before: originalSnapshot.currency || '-', after: revisedSnapshot.currency || '-' },
+    { label: '발행일', before: originalSnapshot.issueDate || '-', after: revisedSnapshot.issueDate || '-' },
+    { label: '납기일', before: originalSnapshot.deliveryDate || '-', after: revisedSnapshot.deliveryDate || '-' },
+    {
+      label: '인코텀즈',
+      before: formatIncotermsLabel(originalSnapshot.incoterms, originalSnapshot.namedPlace) || '-',
+      after: formatIncotermsLabel(revisedSnapshot.incoterms, revisedSnapshot.namedPlace) || '-',
+    },
+    {
+      label: '품목 목록',
+      before: createItemDigest(originalSnapshot.items),
+      after: createItemDigest(revisedSnapshot.items),
+    },
+    { label: '총액', before: originalSnapshot.amount || '-', after: revisedSnapshot.amount || '-' },
+  ].filter((row) => row.before !== row.after)
+}
+
 function getCurrentRequesterName() {
   return authStore.currentUser?.name || '김영업'
 }
@@ -406,6 +485,61 @@ const createApprovalItemSummaryRows = computed(() => {
   ]
 })
 
+const editApprovalRequestRows = computed(() => {
+  if (!pendingEditRequest.value) return []
+
+  return [
+    { label: '요청 유형', value: '수정 요청' },
+    { label: '결재자', value: pendingEditRequest.value.approver || '-' },
+    { label: '요청자', value: getCurrentRequesterName() },
+    { label: '문서 상태', value: '결재대기' },
+    { label: '요청 상태', value: '수정요청' },
+    { label: '요청 시각', value: getRequestedAt() },
+  ]
+})
+
+const editApprovalDocumentRows = computed(() => {
+  if (!pendingEditRequest.value) return []
+
+  const { revisedSnapshot, id } = pendingEditRequest.value
+
+  return [
+    { label: '대상 PI 번호', value: id || '-' },
+    { label: '거래처', value: revisedSnapshot.clientName || '-' },
+    { label: '영문주소', value: revisedSnapshot.clientAddress || '-', fullWidth: true },
+    { label: '바이어', value: revisedSnapshot.buyerName || '-' },
+    { label: '통화', value: revisedSnapshot.currency || '-' },
+    { label: '발행일', value: revisedSnapshot.issueDate || '-' },
+    { label: '납기일', value: revisedSnapshot.deliveryDate || '-' },
+    { label: '인코텀즈', value: formatIncotermsLabel(revisedSnapshot.incoterms, revisedSnapshot.namedPlace) || '-' },
+  ]
+})
+
+const editApprovalItemRows = computed(() => {
+  if (!pendingEditRequest.value) return []
+
+  return pendingEditRequest.value.revisedSnapshot.items.map((item, index) => ({
+    id: `${item.name || 'item'}-${index}`,
+    name: item.name || '-',
+    qty: item.qty > 0 ? item.qty.toLocaleString() : '-',
+    unit: item.unit || '-',
+    unitPrice: formatAmount(pendingEditRequest.value.revisedSnapshot.currency, item.unitPrice),
+    amount: formatAmount(pendingEditRequest.value.revisedSnapshot.currency, item.amount),
+    remark: item.remark || '-',
+  }))
+})
+
+const editApprovalItemSummaryRows = computed(() => {
+  if (!pendingEditRequest.value) return []
+
+  const { revisedSnapshot } = pendingEditRequest.value
+
+  return [
+    { label: '품목 건수', value: `${revisedSnapshot.items.length}건` },
+    { label: '총액', value: revisedSnapshot.amount, emphasis: true },
+  ]
+})
+
 function confirmCreateApprovalRequest() {
   if (!pendingCreateFormValue.value) return
 
@@ -438,6 +572,39 @@ function cancelCreateApprovalRequest() {
   approvalRequestOpen.value = false
 }
 
+function confirmEditApprovalRequest() {
+  if (!pendingEditRequest.value) return
+
+  const requesterName = getCurrentRequesterName()
+  const requestedAt = getRequestedAt()
+
+  rowsData.value = rowsData.value.map((row) => (
+    row.id === pendingEditRequest.value.id
+      ? {
+        ...row,
+        ...pendingEditRequest.value.nextRow,
+        approver: pendingEditRequest.value.approver || row.approver || '',
+        status: '결재대기',
+        approvalStatus: '대기',
+        requestStatus: '수정요청',
+        approvalAction: '수정',
+        approvalRequestedBy: requesterName,
+        approvalRequestedAt: requestedAt,
+      }
+      : row
+  ))
+
+  editApprovalRequestOpen.value = false
+  pendingEditRequest.value = null
+  formOpen.value = false
+  selectedClient.value = null
+  success('PI 수정 결재 요청이 전송되었습니다.')
+}
+
+function cancelEditApprovalRequest() {
+  editApprovalRequestOpen.value = false
+}
+
 function handleSave(formValue) {
   const { nextRow } = buildRowPayload(formValue)
 
@@ -450,15 +617,27 @@ function handleSave(formValue) {
     return
   }
 
-  rowsData.value = rowsData.value.map((row) => (
-    row.id === selectedRow.value?.id
-      ? {
-        ...row,
-        ...nextRow,
-      }
-      : row
-  ))
-  success(`${selectedRow.value?.id} 수정 폼이 연결되었습니다.`)
+  const originalSnapshot = createComparableSnapshot(selectedRow.value ?? {})
+  const revisedSnapshot = createComparableSnapshot({
+    id: selectedRow.value?.id,
+    ...selectedRow.value,
+    ...nextRow,
+  })
+  const changeRows = buildChangeRows(originalSnapshot, revisedSnapshot)
+
+  if (!changeRows.length) {
+    warning('변경된 내용이 없습니다.')
+    return
+  }
+
+  pendingEditRequest.value = {
+    id: selectedRow.value?.id,
+    approver: formValue.approver || '',
+    nextRow,
+    revisedSnapshot,
+    changeRows,
+  }
+  editApprovalRequestOpen.value = true
 }
 
 function openDeleteModal(row) {
@@ -650,6 +829,27 @@ function handleProductSelect(product) {
       confirm-label="결재 요청"
       @confirm="confirmCreateApprovalRequest"
       @cancel="cancelCreateApprovalRequest"
+    />
+
+    <ApprovalRequestModal
+      :open="editApprovalRequestOpen"
+      title="PI 수정 결재 요청"
+      message="변경 사항을 확인한 뒤 선택한 결재자에게 PI 수정 결재 요청을 전송하시겠습니까?"
+      :request-rows="editApprovalRequestRows"
+      :document-rows="editApprovalDocumentRows"
+      :change-columns="approvalChangeColumns"
+      :change-rows="pendingEditRequest?.changeRows ?? []"
+      :item-columns="approvalItemColumns"
+      :item-rows="editApprovalItemRows"
+      :item-summary-rows="editApprovalItemSummaryRows"
+      document-section-title="수정 대상 PI 정보"
+      change-section-title="변경 사항 비교"
+      item-section-title="변경 후 PI 품목 정보"
+      helper-text="요청 후 PI는 결재대기 상태가 되며, 승인 전까지 수정 내용이 확정되지 않습니다."
+      width="max-w-6xl"
+      confirm-label="수정 요청"
+      @confirm="confirmEditApprovalRequest"
+      @cancel="cancelEditApprovalRequest"
     />
 
     <ConfirmModal

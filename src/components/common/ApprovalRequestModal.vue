@@ -31,6 +31,18 @@ defineProps({
     type: String,
     default: '문서 요약',
   },
+  changeColumns: {
+    type: Array,
+    default: () => [],
+  },
+  changeRows: {
+    type: Array,
+    default: () => [],
+  },
+  changeSectionTitle: {
+    type: String,
+    default: '변경 사항',
+  },
   itemColumns: {
     type: Array,
     default: () => [],
@@ -149,6 +161,60 @@ function getItemAlignmentClass(align) {
             </dd>
           </div>
         </dl>
+      </div>
+
+      <div
+        v-if="changeColumns.length"
+        class="overflow-hidden rounded-lg border border-slate-200 bg-white"
+      >
+        <div class="border-b border-slate-100 bg-slate-50 px-4 py-3">
+          <p class="text-sm font-semibold text-slate-800">{{ changeSectionTitle }}</p>
+        </div>
+
+        <div class="max-h-[280px] overflow-auto">
+          <table class="min-w-full border-collapse">
+            <thead class="bg-slate-50">
+              <tr>
+                <th
+                  v-for="column in changeColumns"
+                  :key="column.key"
+                  class="border-b border-r border-slate-200 px-4 py-3 text-xs font-semibold text-slate-600 last:border-r-0"
+                  :class="getItemAlignmentClass(column.align)"
+                >
+                  {{ column.label }}
+                </th>
+              </tr>
+            </thead>
+
+            <tbody v-if="changeRows.length" class="bg-white">
+              <tr
+                v-for="(row, rowIndex) in changeRows"
+                :key="row.id ?? rowIndex"
+                class="align-top"
+              >
+                <td
+                  v-for="column in changeColumns"
+                  :key="`${column.key}-${rowIndex}`"
+                  class="border-b border-r border-slate-200 px-4 py-3 text-sm text-slate-700 last:border-r-0"
+                  :class="getItemAlignmentClass(column.align)"
+                >
+                  {{ row[column.key] || '-' }}
+                </td>
+              </tr>
+            </tbody>
+
+            <tbody v-else class="bg-white">
+              <tr>
+                <td
+                  :colspan="changeColumns.length"
+                  class="px-4 py-10 text-center text-sm text-slate-400"
+                >
+                  변경 사항이 없습니다.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div
