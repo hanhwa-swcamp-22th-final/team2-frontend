@@ -236,7 +236,7 @@ function updateStatus(poId, value) {
 
 <template>
   <div class="fade-in space-y-5">
-    <PageHeader title="매출·수금 현황" icon-class="fas fa-chart-bar" />
+    <PageHeader title="매출·수금 현황 관리" icon-class="fas fa-chart-bar" />
 
     <FilterToolbarCard
       v-model="filters.keyword"

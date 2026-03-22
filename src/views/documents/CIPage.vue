@@ -186,7 +186,7 @@ function handleProductSelect(row) {
 
 <template>
   <div class="fade-in space-y-5">
-    <PageHeader title="Commercial Invoice" icon-class="fas fa-file-invoice-dollar">
+    <PageHeader title="Commercial Invoice 관리" icon-class="fas fa-file-invoice-dollar">
       <template #actions>
         <BaseButton variant="secondary" size="sm">
           <template #leading>

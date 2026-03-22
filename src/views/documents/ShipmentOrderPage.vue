@@ -213,7 +213,7 @@ function downloadPdf(row) {
 
 <template>
   <div class="fade-in space-y-5">
-    <PageHeader title="출하지시서" icon-class="fas fa-truck-loading">
+    <PageHeader title="출하지시서 관리" icon-class="fas fa-truck-loading">
       <template #actions>
         <BaseButton variant="secondary" size="sm" @click="currentOutputTarget ? printDocument(currentOutputTarget) : toast.info('출력할 출하지시서가 없습니다.', '인쇄')">
           <template #leading>

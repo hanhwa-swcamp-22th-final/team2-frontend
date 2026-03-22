@@ -214,7 +214,7 @@ function downloadPdf(row) {
 
 <template>
   <div class="fade-in space-y-5">
-    <PageHeader title="생산지시서" icon-class="fas fa-industry">
+    <PageHeader title="생산지시서 관리" icon-class="fas fa-industry">
       <template #actions>
         <BaseButton variant="secondary" size="sm" @click="currentOutputTarget ? printDocument(currentOutputTarget) : toast.info('출력할 생산지시서가 없습니다.', '인쇄')">
           <template #leading>

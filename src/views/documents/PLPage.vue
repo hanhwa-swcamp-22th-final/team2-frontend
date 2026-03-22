@@ -188,7 +188,7 @@ function handleProductSelect(row) {
 
 <template>
   <div class="fade-in space-y-5">
-    <PageHeader title="Packing List" icon-class="fas fa-box-open">
+    <PageHeader title="Packing List 관리" icon-class="fas fa-box-open">
       <template #actions>
         <BaseButton variant="secondary" size="sm">
           <template #leading>

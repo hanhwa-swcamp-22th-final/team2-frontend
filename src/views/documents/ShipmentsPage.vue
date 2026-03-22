@@ -141,7 +141,7 @@ function searchRows() {
 
 <template>
   <div class="fade-in space-y-6">
-    <PageHeader title="출하 현황" icon-class="fas fa-truck" />
+    <PageHeader title="출하 현황 관리" icon-class="fas fa-truck" />
 
     <FilterToolbarCard
       v-model="filters.keyword"

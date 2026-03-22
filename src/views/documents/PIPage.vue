@@ -774,7 +774,7 @@ function handleProductSelect(product) {
 
 <template>
   <div class="fade-in space-y-5">
-    <PageHeader title="Proforma Invoice" icon-class="fas fa-file-invoice">
+    <PageHeader title="Proforma Invoice 관리" icon-class="fas fa-file-invoice">
       <template #actions>
         <BaseButton @click="openCreateForm">
           <template #leading>

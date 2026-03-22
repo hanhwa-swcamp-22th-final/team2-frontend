@@ -760,7 +760,7 @@ function handleProductSelect(product) {
 
 <template>
   <div class="fade-in space-y-5">
-    <PageHeader title="Purchase Order" icon-class="fas fa-file-contract">
+    <PageHeader title="Purchase Order 관리" icon-class="fas fa-file-contract">
       <template #actions>
         <BaseButton @click="openCreateForm">
           <template #leading>
