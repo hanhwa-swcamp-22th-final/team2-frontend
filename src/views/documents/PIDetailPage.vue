@@ -71,6 +71,22 @@ const previewFields = computed(() => {
   ]
 })
 
+const summaryRows = computed(() => {
+  if (!detail.value) return []
+
+  return [
+    { label: '거래처', value: detail.value.clientName },
+    { label: '영업담당자', value: detail.value.manager || '-' },
+    { label: '통화 / 총액', value: `${detail.value.currency} / ${detail.value.totalAmount}` },
+    { label: '납기일', value: detail.value.deliveryDate || '-' },
+  ]
+})
+
+const documentNote = computed(() => {
+  if (!detail.value) return '-'
+  return detail.value.remarks || '-'
+})
+
 const currencySymbolMap = {
   KRW: '₩',
   USD: '$',
@@ -334,10 +350,21 @@ function confirmDelete() {
       </DetailPageHeader>
     </div>
 
+    <div class="mb-6 grid grid-cols-1 overflow-hidden rounded-xl border border-slate-200 bg-white lg:grid-cols-4">
+      <div
+        v-for="row in summaryRows"
+        :key="row.label"
+        class="border-b border-slate-200 px-5 py-4 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0"
+      >
+        <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">{{ row.label }}</div>
+        <div class="mt-1 text-sm font-semibold text-slate-900">{{ row.value }}</div>
+      </div>
+    </div>
+
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div class="space-y-4 lg:col-span-2">
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 class="mb-4 font-bold text-slate-800">기본 정보</h3>
+          <h3 class="mb-4 font-bold text-slate-800">문서 기본정보</h3>
           <div class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
             <div>
               <span class="text-slate-500">거래처</span>
@@ -348,8 +375,34 @@ function confirmDelete() {
               <div class="mt-0.5 break-words font-medium">{{ detail.buyer }}</div>
             </div>
             <div>
+              <span class="text-slate-500">영문주소</span>
+              <div class="mt-0.5 break-words">{{ detail.clientAddress || '-' }}</div>
+            </div>
+            <div>
+              <span class="text-slate-500">국가</span>
+              <div class="mt-0.5">{{ detail.country || '-' }}</div>
+            </div>
+            <div>
+              <span class="text-slate-500">발행일</span>
+              <div class="mt-0.5">{{ detail.issueDate }}</div>
+            </div>
+            <div>
+              <span class="text-slate-500">PI 번호</span>
+              <div class="mt-0.5 font-medium">{{ detail.id }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 class="mb-4 font-bold text-slate-800">거래 조건 정보</h3>
+          <div class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+            <div>
               <span class="text-slate-500">통화</span>
               <div class="mt-0.5">{{ detail.currency }}</div>
+            </div>
+            <div>
+              <span class="text-slate-500">총액</span>
+              <div class="mt-0.5 font-semibold text-slate-900">{{ detail.totalAmount }}</div>
             </div>
             <div>
               <span class="text-slate-500">인코텀즈</span>
@@ -359,49 +412,59 @@ function confirmDelete() {
               <span class="text-slate-500">납기일</span>
               <div class="mt-0.5">{{ detail.deliveryDate }}</div>
             </div>
-            <div>
-              <span class="text-slate-500">발행일</span>
-              <div class="mt-0.5">{{ detail.issueDate }}</div>
+            <div class="sm:col-span-2">
+              <span class="text-slate-500">Named Place</span>
+              <div class="mt-0.5">{{ detail.namedPlace || '-' }}</div>
             </div>
           </div>
         </div>
 
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 class="mb-4 font-bold text-slate-800">품목 목록</h3>
+          <h3 class="mb-4 font-bold text-slate-800">품목 내역</h3>
           <div class="overflow-x-auto">
-            <table class="w-full min-w-[620px] text-sm">
+            <table class="w-full min-w-[760px] text-sm">
               <thead class="bg-gray-50">
                 <tr>
                   <th class="p-3 text-left">품목</th>
+                  <th class="p-3 text-center">단위</th>
                   <th class="p-3 text-right">수량</th>
                   <th class="p-3 text-right">단가</th>
                   <th class="p-3 text-right">금액</th>
+                  <th class="p-3 text-left">비고</th>
                 </tr>
               </thead>
               <tbody class="divide-y">
                 <tr v-for="item in detail.items" :key="`${detail.id}-${item.name}`">
                   <td class="p-3">{{ item.name }}</td>
+                  <td class="p-3 text-center">{{ item.unit || '-' }}</td>
                   <td class="p-3 text-right">{{ item.quantity }}</td>
                   <td class="p-3 text-right">{{ item.unitPrice }}</td>
                   <td class="p-3 text-right font-semibold">{{ item.amount }}</td>
+                  <td class="p-3 text-slate-600">{{ item.remark || '-' }}</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr class="border-t border-slate-200">
-                  <td colspan="3" class="p-3 text-right text-xs font-bold uppercase tracking-wider text-slate-600">
+                  <td colspan="4" class="p-3 text-right text-xs font-bold uppercase tracking-wider text-slate-600">
                     합계
                   </td>
                   <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ detail.totalAmount }}</td>
+                  <td></td>
                 </tr>
               </tfoot>
             </table>
           </div>
         </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 class="mb-3 font-bold text-slate-800">비고</h3>
+          <p class="text-sm leading-6 text-slate-700">{{ documentNote }}</p>
+        </div>
       </div>
 
       <div class="space-y-4">
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 class="mb-3 font-bold text-slate-800">결재 상태</h3>
+          <h3 class="mb-3 font-bold text-slate-800">결재 정보</h3>
           <div v-if="approvalInfoRows.length" class="space-y-3 text-sm">
             <div
               v-for="row in approvalInfoRows"
@@ -422,7 +485,7 @@ function confirmDelete() {
         </div>
 
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 class="mb-3 font-bold text-slate-800">연결 문서</h3>
+          <h3 class="mb-3 font-bold text-slate-800">참조 문서</h3>
           <div class="space-y-2 text-sm">
             <template v-if="detail.linkedDocuments.length">
               <button
@@ -442,16 +505,11 @@ function confirmDelete() {
         </div>
 
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 class="mb-3 font-bold text-slate-800">담당자</h3>
-          <div class="text-sm">{{ detail.manager }}</div>
-        </div>
-
-        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <div class="mb-3 flex items-center justify-between">
-            <h3 class="font-bold text-slate-800">수정 이력</h3>
+            <h3 class="font-bold text-slate-800">변경 이력</h3>
           </div>
           <div class="text-xs text-slate-400">
-            {{ detail.revisionHistory.length ? detail.revisionHistory.join(', ') : '수정 이력 없음' }}
+            {{ detail.revisionHistory.length ? detail.revisionHistory.join(', ') : '변경 이력 없음' }}
           </div>
         </div>
       </div>

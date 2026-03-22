@@ -19,6 +19,7 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
+import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useToast } from '@/composables/useToast'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
 import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
@@ -67,41 +68,7 @@ const columns = [
   { key: 'actions', label: '', align: 'center', width: '120px' },
 ]
 
-const rowsData = ref([
-  {
-    id: 'SO2026001',
-    issueDate: '2026/02/24',
-    poId: 'PO26001',
-    clientName: 'COOLSAY SDN BHD',
-    country: '말레이시아',
-    itemName: 'H-Beam 482x300x11x15',
-    manager: '김영업',
-    status: '출하완료',
-    dueDate: '2026/04/20',
-  },
-  {
-    id: 'SO2026002',
-    issueDate: '2026/03/03',
-    poId: 'PO26002',
-    clientName: 'TechBridge GmbH',
-    country: '독일',
-    itemName: 'H-Beam 482x300x11x15',
-    manager: '김영업',
-    status: '준비완료',
-    dueDate: '2026/05/25',
-  },
-  {
-    id: 'SO2026003',
-    issueDate: '2026/03/14',
-    poId: 'PO26003',
-    clientName: 'Pacific Trading Inc.',
-    country: '미국',
-    itemName: 'Lubricant Oil SAE 10W-40',
-    manager: '정영업',
-    status: '준비완료',
-    dueDate: '2026/06/05',
-  },
-])
+const rowsData = useShipmentOrderDocuments()
 
 const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
   keywordFields: ['id', 'issueDate', 'poId', 'clientName', 'country', 'itemName', 'manager', 'status', 'dueDate'],
