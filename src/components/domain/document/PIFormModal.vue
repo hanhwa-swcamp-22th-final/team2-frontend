@@ -45,26 +45,28 @@ const defaultApproverOptions = [
   '최관리 (경영지원 · 관리자)',
   '박리드 (영업지원 · 팀장)',
 ]
-const defaultProductOptions = [
-  'H-Beam 482x300x11x15',
-  'H-Beam 488x300x11x18',
-  'Steel Girder 340x250x9x14',
-  'Lubricant Oil SAE 10W-40',
-  'Industrial Grease EP-2',
-  'Hydraulic Oil ISO VG 46',
-  'Seamless Steel Pipe 168x7',
-  'Welded Steel Pipe 323x6.4',
-  'Hydraulic Cylinder 100x500',
-  'Gear Pump GP-20',
+const fallbackProductCatalog = [
+  { id: '1', code: 'ITM001', name: 'Wireless Presenter', spec: '2.4GHz / 100m / USB Receiver / Laser Pointer', unit: 'EA', unitPrice: 55000 },
+  { id: '2', code: 'ITM002', name: 'Tablet PC 10"', spec: '10.1" FHD / Octa-core / 4GB / 64GB / WiFi', unit: 'EA', unitPrice: 650000 },
+  { id: '3', code: 'ITM003', name: 'Smart Projector FHD', spec: 'FHD 1920×1080 / 3500lm / HDMI / WiFi / BT', unit: 'EA', unitPrice: 780000 },
+  { id: '4', code: 'ITM004', name: 'All-in-One PC 24"', spec: '24" FHD / Intel i5 / 16GB / 512GB SSD', unit: 'EA', unitPrice: 1650000 },
+  { id: '5', code: 'ITM005', name: 'Network Switch 24Port', spec: '24-Port / Gigabit / PoE+ / Managed / 19" Rack', unit: 'EA', unitPrice: 420000 },
+  { id: '6', code: 'ITM006', name: 'Multifunction Printer A3', spec: 'A3 / Print·Scan·Copy·Fax / 40ppm / WiFi', unit: 'EA', unitPrice: 1200000 },
+  { id: '7', code: 'ITM007', name: 'USB-C Hub 7-in-1', spec: 'USB-C / HDMI 4K / USB3.0×3 / SD / PD100W', unit: 'EA', unitPrice: 48000 },
+  { id: '8', code: 'ITM008', name: 'Bluetooth Headset', spec: 'BT 5.3 / ANC / 30h Battery / USB-C / Foldable', unit: 'EA', unitPrice: 95000 },
+  { id: '9', code: 'ITM009', name: 'NAS Storage 4-Bay', spec: '4-Bay / Quad-core / 4GB ECC / 2×GbE / USB3.2', unit: 'EA', unitPrice: 680000 },
+  { id: '10', code: 'ITM010', name: 'Smart Whiteboard 65"', spec: '65" 4K Touch / Android / WiFi / HDMI / 20pt', unit: 'EA', unitPrice: 3500000 },
+  { id: '11', code: 'ITM011', name: 'Business Laptop 15"', spec: '15.6" FHD / Intel i7 / 16GB / 512GB SSD', unit: 'EA', unitPrice: 1850000 },
+  { id: '12', code: 'ITM012', name: 'Desktop PC Set', spec: 'Intel i7 / 32GB / 1TB SSD / Tower', unit: 'SET', unitPrice: 2200000 },
+  { id: '13', code: 'ITM013', name: 'LED Monitor 27"', spec: '27" QHD 2560×1440 / IPS / 75Hz', unit: 'EA', unitPrice: 450000 },
+  { id: '14', code: 'ITM014', name: 'Laser Printer A4', spec: 'A4 / 30ppm / Duplex / WiFi / USB', unit: 'EA', unitPrice: 380000 },
+  { id: '15', code: 'ITM015', name: 'Document Scanner', spec: 'A4 / ADF 50매 / 600dpi / USB', unit: 'EA', unitPrice: 290000 },
+  { id: '16', code: 'ITM016', name: 'Mechanical Keyboard', spec: 'TKL / Cherry MX Red / USB-C / Backlit', unit: 'EA', unitPrice: 120000 },
+  { id: '17', code: 'ITM017', name: 'Wireless Mouse', spec: '2.4GHz / 1600DPI / USB Dongle / 12M Battery', unit: 'EA', unitPrice: 35000 },
+  { id: '18', code: 'ITM018', name: 'External SSD 1TB', spec: '1TB / USB 3.2 / 1050MB/s / Pocket Size', unit: 'EA', unitPrice: 98000 },
+  { id: '19', code: 'ITM019', name: 'UPS 1000VA', spec: '1000VA / 600W / 8 Outlet / LCD Display', unit: 'EA', unitPrice: 185000 },
+  { id: '20', code: 'ITM020', name: 'Video Conference Camera', spec: '4K / 120° FOV / Built-in Mic / USB-C', unit: 'EA', unitPrice: 320000 },
 ]
-const defaultProductCatalog = defaultProductOptions.map((name, index) => ({
-  id: `default-${index + 1}`,
-  code: `DEF${String(index + 1).padStart(3, '0')}`,
-  name,
-  spec: '',
-  unit: 'EA',
-  unitPrice: 0,
-}))
 const exchangeRateRangeMap = {
   USD: { unitLabel: '1 USD', quoteAmount: 1, min: 1430, max: 1490 },
   EUR: { unitLabel: '1 EUR', quoteAmount: 1, min: 1560, max: 1640 },
@@ -189,7 +191,7 @@ const clientCatalog = ref([])
 const buyerRows = ref([...defaultBuyerOptions])
 const currencyOptions = ref([...defaultCurrencyOptions])
 const approverOptions = ref([...defaultApproverOptions])
-const productCatalog = ref([...defaultProductCatalog])
+const productCatalog = ref([...fallbackProductCatalog])
 const incotermCatalog = ref([...fallbackIncotermsCatalog])
 const exchangeRateHint = ref(createExchangeRateHint('USD', getTodayDateInput()))
 const currentCurrency = computed(() => form.value.currency || 'USD')
@@ -244,7 +246,7 @@ const buyerOptions = computed(() => {
 const productOptions = computed(() => productCatalog.value.map((item) => ({
   label: item.name,
   value: item.name,
-  sublabel: [item.code, item.spec].filter(Boolean).join(' · '),
+  sublabel: [item.code, item.spec, `${Number(item.unitPrice ?? 0).toLocaleString('ko-KR')} KRW`].filter(Boolean).join(' · '),
 })))
 
 const reasonFieldLabel = computed(() => (
@@ -299,6 +301,10 @@ async function loadReferenceData() {
         unitPrice: Number(item.unitPrice ?? 0),
       }))
       .filter((item) => item.name)
+
+    if (!productCatalog.value.length) {
+      productCatalog.value = [...fallbackProductCatalog]
+    }
     incotermCatalog.value = incotermsData
       .map((item) => ({
         id: String(item.id),
@@ -328,6 +334,7 @@ async function loadReferenceData() {
   } catch {
     // json-server가 내려가 있어도 폼이 열리도록 기본값 유지
     incotermCatalog.value = [...fallbackIncotermsCatalog]
+    productCatalog.value = [...fallbackProductCatalog]
   }
 }
 
@@ -465,6 +472,11 @@ function applyCatalogItemToRow(itemRow, productName) {
     convertKrwPriceToCurrency(product.unitPrice, form.value.currency, form.value.issueDate),
   )
   updateItemAmount(itemRow)
+}
+
+function handleProductNameChange(itemRow, productName) {
+  clearItemError(itemRow.id, 'name')
+  applyCatalogItemToRow(itemRow, productName)
 }
 
 function refreshAutoPricedItems() {
@@ -647,7 +659,7 @@ function openClientSearch() {
 
 function addItem() {
   const itemRow = createEmptyItemRow()
-  const defaultProductName = productCatalog.value[0]?.name ?? defaultProductCatalog[0]?.name ?? ''
+  const defaultProductName = productCatalog.value[0]?.name ?? fallbackProductCatalog[0]?.name ?? ''
 
   if (defaultProductName) {
     applyCatalogItemToRow(itemRow, defaultProductName)
@@ -958,7 +970,7 @@ watch(
                   v-model="row.name"
                   :options="productOptions"
                   placeholder="품목명을 검색하세요"
-                  @update:modelValue="clearItemError(row.id, 'name'); applyCatalogItemToRow(row, row.name)"
+                  @update:modelValue="handleProductNameChange(row, $event)"
                 />
                 <p v-if="getItemError(row.id, 'name')" class="mt-1 text-[11px] text-red-500">{{ getItemError(row.id, 'name') }}</p>
               </div>

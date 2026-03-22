@@ -192,6 +192,18 @@ function formatAmount(value, currency) {
   return `${symbol}${value}`
 }
 
+function formatCollectionDate(value) {
+  return value || '-'
+}
+
+function getTodaySlashDate() {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}/${month}/${day}`
+}
+
 function resetFilters() {
   resetBaseFilters()
   currencyFilter.value = ''
@@ -225,6 +237,9 @@ function updateStatus(poId, value) {
       ? {
         ...row,
         status: value === 'PAID' ? '수금완료' : '미수금',
+        collectionDate: value === 'PAID' && row.status !== '수금완료'
+          ? getTodaySlashDate()
+          : row.collectionDate,
       }
       : row
   ))
@@ -350,7 +365,7 @@ function updateStatus(poId, value) {
       </template>
 
       <template #cell-collectionDate="{ value }">
-        <span class="text-xs">{{ value }}</span>
+        <span class="text-xs">{{ formatCollectionDate(value) }}</span>
       </template>
 
       <template #cell-status="{ row }">
