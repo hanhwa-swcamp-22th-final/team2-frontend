@@ -164,8 +164,7 @@ async function resendEmail() {
     const newRecord = {
       ...rest,
       status: '발송',
-      sentAt: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })
-        .replace(/\. /g, '/').replace('.', ''),
+      sentAt: (() => { const d = new Date(); return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}` })(),
     }
     await api.post('/activityEmails', newRecord)
     closeDetail()
