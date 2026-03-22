@@ -28,19 +28,46 @@ const props = defineProps({
     type: String,
     default: '검색 결과가 없습니다.',
   },
+  width: {
+    type: String,
+    default: 'max-w-6xl',
+  },
 })
 
 const emit = defineEmits(['close', 'update:searchKeyword', 'select'])
 
 function normalizeColumn(column) {
   if (typeof column === 'string') {
-    return { key: column, label: column }
+    return { key: column, label: column, align: 'left', width: '' }
   }
 
   return {
     key: column.key,
     label: column.label ?? column.key,
+    align: column.align ?? 'left',
+    width: column.width ?? '',
+    format: column.format,
   }
+}
+
+function getAlignClass(align) {
+  if (align === 'center') return 'text-center'
+  if (align === 'right') return 'text-right'
+  return 'text-left'
+}
+
+function getColumnStyle(column) {
+  if (!column.width) return {}
+
+  return {
+    width: column.width,
+    minWidth: column.width,
+  }
+}
+
+function getCellValue(row, column) {
+  const value = row[column.key]
+  return column.format ? column.format(value, row) : value
 }
 </script>
 
@@ -49,7 +76,7 @@ function normalizeColumn(column) {
     :open="open"
     :title="title"
     description="목록에서 원하는 항목을 검색해 선택하는 공통 모달"
-    width="max-w-4xl"
+    :width="width"
     :z-index="70"
     @close="$emit('close')"
   >
@@ -69,7 +96,9 @@ function normalizeColumn(column) {
               <th
                 v-for="column in columns"
                 :key="normalizeColumn(column).key"
-                class="px-4 py-3 text-left text-sm font-semibold text-slate-600"
+                class="px-4 py-3 text-sm font-semibold text-slate-600"
+                :class="getAlignClass(normalizeColumn(column).align)"
+                :style="getColumnStyle(normalizeColumn(column))"
               >
                 {{ normalizeColumn(column).label }}
               </th>
@@ -92,13 +121,15 @@ function normalizeColumn(column) {
                 v-for="column in columns"
                 :key="normalizeColumn(column).key"
                 class="px-4 py-3 text-slate-700"
+                :class="getAlignClass(normalizeColumn(column).align)"
+                :style="getColumnStyle(normalizeColumn(column))"
               >
                 <slot
                   :name="`cell-${normalizeColumn(column).key}`"
                   :row="row"
                   :value="row[normalizeColumn(column).key]"
                 >
-                  {{ row[normalizeColumn(column).key] ?? '-' }}
+                  {{ getCellValue(row, normalizeColumn(column)) ?? '-' }}
                 </slot>
               </td>
             </tr>

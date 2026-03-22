@@ -16,7 +16,9 @@ import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
+import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
+import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
 
 const isAdvancedOpen = ref(false)
 const previewTarget = ref(null)
@@ -77,13 +79,9 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
   issueDateField: 'invoiceDate',
 })
 const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
+const { createClientRows, createProductRows } = useSearchModalLookups()
 
-const clientRows = computed(() => {
-  const keyword = clientSearchKeyword.value.trim().toLowerCase()
-  const source = [...new Map(rowsData.value.map((row) => [row.clientName, { id: row.id, name: row.clientName, country: row.country }])).values()]
-  if (!keyword) return source
-  return source.filter((row) => [row.id, row.name, row.country].some((value) => String(value).toLowerCase().includes(keyword)))
-})
+const clientRows = createClientRows(clientSearchKeyword)
 
 const codeRows = computed(() => {
   const keyword = codeSearchKeyword.value.trim().toLowerCase()
@@ -92,12 +90,7 @@ const codeRows = computed(() => {
   return source.filter((row) => [row.id, row.invoiceDate, row.clientName].some((value) => String(value).toLowerCase().includes(keyword)))
 })
 
-const productRows = computed(() => {
-  const keyword = productSearchKeyword.value.trim().toLowerCase()
-  const source = [...new Map(rowsData.value.map((row) => [row.itemName, { name: row.itemName, country: row.country, clientName: row.clientName }])).values()]
-  if (!keyword) return source
-  return source.filter((row) => [row.name, row.country, row.clientName].some((value) => String(value).toLowerCase().includes(keyword)))
-})
+const productRows = createProductRows(productSearchKeyword)
 
 /**
  * 목록 row 데이터를 PL 문서 템플릿이 필요로 하는 구조로 변환합니다.
@@ -316,11 +309,7 @@ function handleProductSelect(row) {
     <SearchModal
       :open="clientSearchOpen"
       title="거래처 검색"
-      :columns="[
-        { key: 'id', label: '코드' },
-        { key: 'name', label: '거래처명' },
-        { key: 'country', label: '국가' },
-      ]"
+      :columns="clientSearchColumns"
       :rows="clientRows"
       :search-keyword="clientSearchKeyword"
       @update:search-keyword="clientSearchKeyword = $event"
@@ -346,11 +335,7 @@ function handleProductSelect(row) {
     <SearchModal
       :open="productSearchOpen"
       title="품목명 검색"
-      :columns="[
-        { key: 'name', label: '품목명' },
-        { key: 'country', label: '국가' },
-        { key: 'clientName', label: '거래처명' },
-      ]"
+      :columns="productSearchColumns"
       :rows="productRows"
       :search-keyword="productSearchKeyword"
       @update:search-keyword="productSearchKeyword = $event"

@@ -10,11 +10,13 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import PODocumentTemplate from '@/components/domain/document/PODocumentTemplate.vue'
 import POFormModal from '@/components/domain/document/POFormModal.vue'
+import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useToast } from '@/composables/useToast'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { buildApprovalInfoRows } from '@/utils/documentApproval'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
+import { clientSearchColumns } from '@/utils/searchModalColumns'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,11 +34,7 @@ const selectedClient = ref(null)
 const piDocuments = usePiDocuments()
 const poDocuments = usePoDocuments()
 
-const clientRowsSource = [
-  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
-  { id: 'CL002', name: 'TechBridge GmbH', country: '독일' },
-  { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국' },
-]
+const { createClientRows } = useSearchModalLookups()
 
 const piRows = computed(() => {
   const keyword = piSearchKeyword.value.trim().toLowerCase()
@@ -44,11 +42,7 @@ const piRows = computed(() => {
   return piDocuments.value.filter((row) => [row.id, row.clientName, row.currency, row.deliveryDate].some((value) => String(value ?? '').toLowerCase().includes(keyword)))
 })
 
-const clientRows = computed(() => {
-  const keyword = clientSearchKeyword.value.trim().toLowerCase()
-  if (!keyword) return clientRowsSource
-  return clientRowsSource.filter((row) => [row.id, row.name, row.country].some((value) => String(value).toLowerCase().includes(keyword)))
-})
+const clientRows = createClientRows(clientSearchKeyword)
 
 function parseNumericValue(value) {
   const numeric = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))
@@ -456,11 +450,7 @@ function confirmDelete() {
     <SearchModal
       :open="clientSearchOpen"
       title="거래처 검색"
-      :columns="[
-        { key: 'id', label: '코드' },
-        { key: 'name', label: '거래처명' },
-        { key: 'country', label: '국가' },
-      ]"
+      :columns="clientSearchColumns"
       :rows="clientRows"
       :search-keyword="clientSearchKeyword"
       @update:search-keyword="clientSearchKeyword = $event"

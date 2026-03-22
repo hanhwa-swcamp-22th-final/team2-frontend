@@ -20,6 +20,7 @@ import PIFormModal from '@/components/domain/document/PIFormModal.vue'
 import { fetchBuyers, fetchClients, fetchCountries, fetchCurrencies } from '@/api/master'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
+import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { useToast } from '@/composables/useToast'
@@ -36,6 +37,7 @@ import {
   REGISTRATION_REQUEST_STATUS,
 } from '@/utils/documentApproval'
 import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
+import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -87,7 +89,10 @@ const fallbackClientRowsSource = [
     code: 'CL001',
     name: 'COOLSAY SDN BHD',
     country: '말레이시아',
+    city: 'Port Klang',
     currency: 'USD',
+    manager: 'Ahmad Razak',
+    status: '활성',
     address: 'Lot 18, Jalan Pelabuhan Utara 27, 42000 Port Klang, Selangor, Malaysia',
     tel: '+60-3-555-0101',
     email: 'contact@coolsay.com',
@@ -98,7 +103,10 @@ const fallbackClientRowsSource = [
     code: 'CL002',
     name: 'TechBridge GmbH',
     country: '독일',
+    city: 'Hamburg',
     currency: 'EUR',
+    manager: 'Hanna Schneider',
+    status: '활성',
     address: 'Am Sandtorkai 35, 20457 Hamburg, Germany',
     tel: '+49-40-555-0202',
     email: 'info@techbridge.de',
@@ -109,7 +117,10 @@ const fallbackClientRowsSource = [
     code: 'CL003',
     name: 'Pacific Trading Inc.',
     country: '미국',
+    city: 'Seattle',
     currency: 'USD',
+    manager: 'Jacob Miller',
+    status: '활성',
     address: '1201 Harbor Avenue SW, Seattle, WA 98134, USA',
     tel: '+1-206-555-0303',
     email: 'contact@pacifictrading.com',
@@ -117,6 +128,7 @@ const fallbackClientRowsSource = [
   },
 ]
 const clientRowsSource = ref([...fallbackClientRowsSource])
+const { createProductRows } = useSearchModalLookups()
 const rowsData = usePiDocuments()
 
 const columns = [
@@ -157,7 +169,16 @@ const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
 const clientRows = computed(() => {
   const keyword = clientSearchKeyword.value.trim().toLowerCase()
   if (!keyword) return clientRowsSource.value
-  return clientRowsSource.value.filter((client) => [client.id, client.name, client.country].some((value) => value.toLowerCase().includes(keyword)))
+  return clientRowsSource.value.filter((client) => [
+    client.code,
+    client.name,
+    client.country,
+    client.city,
+    client.currency,
+    client.manager,
+    client.tel,
+    client.status,
+  ].some((value) => String(value ?? '').toLowerCase().includes(keyword)))
 })
 
 const codeRows = computed(() => {
@@ -167,12 +188,7 @@ const codeRows = computed(() => {
   return rows.filter((row) => [row.id, row.issueDate, row.clientName].some((value) => String(value).toLowerCase().includes(keyword)))
 })
 
-const productRows = computed(() => {
-  const keyword = productSearchKeyword.value.trim().toLowerCase()
-  const rows = [...new Map(rowsData.value.map((row) => [row.itemName, { name: row.itemName, country: row.country, manager: row.manager }])).values()]
-  if (!keyword) return rows
-  return rows.filter((row) => [row.name, row.country, row.manager].some((value) => String(value).toLowerCase().includes(keyword)))
-})
+const productRows = createProductRows(productSearchKeyword)
 
 const currencySymbolMap = {
   USD: '$',
@@ -225,7 +241,10 @@ async function loadClientRows() {
       code: client.code,
       name: client.name,
       country: countryMap.get(String(client.countryId)) ?? '-',
+      city: client.city ?? '-',
       currency: currencyMap.get(String(client.currencyId)) ?? 'USD',
+      manager: client.manager ?? '-',
+      status: client.status ?? '-',
       address: client.address ?? '',
       tel: client.tel ?? '',
       email: client.email ?? '',
@@ -974,11 +993,7 @@ function handleProductSelect(product) {
     <SearchModal
       :open="clientSearchOpen"
       title="거래처 검색"
-      :columns="[
-        { key: 'id', label: '코드' },
-        { key: 'name', label: '거래처명' },
-        { key: 'country', label: '국가' },
-      ]"
+      :columns="clientSearchColumns"
       :rows="clientRows"
       :search-keyword="clientSearchKeyword"
       @update:search-keyword="clientSearchKeyword = $event"
@@ -1004,11 +1019,7 @@ function handleProductSelect(product) {
     <SearchModal
       :open="productSearchOpen"
       title="품목명 검색"
-      :columns="[
-        { key: 'name', label: '품목명' },
-        { key: 'country', label: '국가' },
-        { key: 'manager', label: '영업담당자' },
-      ]"
+      :columns="productSearchColumns"
       :rows="productRows"
       :search-keyword="productSearchKeyword"
       @update:search-keyword="productSearchKeyword = $event"

@@ -19,6 +19,7 @@ import TableActions from '@/components/common/TableActions.vue'
 import POFormModal from '@/components/domain/document/POFormModal.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
+import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
@@ -35,6 +36,7 @@ import {
   REGISTRATION_DOCUMENT_STATUS,
   REGISTRATION_REQUEST_STATUS,
 } from '@/utils/documentApproval'
+import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -84,11 +86,7 @@ const statusOptions = [
   { value: '취소', label: '취소' },
 ]
 const piRowsSource = usePiDocuments()
-const clientRowsSource = [
-  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
-  { id: 'CL002', name: 'TechBridge GmbH', country: '독일' },
-  { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국' },
-]
+const { clientRowsSource, createClientRows, createProductRows } = useSearchModalLookups()
 
 const columns = [
   { key: 'id', label: 'PO번호', align: 'center', width: '140px' },
@@ -132,11 +130,7 @@ const piRows = computed(() => {
   return piRowsSource.value.filter((row) => [row.id, row.clientName, row.currency, row.deliveryDate].some((value) => value.toLowerCase().includes(keyword)))
 })
 
-const clientRows = computed(() => {
-  const keyword = clientSearchKeyword.value.trim().toLowerCase()
-  if (!keyword) return clientRowsSource
-  return clientRowsSource.filter((row) => [row.id, row.name, row.country].some((value) => value.toLowerCase().includes(keyword)))
-})
+const clientRows = createClientRows(clientSearchKeyword)
 
 const codeRows = computed(() => {
   const keyword = codeSearchKeyword.value.trim().toLowerCase()
@@ -145,12 +139,7 @@ const codeRows = computed(() => {
   return rows.filter((row) => [row.id, row.issueDate, row.clientName].some((value) => String(value).toLowerCase().includes(keyword)))
 })
 
-const productRows = computed(() => {
-  const keyword = productSearchKeyword.value.trim().toLowerCase()
-  const rows = [...new Map(rowsData.value.map((row) => [row.itemName, { name: row.itemName, country: row.country, manager: row.manager }])).values()]
-  if (!keyword) return rows
-  return rows.filter((row) => [row.name, row.country, row.manager].some((value) => String(value).toLowerCase().includes(keyword)))
-})
+const productRows = createProductRows(productSearchKeyword)
 
 function openClientSearch(context = 'filter') {
   clientSearchContext.value = context
@@ -189,7 +178,7 @@ function closeForm() {
 
 function openEditForm(row) {
   selectedPi.value = piRowsSource.value.find((pi) => pi.id === (row.piId || row.linkedPiId || '')) ?? null
-  selectedClient.value = clientRowsSource.find((client) => client.name === row.clientName) ?? null
+  selectedClient.value = clientRowsSource.value.find((client) => client.name === row.clientName) ?? null
   formMode.value = 'edit'
   selectedRow.value = {
     id: row.id,
@@ -311,7 +300,7 @@ function getLinkedPiItems(linkedPi) {
 }
 
 function buildRowPayload(formValue) {
-  const matchedClient = clientRowsSource.find((client) => client.name === formValue.clientName)
+  const matchedClient = clientRowsSource.value.find((client) => client.name === formValue.clientName)
   const linkedPi = piRowsSource.value.find((pi) => pi.id === formValue.linkedPiId)
   const linkedItems = getLinkedPiItems(linkedPi)
   const totalAmount = linkedItems.reduce((sum, item) => sum + parseAmount(item.amount), 0)
@@ -980,11 +969,7 @@ function handleProductSelect(product) {
     <SearchModal
       :open="clientSearchOpen"
       title="거래처 검색"
-      :columns="[
-        { key: 'id', label: '코드' },
-        { key: 'name', label: '거래처명' },
-        { key: 'country', label: '국가' },
-      ]"
+      :columns="clientSearchColumns"
       :rows="clientRows"
       :search-keyword="clientSearchKeyword"
       @update:search-keyword="clientSearchKeyword = $event"
@@ -1010,11 +995,7 @@ function handleProductSelect(product) {
     <SearchModal
       :open="productSearchOpen"
       title="품목명 검색"
-      :columns="[
-        { key: 'name', label: '품목명' },
-        { key: 'country', label: '국가' },
-        { key: 'manager', label: '영업담당자' },
-      ]"
+      :columns="productSearchColumns"
       :rows="productRows"
       :search-keyword="productSearchKeyword"
       @update:search-keyword="productSearchKeyword = $event"
