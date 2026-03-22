@@ -5,6 +5,7 @@ import { createActivity, fetchActivityClients, fetchPOsByClient } from '@/api/ac
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import BaseButton from '@/components/common/BaseButton.vue'
+import FormField from '@/components/common/FormField.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTextarea from '@/components/common/BaseTextarea.vue'
@@ -174,33 +175,24 @@ async function handleSubmit() {
 
         <!-- 1행: 거래처 + 유형 -->
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div class="space-y-1.5">
-            <p class="text-sm font-semibold text-slate-700">
-              거래처 <span class="text-red-500">*</span>
-            </p>
+          <FormField label="거래처" :required="true" :error="errors.client">
             <SearchableCombobox
               v-model="formClient"
               :options="clientOptions"
               placeholder="거래처 검색/선택..."
             />
-            <p v-if="errors.client" class="mt-1 text-xs text-red-500">{{ errors.client }}</p>
-          </div>
-          <div class="space-y-1.5">
-            <p class="text-sm font-semibold text-slate-700">
-              유형 <span class="text-red-500">*</span>
-            </p>
+          </FormField>
+          <FormField label="유형" :required="true" :error="errors.type">
             <BaseSelect
               v-model="formType"
               :options="typeOptions"
               placeholder="유형 선택"
             />
-            <p v-if="errors.type" class="mt-1 text-xs text-red-500">{{ errors.type }}</p>
-          </div>
+          </FormField>
         </div>
 
         <!-- 2행: 수주건(PO) -->
-        <div class="space-y-1.5">
-          <p class="text-sm font-semibold text-slate-700">수주건</p>
+        <FormField label="수주건">
           <div class="flex items-center gap-2">
             <BaseTextField
               v-model="formPoDisplay"
@@ -222,55 +214,41 @@ async function handleSubmit() {
               </svg>
             </BaseButton>
           </div>
-        </div>
+        </FormField>
 
         <!-- 3행: 날짜 + 작성자 -->
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div class="space-y-1.5">
-            <p class="text-sm font-semibold text-slate-700">
-              날짜 <span class="text-red-500">*</span>
-            </p>
+          <FormField label="날짜" :required="true" :error="errors.date">
             <DateField v-model="formDate" />
-            <p v-if="errors.date" class="mt-1 text-xs text-red-500">{{ errors.date }}</p>
-          </div>
-          <div class="space-y-1.5">
-            <p class="text-sm font-semibold text-slate-700">
-              작성자 <span class="text-red-500">*</span>
-            </p>
+          </FormField>
+          <FormField label="작성자" :required="true" :error="errors.author">
             <BaseTextField
               v-model="formAuthor"
               :placeholder="isAuthorLocked ? '' : 'PO 선택 시 자동 입력됩니다'"
               :readonly="isAuthorLocked"
               :class="isAuthorLocked ? 'cursor-not-allowed bg-slate-50 text-slate-500' : ''"
             />
-            <p v-if="errors.author" class="mt-1 text-xs text-red-500">{{ errors.author }}</p>
-          </div>
+          </FormField>
         </div>
 
         <!-- 4행: 우선순위(이슈일 때만) -->
-        <div v-if="isIssue" class="space-y-1.5">
-          <p class="text-sm font-semibold text-slate-700">우선순위</p>
+        <FormField v-if="isIssue" label="우선순위">
           <BaseSelect v-model="formPriority" :options="priorityOptions" />
-        </div>
+        </FormField>
 
         <!-- 4행: 제목 -->
-        <div class="space-y-1.5">
-          <p class="text-sm font-semibold text-slate-700">
-            제목 <span class="text-red-500">*</span>
-          </p>
+        <FormField label="제목" :required="true" :error="errors.title">
           <BaseTextField v-model="formTitle" placeholder="활동 제목을 입력하세요" />
-          <p v-if="errors.title" class="mt-1 text-xs text-red-500">{{ errors.title }}</p>
-        </div>
+        </FormField>
 
         <!-- 5행: 내용 -->
-        <div class="space-y-1.5">
-          <p class="text-sm font-semibold text-slate-700">내용</p>
+        <FormField label="내용">
           <BaseTextarea
             v-model="formContent"
             placeholder="상세 내용을 입력하세요"
             :rows="6"
           />
-        </div>
+        </FormField>
 
         <!-- 저장 버튼 -->
         <div class="pt-2">

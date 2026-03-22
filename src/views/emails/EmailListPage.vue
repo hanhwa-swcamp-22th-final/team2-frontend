@@ -169,8 +169,8 @@ async function resendEmail() {
     }
     await api.post('/activityEmails', newRecord)
     closeDetail()
-    emails.value = await fetchActivityEmails()
     success('메일을 발송했습니다.')
+    emails.value = await fetchActivityEmails()
   } catch (e) {
     console.error('재전송 실패', e)
     error('재전송에 실패했습니다.')
@@ -286,7 +286,7 @@ const columns = [
     </CollapsibleFilterCard>
 
     <!-- 테이블 -->
-    <BaseTable :columns="columns" :rows="filteredEmails" row-key="id" class="cursor-pointer" @row-click="openDetail">
+    <BaseTable :columns="columns" :rows="filteredEmails" row-key="id" class="cursor-pointer" :footer-text="`총 ${filteredEmails.length}건`" @row-click="openDetail">
 
       <!-- 항목 번호 -->
       <template #cell-index="{ row }">
@@ -344,11 +344,6 @@ const columns = [
       </template>
 
     </BaseTable>
-
-    <!-- 하단 카운트 -->
-    <div class="px-1 text-xs text-slate-500">
-      총 {{ filteredEmails.length }}건
-    </div>
 
     <!-- 첨부파일 문서 미리보기 모달 -->
     <BaseModal
