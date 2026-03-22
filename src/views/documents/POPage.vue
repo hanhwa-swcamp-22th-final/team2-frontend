@@ -21,8 +21,11 @@ import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { useToast } from '@/composables/useToast'
 import {
+  createDeleteApprovalMeta,
   createEditApprovalMeta,
   createRegistrationApprovalMeta,
+  DELETE_REQUEST_DOCUMENT_STATUS,
+  DELETE_REQUEST_STATUS,
   EDIT_REQUEST_DOCUMENT_STATUS,
   EDIT_REQUEST_STATUS,
   REGISTRATION_DOCUMENT_STATUS,
@@ -550,8 +553,8 @@ const deleteApprovalRequestRows = computed(() => {
     { label: '요청 유형', value: '삭제 요청' },
     { label: '결재자', value: getDefaultDeleteApprover(selectedRow.value) },
     { label: '요청자', value: getCurrentRequesterName() },
-    { label: '문서 상태', value: '결재대기' },
-    { label: '요청 상태', value: '삭제요청' },
+    { label: '문서 상태', value: DELETE_REQUEST_DOCUMENT_STATUS },
+    { label: '요청 상태', value: DELETE_REQUEST_STATUS },
     { label: '요청 시각', value: getRequestedAt() },
   ]
 })
@@ -736,13 +739,11 @@ function confirmDelete() {
     row.id === selectedRow.value?.id
       ? {
         ...row,
-        approver: getDefaultDeleteApprover(selectedRow.value),
-        status: '결재대기',
-        approvalStatus: '대기',
-        requestStatus: '삭제요청',
-        approvalAction: '삭제',
-        approvalRequestedBy: requesterName,
-        approvalRequestedAt: requestedAt,
+        ...createDeleteApprovalMeta({
+          approver: getDefaultDeleteApprover(selectedRow.value),
+          requesterName,
+          requestedAt,
+        }),
       }
       : row
   ))
