@@ -11,6 +11,9 @@ import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewMo
 import PODocumentTemplate from '@/components/domain/document/PODocumentTemplate.vue'
 import POFormModal from '@/components/domain/document/POFormModal.vue'
 import { useToast } from '@/composables/useToast'
+import { usePiDocuments } from '@/stores/piDocuments'
+import { usePoDocuments } from '@/stores/poDocuments'
+import { buildApprovalInfoRows } from '@/utils/documentApproval'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
 
 const route = useRoute()
@@ -26,78 +29,9 @@ const clientSearchOpen = ref(false)
 const clientSearchKeyword = ref('')
 const selectedPi = ref(null)
 const selectedClient = ref(null)
+const piDocuments = usePiDocuments()
+const poDocuments = usePoDocuments()
 
-const detailMap = {
-  PO26001: {
-    id: 'PO26001',
-    status: '확정',
-    clientName: 'COOLSAY SDN BHD',
-    buyer: 'Mr. Ahmad Razak (Purchasing Manager)',
-    currency: 'USD',
-    incoterms: 'FOB BUSAN',
-    deliveryDate: '2026/04/20',
-    issueDate: '2026/02/05',
-    manager: '김영업',
-    linkedDocuments: [
-      { id: 'PI26001', status: '확정' },
-      { id: 'SO2026001', status: '준비중' },
-    ],
-    items: [
-      { name: 'H-Beam 482x300x11x15', quantity: '30', unitPrice: '$850', amount: '$25,500' },
-      { name: 'Lubricant Oil SAE 10W-40', quantity: '200', unitPrice: '$30', amount: '$6,000' },
-      { name: 'Industrial Grease EP-2', quantity: '100', unitPrice: '$45', amount: '$4,500' },
-      { name: 'Hydraulic Oil ISO VG 46', quantity: '32', unitPrice: '$200', amount: '$6,400' },
-    ],
-    totalAmount: '$42,400',
-    revisionHistory: [],
-  },
-  PO26002: {
-    id: 'PO26002',
-    status: '발송',
-    clientName: 'TechBridge GmbH',
-    buyer: 'Ms. Hanna Schneider (Procurement Lead)',
-    currency: 'EUR',
-    incoterms: 'CIF HAMBURG',
-    deliveryDate: '2026/05/25',
-    issueDate: '2026/02/20',
-    manager: '김영업',
-    linkedDocuments: [
-      { id: 'PI26002', status: '발송' },
-    ],
-    items: [
-      { name: 'H-Beam 482x300x11x15', quantity: '80', unitPrice: '€855', amount: '€68,400' },
-    ],
-    totalAmount: '€68,400',
-    revisionHistory: [],
-  },
-  PO26003: {
-    id: 'PO26003',
-    status: '초안',
-    clientName: 'Pacific Trading Inc.',
-    buyer: 'Mr. Jacob Miller (Import Manager)',
-    currency: 'USD',
-    incoterms: 'CFR LOS ANGELES',
-    deliveryDate: '2026/06/05',
-    issueDate: '2026/03/03',
-    manager: '정영업',
-    linkedDocuments: [
-      { id: 'PI26003', status: '초안' },
-    ],
-    items: [
-      { name: 'Lubricant Oil SAE 10W-40', quantity: '520', unitPrice: '$30', amount: '$15,600' },
-    ],
-    totalAmount: '$15,600',
-    revisionHistory: [],
-  },
-}
-
-const detail = computed(() => detailMap[route.params.id] ?? null)
-
-const piRowsSource = [
-  { id: 'PI26001', clientName: 'COOLSAY SDN BHD', currency: 'USD', deliveryDate: '2026/04/15' },
-  { id: 'PI26002', clientName: 'TechBridge GmbH', currency: 'EUR', deliveryDate: '2026/05/20' },
-  { id: 'PI26003', clientName: 'Pacific Trading Inc.', currency: 'USD', deliveryDate: '2026/06/01' },
-]
 const clientRowsSource = [
   { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
   { id: 'CL002', name: 'TechBridge GmbH', country: '독일' },
@@ -106,8 +40,8 @@ const clientRowsSource = [
 
 const piRows = computed(() => {
   const keyword = piSearchKeyword.value.trim().toLowerCase()
-  if (!keyword) return piRowsSource
-  return piRowsSource.filter((row) => [row.id, row.clientName, row.currency, row.deliveryDate].some((value) => String(value).toLowerCase().includes(keyword)))
+  if (!keyword) return piDocuments.value
+  return piDocuments.value.filter((row) => [row.id, row.clientName, row.currency, row.deliveryDate].some((value) => String(value ?? '').toLowerCase().includes(keyword)))
 })
 
 const clientRows = computed(() => {
@@ -115,6 +49,60 @@ const clientRows = computed(() => {
   if (!keyword) return clientRowsSource
   return clientRowsSource.filter((row) => [row.id, row.name, row.country].some((value) => String(value).toLowerCase().includes(keyword)))
 })
+
+function parseNumericValue(value) {
+  const numeric = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function formatCurrencyValue(currency, value) {
+  const symbolMap = { KRW: '₩', USD: '$', EUR: '€', JPY: '¥' }
+  const symbol = symbolMap[currency] ?? `${currency} `
+  return `${symbol}${Math.round(value).toLocaleString('en-US')}`
+}
+
+function buildLinkedDocuments(row) {
+  const currentLinks = row.linkedDocuments ?? []
+
+  if (currentLinks.length) {
+    return currentLinks
+  }
+
+  const linkedPi = piDocuments.value.find((pi) => pi.id === (row.piId || row.linkedPiId))
+  return linkedPi ? [{ id: linkedPi.id, status: linkedPi.status }] : []
+}
+
+function normalizeDetail(row) {
+  if (!row) return null
+
+  const currency = row.currency || 'USD'
+  const items = (row.items ?? []).map((item) => ({
+    name: item.name ?? '',
+    quantity: String(item.qty ?? item.quantity ?? ''),
+    unit: item.unit ?? 'EA',
+    unitPrice: formatCurrencyValue(currency, parseNumericValue(item.unitPrice)),
+    amount: formatCurrencyValue(currency, parseNumericValue(item.amount)),
+    remark: item.remark ?? '',
+  }))
+
+  const totalAmountValue = items.reduce((sum, item) => sum + parseNumericValue(item.amount), 0)
+
+  return {
+    ...row,
+    buyer: row.buyerName || row.buyer || '-',
+    incoterms: row.incoterms ? `${row.incoterms}${row.namedPlace ? ` ${row.namedPlace}` : ''}` : '-',
+    linkedDocuments: buildLinkedDocuments(row),
+    items,
+    totalAmount: row.totalAmount || row.amount || formatCurrencyValue(currency, totalAmountValue),
+    revisionHistory: row.revisionHistory ?? [],
+  }
+}
+
+const detail = computed(() => normalizeDetail(
+  poDocuments.value.find((row) => row.id === route.params.id),
+))
+
+const approvalInfoRows = computed(() => buildApprovalInfoRows(detail.value))
 
 const previewFields = computed(() => {
   if (!detail.value) return []
@@ -163,9 +151,52 @@ function handlePreviewPrint() {
   handlePrint()
 }
 
-function handleSave() {
+function formatSlashDate(value) {
+  return value ? value.replaceAll('-', '/') : '-'
+}
+
+function handleSave(formValue) {
+  if (!detail.value) return
+
+  const linkedPi = piDocuments.value.find((row) => row.id === formValue.linkedPiId)
+  const currency = linkedPi?.currency || formValue.currency || detail.value.currency || 'USD'
+  const items = (linkedPi?.items ?? detail.value.items ?? []).map((item) => ({
+    name: item.name ?? '',
+    qty: String(item.qty ?? item.quantity ?? ''),
+    unit: item.unit ?? 'EA',
+    unitPrice: String(parseNumericValue(item.unitPrice)),
+    amount: String(parseNumericValue(item.amount)),
+    remark: item.remark ?? '',
+  }))
+  const totalAmount = items.reduce((sum, item) => sum + parseNumericValue(item.amount), 0)
+
+  poDocuments.value = poDocuments.value.map((row) => (
+    row.id === detail.value.id
+      ? {
+        ...row,
+        piId: formValue.linkedPiId || '',
+        linkedPiId: formValue.linkedPiId || '',
+        clientName: linkedPi?.clientName || formValue.clientName || row.clientName,
+        clientAddress: linkedPi?.clientAddress || row.clientAddress || '',
+        buyerName: linkedPi?.buyerName || row.buyerName || '',
+        currency,
+        country: linkedPi?.country || row.country || '-',
+        itemName: items[0]?.name || row.itemName,
+        amount: formatCurrencyValue(currency, totalAmount),
+        totalAmount: formatCurrencyValue(currency, totalAmount),
+        incoterms: linkedPi?.incoterms || row.incoterms || '',
+        namedPlace: linkedPi?.namedPlace || row.namedPlace || '',
+        deliveryDate: formatSlashDate(formValue.deliveryDate),
+        sourceDeliveryDate: formatSlashDate(formValue.sourceDeliveryDate),
+        deliveryDateOverride: Boolean(formValue.linkedPiId && formValue.deliveryDateOverride),
+        approver: formValue.approver || row.approver || '',
+        items,
+      }
+      : row
+  ))
+
   formOpen.value = false
-  success(`${detail.value?.id} 수정 폼이 연결되었습니다.`)
+  success(`${detail.value?.id} 수정 내용이 반영되었습니다.`)
 }
 
 function openPiSearch() {
@@ -200,6 +231,7 @@ function goToLinkedDocument(documentId) {
 }
 
 function confirmDelete() {
+  poDocuments.value = poDocuments.value.filter((row) => row.id !== detail.value?.id)
   deleteOpen.value = false
   success(`${detail.value?.id}가 삭제되었습니다.`)
   router.push({ name: 'po' })
@@ -306,6 +338,27 @@ function confirmDelete() {
 
       <div class="space-y-4">
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 class="mb-3 font-bold text-slate-800">결재 상태</h3>
+          <div v-if="approvalInfoRows.length" class="space-y-3 text-sm">
+            <div
+              v-for="row in approvalInfoRows"
+              :key="row.label"
+              class="flex items-start justify-between gap-3"
+            >
+              <span class="text-slate-500">{{ row.label }}</span>
+              <div class="text-right">
+                <StatusBadge
+                  v-if="['문서 상태', '결재 상태', '요청 상태'].includes(row.label)"
+                  :value="row.value"
+                />
+                <span v-else class="break-words font-medium text-slate-700">{{ row.value }}</span>
+              </div>
+            </div>
+          </div>
+          <div v-else class="text-xs text-slate-400">결재 요청 이력 없음</div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 class="mb-3 font-bold text-slate-800">연결 문서</h3>
           <div class="space-y-2 text-sm">
             <button
@@ -359,7 +412,11 @@ function confirmDelete() {
         id: detail.id,
         piId: detail.linkedDocuments.find((document) => document.id.startsWith('PI'))?.id ?? '',
         clientName: detail.clientName,
+        currency: detail.currency,
         deliveryDate: detail.deliveryDate,
+        sourceDeliveryDate: detail.sourceDeliveryDate,
+        deliveryDateOverride: detail.deliveryDateOverride,
+        approver: detail.approver,
       }"
       :selected-pi="selectedPi"
       :selected-client="selectedClient"
