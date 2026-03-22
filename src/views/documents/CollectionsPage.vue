@@ -3,7 +3,6 @@ import { computed, ref } from 'vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BasePagination from '@/components/common/BasePagination.vue'
-import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
@@ -14,12 +13,14 @@ import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
+import { convertCurrencyAmountToKrw } from '@/utils/exchangeRate'
 
 const isAdvancedOpen = ref(false)
 const clientSearchOpen = ref(false)
 const clientSearchKeyword = ref('')
 const poSearchOpen = ref(false)
 const poSearchKeyword = ref('')
+const viewScope = ref('all')
 const currencyFilter = ref('')
 const appliedCurrencyFilter = ref('')
 
@@ -49,10 +50,9 @@ const statusOptions = [
 const columns = [
   { key: 'poId', label: 'PO 번호', align: 'center', width: '140px' },
   { key: 'clientName', label: '거래처', align: 'center', width: '220px' },
-  { key: 'country', label: '국가', align: 'center', width: '120px' },
-  { key: 'manager', label: '영업담당자', align: 'center', width: '120px' },
-  { key: 'currency', label: '통화', align: 'center', width: '80px' },
-  { key: 'salesAmount', label: '매출액', align: 'right', width: '150px' },
+  { key: 'currency', label: '통화', align: 'center', width: '90px' },
+  { key: 'salesAmount', label: '원문매출액', align: 'right', width: '150px' },
+  { key: 'salesAmountKrw', label: '환산매출액(KRW)', align: 'right', width: '170px' },
   { key: 'issueDate', label: '발행일', align: 'center', width: '130px' },
   { key: 'collectionDate', label: '수금일', align: 'center', width: '130px' },
   { key: 'status', label: '상태', align: 'center', width: '120px' },
@@ -140,9 +140,86 @@ const {
 })
 
 const filteredRows = computed(() => {
-  return baseFilteredRows.value.filter((row) => !appliedCurrencyFilter.value || row.currency === appliedCurrencyFilter.value)
+  let rows = baseFilteredRows.value
+
+  if (viewScope.value === 'krw') {
+    rows = rows.filter((row) => row.currency === 'KRW')
+  } else if (viewScope.value === 'foreign') {
+    rows = rows.filter((row) => row.currency !== 'KRW')
+  }
+
+  return rows.filter((row) => !appliedCurrencyFilter.value || row.currency === appliedCurrencyFilter.value)
 })
-const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
+
+const enrichedRows = computed(() => {
+  return filteredRows.value.map((row) => ({
+    ...row,
+    salesAmountKrw: convertCurrencyAmountToKrw(row.salesAmount, row.currency, row.issueDate?.replaceAll('/', '-')),
+  }))
+})
+
+const sortedRows = computed(() => {
+  return [...enrichedRows.value].sort((left, right) => {
+    const currencyCompare = left.currency.localeCompare(right.currency)
+
+    if (currencyCompare !== 0) {
+      return currencyCompare
+    }
+
+    return right.issueDate.localeCompare(left.issueDate)
+  })
+})
+
+const { currentPage, totalPages, paginatedRows } = usePagination(sortedRows)
+const totalKrwAmount = computed(() => sortedRows.value.reduce((sum, row) => sum + row.salesAmountKrw, 0))
+const tableRows = computed(() => {
+  const rows = []
+  let currentCurrency = ''
+  let originalSubtotal = 0
+  let krwSubtotal = 0
+  let rowCount = 0
+
+  paginatedRows.value.forEach((row, index) => {
+    if (currentCurrency && currentCurrency !== row.currency) {
+      rows.push({
+        rowKey: `subtotal-${currentCurrency}-${index}`,
+        rowType: 'subtotal',
+        currency: currentCurrency,
+        originalSubtotal,
+        krwSubtotal,
+        rowCount,
+      })
+
+      originalSubtotal = 0
+      krwSubtotal = 0
+      rowCount = 0
+    }
+
+    currentCurrency = row.currency
+    originalSubtotal += row.salesAmount
+    krwSubtotal += row.salesAmountKrw
+    rowCount += 1
+
+    rows.push({
+      ...row,
+      rowKey: `row-${row.poId}`,
+      rowType: 'data',
+    })
+  })
+
+  if (currentCurrency) {
+    rows.push({
+      rowKey: `subtotal-${currentCurrency}-final`,
+      rowType: 'subtotal',
+      currency: currentCurrency,
+      originalSubtotal,
+      krwSubtotal,
+      rowCount,
+    })
+  }
+
+  return rows
+})
 
 const clientRows = computed(() => {
   const keyword = clientSearchKeyword.value.trim().toLowerCase()
@@ -161,28 +238,8 @@ const poRows = computed(() => {
   return source.filter((row) => [row.poId, row.clientName, row.issueDate].some((value) => String(value).toLowerCase().includes(keyword)))
 })
 
-const summaryRows = computed(() => {
-  const currencyMap = {}
-
-  filteredRows.value.forEach((row) => {
-    if (!currencyMap[row.currency]) {
-      currencyMap[row.currency] = { count: 0, total: 0 }
-    }
-    currencyMap[row.currency].count += 1
-    currencyMap[row.currency].total += row.salesAmount
-  })
-
-  return Object.entries(currencyMap)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([currency, data]) => ({
-      currency,
-      count: data.count,
-      total: data.total,
-      totalFormatted: data.total.toLocaleString(),
-    }))
-})
-
 const currencySymbols = {
+  KRW: '₩',
   USD: '$',
   JPY: '¥',
   EUR: '€',
@@ -245,7 +302,7 @@ function updateStatus(poId, value) {
     />
 
     <CollapsibleFilterCard :open="isAdvancedOpen">
-        <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-4">
+      <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-4">
           <FormField label="발행일" class="col-span-2">
             <div class="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
               <DateField v-model="filters.registeredFrom" />
@@ -302,114 +359,159 @@ function updateStatus(poId, value) {
               placeholder="상태 선택..."
             />
           </FormField>
-        </div>
+      </div>
 
-        <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
-          <BaseButton variant="secondary" size="sm" @click="resetFilters">
-            <template #leading>
-              <i class="fas fa-undo text-xs" aria-hidden="true"></i>
-            </template>
-            초기화
-          </BaseButton>
-          <BaseButton size="sm" @click="searchRows">
-            <template #leading>
-              <i class="fas fa-search text-xs" aria-hidden="true"></i>
-            </template>
-            검색
-          </BaseButton>
-        </div>
+      <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+        <BaseButton variant="secondary" size="sm" @click="resetFilters">
+          <template #leading>
+            <i class="fas fa-undo text-xs" aria-hidden="true"></i>
+          </template>
+          초기화
+        </BaseButton>
+        <BaseButton size="sm" @click="searchRows">
+          <template #leading>
+            <i class="fas fa-search text-xs" aria-hidden="true"></i>
+          </template>
+          검색
+        </BaseButton>
+      </div>
     </CollapsibleFilterCard>
-    <BaseTable
-      :columns="columns"
-      :rows="paginatedRows"
-      empty-text="데이터가 없습니다."
-    >
-      <template #cell-poId="{ value }">
-        <span class="font-mono text-xs font-semibold text-brand-600">{{ value }}</span>
-      </template>
 
-      <template #cell-clientName="{ value }">
-        <span>{{ value }}</span>
-      </template>
-
-      <template #cell-country="{ value }">
-        <span class="text-xs text-slate-600">{{ value }}</span>
-      </template>
-
-      <template #cell-manager="{ value }">
-        <span class="text-xs text-slate-600">{{ value }}</span>
-      </template>
-
-      <template #cell-currency="{ value }">
-        <span class="text-xs font-semibold text-slate-700">{{ value }}</span>
-      </template>
-
-      <template #cell-salesAmount="{ value, row }">
-        <span class="text-sm font-semibold text-slate-800">{{ formatAmount(value, row.currency) }}</span>
-      </template>
-
-      <template #cell-issueDate="{ value }">
-        <span class="text-xs">{{ value }}</span>
-      </template>
-
-      <template #cell-collectionDate="{ value }">
-        <span class="text-xs">{{ value }}</span>
-      </template>
-
-      <template #cell-status="{ row }">
-        <select
-          class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:border-brand-400 focus:outline-none"
-          :value="row.status === '수금완료' ? 'PAID' : 'UNPAID'"
-          @change="updateStatus(row.poId, $event.target.value)"
-        >
-          <option value="UNPAID">미수금</option>
-          <option value="PAID">수금완료</option>
-        </select>
-      </template>
-
-      <template #footer>
-        <tr
-          v-for="(summary, index) in summaryRows"
-          :key="summary.currency"
-          class="bg-slate-100/80"
-        >
-          <template v-if="index === 0">
-            <td
-              class="border-t-2 border-t-slate-300 border-r border-slate-200 px-4 py-3 text-center align-middle text-xs font-semibold text-slate-500"
-              :rowspan="summaryRows.length"
-            >
-              {{ filteredRows.length }}건
-            </td>
-            <td
-              class="border-t-2 border-t-slate-300 border-r border-slate-200 px-4 py-3 text-center align-middle text-base font-extrabold text-slate-800"
-              :rowspan="summaryRows.length"
-              colspan="3"
-            >
-              합계
-            </td>
-          </template>
-          <td
-            class="border-r border-slate-200 px-4 py-3 text-center text-xs font-bold text-slate-700"
-            :class="index === 0 ? 'border-t-2 border-t-slate-300' : 'border-t border-slate-200'"
+    <section class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="text-sm font-semibold text-slate-700">표시 기준</span>
+        <div class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1">
+          <button
+            type="button"
+            class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+            :class="viewScope === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+            @click="viewScope = 'all'"
           >
-            {{ summary.currency }}
-          </td>
-          <td
-            class="border-r border-slate-200 px-4 py-3 text-right text-sm font-extrabold text-slate-800"
-            :class="index === 0 ? 'border-t-2 border-t-slate-300' : 'border-t border-slate-200'"
+            전체
+          </button>
+          <button
+            type="button"
+            class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+            :class="viewScope === 'krw' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+            @click="viewScope = 'krw'"
           >
-            {{ formatAmount(summary.total, summary.currency) }}
-          </td>
-          <template v-if="index === 0">
-            <td
-              class="border-t-2 border-t-slate-300 px-4 py-3"
-              :rowspan="summaryRows.length"
-              colspan="3"
-            ></td>
-          </template>
-        </tr>
-      </template>
-    </BaseTable>
+            원화
+          </button>
+          <button
+            type="button"
+            class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+            :class="viewScope === 'foreign' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+            @click="viewScope = 'foreign'"
+          >
+            외화
+          </button>
+        </div>
+      </div>
+      <div class="text-xs text-slate-500">
+        통화별로 정렬된 행 뒤에 소계를 표시하고, 맨 아래에서 전체 환산 총액을 확인합니다.
+      </div>
+    </section>
+
+    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="min-w-full border-collapse">
+          <thead class="bg-slate-50">
+            <tr>
+              <th
+                v-for="column in columns"
+                :key="column.key"
+                scope="col"
+                class="border-b border-r border-slate-200 px-4 py-3 text-center text-sm font-bold text-slate-700 last:border-r-0"
+                :style="{ width: column.width, minWidth: column.width }"
+              >
+                {{ column.label }}
+              </th>
+            </tr>
+          </thead>
+          <tbody v-if="tableRows.length > 0" class="bg-white">
+            <tr
+              v-for="row in tableRows"
+              :key="row.rowKey"
+              :class="row.rowType === 'subtotal' ? 'bg-slate-50' : 'transition hover:bg-slate-50/70'"
+            >
+              <template v-if="row.rowType === 'subtotal'">
+                <td colspan="3" class="border-b border-r border-slate-200 px-4 py-3 text-left text-sm font-semibold text-slate-800">
+                  {{ row.currency }} 소계 ({{ row.rowCount }}건)
+                </td>
+                <td class="border-b border-r border-slate-200 px-4 py-3 text-right text-sm font-semibold text-slate-800">
+                  {{ formatAmount(row.originalSubtotal, row.currency) }}
+                </td>
+                <td class="border-b border-r border-slate-200 px-4 py-3 text-right text-sm font-bold text-slate-900">
+                  {{ formatAmount(row.krwSubtotal, 'KRW') }}
+                </td>
+                <td colspan="3" class="border-b border-slate-200 px-4 py-3 text-right text-xs text-slate-400"></td>
+              </template>
+
+              <template v-else>
+                <td class="border-b border-r border-slate-200 px-4 py-3 text-center text-sm">
+                  <span class="font-mono text-xs font-semibold text-brand-600">
+                    {{ row.poId }}
+                  </span>
+                </td>
+                <td class="border-b border-r border-slate-200 px-4 py-3 text-left text-sm">
+                  <span class="font-medium text-slate-900">{{ row.clientName }}</span>
+                </td>
+                <td class="border-b border-r border-slate-200 px-4 py-3 text-center text-sm">
+                  <span class="text-xs font-semibold text-slate-700">
+                    {{ row.currency }}
+                  </span>
+                </td>
+                <td class="border-b border-r border-slate-200 px-4 py-3 text-right text-sm">
+                  <span class="font-semibold text-slate-800">
+                    {{ formatAmount(row.salesAmount, row.currency) }}
+                  </span>
+                </td>
+                <td class="border-b border-r border-slate-200 px-4 py-3 text-right text-sm">
+                  <span class="font-semibold text-slate-900">
+                    {{ formatAmount(row.salesAmountKrw, 'KRW') }}
+                  </span>
+                </td>
+                <td class="border-b border-r border-slate-200 px-4 py-3 text-center text-xs text-slate-700">
+                  {{ row.issueDate }}
+                </td>
+                <td class="border-b border-r border-slate-200 px-4 py-3 text-center text-xs text-slate-700">
+                  {{ row.collectionDate }}
+                </td>
+                <td class="border-b border-slate-200 px-4 py-3 text-center text-sm">
+                  <select
+                    class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:border-brand-400 focus:outline-none"
+                    :value="row.status === '수금완료' ? 'PAID' : 'UNPAID'"
+                    @change="updateStatus(row.poId, $event.target.value)"
+                  >
+                    <option value="UNPAID">미수금</option>
+                    <option value="PAID">수금완료</option>
+                  </select>
+                </td>
+              </template>
+            </tr>
+          </tbody>
+          <tfoot v-if="tableRows.length > 0" class="bg-slate-50">
+            <tr>
+              <td colspan="4" class="border-t border-r border-slate-200 px-4 py-3 text-left text-sm font-bold text-slate-900">
+                전체 환산 총액
+              </td>
+              <td class="border-t border-r border-slate-200 px-4 py-3 text-right text-sm font-extrabold text-slate-900">
+                {{ formatAmount(totalKrwAmount, 'KRW') }}
+              </td>
+              <td colspan="3" class="border-t border-slate-200 px-4 py-3 text-right text-xs text-slate-400">
+                KRW 기준 집계
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div
+        v-if="tableRows.length === 0"
+        class="flex min-h-[160px] items-center justify-center border-t border-slate-200 bg-white px-4 py-12 text-center text-sm text-slate-400"
+      >
+        데이터가 없습니다.
+      </div>
+    </section>
 
     <BasePagination
       v-model:current-page="currentPage"
