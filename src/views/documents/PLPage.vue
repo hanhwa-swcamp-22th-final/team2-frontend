@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BasePagination from '@/components/common/BasePagination.vue'
@@ -16,10 +17,12 @@ import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
-import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
+import { usePlDocuments } from '@/stores/plDocuments'
+import { useToast } from '@/composables/useToast'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
-import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
 
+const router = useRouter()
+const toast = useToast()
 const isAdvancedOpen = ref(false)
 const previewTarget = ref(null)
 const clientSearchOpen = ref(false)
@@ -37,9 +40,26 @@ const countryOptions = [
   { value: '싱가포르', label: '싱가포르' },
 ]
 
+const clientSearchColumns = [
+  { key: 'name', label: '거래처명', align: 'left', width: '220px' },
+  { key: 'country', label: '국가', align: 'center', width: '110px' },
+  { key: 'buyer', label: '바이어', align: 'left', width: '220px' },
+  { key: 'address', label: '영문주소', align: 'left', width: '320px' },
+  { key: 'status', label: '상태', align: 'center', width: '90px' },
+]
+
+const productSearchColumns = [
+  { key: 'name', label: '품목명', align: 'left', width: '220px' },
+  { key: 'quantity', label: '수량', align: 'right', width: '100px' },
+  { key: 'netWeight', label: 'Net Weight', align: 'right', width: '120px' },
+  { key: 'grossWeight', label: 'Gross Weight', align: 'right', width: '120px' },
+  { key: 'measurement', label: 'Volume', align: 'right', width: '100px' },
+  { key: 'documentIds', label: '관련 PL', align: 'left', width: '180px' },
+]
+
 const columns = [
   { key: 'id', label: 'PL번호', align: 'center', width: '150px' },
-  { key: 'invoiceDate', label: '발행일', align: 'center', width: '130px' },
+  { key: 'issueDate', label: '발행일', align: 'center', width: '130px' },
   { key: 'clientName', label: '거래처', align: 'center', width: '220px' },
   { key: 'country', label: '국가', align: 'center', width: '120px' },
   { key: 'itemName', label: '품목명', align: 'center', width: '220px' },
@@ -47,92 +67,117 @@ const columns = [
   { key: 'actions', label: '', align: 'center', width: '120px' },
 ]
 
-const rowsData = ref([
-  {
-    id: 'PL26001',
-    invoiceDate: '2026/02/18',
-    clientName: 'COOLSAY SDN BHD',
-    country: '말레이시아',
-    itemName: 'H-Beam 482x300x11x15',
-    grossWeight: '18,520',
-  },
-  {
-    id: 'PL26002',
-    invoiceDate: '2026/02/28',
-    clientName: 'TechBridge GmbH',
-    country: '독일',
-    itemName: 'H-Beam 482x300x11x15',
-    grossWeight: '24,860',
-  },
-  {
-    id: 'PL26003',
-    invoiceDate: '2026/03/12',
-    clientName: 'Pacific Trading Inc.',
-    country: '미국',
-    itemName: 'Lubricant Oil SAE 10W-40',
-    grossWeight: '7,430',
-  },
-])
+const rowsData = usePlDocuments()
 
 const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
-  keywordFields: ['id', 'invoiceDate', 'clientName', 'country', 'itemName', 'grossWeight'],
-  issueDateField: 'invoiceDate',
+  keywordFields: ['id', 'issueDate', 'clientName', 'country', 'itemName', 'grossWeight'],
+  issueDateField: 'issueDate',
 })
 const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
-const { createClientRows, createProductRows } = useSearchModalLookups()
 
-const clientRows = createClientRows(clientSearchKeyword)
+function includesKeyword(values, keyword) {
+  if (!keyword) return true
+  return values.some((value) => String(value ?? '').toLowerCase().includes(keyword))
+}
+
+const clientRows = computed(() => {
+  const keyword = clientSearchKeyword.value.trim().toLowerCase()
+  const uniqueRows = Array.from(new Map(
+    rowsData.value.map((row) => [
+      row.clientName,
+      {
+        id: `client-${row.clientName}`,
+        name: row.clientName,
+        country: row.country ?? '-',
+        buyer: row.buyer ?? '-',
+        address: row.clientAddress ?? '-',
+        status: row.status ?? '-',
+      },
+    ]),
+  ).values())
+
+  return uniqueRows.filter((row) => includesKeyword(
+    [row.name, row.country, row.buyer, row.address, row.status],
+    keyword,
+  ))
+})
 
 const codeRows = computed(() => {
   const keyword = codeSearchKeyword.value.trim().toLowerCase()
-  const source = rowsData.value.map((row) => ({ id: row.id, invoiceDate: row.invoiceDate, clientName: row.clientName }))
+  const source = rowsData.value.map((row) => ({ id: row.id, issueDate: row.issueDate, clientName: row.clientName }))
   if (!keyword) return source
-  return source.filter((row) => [row.id, row.invoiceDate, row.clientName].some((value) => String(value).toLowerCase().includes(keyword)))
+  return source.filter((row) => [row.id, row.issueDate, row.clientName].some((value) => String(value).toLowerCase().includes(keyword)))
 })
 
-const productRows = createProductRows(productSearchKeyword)
+const productRows = computed(() => {
+  const keyword = productSearchKeyword.value.trim().toLowerCase()
+  const aggregatedRows = new Map()
+
+  rowsData.value.forEach((row) => {
+    row.items?.forEach((item) => {
+      const current = aggregatedRows.get(item.name)
+      if (current) {
+        current.documentIds.push(row.id)
+        return
+      }
+
+      aggregatedRows.set(item.name, {
+        id: `product-${item.name}`,
+        name: item.name,
+        quantity: item.quantity || '-',
+        netWeight: item.netWeight || '-',
+        grossWeight: item.grossWeight || '-',
+        measurement: item.measurement || '-',
+        documentIds: [row.id],
+      })
+    })
+  })
+
+  return Array.from(aggregatedRows.values())
+    .map((row) => ({
+      ...row,
+      documentIds: row.documentIds.join(', '),
+    }))
+    .filter((row) => includesKeyword(
+      [row.name, row.quantity, row.netWeight, row.grossWeight, row.measurement, row.documentIds],
+      keyword,
+    ))
+})
 
 /**
  * 목록 row 데이터를 PL 문서 템플릿이 필요로 하는 구조로 변환합니다.
  * CI와 동일한 헤더 구조이지만, 품목 컬럼이 중량/용적 기준입니다.
  */
-const previewDoc = computed(() => {
-  if (!previewTarget.value) return null
-  const row = previewTarget.value
-  return {
-    id: row.id,
-    issueDate: row.invoiceDate,
-    clientName: row.clientName,
-    buyer: '',
-    country: row.country,
-    incoterms: 'FOB BUSAN',
-    deliveryDate: '',
-    portOfDischarge: '',
-    carrier: '',
-    bookingNo: '',
-    totalQuantity: '-',
-    totalNetWeight: '-',
-    totalGrossWeight: row.grossWeight || '-',
-    totalMeasurement: '-',
-    items: [
-      {
-        name: row.itemName,
-        quantity: '-',
-        netWeight: '-',
-        grossWeight: row.grossWeight || '-',
-        measurement: '-',
-      },
-    ],
-  }
-})
+const currentOutputTarget = computed(() => previewTarget.value ?? paginatedRows.value[0] ?? null)
 
 /**
  * 미리보기 모달에서 인쇄 버튼 클릭 시 호출.
  * documentOutput.js의 PL 빌더를 사용하여 새 창에 양식을 띄우고 인쇄합니다.
  */
 function handlePrint() {
-  if (previewDoc.value) {
-    openDocumentOutputByType('PL', previewDoc.value, true)
+  if (previewTarget.value) {
+    openDocumentOutputByType('PL', previewTarget.value, true)
+  }
+}
+
+function printCurrentDocument() {
+  if (!currentOutputTarget.value) {
+    toast.info('출력할 Packing List가 없습니다.', '인쇄')
+    return
+  }
+
+  openDocumentOutputByType('PL', currentOutputTarget.value, true)
+}
+
+function downloadCurrentPdf() {
+  if (!currentOutputTarget.value) {
+    toast.info('출력할 Packing List가 없습니다.', 'PDF')
+    return
+  }
+
+  const opened = openDocumentOutputByType('PL', currentOutputTarget.value, false)
+  if (opened) {
+    toast.info('브라우저 인쇄 창에서 PDF로 저장할 수 있습니다.', 'PDF')
   }
 }
 
@@ -160,6 +205,10 @@ function closePreview() {
   previewTarget.value = null
 }
 
+function goToDetail(id) {
+  router.push({ name: 'pl-detail', params: { id } })
+}
+
 function handleClientSelect(client) {
   filters.value.clientName = client.name
   clientSearchOpen.value = false
@@ -183,13 +232,13 @@ function handleProductSelect(row) {
   <div class="fade-in space-y-5">
     <PageHeader title="Packing List 관리" icon-class="fas fa-box-open">
       <template #actions>
-        <BaseButton variant="secondary" size="sm">
+        <BaseButton variant="secondary" size="sm" @click="printCurrentDocument">
           <template #leading>
             <i class="fas fa-print text-xs" aria-hidden="true"></i>
           </template>
           인쇄
         </BaseButton>
-        <BaseButton size="sm">
+        <BaseButton size="sm" @click="downloadCurrentPdf">
           <template #leading>
             <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
           </template>
@@ -269,11 +318,15 @@ function handleProductSelect(row) {
     <BaseTable
       :columns="columns"
       :rows="paginatedRows"
+      clickable-rows
       empty-text="데이터가 없습니다."
       :footer-text="`총 ${filteredRows.length}건`"
+      @row-click="goToDetail($event.id)"
     >
       <template #cell-id="{ value }">
-        <span class="font-mono text-xs font-semibold text-brand-600">{{ value }}</span>
+        <button type="button" class="font-mono text-xs font-semibold text-brand-600 hover:underline" @click.stop="goToDetail(value)">
+          {{ value }}
+        </button>
       </template>
 
       <template #cell-actions="{ row }">
@@ -303,7 +356,7 @@ function handleProductSelect(row) {
       @close="closePreview"
       @print="handlePrint"
     >
-      <PLDocumentTemplate v-if="previewDoc" :document="previewDoc" />
+      <PLDocumentTemplate v-if="previewTarget" :document="previewTarget" />
     </DocumentPreviewModal>
 
     <SearchModal
@@ -322,7 +375,7 @@ function handleProductSelect(row) {
       title="PL번호 검색"
       :columns="[
         { key: 'id', label: 'PL번호' },
-        { key: 'invoiceDate', label: '발행일' },
+        { key: 'issueDate', label: '발행일' },
         { key: 'clientName', label: '거래처명' },
       ]"
       :rows="codeRows"

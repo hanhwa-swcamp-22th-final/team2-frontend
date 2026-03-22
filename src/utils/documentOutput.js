@@ -423,13 +423,14 @@ export function buildPOOutputHtml(doc) {
 export function buildCIOutputHtml(doc) {
   const items = normalizeCIItems(doc.items)
   const attention = resolveConsigneeAttention(doc)
+  const currencyCode = doc.currency || 'USD'
   const itemRows = items.length
     ? items.map((item) => `
         <tr class="item-row">
           <td class="accent-blue">품명 <span class="item-meta">${esc(item.name)}</span>${item.hsCode ? `<span class="item-code">${esc(item.hsCode)}</span>` : ''}</td>
           <td class="text-right accent-blue">${esc(item.quantity)} <span class="unit-label">EA</span></td>
-          <td class="text-right accent-blue">USD ${esc(item.unitPrice)}</td>
-          <td class="text-right accent-blue">USD ${esc(item.amount)}</td>
+          <td class="text-right accent-blue">${esc(currencyCode)} ${esc(item.unitPrice)}</td>
+          <td class="text-right accent-blue">${esc(currencyCode)} ${esc(item.amount)}</td>
         </tr>`).join('')
     : '<tr class="no-items-row"><td colspan="4" class="no-items-cell">No items</td></tr>'
 
@@ -519,7 +520,7 @@ export function buildCIOutputHtml(doc) {
             SHIPMENT NO. : ${esc(doc.id)}<br><br>
             Terms of Delivery and payment<br>
             ${esc(doc.incoterms || 'FOB BUSAN')}<br>
-            T/T REMITTANCE
+            ${esc(doc.paymentTerms || 'T/T REMITTANCE')}
           </div>
         </div>
       </td>
@@ -567,7 +568,7 @@ export function buildCIOutputHtml(doc) {
   </table>
   <div class="total-row">
     <span class="accent-blue">TOTAL ${items.length} Packages</span>
-    <span class="total-right accent-blue">USD ${esc(doc.totalAmount)}</span>
+    <span class="total-right accent-blue">${esc(currencyCode)} ${esc(doc.totalAmount)}</span>
   </div>
 
   <div class="signature-area">

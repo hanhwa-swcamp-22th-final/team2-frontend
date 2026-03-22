@@ -19,6 +19,7 @@ const props = defineProps({
 const invoiceItems = computed(() => normalizeCIItems(props.document?.items))
 const itemCount = computed(() => invoiceItems.value.length)
 const consigneeAttention = computed(() => resolveConsigneeAttention(props.document))
+const currencyCode = computed(() => props.document?.currency || 'USD')
 </script>
 
 <template>
@@ -68,7 +69,7 @@ const consigneeAttention = computed(() => resolveConsigneeAttention(props.docume
                 SHIPMENT NO. : {{ document.id }}<br><br>
                 Terms of Delivery and payment<br>
                 {{ document.incoterms || 'FOB BUSAN' }}<br>
-                T/T REMITTANCE
+                {{ document.paymentTerms || 'T/T REMITTANCE' }}
               </div>
             </div>
           </td>
@@ -134,8 +135,8 @@ const consigneeAttention = computed(() => resolveConsigneeAttention(props.docume
             {{ item.quantity }}
             <span class="unit-label">EA</span>
           </td>
-          <td class="text-right accent-blue">USD {{ item.unitPrice }}</td>
-          <td class="text-right accent-blue">USD {{ item.amount }}</td>
+          <td class="text-right accent-blue">{{ currencyCode }} {{ item.unitPrice }}</td>
+          <td class="text-right accent-blue">{{ currencyCode }} {{ item.amount }}</td>
         </tr>
         <tr v-if="itemCount === 0" class="no-items-row">
           <td colspan="4" class="no-items-cell">No items</td>
@@ -151,7 +152,7 @@ const consigneeAttention = computed(() => resolveConsigneeAttention(props.docume
 
     <div class="total-row">
       <span class="total-left accent-blue">TOTAL {{ itemCount }} Packages</span>
-      <span class="total-right accent-blue">USD {{ document.totalAmount }}</span>
+      <span class="total-right accent-blue">{{ currencyCode }} {{ document.totalAmount }}</span>
     </div>
 
     <div class="signature-area">

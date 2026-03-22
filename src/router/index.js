@@ -5,10 +5,12 @@ import CommonComponentsPage from '@/views/CommonComponentsPage.vue'
 import DashboardPage from '@/views/DashboardPage.vue'
 import DomainComponentsPage from '@/views/DomainComponentsPage.vue'
 import CIPage from '@/views/documents/CIPage.vue'
+import CIDetailPage from '@/views/documents/CIDetailPage.vue'
 import CollectionsPage from '@/views/documents/CollectionsPage.vue'
 import PIPage from '@/views/documents/PIPage.vue'
 import PIDetailPage from '@/views/documents/PIDetailPage.vue'
 import PLPage from '@/views/documents/PLPage.vue'
+import PLDetailPage from '@/views/documents/PLDetailPage.vue'
 import POPage from '@/views/documents/POPage.vue'
 import PODetailPage from '@/views/documents/PODetailPage.vue'
 import ProductionOrderPage from '@/views/documents/ProductionOrderPage.vue'
@@ -183,6 +185,16 @@ const routes = [
         },
       },
       {
+        path: 'ci/:id',
+        name: 'ci-detail',
+        component: CIDetailPage,
+        meta: {
+          title: 'CI Detail',
+          serviceName: 'Commercial Invoice 상세',
+          description: 'Commercial Invoice 상세 화면',
+        },
+      },
+      {
         path: 'pl',
         name: 'pl',
         component: PLPage,
@@ -190,6 +202,16 @@ const routes = [
           title: 'PL',
           serviceName: 'PL 관리',
           description: 'PL 조회 및 상세 화면',
+        },
+      },
+      {
+        path: 'pl/:id',
+        name: 'pl-detail',
+        component: PLDetailPage,
+        meta: {
+          title: 'PL Detail',
+          serviceName: 'Packing List 상세',
+          description: 'Packing List 상세 화면',
         },
       },
       {
