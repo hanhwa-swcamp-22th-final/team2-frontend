@@ -16,9 +16,10 @@ const router = useRouter()
 const { warning, error } = useToast()
 
 function todayKr() {
-  return new Date()
-    .toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })
-    .replace(/\. /g, '-').replace('.', '')
+  const d = new Date()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${m}-${day}`
 }
 
 // ── 데이터 ─────────────────────────────────────────────────
@@ -59,13 +60,13 @@ const filteredPoList = computed(() => {
   const q = poSearchKeyword.value.trim().toLowerCase()
   if (!q) return list
   return list.filter(
-    (p) => p.id.toLowerCase().includes(q) || p.title.toLowerCase().includes(q),
+    (p) => p.id.toLowerCase().includes(q) || (p.title ?? '').toLowerCase().includes(q),
   )
 })
 
 function selectPo(po) {
   selectedPoId.value = po.id
-  poDisplay.value = `${po.id} - ${po.title}`
+  poDisplay.value = po.id
   isPoModalOpen.value = false
   poSearchKeyword.value = ''
 }
@@ -318,6 +319,7 @@ function generatePdf() {
   const blob = doc.output('blob')
   const url = URL.createObjectURL(blob)
   window.open(url, '_blank')
+  setTimeout(() => URL.revokeObjectURL(url), 10000)
 }
 </script>
 

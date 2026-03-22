@@ -1,9 +1,10 @@
 <script setup>
+import { computed } from 'vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import InfoField from '@/components/common/InfoField.vue'
 import ActivityTypeBadge from '@/components/domain/activity/ActivityTypeBadge.vue'
 
-defineProps({
+const props = defineProps({
   open: {
     type: Boolean,
     default: false,
@@ -15,12 +16,20 @@ defineProps({
 })
 
 defineEmits(['close'])
+
+const modalTitle = computed(() => {
+  const title = props.activity.title || '활동 상세'
+  if (props.activity.type === '일정' && props.activity.scheduleFrom && props.activity.scheduleTo) {
+    return `${title}(${props.activity.scheduleFrom}~${props.activity.scheduleTo})`
+  }
+  return title
+})
 </script>
 
 <template>
   <BaseModal
     :open="open"
-    :title="activity.title || '활동 상세'"
+    :title="modalTitle"
     description="활동 기록 상세 내용을 확인하는 공통 모달"
     @close="$emit('close')"
   >
@@ -52,7 +61,13 @@ defineEmits(['close'])
       <div>
         <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">내용</p>
         <div class="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
-          <p class="whitespace-pre-wrap text-sm text-slate-700">{{ activity.content || '-' }}</p>
+          <p class="whitespace-pre-wrap text-sm text-slate-700">
+            {{ activity.type === '일정'
+              ? (activity.scheduleFrom && activity.scheduleTo
+                  ? `${activity.scheduleFrom} ~ ${activity.scheduleTo} ${activity.title || ''}`.trim()
+                  : (activity.title || '-'))
+              : (activity.content || '-') }}
+          </p>
         </div>
       </div>
     </div>
