@@ -3927,140 +3927,220 @@
       "clientId": 1,
       "title": "열연강판 공급 계약 1차",
       "date": "2025/02/15",
-      "userId": 1
+      "userId": 1,
+      "issueDate": "2025/01/20",
+      "manager": "김영업",
+      "country": "USA",
+      "deliveryDate": "2025/03/01"
     },
     {
       "id": "PO2025002",
       "clientId": 1,
       "title": "냉연강판 공급 계약",
       "date": "2025/03/01",
-      "userId": 5
+      "userId": 5,
+      "issueDate": "2025/01/25",
+      "manager": "정영업",
+      "country": "Germany",
+      "deliveryDate": "2025/03/10"
     },
     {
       "id": "PO2025003",
       "clientId": 2,
       "title": "스테인리스 봉강 공급",
       "date": "2025/02/20",
-      "userId": 1
+      "userId": 1,
+      "issueDate": "2025/02/10",
+      "manager": "김영업",
+      "country": "Japan",
+      "deliveryDate": "2025/03/20"
     },
     {
       "id": "PO2025004",
       "clientId": 3,
       "title": "무봉강관 2분기 공급",
       "date": "2025/02/28",
-      "userId": 1
+      "userId": 1,
+      "issueDate": "2025/02/20",
+      "manager": "조영업",
+      "country": "China",
+      "deliveryDate": "2025/04/01"
     },
     {
       "id": "PO2025005",
       "clientId": 3,
       "title": "유압프레스 납품",
       "date": "2025/03/10",
-      "userId": 5
+      "userId": 5,
+      "issueDate": "2025/02/25",
+      "manager": "강영업",
+      "country": "UK",
+      "deliveryDate": "2025/04/10"
     },
     {
       "id": "PO2025006",
       "clientId": 2,
       "title": "ERW 강관 추가 발주",
       "date": "2025/03/15",
-      "userId": 5
+      "userId": 5,
+      "issueDate": "2025/03/10",
+      "manager": "정영업",
+      "country": "France",
+      "deliveryDate": "2025/04/20"
     },
     {
       "id": "PO2025007",
       "clientId": 4,
       "title": "노트북 PC 공급 계약",
       "date": "2025/04/01",
-      "userId": 1
+      "userId": 1,
+      "issueDate": "2025/03/15",
+      "manager": "서영업",
+      "country": "India",
+      "deliveryDate": "2025/04/25"
     },
     {
       "id": "PO2025008",
       "clientId": 5,
       "title": "모니터 1차 공급",
       "date": "2025/04/05",
-      "userId": 5
+      "userId": 5,
+      "issueDate": "2025/03/20",
+      "manager": "김영업",
+      "country": "Brazil",
+      "deliveryDate": "2025/05/01"
     },
     {
       "id": "PO2025009",
       "clientId": 6,
       "title": "프린터 및 스캐너 공급",
       "date": "2025/04/10",
-      "userId": 1
+      "userId": 1,
+      "issueDate": "2025/03/25",
+      "manager": "황영업",
+      "country": "Singapore",
+      "deliveryDate": "2025/05/10"
     },
     {
       "id": "PO2025010",
       "clientId": 7,
       "title": "데스크탑 PC 납품",
       "date": "2025/04/15",
-      "userId": 5
+      "userId": 5,
+      "issueDate": "2025/04/10",
+      "manager": "정영업",
+      "country": "Vietnam",
+      "deliveryDate": "2025/05/20"
     },
     {
       "id": "PO2025011",
       "clientId": 8,
       "title": "UPS 전원장치 공급",
       "date": "2025/04/20",
-      "userId": 1
+      "userId": 1,
+      "issueDate": "2025/04/15",
+      "manager": "강영업",
+      "country": "USA",
+      "deliveryDate": "2025/06/01"
     },
     {
       "id": "PO2025012",
       "clientId": 9,
       "title": "화상회의 시스템 공급",
       "date": "2025/04/25",
-      "userId": 5
+      "userId": 5,
+      "issueDate": "2025/04/20",
+      "manager": "전영업",
+      "country": "Germany",
+      "deliveryDate": "2025/06/05"
     },
     {
       "id": "PO2025013",
       "clientId": 10,
       "title": "사무용 전자기기 일괄 공급",
       "date": "2025/05/01",
-      "userId": 1
+      "userId": 1,
+      "issueDate": "2025/04/30",
+      "manager": "김영업",
+      "country": "Japan",
+      "deliveryDate": "2025/06/15"
     },
     {
       "id": "PO2025014",
       "clientId": 11,
       "title": "노트북 2차 추가 발주",
       "date": "2025/05/05",
-      "userId": 5
+      "userId": 5,
+      "issueDate": "2025/05/10",
+      "manager": "정영업",
+      "country": "China",
+      "deliveryDate": "2025/06/20"
     },
     {
       "id": "PO2025015",
       "clientId": 12,
       "title": "모니터 B2B 공급 계약",
       "date": "2025/05/10",
-      "userId": 1
+      "userId": 1,
+      "issueDate": "2025/05/20",
+      "manager": "서영업",
+      "country": "UK",
+      "deliveryDate": "2025/07/01"
     },
     {
       "id": "PO2025016",
       "clientId": 13,
       "title": "키보드·마우스 세트 공급",
       "date": "2025/05/15",
-      "userId": 5
+      "userId": 5,
+      "issueDate": "2025/05/25",
+      "manager": "강영업",
+      "country": "France",
+      "deliveryDate": "2025/07/05"
     },
     {
       "id": "PO2025017",
       "clientId": 14,
       "title": "외장 SSD 대량 공급",
       "date": "2025/05/20",
-      "userId": 1
+      "userId": 1,
+      "issueDate": "2025/06/10",
+      "manager": "황영업",
+      "country": "Singapore",
+      "deliveryDate": "2025/07/20"
     },
     {
       "id": "PO2025018",
       "clientId": 15,
       "title": "레이저 프린터 공급 계약",
       "date": "2025/05/25",
-      "userId": 5
+      "userId": 5,
+      "issueDate": "2025/06/15",
+      "manager": "정영업",
+      "country": "Australia",
+      "deliveryDate": "2025/07/25"
     },
     {
       "id": "PO2025019",
       "clientId": 16,
       "title": "화상회의 카메라 납품",
       "date": "2025/06/01",
-      "userId": 1
+      "userId": 1,
+      "issueDate": "2025/06/20",
+      "manager": "전영업",
+      "country": "Canada",
+      "deliveryDate": "2025/08/01"
     },
     {
       "id": "PO2025020",
       "clientId": 17,
       "title": "PC 및 주변기기 공급",
       "date": "2025/06/05",
-      "userId": 5
+      "userId": 5,
+      "issueDate": "2025/07/10",
+      "manager": "김영업",
+      "country": "Vietnam",
+      "deliveryDate": "2025/08/20"
     }
   ],
   "activityEmails": [
@@ -4677,7 +4757,7 @@
   "po": [
     {
       "id": "PO2025001",
-      "piId": "PI-2025-001",
+      "piId": "PI2025001",
       "issueDate": "2025/01/20",
       "clientName": "Global Steel Corp.",
       "country": "USA",
@@ -4690,7 +4770,7 @@
     },
     {
       "id": "PO2025002",
-      "piId": "PI-2025-002",
+      "piId": "PI2025002",
       "issueDate": "2025/01/25",
       "clientName": "Hamburg Metal GmbH",
       "country": "Germany",
@@ -4703,7 +4783,7 @@
     },
     {
       "id": "PO2025003",
-      "piId": "PI-2025-003",
+      "piId": "PI2025003",
       "issueDate": "2025/02/10",
       "clientName": "Tokyo Trading Co.",
       "country": "Japan",
@@ -4716,7 +4796,7 @@
     },
     {
       "id": "PO2025004",
-      "piId": "PI-2025-004",
+      "piId": "PI2025004",
       "issueDate": "2025/02/20",
       "clientName": "Shanghai Import Ltd.",
       "country": "China",
@@ -4729,7 +4809,7 @@
     },
     {
       "id": "PO2025005",
-      "piId": "PI-2025-005",
+      "piId": "PI2025005",
       "issueDate": "2025/02/25",
       "clientName": "London Metals Plc",
       "country": "UK",
@@ -4742,7 +4822,7 @@
     },
     {
       "id": "PO2025006",
-      "piId": "PI-2025-006",
+      "piId": "PI2025006",
       "issueDate": "2025/03/10",
       "clientName": "Paris Acier SA",
       "country": "France",
@@ -4755,7 +4835,7 @@
     },
     {
       "id": "PO2025007",
-      "piId": "PI-2025-007",
+      "piId": "PI2025007",
       "issueDate": "2025/03/15",
       "clientName": "Mumbai Steel Works",
       "country": "India",
@@ -4768,7 +4848,7 @@
     },
     {
       "id": "PO2025008",
-      "piId": "PI-2025-008",
+      "piId": "PI2025008",
       "issueDate": "2025/03/20",
       "clientName": "São Paulo Metals",
       "country": "Brazil",
@@ -4781,7 +4861,7 @@
     },
     {
       "id": "PO2025009",
-      "piId": "PI-2025-009",
+      "piId": "PI2025009",
       "issueDate": "2025/03/25",
       "clientName": "Singapore Pipe Pte",
       "country": "Singapore",
@@ -4794,7 +4874,7 @@
     },
     {
       "id": "PO2025010",
-      "piId": "PI-2025-010",
+      "piId": "PI2025010",
       "issueDate": "2025/04/10",
       "clientName": "Hanoi Industries",
       "country": "Vietnam",
@@ -4807,7 +4887,7 @@
     },
     {
       "id": "PO2025011",
-      "piId": "PI-2025-011",
+      "piId": "PI2025011",
       "issueDate": "2025/04/15",
       "clientName": "Dtech Electronics Inc.",
       "country": "USA",
@@ -4820,7 +4900,7 @@
     },
     {
       "id": "PO2025012",
-      "piId": "PI-2025-012",
+      "piId": "PI2025012",
       "issueDate": "2025/04/20",
       "clientName": "Berlin Digital AG",
       "country": "Germany",
@@ -4833,7 +4913,7 @@
     },
     {
       "id": "PO2025013",
-      "piId": "PI-2025-013",
+      "piId": "PI2025013",
       "issueDate": "2025/04/30",
       "clientName": "Osaka Tech Corp.",
       "country": "Japan",
@@ -4846,7 +4926,7 @@
     },
     {
       "id": "PO2025014",
-      "piId": "PI-2025-014",
+      "piId": "PI2025014",
       "issueDate": "2025/05/10",
       "clientName": "Shenzhen Gadgets Co.",
       "country": "China",
@@ -4859,7 +4939,7 @@
     },
     {
       "id": "PO2025015",
-      "piId": "PI-2025-015",
+      "piId": "PI2025015",
       "issueDate": "2025/05/20",
       "clientName": "London Tech Ltd",
       "country": "UK",
@@ -4872,7 +4952,7 @@
     },
     {
       "id": "PO2025016",
-      "piId": "PI-2025-016",
+      "piId": "PI2025016",
       "issueDate": "2025/05/25",
       "clientName": "Paris Digital SAS",
       "country": "France",
@@ -4885,7 +4965,7 @@
     },
     {
       "id": "PO2025017",
-      "piId": "PI-2025-017",
+      "piId": "PI2025017",
       "issueDate": "2025/06/10",
       "clientName": "Singapore Electronics Pte",
       "country": "Singapore",
@@ -4898,7 +4978,7 @@
     },
     {
       "id": "PO2025018",
-      "piId": "PI-2025-018",
+      "piId": "PI2025018",
       "issueDate": "2025/06/15",
       "clientName": "Sydney Tech Pty",
       "country": "Australia",
@@ -4911,7 +4991,7 @@
     },
     {
       "id": "PO2025019",
-      "piId": "PI-2025-019",
+      "piId": "PI2025019",
       "issueDate": "2025/06/20",
       "clientName": "Toronto Systems Inc.",
       "country": "Canada",
@@ -4924,7 +5004,7 @@
     },
     {
       "id": "PO2025020",
-      "piId": "PI-2025-020",
+      "piId": "PI2025020",
       "issueDate": "2025/07/10",
       "clientName": "Hanoi Digital JSC",
       "country": "Vietnam",
