@@ -20,9 +20,7 @@ defineEmits(['close'])
 const modalTitle = computed(() => {
   const title = props.activity.title || '활동 상세'
   if (props.activity.type === '일정' && props.activity.scheduleFrom && props.activity.scheduleTo) {
-    const from = props.activity.scheduleFrom.replaceAll('-', '/')
-    const to   = props.activity.scheduleTo.replaceAll('-', '/')
-    return `${title}(${from}~${to})`
+    return `${title}(${props.activity.scheduleFrom}~${props.activity.scheduleTo})`
   }
   return title
 })

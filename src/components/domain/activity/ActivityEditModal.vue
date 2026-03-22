@@ -113,27 +113,27 @@ function dayBtnClass(str, colIndex) {
 }
 
 // ── 모달이 열릴 때마다 activity 데이터로 폼 초기화 ──────────
-watch(
-  () => props.activity,
-  (val) => {
-    formDate.value         = (val?.date         ?? '').replaceAll('/', '-')
-    formTitle.value        = val?.title        ?? ''
-    formContent.value      = val?.content      ?? ''
-    formScheduleFrom.value = (val?.scheduleFrom ?? '').replaceAll('/', '-')
-    formScheduleTo.value   = (val?.scheduleTo   ?? '').replaceAll('/', '-')
-    errors.value           = {}
-    // 달력 월 동기화
-    if (val?.scheduleFrom) {
-      const d = new Date(val.scheduleFrom)
-      calYear.value  = d.getFullYear()
-      calMonth.value = d.getMonth()
-    } else {
-      calYear.value  = new Date().getFullYear()
-      calMonth.value = new Date().getMonth()
-    }
-  },
-  { immediate: true },
-)
+function initForm(val) {
+  formDate.value         = (val?.date         ?? '').replaceAll('/', '-')
+  formTitle.value        = val?.title        ?? ''
+  formContent.value      = val?.content      ?? ''
+  formScheduleFrom.value = (val?.scheduleFrom ?? '').replaceAll('/', '-')
+  formScheduleTo.value   = (val?.scheduleTo   ?? '').replaceAll('/', '-')
+  errors.value           = {}
+  // 달력 월 동기화
+  if (val?.scheduleFrom) {
+    const d = new Date(val.scheduleFrom)
+    calYear.value  = d.getFullYear()
+    calMonth.value = d.getMonth()
+  } else {
+    calYear.value  = new Date().getFullYear()
+    calMonth.value = new Date().getMonth()
+  }
+}
+
+// open이 true로 바뀔 때마다 최신 activity로 초기화 (동일 객체 재사용 대응)
+watch(() => props.open, (val) => { if (val) initForm(props.activity) })
+watch(() => props.activity, initForm, { immediate: true })
 
 watch(formDate,  (val) => { if (val) errors.value.date  = undefined })
 watch(formTitle, (val) => { if (val.trim()) errors.value.title = undefined })
@@ -150,6 +150,7 @@ function handleSave() {
   const e = {}
   if (!formDate.value)         e.date  = '날짜 값이 누락되었습니다.'
   if (!formTitle.value.trim()) e.title = '제목 값이 누락되었습니다.'
+  if (isSchedule.value && (!formScheduleFrom.value || !formScheduleTo.value)) e.scheduleFrom = '기간 선택이 누락되었습니다.'
   errors.value = e
   if (Object.keys(e).length > 0) {
     warning('입력 내용을 확인해주세요.')
@@ -210,7 +211,7 @@ function handleSave() {
 
       <!-- 기간 선택 (일정일 때) -->
       <template v-if="isSchedule">
-        <FormField label="기간 선택">
+        <FormField label="기간 선택" :error="errors.scheduleFrom">
           <div class="flex items-center gap-2">
             <div class="grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2">
               <DateField v-model="formScheduleFrom" />

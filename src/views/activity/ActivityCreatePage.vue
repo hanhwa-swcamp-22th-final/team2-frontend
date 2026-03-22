@@ -226,6 +226,7 @@ function validate() {
   if (!formDate.value)    e.date   = '날짜 값이 누락되었습니다.'
   if (!formTitle.value.trim())  e.title  = '제목 값이 누락되었습니다.'
   if (!formAuthor.value.trim()) e.author = '작성자 값이 누락되었습니다.'
+  if (isSchedule.value && (!formScheduleFrom.value || !formScheduleTo.value)) e.scheduleFrom = '기간 선택이 누락되었습니다.'
   errors.value = e
   return Object.keys(e).length === 0
 }
@@ -358,7 +359,7 @@ async function handleSubmit() {
 
         <!-- 5행: 기간 선택 (일정일 때) -->
         <template v-if="isSchedule">
-          <FormField label="기간 선택">
+          <FormField label="기간 선택" :error="errors.scheduleFrom">
             <div class="flex items-center gap-2">
               <div class="grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2">
                 <DateField v-model="formScheduleFrom" />
