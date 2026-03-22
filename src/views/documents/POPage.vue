@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 
 import ApprovalRequestModal from '@/components/common/ApprovalRequestModal.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
+import BasePagination from '@/components/common/BasePagination.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
@@ -17,6 +18,7 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import POFormModal from '@/components/domain/document/POFormModal.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
+import { usePagination } from '@/composables/usePagination'
 import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
@@ -122,6 +124,7 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
   issueDateField: 'issueDate',
   deliveryDateField: 'deliveryDate',
 })
+const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
 
 const piRows = computed(() => {
   const keyword = piSearchKeyword.value.trim().toLowerCase()
@@ -757,7 +760,7 @@ function handleProductSelect(product) {
 
 <template>
   <div class="fade-in space-y-5">
-    <PageHeader title="PO 관리" icon-class="fas fa-file-contract">
+    <PageHeader title="Purchase Order 관리" icon-class="fas fa-file-contract">
       <template #actions>
         <BaseButton @click="openCreateForm">
           <template #leading>
@@ -854,7 +857,7 @@ function handleProductSelect(product) {
 
     <BaseTable
       :columns="columns"
-      :rows="filteredRows"
+      :rows="paginatedRows"
       clickable-rows
       empty-text="데이터가 없습니다."
       :footer-text="`총 ${filteredRows.length}건`"
@@ -874,6 +877,11 @@ function handleProductSelect(product) {
         <TableActions @edit="openEditForm(row)" @delete="openDeleteApprovalRequest(row)" />
       </template>
     </BaseTable>
+
+    <BasePagination
+      v-model:current-page="currentPage"
+      :total-pages="totalPages"
+    />
 
     <POFormModal
       :open="formOpen"

@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
+import BasePagination from '@/components/common/BasePagination.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
@@ -16,6 +17,7 @@ import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
+import { usePagination } from '@/composables/usePagination'
 import { useToast } from '@/composables/useToast'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
 
@@ -110,6 +112,7 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
   issueDateField: 'issueDate',
   deliveryDateField: 'dueDate',
 })
+const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
 
 const previewFields = computed(() => {
   if (!previewTarget.value) {
@@ -148,7 +151,7 @@ const productRows = computed(() => {
   return source.filter((row) => [row.name, row.country, row.manager].some((value) => String(value).toLowerCase().includes(keyword)))
 })
 
-const currentOutputTarget = computed(() => previewTarget.value ?? filteredRows.value[0] ?? null)
+const currentOutputTarget = computed(() => previewTarget.value ?? paginatedRows.value[0] ?? null)
 
 function openClientSearch() {
   clientSearchOpen.value = true
@@ -210,7 +213,7 @@ function downloadPdf(row) {
 
 <template>
   <div class="fade-in space-y-5">
-    <PageHeader title="출하지시서" icon-class="fas fa-truck-loading">
+    <PageHeader title="출하지시서 관리" icon-class="fas fa-truck-loading">
       <template #actions>
         <BaseButton variant="secondary" size="sm" @click="currentOutputTarget ? printDocument(currentOutputTarget) : toast.info('출력할 출하지시서가 없습니다.', '인쇄')">
           <template #leading>
@@ -321,7 +324,7 @@ function downloadPdf(row) {
 
     <BaseTable
       :columns="columns"
-      :rows="filteredRows"
+      :rows="paginatedRows"
       clickable-rows
       empty-text="데이터가 없습니다."
       :footer-text="`총 ${filteredRows.length}건`"
@@ -370,6 +373,11 @@ function downloadPdf(row) {
         </div>
       </template>
     </BaseTable>
+
+    <BasePagination
+      v-model:current-page="currentPage"
+      :total-pages="totalPages"
+    />
 
     <DocumentPreviewModal
       :open="Boolean(previewTarget)"

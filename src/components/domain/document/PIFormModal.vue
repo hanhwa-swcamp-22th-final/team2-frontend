@@ -25,6 +25,11 @@ import {
   resolveIncotermState,
   shippingStageDefinitions,
 } from '@/utils/incoterms'
+import {
+  createExchangeRateHint,
+  exchangeRateRangeMap,
+  resolveExchangeRateValue,
+} from '@/utils/exchangeRate'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -67,6 +72,14 @@ const fallbackProductCatalog = [
   { id: '19', code: 'ITM019', name: 'UPS 1000VA', spec: '1000VA / 600W / 8 Outlet / LCD Display', unit: 'EA', unitPrice: 185000 },
   { id: '20', code: 'ITM020', name: 'Video Conference Camera', spec: '4K / 120° FOV / Built-in Mic / USB-C', unit: 'EA', unitPrice: 320000 },
 ]
+const defaultProductCatalog = defaultProductOptions.map((name, index) => ({
+  id: `default-${index + 1}`,
+  code: `DEF${String(index + 1).padStart(3, '0')}`,
+  name,
+  spec: '',
+  unit: 'EA',
+  unitPrice: 0,
+}))
 const exchangeRateRangeMap = {
   USD: { unitLabel: '1 USD', quoteAmount: 1, min: 1430, max: 1490 },
   EUR: { unitLabel: '1 EUR', quoteAmount: 1, min: 1560, max: 1640 },
@@ -115,39 +128,6 @@ function getTodayDateInput() {
   const month = String(today.getMonth() + 1).padStart(2, '0')
   const day = String(today.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
-}
-
-function getDeterministicRate(seedText, min, max) {
-  let hash = 0
-
-  for (let index = 0; index < seedText.length; index += 1) {
-    hash = (hash * 31 + seedText.charCodeAt(index)) >>> 0
-  }
-
-  return min + (hash % (max - min + 1))
-}
-
-function createExchangeRateHint(currency, issueDate) {
-  const range = exchangeRateRangeMap[currency]
-
-  if (!range) {
-    return `${currency} 환율은 실시간 변동 통화입니다.`
-  }
-
-  const seed = `${currency}:${issueDate || getTodayDateInput()}`
-  const rate = getDeterministicRate(seed, range.min, range.max)
-  return `참고 환율 ${range.unitLabel} = ${rate.toLocaleString('ko-KR')} KRW`
-}
-
-function resolveExchangeRateValue(currency, issueDate) {
-  const range = exchangeRateRangeMap[currency]
-
-  if (!range) {
-    return null
-  }
-
-  const seed = `${currency}:${issueDate || getTodayDateInput()}`
-  return getDeterministicRate(seed, range.min, range.max)
 }
 
 function getDefaultApprover() {

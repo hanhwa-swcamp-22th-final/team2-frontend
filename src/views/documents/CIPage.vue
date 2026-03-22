@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
+import BasePagination from '@/components/common/BasePagination.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
@@ -14,6 +15,7 @@ import SearchModal from '@/components/common/SearchModal.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
+import { usePagination } from '@/composables/usePagination'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
 
 const isAdvancedOpen = ref(false)
@@ -74,6 +76,7 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
   keywordFields: ['id', 'invoiceDate', 'clientName', 'country', 'itemName', 'amount'],
   issueDateField: 'invoiceDate',
 })
+const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
 
 const clientRows = computed(() => {
   const keyword = clientSearchKeyword.value.trim().toLowerCase()
@@ -183,7 +186,7 @@ function handleProductSelect(row) {
 
 <template>
   <div class="fade-in space-y-5">
-    <PageHeader title="CI (Commercial Invoice)" icon-class="fas fa-file-invoice-dollar">
+    <PageHeader title="Commercial Invoice 관리" icon-class="fas fa-file-invoice-dollar">
       <template #actions>
         <BaseButton variant="secondary" size="sm">
           <template #leading>
@@ -270,7 +273,7 @@ function handleProductSelect(row) {
 
     <BaseTable
       :columns="columns"
-      :rows="filteredRows"
+      :rows="paginatedRows"
       empty-text="데이터가 없습니다."
       :footer-text="`총 ${filteredRows.length}건`"
     >
@@ -291,6 +294,11 @@ function handleProductSelect(row) {
         </div>
       </template>
     </BaseTable>
+
+    <BasePagination
+      v-model:current-page="currentPage"
+      :total-pages="totalPages"
+    />
 
     <!-- CI 문서 양식 미리보기 모달 (slot 모드) -->
     <DocumentPreviewModal
