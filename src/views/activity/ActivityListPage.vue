@@ -35,7 +35,6 @@ const typeOptions = [
   { label: '미팅/협의', value: '미팅/협의' },
   { label: '이슈', value: '이슈' },
   { label: '메모/노트', value: '메모/노트' },
-  { label: '코멘트', value: '코멘트' },
   { label: '일정', value: '일정' },
 ]
 

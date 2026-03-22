@@ -41,7 +41,7 @@ const poColumns = [
   { key: 'id',           label: 'PO번호'  },
   { key: 'issueDate',    label: '등록일'  },
   { key: 'manager',      label: '담당자명' },
-  { key: 'country',      label: '나라'    },
+  { key: 'country',      label: '국가'    },
   { key: 'deliveryDate', label: '납기일'  },
 ]
 
@@ -109,7 +109,6 @@ const typeTabs = [
   { key: '미팅/협의', label: '미팅/협의' },
   { key: '이슈',     label: '이슈'     },
   { key: '메모/노트', label: '메모/노트' },
-  { key: '코멘트',   label: '코멘트'   },
   { key: '일정',     label: '일정'     },
 ]
 
