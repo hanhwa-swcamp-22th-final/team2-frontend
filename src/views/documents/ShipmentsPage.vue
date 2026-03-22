@@ -18,6 +18,7 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
+import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import { clientSearchColumns } from '@/utils/searchModalColumns'
 
 const router = useRouter()
@@ -49,35 +50,7 @@ const columns = [
   { key: 'status', label: '상태', align: 'center', width: '120px' },
 ]
 
-const rowsData = ref([
-  {
-    id: 'SH26001',
-    clientName: 'COOLSAY SDN BHD',
-    country: '말레이시아',
-    poId: 'PO26001',
-    requestDate: '2026/03/26',
-    dueDate: '2026/04/05',
-    status: '출하준비',
-  },
-  {
-    id: 'SH26004',
-    clientName: 'Viet Steel JSC',
-    country: '베트남',
-    poId: 'PO26004',
-    requestDate: '2026/03/12',
-    dueDate: '2026/04/30',
-    status: '출하준비',
-  },
-  {
-    id: 'SH26005',
-    clientName: 'Pacific Trading Inc.',
-    country: '미국',
-    poId: 'PO26003',
-    requestDate: '2026/03/18',
-    dueDate: '2026/06/05',
-    status: '출하완료',
-  },
-])
+const rowsData = useShipmentStatusDocuments()
 
 const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
   keywordFields: ['id', 'clientName', 'country', 'poId', 'requestDate', 'dueDate', 'status'],
