@@ -6,7 +6,6 @@ import ApprovalRequestModal from '@/components/common/ApprovalRequestModal.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
-import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DateField from '@/components/common/DateField.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
@@ -376,6 +375,10 @@ function getCurrentRequesterName() {
   return authStore.currentUser?.name || '김영업'
 }
 
+function getDefaultDeleteApprover(row) {
+  return row?.approver || '박리드 (영업지원 · 팀장)'
+}
+
 function getRequestedAt() {
   const now = new Date()
   const year = now.getFullYear()
@@ -540,6 +543,85 @@ const editApprovalItemSummaryRows = computed(() => {
   ]
 })
 
+const deleteApprovalRequestRows = computed(() => {
+  if (!selectedRow.value || !deleteOpen.value) return []
+
+  return [
+    { label: '요청 유형', value: '삭제 요청' },
+    { label: '결재자', value: getDefaultDeleteApprover(selectedRow.value) },
+    { label: '요청자', value: getCurrentRequesterName() },
+    { label: '문서 상태', value: '결재대기' },
+    { label: '요청 상태', value: '삭제요청' },
+    { label: '요청 시각', value: getRequestedAt() },
+  ]
+})
+
+const deleteApprovalDocumentRows = computed(() => {
+  if (!selectedRow.value || !deleteOpen.value) return []
+
+  const snapshot = createComparableSnapshot(selectedRow.value)
+
+  return [
+    { label: '대상 PO 번호', value: selectedRow.value.id || '-' },
+    { label: '현재 상태', value: selectedRow.value.status || '-' },
+    { label: '발행일', value: snapshot.issueDate || '-' },
+    { label: '납기일', value: snapshot.deliveryDate || '-' },
+    { label: '납기 처리', value: snapshot.deliveryMode || '-' },
+  ]
+})
+
+const deleteApprovalReferenceRows = computed(() => {
+  if (!selectedRow.value || !deleteOpen.value) return []
+
+  const snapshot = createComparableSnapshot(selectedRow.value)
+
+  if (!snapshot.piId) {
+    return []
+  }
+
+  return [
+    { label: '기준 PI 번호', value: snapshot.piId || '-' },
+    { label: '거래처', value: snapshot.clientName || '-' },
+    { label: '영문주소', value: snapshot.clientAddress || '-', fullWidth: true },
+    { label: '바이어', value: snapshot.buyerName || '-' },
+    { label: '통화', value: snapshot.currency || '-' },
+    {
+      label: '인코텀즈',
+      value: snapshot.incoterms
+        ? `${snapshot.incoterms}${snapshot.namedPlace ? ` ${snapshot.namedPlace}` : ''}`
+        : '-',
+    },
+    { label: 'PI 기준 납기일', value: snapshot.sourceDeliveryDate || '-' },
+  ]
+})
+
+const deleteApprovalItemRows = computed(() => {
+  if (!selectedRow.value || !deleteOpen.value) return []
+
+  const snapshot = createComparableSnapshot(selectedRow.value)
+
+  return snapshot.items.map((item, index) => ({
+    id: `${item.name || 'item'}-${index}`,
+    name: item.name || '-',
+    qty: item.qty > 0 ? item.qty.toLocaleString() : '-',
+    unit: item.unit || '-',
+    unitPrice: formatAmount(snapshot.currency, item.unitPrice),
+    amount: formatAmount(snapshot.currency, item.amount),
+    remark: item.remark || '-',
+  }))
+})
+
+const deleteApprovalItemSummaryRows = computed(() => {
+  if (!selectedRow.value || !deleteOpen.value) return []
+
+  const snapshot = createComparableSnapshot(selectedRow.value)
+
+  return [
+    { label: '품목 건수', value: `${snapshot.items.length}건` },
+    { label: '총액', value: snapshot.amount, emphasis: true },
+  ]
+})
+
 function confirmCreateApprovalRequest() {
   if (!pendingCreateFormValue.value) return
 
@@ -645,8 +727,27 @@ function openDeleteModal(row) {
 }
 
 function confirmDelete() {
-  rowsData.value = rowsData.value.filter((row) => row.id !== selectedRow.value?.id)
-  success(`${selectedRow.value?.id}가 삭제되었습니다.`)
+  if (!selectedRow.value) return
+
+  const requesterName = getCurrentRequesterName()
+  const requestedAt = getRequestedAt()
+
+  rowsData.value = rowsData.value.map((row) => (
+    row.id === selectedRow.value?.id
+      ? {
+        ...row,
+        approver: getDefaultDeleteApprover(selectedRow.value),
+        status: '결재대기',
+        approvalStatus: '대기',
+        requestStatus: '삭제요청',
+        approvalAction: '삭제',
+        approvalRequestedBy: requesterName,
+        approvalRequestedAt: requestedAt,
+      }
+      : row
+  ))
+
+  success(`${selectedRow.value?.id} 삭제 결재 요청이 전송되었습니다.`)
   deleteOpen.value = false
   selectedRow.value = null
 }
@@ -859,13 +960,22 @@ function handleProductSelect(product) {
       @cancel="cancelEditApprovalRequest"
     />
 
-    <ConfirmModal
+    <ApprovalRequestModal
       :open="deleteOpen"
-      title="PO 삭제"
-      message="아래 PO를 삭제하시겠습니까?"
-      :detail="selectedRow?.id"
-      confirm-label="삭제"
-      confirm-variant="danger"
+      title="PO 삭제 결재 요청"
+      message="선택한 PO 문서의 삭제 결재 요청을 전송하시겠습니까?"
+      :request-rows="deleteApprovalRequestRows"
+      :document-rows="deleteApprovalDocumentRows"
+      :item-columns="approvalItemColumns"
+      :item-rows="deleteApprovalItemRows"
+      :item-summary-rows="deleteApprovalItemSummaryRows"
+      :reference-rows="deleteApprovalReferenceRows"
+      document-section-title="삭제 대상 PO 정보"
+      item-section-title="삭제 대상 PO 품목 정보"
+      reference-section-title="연결 PI 정보"
+      helper-text="요청 후 PO는 결재대기 상태가 되며, 승인 전까지 실제 삭제되지 않습니다."
+      width="max-w-6xl"
+      confirm-label="삭제 요청"
       @confirm="confirmDelete"
       @cancel="deleteOpen = false"
     />
