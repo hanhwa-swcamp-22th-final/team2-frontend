@@ -65,7 +65,7 @@ const rowsData = ref([
     currency: 'USD',
     salesAmount: 42400,
     issueDate: '2026/02/10',
-    collectionDate: '2026/03/10',
+    collectionDate: null,
     status: '미수금',
   },
   {
@@ -76,7 +76,7 @@ const rowsData = ref([
     currency: 'JPY',
     salesAmount: 8388000,
     issueDate: '2026/02/20',
-    collectionDate: '2026/05/05',
+    collectionDate: null,
     status: '미수금',
   },
   {
@@ -87,7 +87,7 @@ const rowsData = ref([
     currency: 'USD',
     salesAmount: 53600,
     issueDate: '2025/12/20',
-    collectionDate: '2026/04/10',
+    collectionDate: null,
     status: '미수금',
   },
   {
@@ -98,7 +98,7 @@ const rowsData = ref([
     currency: 'USD',
     salesAmount: 28500,
     issueDate: '2025/08/15',
-    collectionDate: '2025/08/20',
+    collectionDate: null,
     status: '미수금',
   },
   {
@@ -109,10 +109,10 @@ const rowsData = ref([
     currency: 'USD',
     salesAmount: 18400,
     issueDate: '2025/09/20',
-    collectionDate: '2025/12/20',
+    collectionDate: null,
     status: '미수금',
   },
-])
+].map(normalizeCollectionRow))
 
 const clientRowsSource = [
   { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
@@ -212,6 +212,13 @@ function resolveNextCollectionDate(row, nextStatusValue) {
   return null
 }
 
+function normalizeCollectionRow(row) {
+  return {
+    ...row,
+    collectionDate: row.status === '수금완료' ? row.collectionDate || null : null,
+  }
+}
+
 function resetFilters() {
   resetBaseFilters()
   currencyFilter.value = ''
@@ -242,11 +249,11 @@ function handlePoSelect(row) {
 function updateStatus(poId, value) {
   rowsData.value = rowsData.value.map((row) => (
     row.poId === poId
-      ? {
+      ? normalizeCollectionRow({
         ...row,
         status: value === 'PAID' ? '수금완료' : '미수금',
         collectionDate: resolveNextCollectionDate(row, value),
-      }
+      })
       : row
   ))
 }
