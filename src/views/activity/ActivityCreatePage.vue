@@ -55,7 +55,6 @@ const typeOptions = [
   { label: '미팅/협의', value: '미팅/협의' },
   { label: '이슈', value: '이슈' },
   { label: '메모/노트', value: '메모/노트' },
-  { label: '코멘트', value: '코멘트' },
   { label: '일정', value: '일정' },
 ]
 
@@ -179,7 +178,7 @@ const poColumns = [
   { key: 'id',           label: 'PO번호'  },
   { key: 'issueDate',    label: '등록일'  },
   { key: 'manager',      label: '담당자명' },
-  { key: 'country',      label: '나라'    },
+  { key: 'country',      label: '국가'    },
   { key: 'deliveryDate', label: '납기일'  },
 ]
 
