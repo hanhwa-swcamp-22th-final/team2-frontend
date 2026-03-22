@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import ApprovalRequestModal from '@/components/common/ApprovalRequestModal.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
@@ -17,10 +18,12 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import POFormModal from '@/components/domain/document/POFormModal.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
+import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const { success } = useToast()
 
 const isAdvancedOpen = ref(false)
@@ -28,6 +31,7 @@ const formOpen = ref(false)
 const formMode = ref('create')
 const selectedRow = ref(null)
 const deleteOpen = ref(false)
+const approvalRequestOpen = ref(false)
 const piSearchOpen = ref(false)
 const piSearchKeyword = ref('')
 const clientSearchOpen = ref(false)
@@ -39,6 +43,7 @@ const codeSearchKeyword = ref('')
 const productSearchOpen = ref(false)
 const productSearchKeyword = ref('')
 const clientSearchContext = ref('filter')
+const pendingCreateFormValue = ref(null)
 
 const managerOptions = [
   { value: '김영업', label: '김영업' },
@@ -80,6 +85,15 @@ const columns = [
   { key: 'status', label: '상태', align: 'center', width: '120px' },
   { key: 'deliveryDate', label: '납기', align: 'center', width: '130px' },
   { key: 'actions', label: '', align: 'center', width: '90px' },
+]
+
+const approvalItemColumns = [
+  { key: 'name', label: '품목명', align: 'left' },
+  { key: 'qty', label: '수량', align: 'right' },
+  { key: 'unit', label: '단위', align: 'center' },
+  { key: 'unitPrice', label: '단가', align: 'right' },
+  { key: 'amount', label: '금액', align: 'right' },
+  { key: 'remark', label: '비고', align: 'left' },
 ]
 
 const initialRows = [
@@ -177,11 +191,15 @@ function openCreateForm() {
   selectedRow.value = null
   selectedPi.value = null
   selectedClient.value = null
+  pendingCreateFormValue.value = null
   formOpen.value = true
 }
 
 function closeForm() {
   formOpen.value = false
+  if (formMode.value === 'create') {
+    pendingCreateFormValue.value = null
+  }
 }
 
 function openEditForm(row) {
@@ -252,23 +270,136 @@ function buildRowPayload(formValue) {
   }
 }
 
+function getCurrentRequesterName() {
+  return authStore.currentUser?.name || '김영업'
+}
+
+function getRequestedAt() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  return `${year}/${month}/${day} ${hours}:${minutes}`
+}
+
+function buildNextPoId() {
+  return `PO26${String(rowsData.value.length + 1).padStart(3, '0')}`
+}
+
+const createApprovalRequestRows = computed(() => {
+  if (!pendingCreateFormValue.value) return []
+
+  return [
+    { label: '요청 유형', value: '등록 요청' },
+    { label: '결재자', value: pendingCreateFormValue.value.approver || '-' },
+    { label: '요청자', value: getCurrentRequesterName() },
+    { label: '문서 상태', value: '결재대기' },
+    { label: '요청 상태', value: '등록요청' },
+    { label: '요청 시각', value: getRequestedAt() },
+  ]
+})
+
+const createApprovalDocumentRows = computed(() => {
+  if (!pendingCreateFormValue.value) return []
+
+  const nextRow = buildRowPayload(pendingCreateFormValue.value)
+  const isDeliveryOverride = Boolean(nextRow.deliveryDateOverride && nextRow.sourceDeliveryDate && nextRow.deliveryDate !== nextRow.sourceDeliveryDate)
+
+  return [
+    { label: '예정 PO 번호', value: buildNextPoId() },
+    { label: '발행일', value: nextRow.issueDate },
+    { label: '납기일', value: nextRow.deliveryDate },
+    { label: '납기 처리', value: isDeliveryOverride ? 'PI 기준값에서 별도 조정' : 'PI 기준값 사용' },
+  ]
+})
+
+const createApprovalReferenceRows = computed(() => {
+  if (!pendingCreateFormValue.value) return []
+
+  const nextRow = buildRowPayload(pendingCreateFormValue.value)
+
+  if (!nextRow.piId) {
+    return []
+  }
+
+  return [
+    { label: '기준 PI 번호', value: nextRow.piId },
+    { label: '거래처', value: nextRow.clientName },
+    { label: '영문주소', value: nextRow.clientAddress || '-', fullWidth: true },
+    { label: '바이어', value: nextRow.buyerName || '-' },
+    { label: '통화', value: nextRow.currency || '-' },
+    { label: '인코텀즈', value: nextRow.incoterms ? `${nextRow.incoterms}${nextRow.namedPlace ? ` ${nextRow.namedPlace}` : ''}` : '-' },
+    { label: 'PI 기준 납기일', value: nextRow.sourceDeliveryDate || '-' },
+  ]
+})
+
+const createApprovalItemRows = computed(() => {
+  if (!pendingCreateFormValue.value) return []
+
+  const nextRow = buildRowPayload(pendingCreateFormValue.value)
+
+  return (nextRow.items ?? []).map((item, index) => ({
+    id: `${item.name || 'item'}-${index}`,
+    name: item.name || '-',
+    qty: parseAmount(item.qty) > 0 ? parseAmount(item.qty).toLocaleString() : '-',
+    unit: item.unit || '-',
+    unitPrice: formatAmount(nextRow.currency || 'USD', parseAmount(item.unitPrice)),
+    amount: formatAmount(nextRow.currency || 'USD', parseAmount(item.amount)),
+    remark: item.remark || '-',
+  }))
+})
+
+const createApprovalItemSummaryRows = computed(() => {
+  if (!pendingCreateFormValue.value) return []
+
+  const nextRow = buildRowPayload(pendingCreateFormValue.value)
+
+  return [
+    { label: '품목 건수', value: `${nextRow.items?.length ?? 0}건` },
+    { label: '총액', value: nextRow.amount, emphasis: true },
+  ]
+})
+
+function confirmCreateApprovalRequest() {
+  if (!pendingCreateFormValue.value) return
+
+  const nextRow = buildRowPayload(pendingCreateFormValue.value)
+  const requesterName = getCurrentRequesterName()
+
+  rowsData.value = [
+    {
+      id: buildNextPoId(),
+      ...nextRow,
+      manager: requesterName,
+      status: '결재대기',
+      approver: pendingCreateFormValue.value.approver || '',
+      approvalStatus: '대기',
+      requestStatus: '등록요청',
+      approvalAction: '등록',
+      approvalRequestedBy: requesterName,
+      approvalRequestedAt: getRequestedAt(),
+    },
+    ...rowsData.value,
+  ]
+
+  approvalRequestOpen.value = false
+  pendingCreateFormValue.value = null
+  formOpen.value = false
+  selectedPi.value = null
+  selectedClient.value = null
+  success('PO 등록 결재 요청이 전송되었습니다.')
+}
+
+function cancelCreateApprovalRequest() {
+  approvalRequestOpen.value = false
+}
+
 function handleSave(formValue) {
   if (formMode.value === 'create') {
-    const nextRow = buildRowPayload(formValue)
-
-    rowsData.value = [
-      {
-        id: `PO26${String(rowsData.value.length + 1).padStart(3, '0')}`,
-        ...nextRow,
-        manager: '김영업',
-        status: '초안',
-      },
-      ...rowsData.value,
-    ]
-    formOpen.value = false
-    selectedPi.value = null
-    selectedClient.value = null
-    success('PO 작성 폼이 연결되었습니다.')
+    pendingCreateFormValue.value = { ...formValue }
+    approvalRequestOpen.value = true
     return
   }
 
@@ -464,6 +595,26 @@ function handleProductSelect(product) {
       @open-client-search="openClientSearch('form')"
       @close="closeForm"
       @save="handleSave"
+    />
+
+    <ApprovalRequestModal
+      :open="approvalRequestOpen"
+      title="PO 등록 결재 요청"
+      message="선택한 결재자에게 PO 등록 결재 요청을 전송하시겠습니까?"
+      :request-rows="createApprovalRequestRows"
+      :document-rows="createApprovalDocumentRows"
+      :item-columns="approvalItemColumns"
+      :item-rows="createApprovalItemRows"
+      :item-summary-rows="createApprovalItemSummaryRows"
+      :reference-rows="createApprovalReferenceRows"
+      document-section-title="PO 문서 정보"
+      item-section-title="연결 PI 기준 품목"
+      reference-section-title="연결 PI 정보"
+      helper-text="요청 후 PO는 결재대기 상태로 등록되며, 승인 전까지 확정 처리되지 않습니다."
+      width="max-w-6xl"
+      confirm-label="결재 요청"
+      @confirm="confirmCreateApprovalRequest"
+      @cancel="cancelCreateApprovalRequest"
     />
 
     <ConfirmModal

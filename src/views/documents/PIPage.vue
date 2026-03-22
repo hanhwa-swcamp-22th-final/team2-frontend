@@ -22,6 +22,11 @@ import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { useToast } from '@/composables/useToast'
+import {
+  createRegistrationApprovalMeta,
+  REGISTRATION_DOCUMENT_STATUS,
+  REGISTRATION_REQUEST_STATUS,
+} from '@/utils/documentApproval'
 import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
 
 const router = useRouter()
@@ -115,6 +120,15 @@ const columns = [
   { key: 'status', label: '상태', align: 'center', width: '120px' },
   { key: 'deliveryDate', label: '납기', align: 'center', width: '130px' },
   { key: 'actions', label: '', align: 'center', width: '90px' },
+]
+
+const approvalItemColumns = [
+  { key: 'name', label: '품목명', align: 'left' },
+  { key: 'qty', label: '수량', align: 'right' },
+  { key: 'unit', label: '단위', align: 'center' },
+  { key: 'unitPrice', label: '단가', align: 'right' },
+  { key: 'amount', label: '금액', align: 'right' },
+  { key: 'remark', label: '비고', align: 'left' },
 ]
 
 const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
@@ -342,8 +356,8 @@ const createApprovalRequestRows = computed(() => {
     { label: '요청 유형', value: '등록 요청' },
     { label: '결재자', value: pendingCreateFormValue.value.approver || '-' },
     { label: '요청자', value: getCurrentRequesterName() },
-    { label: '문서 상태', value: '결재대기' },
-    { label: '요청 상태', value: '등록요청' },
+    { label: '문서 상태', value: REGISTRATION_DOCUMENT_STATUS },
+    { label: '요청 상태', value: REGISTRATION_REQUEST_STATUS },
     { label: '요청 시각', value: getRequestedAt() },
   ]
 })
@@ -352,18 +366,43 @@ const createApprovalDocumentRows = computed(() => {
   if (!pendingCreateFormValue.value) return []
 
   const { nextRow } = buildRowPayload(pendingCreateFormValue.value)
-  const itemCount = pendingCreateFormValue.value.items?.length ?? 0
 
   return [
     { label: '예정 PI 번호', value: buildNextPiId() },
     { label: '거래처', value: nextRow.clientName },
+    { label: '영문주소', value: nextRow.clientAddress || '-', fullWidth: true },
     { label: '바이어', value: nextRow.buyerName || '-' },
     { label: '통화', value: nextRow.currency },
     { label: '발행일', value: nextRow.issueDate },
     { label: '납기일', value: nextRow.deliveryDate },
     { label: '인코텀즈', value: formatIncotermsLabel(nextRow.incoterms, nextRow.namedPlace) || '-' },
-    { label: '품목 건수', value: `${itemCount}건` },
-    { label: '총액', value: nextRow.amount, emphasis: true, fullWidth: true },
+  ]
+})
+
+const createApprovalItemRows = computed(() => {
+  if (!pendingCreateFormValue.value) return []
+
+  const { currency, nextRow } = buildRowPayload(pendingCreateFormValue.value)
+
+  return (nextRow.items ?? []).map((item, index) => ({
+    id: `${item.name || 'item'}-${index}`,
+    name: item.name || '-',
+    qty: parseAmount(item.qty) > 0 ? parseAmount(item.qty).toLocaleString() : '-',
+    unit: item.unit || '-',
+    unitPrice: formatAmount(currency, parseAmount(item.unitPrice)),
+    amount: formatAmount(currency, parseAmount(item.amount)),
+    remark: item.remark || '-',
+  }))
+})
+
+const createApprovalItemSummaryRows = computed(() => {
+  if (!pendingCreateFormValue.value) return []
+
+  const { nextRow } = buildRowPayload(pendingCreateFormValue.value)
+
+  return [
+    { label: '품목 건수', value: `${nextRow.items?.length ?? 0}건` },
+    { label: '총액', value: nextRow.amount, emphasis: true },
   ]
 })
 
@@ -372,19 +411,18 @@ function confirmCreateApprovalRequest() {
 
   const { nextRow } = buildRowPayload(pendingCreateFormValue.value)
   const requesterName = getCurrentRequesterName()
+  const requestedAt = getRequestedAt()
 
   rowsData.value = [
     {
       id: buildNextPiId(),
       ...nextRow,
       manager: requesterName,
-      status: '결재대기',
-      approver: pendingCreateFormValue.value.approver || '',
-      approvalStatus: '대기',
-      requestStatus: '등록요청',
-      approvalAction: '등록',
-      approvalRequestedBy: requesterName,
-      approvalRequestedAt: getRequestedAt(),
+      ...createRegistrationApprovalMeta({
+        approver: pendingCreateFormValue.value.approver,
+        requesterName,
+        requestedAt,
+      }),
     },
     ...rowsData.value,
   ]
@@ -602,7 +640,13 @@ function handleProductSelect(product) {
       message="선택한 결재자에게 PI 등록 결재 요청을 전송하시겠습니까?"
       :request-rows="createApprovalRequestRows"
       :document-rows="createApprovalDocumentRows"
+      :item-columns="approvalItemColumns"
+      :item-rows="createApprovalItemRows"
+      :item-summary-rows="createApprovalItemSummaryRows"
+      document-section-title="PI 문서 정보"
+      item-section-title="PI 품목 정보"
       helper-text="요청 후 PI는 결재대기 상태로 등록되며, 승인 전까지 확정 처리되지 않습니다."
+      width="max-w-6xl"
       confirm-label="결재 요청"
       @confirm="confirmCreateApprovalRequest"
       @cancel="cancelCreateApprovalRequest"
