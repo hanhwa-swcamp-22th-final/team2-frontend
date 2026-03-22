@@ -65,7 +65,7 @@ const filteredPoList = computed(() => {
 
 function selectPo(po) {
   selectedPoId.value = po.id
-  poDisplay.value = `${po.id} - ${po.title}`
+  poDisplay.value = po.id
   isPoModalOpen.value = false
   poSearchKeyword.value = ''
 }
