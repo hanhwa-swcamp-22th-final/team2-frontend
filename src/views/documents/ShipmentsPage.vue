@@ -17,6 +17,8 @@ import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
+import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
+import { clientSearchColumns } from '@/utils/searchModalColumns'
 
 const router = useRouter()
 const isAdvancedOpen = ref(false)
@@ -77,12 +79,6 @@ const rowsData = ref([
   },
 ])
 
-const clientRowsSource = [
-  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
-  { id: 'CL002', name: 'Viet Steel JSC', country: '베트남' },
-  { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국' },
-]
-
 const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
   keywordFields: ['id', 'clientName', 'country', 'poId', 'requestDate', 'dueDate', 'status'],
   issueDateField: 'requestDate',
@@ -90,14 +86,11 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
   codeField: 'id',
 })
 const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
+const { createClientRows } = useSearchModalLookups()
 
 const preparingCount = computed(() => filteredRows.value.filter((row) => row.status === '출하준비').length)
 const completedCount = computed(() => filteredRows.value.filter((row) => row.status === '출하완료').length)
-const clientRows = computed(() => {
-  const keyword = clientSearchKeyword.value.trim().toLowerCase()
-  if (!keyword) return clientRowsSource
-  return clientRowsSource.filter((row) => [row.id, row.name, row.country].some((value) => String(value).toLowerCase().includes(keyword)))
-})
+const clientRows = createClientRows(clientSearchKeyword)
 
 const shipmentRows = computed(() => {
   const keyword = shipmentSearchKeyword.value.trim().toLowerCase()
@@ -271,11 +264,7 @@ function searchRows() {
     <SearchModal
       :open="clientSearchOpen"
       title="거래처 검색"
-      :columns="[
-        { key: 'id', label: '코드' },
-        { key: 'name', label: '거래처명' },
-        { key: 'country', label: '국가' },
-      ]"
+      :columns="clientSearchColumns"
       :rows="clientRows"
       :search-keyword="clientSearchKeyword"
       @update:search-keyword="clientSearchKeyword = $event"

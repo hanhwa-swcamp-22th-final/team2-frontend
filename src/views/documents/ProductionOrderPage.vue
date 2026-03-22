@@ -18,8 +18,10 @@ import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
+import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useToast } from '@/composables/useToast'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
+import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
 
 const router = useRouter()
 const isAdvancedOpen = ref(false)
@@ -102,18 +104,13 @@ const rowsData = ref([
   },
 ])
 
-const clientRowsSource = [
-  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
-  { id: 'CL002', name: 'TechBridge GmbH', country: '독일' },
-  { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국' },
-]
-
 const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
   keywordFields: ['id', 'issueDate', 'poId', 'country', 'clientName', 'itemName', 'manager', 'status', 'dueDate'],
   issueDateField: 'issueDate',
   deliveryDateField: 'dueDate',
 })
 const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
+const { createClientRows, createProductRows } = useSearchModalLookups()
 
 const previewFields = computed(() => {
   if (!previewTarget.value) {
@@ -132,11 +129,7 @@ const previewFields = computed(() => {
   ]
 })
 
-const clientRows = computed(() => {
-  const keyword = clientSearchKeyword.value.trim().toLowerCase()
-  if (!keyword) return clientRowsSource
-  return clientRowsSource.filter((row) => [row.id, row.name, row.country].some((value) => String(value).toLowerCase().includes(keyword)))
-})
+const clientRows = createClientRows(clientSearchKeyword)
 
 const codeRows = computed(() => {
   const keyword = codeSearchKeyword.value.trim().toLowerCase()
@@ -145,12 +138,7 @@ const codeRows = computed(() => {
   return source.filter((row) => [row.id, row.issueDate, row.clientName].some((value) => String(value).toLowerCase().includes(keyword)))
 })
 
-const productRows = computed(() => {
-  const keyword = productSearchKeyword.value.trim().toLowerCase()
-  const source = [...new Map(rowsData.value.map((row) => [row.itemName, { name: row.itemName, country: row.country, manager: row.manager }])).values()]
-  if (!keyword) return source
-  return source.filter((row) => [row.name, row.country, row.manager].some((value) => String(value).toLowerCase().includes(keyword)))
-})
+const productRows = createProductRows(productSearchKeyword)
 
 const currentOutputTarget = computed(() => previewTarget.value ?? paginatedRows.value[0] ?? null)
 
@@ -379,11 +367,7 @@ function downloadPdf(row) {
     <SearchModal
       :open="clientSearchOpen"
       title="거래처 검색"
-      :columns="[
-        { key: 'id', label: '코드' },
-        { key: 'name', label: '거래처명' },
-        { key: 'country', label: '국가' },
-      ]"
+      :columns="clientSearchColumns"
       :rows="clientRows"
       :search-keyword="clientSearchKeyword"
       @update:search-keyword="clientSearchKeyword = $event"
@@ -409,11 +393,7 @@ function downloadPdf(row) {
     <SearchModal
       :open="productSearchOpen"
       title="품목명 검색"
-      :columns="[
-        { key: 'name', label: '품목명' },
-        { key: 'country', label: '국가' },
-        { key: 'manager', label: '영업담당자' },
-      ]"
+      :columns="productSearchColumns"
       :rows="productRows"
       :search-keyword="productSearchKeyword"
       @update:search-keyword="productSearchKeyword = $event"

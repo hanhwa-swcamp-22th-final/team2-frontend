@@ -14,7 +14,9 @@ import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
+import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { convertCurrencyAmountToKrw } from '@/utils/exchangeRate'
+import { clientSearchColumns } from '@/utils/searchModalColumns'
 
 const isAdvancedOpen = ref(false)
 const clientSearchOpen = ref(false)
@@ -128,12 +130,7 @@ const rowsData = ref([
   },
 ].map(normalizeCollectionRow))
 
-const clientRowsSource = [
-  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
-  { id: 'CL002', name: 'Sakura Electronics Co., Ltd.', country: '일본' },
-  { id: 'CL003', name: 'Viet Steel JSC', country: '베트남' },
-  { id: 'CL004', name: 'Al Baraka Trading LLC', country: 'UAE' },
-]
+const { createClientRows } = useSearchModalLookups()
 
 const {
   filters,
@@ -229,11 +226,7 @@ const tableRows = computed(() => {
 
 const totalKrwAmount = computed(() => sortedRows.value.reduce((sum, row) => sum + row.salesAmountKrw, 0))
 
-const clientRows = computed(() => {
-  const keyword = clientSearchKeyword.value.trim().toLowerCase()
-  if (!keyword) return clientRowsSource
-  return clientRowsSource.filter((row) => [row.id, row.name, row.country].some((value) => String(value).toLowerCase().includes(keyword)))
-})
+const clientRows = createClientRows(clientSearchKeyword)
 
 const poRows = computed(() => {
   const keyword = poSearchKeyword.value.trim().toLowerCase()
@@ -607,11 +600,7 @@ function cancelStatusChange() {
     <SearchModal
       :open="clientSearchOpen"
       title="거래처 검색"
-      :columns="[
-        { key: 'id', label: '코드' },
-        { key: 'name', label: '거래처명' },
-        { key: 'country', label: '국가' },
-      ]"
+      :columns="clientSearchColumns"
       :rows="clientRows"
       :search-keyword="clientSearchKeyword"
       @update:search-keyword="clientSearchKeyword = $event"

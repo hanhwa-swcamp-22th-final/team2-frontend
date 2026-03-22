@@ -17,6 +17,7 @@ import { usePoDocuments } from '@/stores/poDocuments'
 import { buildApprovalInfoRows } from '@/utils/documentApproval'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
 import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
+import { clientSearchColumns } from '@/utils/searchModalColumns'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,16 +33,25 @@ const piDocuments = usePiDocuments()
 const poDocuments = usePoDocuments()
 
 const fallbackClientRowsSource = [
-  { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아', buyers: ['Mr. Ahmad Razak (Purchasing Manager)', 'Ms. Siti Nurhaliza (Director)'] },
-  { id: 'CL002', name: 'TechBridge GmbH', country: '독일', buyers: ['Ms. Hanna Schneider (Procurement Lead)'] },
-  { id: 'CL003', name: 'Pacific Trading Inc.', country: '미국', buyers: ['Mr. Jacob Miller (Import Manager)'] },
+  { id: 'CL001', code: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아', city: 'Port Klang', currency: 'USD', manager: 'Ahmad Razak', tel: '+60-3-555-0101', status: '활성', buyers: ['Mr. Ahmad Razak (Purchasing Manager)', 'Ms. Siti Nurhaliza (Director)'] },
+  { id: 'CL002', code: 'CL002', name: 'TechBridge GmbH', country: '독일', city: 'Hamburg', currency: 'EUR', manager: 'Hanna Schneider', tel: '+49-40-555-0202', status: '활성', buyers: ['Ms. Hanna Schneider (Procurement Lead)'] },
+  { id: 'CL003', code: 'CL003', name: 'Pacific Trading Inc.', country: '미국', city: 'Seattle', currency: 'USD', manager: 'Jacob Miller', tel: '+1-206-555-0303', status: '활성', buyers: ['Mr. Jacob Miller (Import Manager)'] },
 ]
 const clientRowsSource = ref([...fallbackClientRowsSource])
 
 const clientRows = computed(() => {
   const keyword = clientSearchKeyword.value.trim().toLowerCase()
   if (!keyword) return clientRowsSource.value
-  return clientRowsSource.value.filter((client) => [client.id, client.name, client.country].some((value) => value.toLowerCase().includes(keyword)))
+  return clientRowsSource.value.filter((client) => [
+    client.code,
+    client.name,
+    client.country,
+    client.city,
+    client.currency,
+    client.manager,
+    client.tel,
+    client.status,
+  ].some((value) => String(value ?? '').toLowerCase().includes(keyword)))
 })
 
 const incotermsLabel = computed(() => (
@@ -166,6 +176,11 @@ async function loadClientRows() {
       code: client.code,
       name: client.name,
       country: countryMap.get(String(client.countryId)) ?? '-',
+      city: client.city ?? '-',
+      currency: '-',
+      manager: client.manager ?? '-',
+      tel: client.tel ?? '-',
+      status: client.status ?? '-',
       buyers: buyersByClientId.get(String(client.id)) ?? [],
     }))
   } catch {
@@ -499,11 +514,7 @@ function confirmDelete() {
     <SearchModal
       :open="clientSearchOpen"
       title="거래처 검색"
-      :columns="[
-        { key: 'id', label: '코드' },
-        { key: 'name', label: '거래처명' },
-        { key: 'country', label: '국가' },
-      ]"
+      :columns="clientSearchColumns"
       :rows="clientRows"
       :search-keyword="clientSearchKeyword"
       @update:search-keyword="clientSearchKeyword = $event"
