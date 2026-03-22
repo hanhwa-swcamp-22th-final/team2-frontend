@@ -19,6 +19,7 @@ import POFormModal from '@/components/domain/document/POFormModal.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
+import { usePoDocuments } from '@/stores/poDocuments'
 import { useToast } from '@/composables/useToast'
 import {
   buildApprovalRequestRows,
@@ -115,47 +116,7 @@ const approvalChangeColumns = [
   { key: 'after', label: '변경값', align: 'left' },
 ]
 
-const initialRows = [
-  {
-    id: 'PO26001',
-    piId: 'PI26001',
-    issueDate: '2026/02/05',
-    clientName: 'COOLSAY SDN BHD',
-    country: '말레이시아',
-    itemName: 'H-Beam 482x300x11x15',
-    amount: '$42,400',
-    currency: 'USD',
-    manager: '김영업',
-    status: '확정',
-    deliveryDate: '2026/04/20',
-    sourceDeliveryDate: '2026/04/15',
-    deliveryDateOverride: true,
-  },
-  {
-    id: 'PO26002',
-    issueDate: '2026/02/20',
-    clientName: 'TechBridge GmbH',
-    country: '독일',
-    itemName: 'H-Beam 482x300x11x15',
-    amount: '€68,400',
-    manager: '김영업',
-    status: '발송',
-    deliveryDate: '2026/05/25',
-  },
-  {
-    id: 'PO26003',
-    issueDate: '2026/03/03',
-    clientName: 'Pacific Trading Inc.',
-    country: '미국',
-    itemName: 'Lubricant Oil SAE 10W-40',
-    amount: '$15,600',
-    manager: '정영업',
-    status: '초안',
-    deliveryDate: '2026/06/05',
-  },
-]
-
-const rowsData = ref([...initialRows])
+const rowsData = usePoDocuments()
 const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
   keywordFields: ['id', 'clientName', 'country', 'itemName', 'amount', 'manager', 'status', 'issueDate', 'deliveryDate'],
   issueDateField: 'issueDate',

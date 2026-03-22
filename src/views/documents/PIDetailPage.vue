@@ -12,6 +12,9 @@ import PIDocumentTemplate from '@/components/domain/document/PIDocumentTemplate.
 import PIFormModal from '@/components/domain/document/PIFormModal.vue'
 import { fetchBuyers, fetchClients, fetchCountries } from '@/api/master'
 import { useToast } from '@/composables/useToast'
+import { usePiDocuments } from '@/stores/piDocuments'
+import { usePoDocuments } from '@/stores/poDocuments'
+import { buildApprovalInfoRows } from '@/utils/documentApproval'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
 import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
 
@@ -25,72 +28,8 @@ const deleteOpen = ref(false)
 const clientSearchOpen = ref(false)
 const clientSearchKeyword = ref('')
 const selectedClient = ref(null)
-
-const detailMap = ref({
-  PI26001: {
-    id: 'PI26001',
-    status: '확정',
-    clientName: 'COOLSAY SDN BHD',
-    buyer: 'Mr. Ahmad Razak (Purchasing Manager)',
-    currency: 'USD',
-    incoterms: 'FOB',
-    namedPlace: 'BUSAN',
-    deliveryDate: '2026/04/15',
-    issueDate: '2026/02/01',
-    manager: '김영업',
-    linkedDocuments: [
-      { id: 'PO26001', status: '생산중' },
-    ],
-    items: [
-      { name: 'H-Beam 482x300x11x15', quantity: '30', unit: 'EA', unitPrice: '$850', amount: '$25,500', remark: '' },
-      { name: 'Lubricant Oil SAE 10W-40', quantity: '200', unit: 'EA', unitPrice: '$30', amount: '$6,000', remark: '' },
-      { name: 'Industrial Grease EP-2', quantity: '100', unit: 'EA', unitPrice: '$45', amount: '$4,500', remark: '' },
-      { name: 'Hydraulic Oil ISO VG 46', quantity: '32', unit: 'EA', unitPrice: '$200', amount: '$6,400', remark: '' },
-    ],
-    totalAmount: '$42,400',
-    revisionHistory: [],
-  },
-  PI26002: {
-    id: 'PI26002',
-    status: '발송',
-    clientName: 'TechBridge GmbH',
-    buyer: 'Ms. Hanna Schneider (Procurement Lead)',
-    currency: 'EUR',
-    incoterms: 'CIF',
-    namedPlace: 'HAMBURG',
-    deliveryDate: '2026/05/20',
-    issueDate: '2026/02/15',
-    manager: '김영업',
-    linkedDocuments: [
-      { id: 'PO26002', status: '생산중' },
-    ],
-    items: [
-      { name: 'H-Beam 482x300x11x15', quantity: '80', unit: 'EA', unitPrice: '€855', amount: '€68,400', remark: '' },
-    ],
-    totalAmount: '€68,400',
-    revisionHistory: [],
-  },
-  PI26003: {
-    id: 'PI26003',
-    status: '초안',
-    clientName: 'Pacific Trading Inc.',
-    buyer: 'Mr. Jacob Miller (Import Manager)',
-    currency: 'USD',
-    incoterms: 'CFR',
-    namedPlace: 'LOS ANGELES',
-    deliveryDate: '2026/06/01',
-    issueDate: '2026/03/01',
-    manager: '정영업',
-    linkedDocuments: [],
-    items: [
-      { name: 'Lubricant Oil SAE 10W-40', quantity: '520', unit: 'EA', unitPrice: '$30', amount: '$15,600', remark: '' },
-    ],
-    totalAmount: '$15,600',
-    revisionHistory: [],
-  },
-})
-
-const detail = computed(() => detailMap.value[route.params.id] ?? null)
+const piDocuments = usePiDocuments()
+const poDocuments = usePoDocuments()
 
 const fallbackClientRowsSource = [
   { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아', buyers: ['Mr. Ahmad Razak (Purchasing Manager)', 'Ms. Siti Nurhaliza (Director)'] },
@@ -157,6 +96,49 @@ function formatCurrencyValue(currency, value) {
 function formatSlashDate(value) {
   return value ? value.replaceAll('-', '/') : '-'
 }
+
+function buildLinkedDocuments(documentId) {
+  return poDocuments.value
+    .filter((row) => (row.piId || row.linkedPiId) === documentId)
+    .map((row) => ({ id: row.id, status: row.status }))
+}
+
+function normalizeDetail(row) {
+  if (!row) return null
+
+  const currency = row.currency || 'USD'
+  const items = (row.items ?? []).map((item) => {
+    const quantity = String(item.qty ?? item.quantity ?? '')
+    const unitPriceValue = parseNumericValue(item.unitPrice)
+    const amountValue = parseNumericValue(item.amount)
+
+    return {
+      name: item.name ?? '',
+      quantity,
+      unit: item.unit ?? 'EA',
+      unitPrice: formatCurrencyValue(currency, unitPriceValue),
+      amount: formatCurrencyValue(currency, amountValue),
+      remark: item.remark ?? '',
+    }
+  })
+
+  const totalAmountValue = items.reduce((sum, item) => sum + parseNumericValue(item.amount), 0)
+
+  return {
+    ...row,
+    buyer: row.buyerName || row.buyer || '-',
+    linkedDocuments: buildLinkedDocuments(row.id),
+    items,
+    totalAmount: row.totalAmount || row.amount || formatCurrencyValue(currency, totalAmountValue),
+    revisionHistory: row.revisionHistory ?? [],
+  }
+}
+
+const detail = computed(() => normalizeDetail(
+  piDocuments.value.find((row) => row.id === route.params.id),
+))
+
+const approvalInfoRows = computed(() => buildApprovalInfoRows(detail.value))
 
 async function loadClientRows() {
   try {
@@ -248,21 +230,34 @@ function handleSave(formValue) {
 
   const totalAmount = normalizedItems.reduce((sum, item) => sum + parseNumericValue(item.amount), 0)
 
-  detailMap.value = {
-    ...detailMap.value,
-    [detail.value.id]: {
-      ...detail.value,
-      clientName: formValue.clientName,
-      buyer: formValue.buyerName,
-      currency: formValue.currency,
-      incoterms: normalizedIncoterms.code,
-      namedPlace: normalizedIncoterms.namedPlace,
-      issueDate: formatSlashDate(formValue.issueDate),
-      deliveryDate: formatSlashDate(formValue.deliveryDate),
-      items: normalizedItems,
-      totalAmount: formatCurrencyValue(formValue.currency, totalAmount),
-    },
-  }
+  piDocuments.value = piDocuments.value.map((row) => (
+    row.id === detail.value.id
+      ? {
+        ...row,
+        clientName: formValue.clientName,
+        clientAddress: formValue.clientAddress ?? row.clientAddress ?? '',
+        clientTel: formValue.clientTel ?? row.clientTel ?? '',
+        clientEmail: formValue.clientEmail ?? row.clientEmail ?? '',
+        buyerName: formValue.buyerName,
+        currency: formValue.currency,
+        incoterms: normalizedIncoterms.code,
+        namedPlace: normalizedIncoterms.namedPlace,
+        issueDate: formatSlashDate(formValue.issueDate),
+        deliveryDate: formatSlashDate(formValue.deliveryDate),
+        itemName: normalizedItems[0]?.name || row.itemName,
+        amount: formatCurrencyValue(formValue.currency, totalAmount),
+        totalAmount: formatCurrencyValue(formValue.currency, totalAmount),
+        items: normalizedItems.map((item) => ({
+          name: item.name,
+          qty: item.quantity,
+          unit: item.unit,
+          unitPrice: String(parseNumericValue(item.unitPrice)),
+          amount: String(parseNumericValue(item.amount)),
+          remark: item.remark ?? '',
+        })),
+      }
+      : row
+  ))
 
   formOpen.value = false
   success(`${detail.value?.id} 수정 폼이 연결되었습니다.`)
@@ -284,6 +279,7 @@ function goToLinkedDocument(documentId) {
 }
 
 function confirmDelete() {
+  piDocuments.value = piDocuments.value.filter((row) => row.id !== detail.value?.id)
   deleteOpen.value = false
   success(`${detail.value?.id}가 삭제되었습니다.`)
   router.push({ name: 'pi' })
@@ -390,6 +386,27 @@ function confirmDelete() {
 
       <div class="space-y-4">
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 class="mb-3 font-bold text-slate-800">결재 상태</h3>
+          <div v-if="approvalInfoRows.length" class="space-y-3 text-sm">
+            <div
+              v-for="row in approvalInfoRows"
+              :key="row.label"
+              class="flex items-start justify-between gap-3"
+            >
+              <span class="text-slate-500">{{ row.label }}</span>
+              <div class="text-right">
+                <StatusBadge
+                  v-if="['문서 상태', '결재 상태', '요청 상태'].includes(row.label)"
+                  :value="row.value"
+                />
+                <span v-else class="break-words font-medium text-slate-700">{{ row.value }}</span>
+              </div>
+            </div>
+          </div>
+          <div v-else class="text-xs text-slate-400">결재 요청 이력 없음</div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 class="mb-3 font-bold text-slate-800">연결 문서</h3>
           <div class="space-y-2 text-sm">
             <template v-if="detail.linkedDocuments.length">
@@ -442,6 +459,9 @@ function confirmDelete() {
       :document="{
         id: detail.id,
         clientName: detail.clientName,
+        clientAddress: detail.clientAddress,
+        clientTel: detail.clientTel,
+        clientEmail: detail.clientEmail,
         buyerName: detail.buyer,
         country: selectedClient?.country ?? '',
         currency: detail.currency,
@@ -449,6 +469,7 @@ function confirmDelete() {
         namedPlace: detail.namedPlace,
         issueDate: detail.issueDate,
         deliveryDate: detail.deliveryDate,
+        approver: detail.approver,
         items: detail.items.map((item) => ({
           name: item.name,
           qty: item.quantity,

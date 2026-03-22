@@ -66,3 +66,18 @@ export function buildApprovalRequestRows({
     { label: '요청 시각', value: requestedAt || '-' },
   ]
 }
+
+export function buildApprovalInfoRows(document) {
+  if (!document?.requestStatus) {
+    return []
+  }
+
+  return [
+    { label: '문서 상태', value: document.status || '-' },
+    { label: '결재 상태', value: document.approvalStatus || '-' },
+    { label: '요청 상태', value: document.requestStatus || '-' },
+    { label: '결재자', value: document.approver || '-' },
+    { label: '요청자', value: document.approvalRequestedBy || '-' },
+    { label: '요청 시각', value: document.approvalRequestedAt || '-' },
+  ]
+}
