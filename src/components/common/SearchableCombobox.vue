@@ -75,7 +75,7 @@ watch(
   () => props.modelValue,
   (value) => {
     const matched = normalizedOptions.value.find((option) => String(option.value) === String(value))
-    const label = matched?.label ?? ''
+    const label = matched?.label ?? (value == null ? '' : String(value))
     inputValue.value = label
     rawQuery.value = label
   },

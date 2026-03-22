@@ -333,7 +333,7 @@ function getCurrentRequesterName() {
 }
 
 function getDefaultDeleteApprover(row) {
-  return row?.approver || '박리드 (영업지원 · 팀장)'
+  return row?.approver || '김영업'
 }
 
 function getRequestedAt() {
@@ -348,6 +348,41 @@ function getRequestedAt() {
 
 function buildNextPoId() {
   return `PO26${String(rowsData.value.length + 1).padStart(3, '0')}`
+}
+
+function createApprovalReviewSnapshot({
+  title,
+  message,
+  requestRows = [],
+  documentRows = [],
+  changeRows = [],
+  itemRows = [],
+  itemSummaryRows = [],
+  referenceRows = [],
+  documentSectionTitle = '문서 정보',
+  changeSectionTitle = '변경 사항',
+  itemSectionTitle = '품목 정보',
+  referenceSectionTitle = '참조 문서 정보',
+  helperText = '',
+}) {
+  return {
+    title,
+    message,
+    requestRows: requestRows.map((row) => ({ ...row })),
+    requestSectionTitle: '팀장 결재 정보',
+    documentRows: documentRows.map((row) => ({ ...row })),
+    documentSectionTitle,
+    changeColumns: changeRows.length ? approvalChangeColumns.map((column) => ({ ...column })) : [],
+    changeRows: changeRows.map((row) => ({ ...row })),
+    changeSectionTitle,
+    itemColumns: itemRows.length ? approvalItemColumns.map((column) => ({ ...column })) : [],
+    itemRows: itemRows.map((row) => ({ ...row })),
+    itemSummaryRows: itemSummaryRows.map((row) => ({ ...row })),
+    itemSectionTitle,
+    referenceRows: referenceRows.map((row) => ({ ...row })),
+    referenceSectionTitle,
+    helperText,
+  }
 }
 
 const createApprovalRequestRows = computed(() => {
@@ -588,12 +623,26 @@ function confirmCreateApprovalRequest() {
   const nextRow = buildRowPayload(pendingCreateFormValue.value)
   const requesterName = getCurrentRequesterName()
   const requestedAt = getRequestedAt()
+  const approvalReview = createApprovalReviewSnapshot({
+    title: 'PO 등록 결재 검토',
+    message: '선택한 결재자에게 PO 등록 결재 요청이 접수되었습니다. 연결 PI 기준 정보와 품목 내역을 검토합니다.',
+    requestRows: createApprovalRequestRows.value,
+    documentRows: createApprovalDocumentRows.value,
+    itemRows: createApprovalItemRows.value,
+    itemSummaryRows: createApprovalItemSummaryRows.value,
+    referenceRows: createApprovalReferenceRows.value,
+    documentSectionTitle: 'PO 문서 정보',
+    itemSectionTitle: '연결 PI 기준 품목',
+    referenceSectionTitle: '연결 PI 정보',
+    helperText: '등록 요청은 팀장 승인 후 확정되며, 승인 전까지 문서는 결재대기 상태로 유지됩니다.',
+  })
 
   rowsData.value = [
     {
       id: buildNextPoId(),
       ...nextRow,
       manager: requesterName,
+      approvalReview,
       ...createRegistrationApprovalMeta({
         approver: pendingCreateFormValue.value.approver,
         requesterName,
@@ -620,12 +669,28 @@ function confirmEditApprovalRequest() {
 
   const requesterName = getCurrentRequesterName()
   const requestedAt = getRequestedAt()
+  const approvalReview = createApprovalReviewSnapshot({
+    title: 'PO 수정 결재 검토',
+    message: '요청된 변경 사항과 연결 PI 기준 정보를 함께 검토한 뒤 승인 또는 반려를 결정합니다.',
+    requestRows: editApprovalRequestRows.value,
+    documentRows: editApprovalDocumentRows.value,
+    changeRows: pendingEditRequest.value.changeRows ?? [],
+    itemRows: editApprovalItemRows.value,
+    itemSummaryRows: editApprovalItemSummaryRows.value,
+    referenceRows: editApprovalReferenceRows.value,
+    documentSectionTitle: '수정 대상 PO 정보',
+    changeSectionTitle: '변경 사항 비교',
+    itemSectionTitle: '변경 후 PO 품목 정보',
+    referenceSectionTitle: '연결 PI 정보',
+    helperText: '수정 요청은 승인 전까지 확정되지 않으며, 반려 시 요청 상태만 반영됩니다.',
+  })
 
   rowsData.value = rowsData.value.map((row) => (
     row.id === pendingEditRequest.value.id
       ? {
         ...row,
         ...pendingEditRequest.value.nextRow,
+        approvalReview,
         ...createEditApprovalMeta({
           approver: pendingEditRequest.value.approver || row.approver || '',
           requesterName,
@@ -691,11 +756,25 @@ function confirmDeleteApprovalRequest() {
 
   const requesterName = getCurrentRequesterName()
   const requestedAt = getRequestedAt()
+  const approvalReview = createApprovalReviewSnapshot({
+    title: 'PO 삭제 결재 검토',
+    message: '선택한 PO 삭제 요청 건입니다. 연결 PI와 품목 정보를 확인한 뒤 승인 또는 반려를 결정합니다.',
+    requestRows: deleteApprovalRequestRows.value,
+    documentRows: deleteApprovalDocumentRows.value,
+    itemRows: deleteApprovalItemRows.value,
+    itemSummaryRows: deleteApprovalItemSummaryRows.value,
+    referenceRows: deleteApprovalReferenceRows.value,
+    documentSectionTitle: '삭제 대상 PO 정보',
+    itemSectionTitle: '삭제 대상 PO 품목 정보',
+    referenceSectionTitle: '연결 PI 정보',
+    helperText: '삭제 요청은 승인 전까지 실제 삭제되지 않으며, 승인 시 문서 상태가 취소로 전환됩니다.',
+  })
 
   rowsData.value = rowsData.value.map((row) => (
     row.id === selectedRow.value?.id
       ? {
         ...row,
+        approvalReview,
         ...createDeleteApprovalMeta({
           approver: getDefaultDeleteApprover(selectedRow.value),
           requesterName,

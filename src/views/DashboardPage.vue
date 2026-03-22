@@ -1,10 +1,21 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
+import ApprovalReviewModal from '@/components/common/ApprovalReviewModal.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import { useAuthStore } from '@/stores/auth'
+import { usePiDocuments } from '@/stores/piDocuments'
+import { usePoDocuments } from '@/stores/poDocuments'
 
 const router = useRouter()
+const authStore = useAuthStore()
+const piDocuments = usePiDocuments()
+const poDocuments = usePoDocuments()
+const selectedRequest = ref(null)
+const decisionConfirmOpen = ref(false)
+const pendingDecision = ref('')
 
 const summaryCards = ref([
   {
@@ -32,42 +43,6 @@ const summaryCards = ref([
     to: '/ci',
   },
 ])
-
-const requestItems = [
-  {
-    id: 1,
-    docType: 'PO',
-    docId: 'PO26002',
-    actionLabel: '수정',
-    company: 'COOLSAY SDN BHD',
-    requester: '김영업(과장)',
-    approver: '최관리(이사)',
-    status: '대기',
-    urgent: false,
-  },
-  {
-    id: 2,
-    docType: 'PO',
-    docId: 'PO26004',
-    actionLabel: '삭제',
-    company: 'TechBridge GmbH',
-    requester: '정영업(대리)',
-    approver: '최관리(이사)',
-    status: '진행중',
-    urgent: true,
-  },
-  {
-    id: 3,
-    docType: 'PI',
-    docId: 'PI26005',
-    actionLabel: '수정',
-    company: 'Sakura Electronics',
-    requester: '정영업(대리)',
-    approver: '최관리(이사)',
-    status: '완료',
-    urgent: false,
-  },
-]
 
 const shipmentItems = [
   {
@@ -134,16 +109,223 @@ const recentActivities = [
   },
 ]
 
-function goToRequestItem(item) {
-  const targetPath = item.docType === 'PI' ? '/pi' : '/po'
+const currentUser = computed(() => authStore.currentUser ?? null)
+const isSalesManager = computed(() => currentUser.value?.role === 'sales' && Number(currentUser.value?.positionId) === 1)
+const isSalesMember = computed(() => currentUser.value?.role === 'sales' && Number(currentUser.value?.positionId) === 2)
+const canApproveRequests = computed(() => isSalesManager.value)
+const showApprovalSection = computed(() => canApproveRequests.value || isSalesMember.value)
+const requestSectionTitle = computed(() => (canApproveRequests.value ? '결재 요청함' : '내 요청 현황'))
+
+function parseRequestedAt(value) {
+  const normalized = String(value ?? '').trim()
+  if (!normalized) return 0
+  return new Date(normalized.replace(/\./g, '-')).getTime() || 0
+}
+
+function buildFallbackReview(docType, row) {
+  const itemRows = (row.items ?? []).map((item, index) => ({
+    id: `${row.id}-item-${index}`,
+    name: item.name || '-',
+    qty: item.qty ?? item.quantity ?? '-',
+    unit: item.unit || '-',
+    unitPrice: item.unitPrice || '-',
+    amount: item.amount || '-',
+    remark: item.remark || '-',
+  }))
+
+  return {
+    title: `${docType} ${row.approvalAction || row.requestStatus || '결재'} 검토`,
+    message: '요청 시점의 검토 데이터가 없어 현재 문서 스냅샷 기준으로 표시합니다.',
+    requestRows: [
+      { label: '요청 유형', value: `${row.approvalAction || '-'} 요청` },
+      { label: '결재자', value: row.approver || '-' },
+      { label: '요청자', value: row.approvalRequestedBy || '-' },
+      { label: '문서 상태', value: row.status || '-' },
+      { label: '요청 상태', value: row.requestStatus || '-' },
+      { label: '요청 시각', value: row.approvalRequestedAt || '-' },
+    ],
+    requestSectionTitle: '팀장 결재 정보',
+    documentRows: [
+      { label: `${docType} 번호`, value: row.id || '-' },
+      { label: '거래처', value: row.clientName || '-' },
+      { label: '통화', value: row.currency || '-' },
+      { label: '발행일', value: row.issueDate || '-' },
+      { label: '납기일', value: row.deliveryDate || '-' },
+    ],
+    documentSectionTitle: `${docType} 문서 정보`,
+    changeColumns: [],
+    changeRows: [],
+    itemColumns: [
+      { key: 'name', label: '품목명', align: 'left' },
+      { key: 'qty', label: '수량', align: 'right' },
+      { key: 'unit', label: '단위', align: 'center' },
+      { key: 'unitPrice', label: '단가', align: 'right' },
+      { key: 'amount', label: '금액', align: 'right' },
+      { key: 'remark', label: '비고', align: 'left' },
+    ],
+    itemRows,
+    itemSummaryRows: [
+      { label: '품목 건수', value: `${itemRows.length}건` },
+      { label: '총액', value: row.amount || '-', emphasis: true },
+    ],
+    itemSectionTitle: `${docType} 품목 정보`,
+    referenceRows: [],
+    referenceSectionTitle: '참조 문서 정보',
+    helperText: '',
+  }
+}
+
+function createRequestItem(docType, row) {
+  return {
+    id: `${docType}-${row.id}`,
+    docType,
+    docId: row.id,
+    actionLabel: row.approvalAction || row.requestStatus?.replace('요청', '') || '결재',
+    company: row.clientName || '-',
+    requester: row.approvalRequestedBy || '-',
+    approver: row.approver || '-',
+    status: row.approvalStatus || '-',
+    requestStatus: row.requestStatus || '-',
+    requestedAt: row.approvalRequestedAt || '-',
+    urgent: false,
+    routeName: docType === 'PI' ? 'pi-detail' : 'po-detail',
+    review: row.approvalReview || buildFallbackReview(docType, row),
+  }
+}
+
+function canReviewRequest(item) {
+  if (isSalesManager.value) {
+    return item.docType === 'PI' || item.docType === 'PO'
+  }
+  return false
+}
+
+const allRequestItems = computed(() => {
+  const piItems = piDocuments.value
+    .filter((row) => row.requestStatus)
+    .map((row) => createRequestItem('PI', row))
+
+  const poItems = poDocuments.value
+    .filter((row) => row.requestStatus)
+    .map((row) => createRequestItem('PO', row))
+
+  return [...poItems, ...piItems].sort((a, b) => parseRequestedAt(b.requestedAt) - parseRequestedAt(a.requestedAt))
+})
+
+const requestItems = computed(() => {
+  if (canApproveRequests.value) {
+    return allRequestItems.value.filter((item) => item.status === '대기' && canReviewRequest(item))
+  }
+
+  if (isSalesMember.value) {
+    return allRequestItems.value.filter((item) => item.requester === currentUser.value?.name)
+  }
+
+  return []
+})
+
+const selectedRequestReview = computed(() => selectedRequest.value?.review ?? null)
+
+function openRequestReview(item) {
+  selectedRequest.value = item
+}
+
+function closeRequestReview() {
+  selectedRequest.value = null
+}
+
+function closeDecisionConfirm() {
+  decisionConfirmOpen.value = false
+  pendingDecision.value = ''
+}
+
+function updateRequestDocument(item, patch) {
+  const targetStore = item.docType === 'PI' ? piDocuments : poDocuments
+  targetStore.value = targetStore.value.map((row) => (
+    row.id === item.docId
+      ? { ...row, ...patch }
+      : row
+  ))
+}
+
+function getReviewedAt() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  return `${year}/${month}/${day} ${hours}:${minutes}`
+}
+
+const decisionConfirmTitle = computed(() => (
+  pendingDecision.value === 'approve' ? '결재 승인' : '결재 반려'
+))
+
+const decisionConfirmMessage = computed(() => {
+  if (!selectedRequest.value) return ''
+
+  return pendingDecision.value === 'approve'
+    ? `해당 ${selectedRequest.value.docType} 결재 요청을 승인하시겠습니까?`
+    : `해당 ${selectedRequest.value.docType} 결재 요청을 반려하시겠습니까?`
+})
+
+const decisionConfirmDetailRows = computed(() => {
+  if (!selectedRequest.value) return []
+
+  return [
+    { label: '문서 종류', value: selectedRequest.value.docType },
+    { label: '문서 번호', value: selectedRequest.value.docId },
+    { label: '요청 유형', value: `${selectedRequest.value.actionLabel} 요청` },
+    { label: '요청자', value: selectedRequest.value.requester || '-' },
+    { label: '결재자', value: selectedRequest.value.approver || '-' },
+    { label: '요청 시각', value: selectedRequest.value.requestedAt || '-' },
+  ]
+})
+
+function openApproveConfirm() {
+  pendingDecision.value = 'approve'
+  decisionConfirmOpen.value = true
+}
+
+function openRejectConfirm() {
+  pendingDecision.value = 'reject'
+  decisionConfirmOpen.value = true
+}
+
+function confirmDecision() {
+  if (!selectedRequest.value || !pendingDecision.value) return
+
+  if (pendingDecision.value === 'approve') {
+    const nextStatus = selectedRequest.value.actionLabel === '삭제' ? '취소' : '확정'
+    updateRequestDocument(selectedRequest.value, {
+      status: nextStatus,
+      approvalStatus: '승인',
+      approvalReviewedBy: currentUser.value?.name || '',
+      approvalReviewedAt: getReviewedAt(),
+    })
+  } else {
+    updateRequestDocument(selectedRequest.value, {
+      status: '반려',
+      approvalStatus: '반려',
+      approvalReviewedBy: currentUser.value?.name || '',
+      approvalReviewedAt: getReviewedAt(),
+    })
+  }
+
+  closeDecisionConfirm()
+  closeRequestReview()
+}
+
+function goToRequestDetail() {
+  if (!selectedRequest.value) return
 
   router.push({
-    path: targetPath,
-    query: {
-      code: item.docId,
-      source: 'dashboard-request',
-    },
+    name: selectedRequest.value.routeName,
+    params: { id: selectedRequest.value.docId },
+    query: { source: 'dashboard-approval-review' },
   })
+  closeRequestReview()
 }
 
 function goToActivityItem(item) {
@@ -196,21 +378,30 @@ function goToShipmentItem(item) {
       </RouterLink>
     </section>
 
-    <BaseCard body-class="-mx-5 -mb-5 max-h-[400px] divide-y divide-slate-100 overflow-y-auto">
+    <BaseCard
+      v-if="showApprovalSection"
+      body-class="-mx-5 -mb-5 max-h-[400px] divide-y divide-slate-100 overflow-y-auto"
+    >
       <template #title>
         <h3 class="flex items-center gap-2 font-bold text-slate-800">
           <i class="fas fa-stamp text-brand-500" />
-          결재란
+          {{ requestSectionTitle }}
         </h3>
       </template>
       <template #header-actions>
         <span class="text-xs font-medium text-slate-400">{{ requestItems.length }}건</span>
       </template>
       <div
+        v-if="!requestItems.length"
+        class="px-5 py-10 text-center text-sm text-slate-400"
+      >
+        표시할 결재 요청이 없습니다.
+      </div>
+      <div
         v-for="item in requestItems"
         :key="item.id"
         class="flex cursor-pointer flex-col items-start gap-3 px-5 py-3.5 transition hover:bg-slate-50/50 sm:flex-row sm:items-center sm:justify-between"
-        @click="goToRequestItem(item)"
+        @click="openRequestReview(item)"
       >
         <div class="flex min-w-0 items-center gap-3">
           <div
@@ -224,7 +415,7 @@ function goToShipmentItem(item) {
           </div>
           <div class="min-w-0">
             <div class="truncate text-sm font-medium text-slate-800">
-              {{ item.docType }} {{ item.docId }} — {{ item.actionLabel }} 결재
+              {{ item.docType }} {{ item.docId }} — {{ item.actionLabel }} 요청
             </div>
             <div class="truncate text-xs text-slate-400 sm:whitespace-normal">
               {{ item.company }} · 요청: {{ item.requester }} → 결재: {{ item.approver }}
@@ -300,5 +491,44 @@ function goToShipmentItem(item) {
         </div>
       </BaseCard>
     </section>
+
+    <ApprovalReviewModal
+      :open="Boolean(selectedRequest)"
+      :title="selectedRequestReview?.title || '결재 검토'"
+      :message="selectedRequestReview?.message || ''"
+      :request-rows="selectedRequestReview?.requestRows || []"
+      :request-section-title="selectedRequestReview?.requestSectionTitle || '결재 요청 정보'"
+      :document-rows="selectedRequestReview?.documentRows || []"
+      :document-section-title="selectedRequestReview?.documentSectionTitle || '문서 정보'"
+      :change-columns="selectedRequestReview?.changeColumns || []"
+      :change-rows="selectedRequestReview?.changeRows || []"
+      :change-section-title="selectedRequestReview?.changeSectionTitle || '변경 사항'"
+      :item-columns="selectedRequestReview?.itemColumns || []"
+      :item-rows="selectedRequestReview?.itemRows || []"
+      :item-summary-rows="selectedRequestReview?.itemSummaryRows || []"
+      :item-section-title="selectedRequestReview?.itemSectionTitle || '품목 정보'"
+      :reference-rows="selectedRequestReview?.referenceRows || []"
+      :reference-section-title="selectedRequestReview?.referenceSectionTitle || '참조 문서 정보'"
+      :helper-text="selectedRequestReview?.helperText || ''"
+      :can-approve="canApproveRequests"
+      @close="closeRequestReview"
+      @detail="goToRequestDetail"
+      @approve="openApproveConfirm"
+      @reject="openRejectConfirm"
+    />
+
+    <ConfirmModal
+      :open="decisionConfirmOpen"
+      :title="decisionConfirmTitle"
+      :message="decisionConfirmMessage"
+      :detail-rows="decisionConfirmDetailRows"
+      :confirm-label="pendingDecision === 'approve' ? '승인' : '반려'"
+      :confirm-variant="pendingDecision === 'approve' ? 'primary' : 'danger'"
+      helper-text="처리 후 요청 상태와 문서 상태가 즉시 갱신됩니다."
+      width="max-w-2xl"
+      :z-index="90"
+      @confirm="confirmDecision"
+      @cancel="closeDecisionConfirm"
+    />
   </div>
 </template>
