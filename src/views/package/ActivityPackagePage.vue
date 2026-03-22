@@ -15,6 +15,12 @@ import SearchModal from '@/components/common/SearchModal.vue'
 const router = useRouter()
 const { warning, error } = useToast()
 
+function todayKr() {
+  return new Date()
+    .toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })
+    .replace(/\. /g, '-').replace('.', '')
+}
+
 // ── 데이터 ─────────────────────────────────────────────────
 const activities = ref([])
 const poList = ref([])
@@ -72,7 +78,7 @@ function clearPo() {
 const keyword     = ref('')
 const poDisplay   = ref('')
 const dateFrom    = ref('')
-const dateTo      = ref(new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '-').replace('.', ''))
+const dateTo      = ref(todayKr())
 
 // ── 유효성 검사 ────────────────────────────────────────────
 const errors = ref({})
@@ -92,7 +98,7 @@ function validate() {
 
 // ── 활동기록 필터 ──────────────────────────────────────────
 const actDateFrom = ref('')
-const actDateTo   = ref(new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '-').replace('.', ''))
+const actDateTo   = ref(todayKr())
 const activeTypeTab = ref('전체')
 
 const typeTabs = [
@@ -422,7 +428,7 @@ function generatePdf() {
               <DateField v-model="actDateTo" />
             </div>
             <div class="flex justify-end">
-              <BaseButton variant="secondary" size="sm" @click="actDateFrom = ''; actDateTo = ''">초기화</BaseButton>
+              <BaseButton variant="secondary" size="sm" @click="actDateFrom = ''; actDateTo = todayKr()">초기화</BaseButton>
             </div>
           </div>
 
@@ -518,7 +524,7 @@ function generatePdf() {
             <DateField v-model="dateTo" />
           </div>
           <div class="flex justify-end">
-            <BaseButton variant="secondary" size="sm" @click="dateFrom = ''; dateTo = ''">기간 초기화</BaseButton>
+            <BaseButton variant="secondary" size="sm" @click="dateFrom = ''; dateTo = todayKr()">기간 초기화</BaseButton>
           </div>
         </div>
       </template>

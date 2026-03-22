@@ -285,7 +285,7 @@ const columns = [
 
     <!-- 테이블 -->
     <div>
-      <BaseTable :columns="columns" :rows="paginatedActivities" row-key="id" class="cursor-pointer" @row-click="openDetail">
+      <BaseTable :columns="columns" :rows="paginatedActivities" row-key="id" class="cursor-pointer" :footer-text="`총 ${filteredActivities.length}건`" @row-click="openDetail">
         <!-- 항목 번호 -->
         <template #cell-index="{ row }">
           <span class="text-xs font-medium text-slate-500">
@@ -311,10 +311,7 @@ const columns = [
         </template>
       </BaseTable>
 
-      <!-- 하단 카운트 + 페이지네이션 -->
-      <div class="mt-2 px-1 text-xs text-slate-500">
-        <span>총 {{ filteredActivities.length }}건</span>
-      </div>
+      <!-- 페이지네이션 -->
       <div class="mt-4">
         <BasePagination
           v-model:current-page="currentPage"

@@ -4,6 +4,7 @@ import { useToast } from '@/composables/useToast'
 import { fetchBuyers, createBuyer, updateBuyer, deleteBuyer } from '@/api/contacts'
 import { fetchActivityClients } from '@/api/activity'
 import BaseButton from '@/components/common/BaseButton.vue'
+import FormField from '@/components/common/FormField.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
@@ -12,6 +13,8 @@ import InfoField from '@/components/common/InfoField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import TableActions from '@/components/common/TableActions.vue'
+
+const { warning, error } = useToast()
 
 // ── 데이터 ─────────────────────────────────────────────────
 const clients = ref([])
@@ -72,7 +75,6 @@ function getClientName(clientId) {
 }
 
 // ── 등록/수정 모달 ─────────────────────────────────────────
-const { warning, error } = useToast()
 const isFormOpen = ref(false)
 const isEditMode = ref(false)
 const editingId = ref(null)
@@ -313,42 +315,28 @@ async function handleDelete() {
     >
       <div class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
-          <div class="space-y-1.5">
-            <p class="text-sm font-semibold text-slate-700">
-              거래처 <span class="text-red-500">*</span>
-            </p>
+          <FormField label="거래처" :required="true" :error="formErrors.clientId">
             <SearchableCombobox
               v-model="formClientId"
               :options="clientOptions"
               placeholder="거래처 검색/선택..."
             />
-            <p v-if="formErrors.clientId" class="mt-1 text-xs text-red-500">{{ formErrors.clientId }}</p>
-          </div>
-          <div class="space-y-1.5">
-            <p class="text-sm font-semibold text-slate-700">
-              이름 <span class="text-red-500">*</span>
-            </p>
+          </FormField>
+          <FormField label="이름" :required="true" :error="formErrors.name">
             <BaseTextField v-model="formName" placeholder="연락처 이름" />
-            <p v-if="formErrors.name" class="mt-1 text-xs text-red-500">{{ formErrors.name }}</p>
-          </div>
+          </FormField>
         </div>
         <div class="grid grid-cols-2 gap-4">
-          <div class="space-y-1.5">
-            <p class="text-sm font-semibold text-slate-700">직위</p>
+          <FormField label="직위">
             <BaseSelect v-model="formPosition" :options="positionOptions" placeholder="직위 선택" />
-          </div>
-          <div class="space-y-1.5">
-            <p class="text-sm font-semibold text-slate-700">
-              이메일 <span class="text-red-500">*</span>
-            </p>
+          </FormField>
+          <FormField label="이메일" :required="true" :error="formErrors.email">
             <BaseTextField v-model="formEmail" placeholder="이메일" type="email" />
-            <p v-if="formErrors.email" class="mt-1 text-xs text-red-500">{{ formErrors.email }}</p>
-          </div>
+          </FormField>
         </div>
-        <div class="space-y-1.5">
-          <p class="text-sm font-semibold text-slate-700">전화</p>
+        <FormField label="전화">
           <BaseTextField v-model="formTel" placeholder="전화번호" />
-        </div>
+        </FormField>
       </div>
       <template #footer>
         <BaseButton variant="secondary" @click="closeForm">취소</BaseButton>
