@@ -68,6 +68,12 @@ const statusMap = {
   completed: 'border-teal-200 bg-teal-50 text-teal-700',
   COMPLETED: 'border-teal-200 bg-teal-50 text-teal-700',
   완료: 'border-teal-200 bg-teal-50 text-teal-700',
+  approved: 'border-green-200 bg-green-50 text-green-700',
+  APPROVED: 'border-green-200 bg-green-50 text-green-700',
+  승인: 'border-green-200 bg-green-50 text-green-700',
+  rejected: 'border-rose-200 bg-rose-50 text-rose-700',
+  REJECTED: 'border-rose-200 bg-rose-50 text-rose-700',
+  반려: 'border-rose-200 bg-rose-50 text-rose-700',
 
   paid: 'border-green-200 bg-green-50 text-green-700',
   PAID: 'border-green-200 bg-green-50 text-green-700',

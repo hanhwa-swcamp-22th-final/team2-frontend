@@ -39,17 +39,14 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'save', 'open-client-search'])
-const { error, success } = useToast()
+const { error } = useToast()
 
 const defaultCurrencyOptions = ['USD', 'EUR', 'JPY', 'GBP', 'AUD', 'CAD', 'SGD', 'AED', 'CNY', 'MYR', 'THB', 'VND', 'IDR', 'INR', 'SAR', 'BRL', 'SEK', 'CHF']
 const defaultBuyerOptions = [
   'Mr. Ahmad Razak (Purchasing Manager)',
   'Ms. Siti Nurhaliza (Director)',
 ]
-const defaultApproverOptions = [
-  '최관리 (경영지원 · 관리자)',
-  '박리드 (영업지원 · 팀장)',
-]
+const defaultApproverOptions = ['김영업']
 const fallbackProductCatalog = [
   { id: '1', code: 'ITM001', name: 'Wireless Presenter', spec: '2.4GHz / 100m / USB Receiver / Laser Pointer', unit: 'EA', unitPrice: 55000 },
   { id: '2', code: 'ITM002', name: 'Tablet PC 10"', spec: '10.1" FHD / Octa-core / 4GB / 64GB / WiFi', unit: 'EA', unitPrice: 650000 },
@@ -195,11 +192,53 @@ const buyerOptions = computed(() => {
   return [...buyers]
 })
 
-const productOptions = computed(() => productCatalog.value.map((item) => ({
-  label: item.name,
-  value: item.name,
-  sublabel: [item.code, item.spec, `${Number(item.unitPrice ?? 0).toLocaleString('ko-KR')} KRW`].filter(Boolean).join(' · '),
-})))
+function parseNumericInput(value) {
+  const normalized = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))
+  return Number.isFinite(normalized) ? normalized : 0
+}
+
+const mergedProductCatalog = computed(() => {
+  const merged = productCatalog.value.map((item) => ({
+    ...item,
+    source: 'catalog',
+  }))
+  const existingNames = new Set(merged.map((item) => item.name))
+
+  for (const item of form.value.items ?? []) {
+    const name = String(item.name ?? '').trim()
+
+    if (!name || existingNames.has(name)) continue
+
+    merged.unshift({
+      id: `legacy-${item.id}`,
+      code: '',
+      name,
+      spec: '',
+      unit: item.unit ?? '',
+      unitPrice: parseNumericInput(item.unitPrice),
+      source: 'legacy',
+    })
+    existingNames.add(name)
+  }
+
+  return merged
+})
+
+const productOptions = computed(() => {
+  const catalogOptions = mergedProductCatalog.value.map((item) => ({
+    label: item.name,
+    value: item.name,
+    sublabel: [
+      item.code,
+      item.spec,
+      item.source === 'legacy'
+        ? '기존 문서 품목'
+        : `${Number(item.unitPrice ?? 0).toLocaleString('ko-KR')} KRW`,
+    ].filter(Boolean).join(' · '),
+  }))
+
+  return catalogOptions
+})
 
 const reasonFieldLabel = computed(() => (
   props.mode === 'create' ? '특기사항' : '수정 사유'
@@ -273,6 +312,7 @@ async function loadReferenceData() {
 
     const activeUsers = usersData
       .filter((user) => user.status === '재직')
+      .filter((user) => user.role === 'sales' && Number(user.positionId) === 1)
       .map((user) => user.name)
       .filter(Boolean)
 
@@ -357,7 +397,7 @@ function clearItemErrors(itemId) {
 }
 
 function findProductByName(name) {
-  return productCatalog.value.find((item) => item.name === name) ?? null
+  return mergedProductCatalog.value.find((item) => item.name === name) ?? null
 }
 
 function formatUnitPriceValue(value) {
@@ -419,6 +459,14 @@ function applyCatalogItemToRow(itemRow, productName) {
 
   itemRow.name = product.name
   itemRow.unit = product.unit || itemRow.unit
+
+  if (product.source === 'legacy') {
+    itemRow.baseUnitPrice = null
+    itemRow.unitPrice = formatUnitPriceValue(parseNumericInput(product.unitPrice))
+    updateItemAmount(itemRow)
+    return
+  }
+
   itemRow.baseUnitPrice = product.unitPrice
   itemRow.unitPrice = formatUnitPriceValue(
     convertKrwPriceToCurrency(product.unitPrice, form.value.currency, form.value.issueDate),
@@ -547,6 +595,29 @@ function updateItemAmount(item) {
   item.amount = formatAmount(quantity * unitPrice)
 }
 
+function normalizeEditItem(item, index) {
+  const normalizedQty = parseNumericInput(item.qty ?? item.quantity)
+  const normalizedUnitPrice = parseNumericInput(item.unitPrice)
+  const normalizedAmount = parseNumericInput(item.amount)
+  const resolvedUnitPrice = normalizedUnitPrice > 0
+    ? normalizedUnitPrice
+    : (normalizedAmount > 0 && normalizedQty > 0 ? Math.round(normalizedAmount / normalizedQty) : 0)
+  const resolvedAmount = normalizedAmount > 0
+    ? normalizedAmount
+    : normalizedQty * resolvedUnitPrice
+
+  return {
+    id: item.id ?? index + 1,
+    name: item.name ?? '',
+    qty: String(item.qty ?? item.quantity ?? ''),
+    unit: item.unit ?? '',
+    unitPrice: String(resolvedUnitPrice),
+    amount: String(resolvedAmount),
+    remark: item.remark ?? item.remarks ?? '',
+    baseUnitPrice: null,
+  }
+}
+
 async function initializeForm() {
   if (!props.open) return
 
@@ -572,19 +643,55 @@ async function initializeForm() {
       namedPlace: normalizedIncoterms.namedPlace || getIncotermMeta(normalizedIncoterms.code, incotermCatalog.value).defaultNamedPlace || '',
       reason: '',
       approver: getDefaultApprover(),
-      items: props.document.items?.map((item, index) => ({
-        id: item.id ?? index + 1,
-        name: item.name ?? '',
-        qty: String(item.qty ?? item.quantity ?? ''),
-        unit: item.unit ?? '',
-        unitPrice: String(item.unitPrice ?? ''),
-        amount: String(item.amount ?? '0').replace(/[^0-9.]/g, '') || '0',
-        remark: item.remark ?? item.remarks ?? '',
-        baseUnitPrice: null,
-      })) ?? [],
+      items: props.document.items?.map(normalizeEditItem) ?? [],
     }
-    form.value.items.forEach(updateItemAmount)
+    form.value.items.forEach((itemRow) => {
+      const matchedProduct = findProductByName(itemRow.name)
+
+      if (!matchedProduct) {
+        updateItemAmount(itemRow)
+        return
+      }
+
+      if (!String(itemRow.unit ?? '').trim()) {
+        itemRow.unit = matchedProduct.unit || ''
+      }
+
+      if (parseNumericInput(itemRow.unitPrice) <= 0) {
+        applyCatalogItemToRow(itemRow, itemRow.name)
+        return
+      }
+
+      if (matchedProduct.source === 'catalog') {
+        itemRow.baseUnitPrice = Number(matchedProduct.unitPrice ?? 0)
+      }
+
+      updateItemAmount(itemRow)
+    })
     await loadReferenceData()
+    form.value.items.forEach((itemRow) => {
+      const matchedProduct = findProductByName(itemRow.name)
+
+      if (!matchedProduct) {
+        updateItemAmount(itemRow)
+        return
+      }
+
+      if (!String(itemRow.unit ?? '').trim()) {
+        itemRow.unit = matchedProduct.unit || itemRow.unit
+      }
+
+      if (parseNumericInput(itemRow.unitPrice) <= 0) {
+        applyCatalogItemToRow(itemRow, itemRow.name)
+        return
+      }
+
+      if (matchedProduct.source === 'catalog') {
+        itemRow.baseUnitPrice = Number(matchedProduct.unitPrice ?? 0)
+      }
+
+      updateItemAmount(itemRow)
+    })
     await loadBuyerOptions()
     return
   }
@@ -611,12 +718,6 @@ function openClientSearch() {
 
 function addItem() {
   const itemRow = createEmptyItemRow()
-  const defaultProductName = productCatalog.value[0]?.name ?? fallbackProductCatalog[0]?.name ?? ''
-
-  if (defaultProductName) {
-    applyCatalogItemToRow(itemRow, defaultProductName)
-  }
-
   form.value.items.push(itemRow)
   clearError('items')
 }
@@ -631,7 +732,6 @@ function removeItem(index) {
 function handleSave() {
   if (!validateForm()) return
 
-  success(props.mode === 'create' ? 'PI 작성 폼 구조가 준비되었습니다.' : 'PI 수정 폼 구조가 준비되었습니다.')
   emit('save', {
     ...form.value,
     items: form.value.items.map(({ baseUnitPrice, ...item }) => ({ ...item })),

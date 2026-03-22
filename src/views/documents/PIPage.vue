@@ -306,9 +306,23 @@ function openEditForm(row) {
     namedPlace: normalizedIncoterms.namedPlace,
     issueDate: row.issueDate,
     deliveryDate: row.deliveryDate,
-    items: (row.items ?? []).map((item) => ({
-      ...item,
-    })),
+    items: (row.items ?? []).map((item) => {
+      const qty = parseAmount(item.qty ?? item.quantity)
+      const amount = parseAmount(item.amount)
+      const unitPrice = parseAmount(item.unitPrice)
+      const resolvedUnitPrice = unitPrice > 0
+        ? unitPrice
+        : (qty > 0 && amount > 0 ? Math.round(amount / qty) : 0)
+
+      return {
+        ...item,
+        qty: String(item.qty ?? item.quantity ?? ''),
+        unit: item.unit ?? '',
+        unitPrice: String(resolvedUnitPrice),
+        amount: String(amount > 0 ? amount : qty * resolvedUnitPrice),
+        remark: item.remark ?? item.remarks ?? '',
+      }
+    }),
   }
   formOpen.value = true
 }
@@ -327,14 +341,38 @@ function formatSlashDate(value) {
   return value ? value.replaceAll('-', '/') : '-'
 }
 
+function resolveUnitPriceValue(item) {
+  const qty = parseAmount(item.qty ?? item.quantity)
+  const unitPrice = parseAmount(item.unitPrice)
+  const amount = parseAmount(item.amount)
+
+  if (unitPrice > 0) {
+    return unitPrice
+  }
+
+  if (qty > 0 && amount > 0) {
+    return Math.round(amount / qty)
+  }
+
+  return 0
+}
+
+function resolveAmountValue(item) {
+  const qty = parseAmount(item.qty ?? item.quantity)
+  const unitPrice = resolveUnitPriceValue(item)
+  const amount = parseAmount(item.amount)
+
+  if (amount > 0) {
+    return amount
+  }
+
+  return qty * unitPrice
+}
+
 function buildRowPayload(formValue) {
   const currency = formValue.currency || 'USD'
   const totalAmount = (formValue.items ?? []).reduce((sum, item) => {
-    const qty = parseAmount(item.qty)
-    const unitPrice = parseAmount(item.unitPrice)
-    const amount = parseAmount(item.amount)
-    const calculatedAmount = amount > 0 ? amount : (qty > 0 && unitPrice > 0 ? qty * unitPrice : 0)
-    return sum + calculatedAmount
+    return sum + resolveAmountValue(item)
   }, 0)
   const matchedClient = clientRowsSource.value.find((client) => client.name === formValue.clientName)
   const nextRow = {
@@ -356,8 +394,8 @@ function buildRowPayload(formValue) {
       name: item.name ?? '',
       qty: String(item.qty ?? ''),
       unit: item.unit ?? '',
-      unitPrice: String(item.unitPrice ?? ''),
-      amount: String(item.amount ?? '0'),
+      unitPrice: String(resolveUnitPriceValue(item)),
+      amount: String(resolveAmountValue(item)),
       remark: item.remark ?? '',
     })),
   }
@@ -443,7 +481,7 @@ function getCurrentRequesterName() {
 }
 
 function getDefaultDeleteApprover(row) {
-  return row?.approver || '박리드 (영업지원 · 팀장)'
+  return row?.approver || '김영업'
 }
 
 function getRequestedAt() {
@@ -458,6 +496,41 @@ function getRequestedAt() {
 
 function buildNextPiId() {
   return `PI26${String(rowsData.value.length + 1).padStart(3, '0')}`
+}
+
+function createApprovalReviewSnapshot({
+  title,
+  message,
+  requestRows = [],
+  documentRows = [],
+  changeRows = [],
+  itemRows = [],
+  itemSummaryRows = [],
+  referenceRows = [],
+  documentSectionTitle = '문서 정보',
+  changeSectionTitle = '변경 사항',
+  itemSectionTitle = '품목 정보',
+  referenceSectionTitle = '참조 문서 정보',
+  helperText = '',
+}) {
+  return {
+    title,
+    message,
+    requestRows: requestRows.map((row) => ({ ...row })),
+    requestSectionTitle: '팀장 결재 정보',
+    documentRows: documentRows.map((row) => ({ ...row })),
+    documentSectionTitle,
+    changeColumns: changeRows.length ? approvalChangeColumns.map((column) => ({ ...column })) : [],
+    changeRows: changeRows.map((row) => ({ ...row })),
+    changeSectionTitle,
+    itemColumns: itemRows.length ? approvalItemColumns.map((column) => ({ ...column })) : [],
+    itemRows: itemRows.map((row) => ({ ...row })),
+    itemSummaryRows: itemSummaryRows.map((row) => ({ ...row })),
+    itemSectionTitle,
+    referenceRows: referenceRows.map((row) => ({ ...row })),
+    referenceSectionTitle,
+    helperText,
+  }
 }
 
 const createApprovalRequestRows = computed(() => {
@@ -639,12 +712,24 @@ function confirmCreateApprovalRequest() {
   const { nextRow } = buildRowPayload(pendingCreateFormValue.value)
   const requesterName = getCurrentRequesterName()
   const requestedAt = getRequestedAt()
+  const approvalReview = createApprovalReviewSnapshot({
+    title: 'PI 등록 결재 검토',
+    message: '선택한 결재자에게 PI 등록 결재 요청이 접수되었습니다. 아래 문서 정보를 기준으로 승인 여부를 검토합니다.',
+    requestRows: createApprovalRequestRows.value,
+    documentRows: createApprovalDocumentRows.value,
+    itemRows: createApprovalItemRows.value,
+    itemSummaryRows: createApprovalItemSummaryRows.value,
+    documentSectionTitle: 'PI 문서 정보',
+    itemSectionTitle: 'PI 품목 정보',
+    helperText: '등록 요청은 팀장 승인 후 확정되며, 승인 전까지 문서는 결재대기 상태로 유지됩니다.',
+  })
 
   rowsData.value = [
     {
       id: buildNextPiId(),
       ...nextRow,
       manager: requesterName,
+      approvalReview,
       ...createRegistrationApprovalMeta({
         approver: pendingCreateFormValue.value.approver,
         requesterName,
@@ -670,12 +755,26 @@ function confirmEditApprovalRequest() {
 
   const requesterName = getCurrentRequesterName()
   const requestedAt = getRequestedAt()
+  const approvalReview = createApprovalReviewSnapshot({
+    title: 'PI 수정 결재 검토',
+    message: '요청된 변경 사항과 변경 후 문서 정보를 검토한 뒤 승인 또는 반려를 결정합니다.',
+    requestRows: editApprovalRequestRows.value,
+    documentRows: editApprovalDocumentRows.value,
+    changeRows: pendingEditRequest.value.changeRows ?? [],
+    itemRows: editApprovalItemRows.value,
+    itemSummaryRows: editApprovalItemSummaryRows.value,
+    documentSectionTitle: '수정 대상 PI 정보',
+    changeSectionTitle: '변경 사항 비교',
+    itemSectionTitle: '변경 후 PI 품목 정보',
+    helperText: '수정 요청은 승인 전까지 확정되지 않으며, 반려 시 요청 상태만 반영됩니다.',
+  })
 
   rowsData.value = rowsData.value.map((row) => (
     row.id === pendingEditRequest.value.id
       ? {
         ...row,
         ...pendingEditRequest.value.nextRow,
+        approvalReview,
         ...createEditApprovalMeta({
           approver: pendingEditRequest.value.approver || row.approver || '',
           requesterName,
@@ -741,11 +840,23 @@ function confirmDeleteApprovalRequest() {
 
   const requesterName = getCurrentRequesterName()
   const requestedAt = getRequestedAt()
+  const approvalReview = createApprovalReviewSnapshot({
+    title: 'PI 삭제 결재 검토',
+    message: '선택한 PI 삭제 요청 건입니다. 문서와 품목 정보를 확인한 뒤 승인 또는 반려를 결정합니다.',
+    requestRows: deleteApprovalRequestRows.value,
+    documentRows: deleteApprovalDocumentRows.value,
+    itemRows: deleteApprovalItemRows.value,
+    itemSummaryRows: deleteApprovalItemSummaryRows.value,
+    documentSectionTitle: '삭제 대상 PI 정보',
+    itemSectionTitle: '삭제 대상 PI 품목 정보',
+    helperText: '삭제 요청은 승인 전까지 실제 삭제되지 않으며, 승인 시 문서 상태가 취소로 전환됩니다.',
+  })
 
   rowsData.value = rowsData.value.map((row) => (
     row.id === selectedRow.value?.id
       ? {
         ...row,
+        approvalReview,
         ...createDeleteApprovalMeta({
           approver: getDefaultDeleteApprover(selectedRow.value),
           requesterName,

@@ -5,7 +5,6 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import { fetchUsers } from '@/api/master'
-import { useToast } from '@/composables/useToast'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -16,11 +15,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'save', 'open-pi-search', 'open-client-search'])
-const { success } = useToast()
-const defaultApproverOptions = [
-  '최관리 (경영지원 · 관리자)',
-  '박리드 (영업지원 · 팀장)',
-]
+const defaultApproverOptions = ['김영업']
 
 function createInitialForm() {
   return {
@@ -31,7 +26,7 @@ function createInitialForm() {
     deliveryDate: '',
     sourceDeliveryDate: '',
     deliveryDateOverride: false,
-    approver: defaultApproverOptions[1],
+    approver: defaultApproverOptions[0],
   }
 }
 
@@ -45,6 +40,7 @@ async function loadApproverOptions() {
     const users = await fetchUsers()
     const activeUsers = users
       .filter((user) => user.status === '재직')
+      .filter((user) => user.role === 'sales' && Number(user.positionId) === 1)
       .map((user) => user.name)
       .filter(Boolean)
 
@@ -56,7 +52,7 @@ async function loadApproverOptions() {
   }
 
   if (!approverOptions.value.includes(form.value.approver)) {
-    form.value.approver = approverOptions.value[0] ?? defaultApproverOptions[1]
+    form.value.approver = approverOptions.value[0] ?? defaultApproverOptions[0]
   }
 }
 
@@ -76,7 +72,7 @@ watch(
         deliveryDate: props.document.deliveryDate?.replaceAll('/', '-') ?? '',
         sourceDeliveryDate: props.document.sourceDeliveryDate?.replaceAll('/', '-') ?? props.document.deliveryDate?.replaceAll('/', '-') ?? '',
         deliveryDateOverride: Boolean(props.document.deliveryDateOverride),
-        approver: props.document.approver ?? approverOptions.value[0] ?? defaultApproverOptions[1],
+        approver: props.document.approver ?? approverOptions.value[0] ?? defaultApproverOptions[0],
       }
       return
     }
@@ -103,7 +99,6 @@ function clearLinkedPi() {
 }
 
 function handleSave() {
-  success(props.mode === 'create' ? 'PO 작성 폼 구조가 준비되었습니다.' : 'PO 수정 폼 구조가 준비되었습니다.')
   emit('save', { ...form.value })
 }
 
