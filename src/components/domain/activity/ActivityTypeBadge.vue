@@ -12,7 +12,7 @@ const variantMap = {
   '미팅/협의': 'bg-sky-50 text-sky-700 border-sky-200',
   '메모/노트': 'bg-slate-100 text-slate-700 border-slate-200',
   '이슈': 'bg-rose-50 text-rose-700 border-rose-200',
-  '코멘트': 'bg-violet-50 text-violet-700 border-violet-200',
+
   '일정': 'bg-amber-50 text-amber-700 border-amber-200',
 }
 
