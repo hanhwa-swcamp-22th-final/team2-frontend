@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DateField from '@/components/common/DateField.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
@@ -20,6 +21,8 @@ const poSearchOpen = ref(false)
 const poSearchKeyword = ref('')
 const currencyFilter = ref('')
 const appliedCurrencyFilter = ref('')
+const statusConfirmOpen = ref(false)
+const pendingStatusChange = ref(null)
 
 const countryOptions = [
   { value: '말레이시아', label: '말레이시아' },
@@ -65,7 +68,7 @@ const rowsData = ref([
     currency: 'USD',
     salesAmount: 42400,
     issueDate: '2026/02/10',
-    collectionDate: '2026/03/10',
+    collectionDate: null,
     status: '미수금',
   },
   {
@@ -76,7 +79,7 @@ const rowsData = ref([
     currency: 'JPY',
     salesAmount: 8388000,
     issueDate: '2026/02/20',
-    collectionDate: '2026/05/05',
+    collectionDate: null,
     status: '미수금',
   },
   {
@@ -87,7 +90,7 @@ const rowsData = ref([
     currency: 'USD',
     salesAmount: 53600,
     issueDate: '2025/12/20',
-    collectionDate: '2026/04/10',
+    collectionDate: null,
     status: '미수금',
   },
   {
@@ -98,7 +101,7 @@ const rowsData = ref([
     currency: 'USD',
     salesAmount: 28500,
     issueDate: '2025/08/15',
-    collectionDate: '2025/08/20',
+    collectionDate: null,
     status: '미수금',
   },
   {
@@ -109,10 +112,10 @@ const rowsData = ref([
     currency: 'USD',
     salesAmount: 18400,
     issueDate: '2025/09/20',
-    collectionDate: '2025/12/20',
+    collectionDate: null,
     status: '미수금',
   },
-])
+].map(normalizeCollectionRow))
 
 const clientRowsSource = [
   { id: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아' },
@@ -179,6 +182,18 @@ const summaryRows = computed(() => {
     }))
 })
 
+const statusConfirmRows = computed(() => {
+  if (!pendingStatusChange.value) return []
+
+  return [
+    { label: 'PO 번호', value: pendingStatusChange.value.poId },
+    { label: '거래처', value: pendingStatusChange.value.clientName },
+    { label: '현재 상태', value: pendingStatusChange.value.currentStatus },
+    { label: '변경 상태', value: pendingStatusChange.value.nextStatus },
+    { label: '수금일 처리', value: pendingStatusChange.value.collectionDatePolicy, fullWidth: true },
+  ]
+})
+
 const currencySymbols = {
   USD: '$',
   JPY: '¥',
@@ -190,6 +205,33 @@ function formatAmount(value, currency) {
   const symbol = currencySymbols[currency] || ''
   if (typeof value === 'number') return `${symbol}${value.toLocaleString()}`
   return `${symbol}${value}`
+}
+
+function formatCollectionDate(value) {
+  return value || '-'
+}
+
+function getTodaySlashDate() {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}/${month}/${day}`
+}
+
+function resolveNextCollectionDate(row, nextStatusValue) {
+  if (nextStatusValue === 'PAID') {
+    return row.status === '수금완료' ? row.collectionDate : getTodaySlashDate()
+  }
+
+  return null
+}
+
+function normalizeCollectionRow(row) {
+  return {
+    ...row,
+    collectionDate: row.status === '수금완료' ? row.collectionDate || null : null,
+  }
 }
 
 function resetFilters() {
@@ -219,15 +261,47 @@ function handlePoSelect(row) {
   poSearchKeyword.value = ''
 }
 
+function openStatusConfirm(row, nextStatusValue) {
+  const nextStatus = nextStatusValue === 'PAID' ? '수금완료' : '미수금'
+  const nextCollectionDate = resolveNextCollectionDate(row, nextStatusValue)
+
+  pendingStatusChange.value = {
+    poId: row.poId,
+    clientName: row.clientName,
+    currentStatus: row.status,
+    nextStatus,
+    nextStatusValue,
+    nextCollectionDate,
+    collectionDatePolicy: nextStatus === '수금완료'
+      ? `수금일이 ${formatCollectionDate(nextCollectionDate)} 로 반영됩니다.`
+      : '수금일이 초기화되고 화면에는 - 로 표시됩니다.',
+  }
+  statusConfirmOpen.value = true
+}
+
 function updateStatus(poId, value) {
   rowsData.value = rowsData.value.map((row) => (
     row.poId === poId
-      ? {
+      ? normalizeCollectionRow({
         ...row,
         status: value === 'PAID' ? '수금완료' : '미수금',
-      }
+        collectionDate: resolveNextCollectionDate(row, value),
+      })
       : row
   ))
+}
+
+function confirmStatusChange() {
+  if (!pendingStatusChange.value) return
+
+  updateStatus(pendingStatusChange.value.poId, pendingStatusChange.value.nextStatusValue)
+  statusConfirmOpen.value = false
+  pendingStatusChange.value = null
+}
+
+function cancelStatusChange() {
+  statusConfirmOpen.value = false
+  pendingStatusChange.value = null
 }
 </script>
 
@@ -350,14 +424,15 @@ function updateStatus(poId, value) {
       </template>
 
       <template #cell-collectionDate="{ value }">
-        <span class="text-xs">{{ value }}</span>
+        <span class="text-xs">{{ formatCollectionDate(value) }}</span>
       </template>
 
       <template #cell-status="{ row }">
         <select
+          :key="`${row.poId}-${row.status}`"
           class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:border-brand-400 focus:outline-none"
           :value="row.status === '수금완료' ? 'PAID' : 'UNPAID'"
-          @change="updateStatus(row.poId, $event.target.value)"
+          @change="openStatusConfirm(row, $event.target.value)"
         >
           <option value="UNPAID">미수금</option>
           <option value="PAID">수금완료</option>
@@ -436,6 +511,18 @@ function updateStatus(poId, value) {
       @update:search-keyword="poSearchKeyword = $event"
       @close="poSearchOpen = false"
       @select="handlePoSelect"
+    />
+
+    <ConfirmModal
+      :open="statusConfirmOpen"
+      title="수금 상태 변경"
+      message="선택한 수금 상태를 반영하시겠습니까?"
+      :detail-rows="statusConfirmRows"
+      confirm-label="변경"
+      helper-text="상태 변경 시 수금일도 함께 조정됩니다."
+      width="max-w-lg"
+      @confirm="confirmStatusChange"
+      @cancel="cancelStatusChange"
     />
   </div>
 </template>
