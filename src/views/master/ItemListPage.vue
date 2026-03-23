@@ -3,10 +3,13 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BasePagination from '@/components/common/BasePagination.vue'
-import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import BaseTextField from '@/components/common/BaseTextField.vue'
+import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
-import SearchInput from '@/components/common/SearchInput.vue'
+import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
+import FormField from '@/components/common/FormField.vue'
+import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
@@ -26,8 +29,35 @@ const loading = ref(false)
 const saving = ref(false)
 const deleting = ref(false)
 
-const searchKeyword = ref('')
-const categoryFilter = ref('')
+const isAdvancedOpen = ref(false)
+
+const filters = ref({
+  keyword: '',
+  code: '',
+  name: '',
+  category: '',
+  unit: '',
+  status: '',
+})
+
+const statusOptions = [
+  { label: '전체', value: '' },
+  { label: '활성', value: '활성' },
+  { label: '비활성', value: '비활성' },
+]
+
+const unitOptions = computed(() => {
+  const units = [...new Set(items.value.map((i) => i.unit).filter(Boolean))]
+  return [{ label: '전체', value: '' }, ...units.map((u) => ({ label: u, value: u }))]
+})
+
+function resetFilters() {
+  filters.value = { keyword: '', code: '', name: '', category: '', unit: '', status: '' }
+}
+
+function searchRows() {
+  currentPage.value = 1
+}
 
 const PAGE_SIZE = 10
 const currentPage = ref(1)
@@ -41,12 +71,12 @@ const itemToDelete = ref(null)
 
 const categoryOptions = computed(() => {
   const cats = [...new Set(items.value.map((i) => i.category).filter(Boolean))]
-  return [{ label: '전체 카테고리', value: '' }, ...cats.map((c) => ({ label: c, value: c }))]
+  return [{ label: '전체', value: '' }, ...cats.map((c) => ({ label: c, value: c }))]
 })
 
 const columns = computed(() => {
   const base = [
-    { key: 'code', label: '코드', width: '100px' },
+    { key: 'code', label: '코드', width: '100px', align: 'center' },
     { key: 'name', label: '품목명' },
     { key: 'spec', label: '규격', width: '200px' },
     { key: 'packUnit', label: '포장단위', width: '100px', align: 'center' },
@@ -64,9 +94,10 @@ const columns = computed(() => {
 
 const filteredItems = computed(() => {
   let result = items.value
+  const f = filters.value
 
-  if (searchKeyword.value) {
-    const kw = searchKeyword.value.toLowerCase()
+  if (f.keyword) {
+    const kw = f.keyword.toLowerCase()
     result = result.filter(
       (item) =>
         item.name.toLowerCase().includes(kw) ||
@@ -75,8 +106,25 @@ const filteredItems = computed(() => {
     )
   }
 
-  if (categoryFilter.value) {
-    result = result.filter((item) => item.category === categoryFilter.value)
+  if (f.code) {
+    result = result.filter((item) => item.code.toLowerCase().includes(f.code.toLowerCase()))
+  }
+
+  if (f.name) {
+    const kw = f.name.toLowerCase()
+    result = result.filter((item) => item.name.toLowerCase().includes(kw) || (item.nameKr && item.nameKr.includes(kw)))
+  }
+
+  if (f.category) {
+    result = result.filter((item) => item.category === f.category)
+  }
+
+  if (f.unit) {
+    result = result.filter((item) => item.unit === f.unit)
+  }
+
+  if (f.status) {
+    result = result.filter((item) => item.status === f.status)
   }
 
   return result
@@ -90,9 +138,9 @@ const paginatedItems = computed(() => {
 })
 
 // Reset to page 1 when filters change
-watch([searchKeyword, categoryFilter], () => {
+watch(filters, () => {
   currentPage.value = 1
-})
+}, { deep: true })
 
 async function loadData() {
   loading.value = true
@@ -174,21 +222,71 @@ function goToDetail(row) {
       </template>
     </PageHeader>
 
-    <div class="flex flex-wrap items-center gap-3">
-      <div class="min-w-0 flex-1">
-        <SearchInput v-model="searchKeyword" placeholder="코드, 품목명으로 검색" />
+    <FilterToolbarCard
+      v-model="filters.keyword"
+      :advanced-open="isAdvancedOpen"
+      placeholder="코드, 품목명으로 검색"
+      @toggle-advanced="isAdvancedOpen = !isAdvancedOpen"
+    />
+
+    <CollapsibleFilterCard :open="isAdvancedOpen">
+      <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3">
+        <FormField label="코드">
+          <BaseTextField v-model="filters.code" placeholder="코드 입력..." />
+        </FormField>
+
+        <FormField label="품목명">
+          <BaseTextField v-model="filters.name" placeholder="영문 또는 한글명..." />
+        </FormField>
+
+        <FormField label="카테고리">
+          <SearchableCombobox
+            v-model="filters.category"
+            :options="categoryOptions"
+            placeholder="카테고리 선택..."
+          />
+        </FormField>
+
+        <FormField label="단위">
+          <SearchableCombobox
+            v-model="filters.unit"
+            :options="unitOptions"
+            placeholder="단위 선택..."
+          />
+        </FormField>
+
+        <FormField label="상태">
+          <SearchableCombobox
+            v-model="filters.status"
+            :options="statusOptions"
+            placeholder="상태 선택..."
+          />
+        </FormField>
       </div>
-      <div class="w-40">
-        <BaseSelect v-model="categoryFilter" :options="categoryOptions" placeholder="전체 카테고리" />
+
+      <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+        <BaseButton variant="secondary" size="sm" @click="resetFilters">
+          <template #leading>
+            <i class="fas fa-undo text-xs" aria-hidden="true"></i>
+          </template>
+          초기화
+        </BaseButton>
+
+        <BaseButton size="sm" @click="searchRows">
+          <template #leading>
+            <i class="fas fa-search text-xs" aria-hidden="true"></i>
+          </template>
+          검색
+        </BaseButton>
       </div>
-    </div>
+    </CollapsibleFilterCard>
 
     <div v-if="loading" class="flex items-center justify-center py-20 text-slate-400">
       데이터를 불러오는 중입니다...
     </div>
 
     <BaseTable v-else :columns="columns" :rows="paginatedItems" row-key="id"
-      :empty-text="searchKeyword || categoryFilter ? '검색 결과가 없습니다.' : '등록된 품목이 없습니다.'"
+      :empty-text="filters.keyword || filters.code || filters.name || filters.category || filters.unit || filters.status ? '검색 결과가 없습니다.' : '등록된 품목이 없습니다.'"
       clickable-rows
       :footer-text="`총 ${filteredItems.length}건`"
       @row-click="goToDetail"
