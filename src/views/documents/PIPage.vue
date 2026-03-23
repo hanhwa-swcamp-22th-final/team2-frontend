@@ -39,12 +39,15 @@ import {
   REGISTRATION_DOCUMENT_STATUS,
   REGISTRATION_REQUEST_STATUS,
 } from '@/utils/documentApproval'
+import { openDocumentOutputByType, openTableOutput } from '@/utils/documentOutput'
 import {
   formatPiShipmentLockMessage,
   getPiShipmentLockInfo,
 } from '@/utils/documentShipmentLock'
+import { createDocumentClientRows } from '@/utils/documentClientRows'
 import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
 import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
+import { buildSelectOptionsFromRows } from '@/utils/selectOptions'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -67,74 +70,7 @@ const productSearchKeyword = ref('')
 const clientSearchContext = ref('filter')
 const pendingCreateFormValue = ref(null)
 const pendingEditRequest = ref(null)
-
-const managerOptions = [
-  { value: '김영업', label: '김영업' },
-  { value: '정영업', label: '정영업' },
-  { value: '최관리', label: '최관리' },
-]
-
-const countryOptions = [
-  { value: '말레이시아', label: '말레이시아' },
-  { value: '독일', label: '독일' },
-  { value: '미국', label: '미국' },
-  { value: '태국', label: '태국' },
-  { value: '싱가포르', label: '싱가포르' },
-  { value: '인도', label: '인도' },
-  { value: '호주', label: '호주' },
-]
-
-const statusOptions = [
-  { value: '초안', label: '초안' },
-  { value: '발송', label: '발송' },
-  { value: '확정', label: '확정' },
-  { value: '취소', label: '취소' },
-]
-const fallbackClientRowsSource = [
-  {
-    id: 'CL001',
-    code: 'CL001',
-    name: 'COOLSAY SDN BHD',
-    country: '말레이시아',
-    city: 'Port Klang',
-    currency: 'USD',
-    manager: 'Ahmad Razak',
-    status: '활성',
-    address: 'Lot 18, Jalan Pelabuhan Utara 27, 42000 Port Klang, Selangor, Malaysia',
-    tel: '+60-3-555-0101',
-    email: 'contact@coolsay.com',
-    buyers: ['Mr. Ahmad Razak (Purchasing Manager)', 'Ms. Siti Nurhaliza (Director)'],
-  },
-  {
-    id: 'CL002',
-    code: 'CL002',
-    name: 'TechBridge GmbH',
-    country: '독일',
-    city: 'Hamburg',
-    currency: 'EUR',
-    manager: 'Hanna Schneider',
-    status: '활성',
-    address: 'Am Sandtorkai 35, 20457 Hamburg, Germany',
-    tel: '+49-40-555-0202',
-    email: 'info@techbridge.de',
-    buyers: ['Ms. Hanna Schneider (Procurement Lead)'],
-  },
-  {
-    id: 'CL003',
-    code: 'CL003',
-    name: 'Pacific Trading Inc.',
-    country: '미국',
-    city: 'Seattle',
-    currency: 'USD',
-    manager: 'Jacob Miller',
-    status: '활성',
-    address: '1201 Harbor Avenue SW, Seattle, WA 98134, USA',
-    tel: '+1-206-555-0303',
-    email: 'contact@pacifictrading.com',
-    buyers: ['Mr. Jacob Miller (Import Manager)'],
-  },
-]
-const clientRowsSource = ref([...fallbackClientRowsSource])
+const clientRowsSource = ref(createDocumentClientRows())
 const { createProductRows } = useSearchModalLookups()
 const rowsData = usePiDocuments()
 const poDocuments = usePoDocuments()
@@ -175,6 +111,10 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
   deliveryDateField: 'deliveryDate',
 })
 const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
+
+const managerOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'manager'))
+const countryOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'country'))
+const statusOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'status'))
 
 const shipmentLockInfoByPiId = computed(() => (
   new Map(
@@ -244,38 +184,14 @@ async function loadClientRows() {
       fetchCurrencies(),
     ])
 
-    const countryMap = new Map(
-      countriesData.map((country) => [String(country.id), country.nameKr ?? country.name ?? '-']),
-    )
-    const currencyMap = new Map(
-      currenciesData.map((currency) => [String(currency.id), currency.code ?? 'USD']),
-    )
-
-    const buyersByClientId = buyersData.reduce((map, buyer) => {
-      const clientId = String(buyer.clientId)
-      const label = buyer.position ? `${buyer.name} (${buyer.position})` : buyer.name
-      const rows = map.get(clientId) ?? []
-      rows.push(label)
-      map.set(clientId, rows)
-      return map
-    }, new Map())
-
-    clientRowsSource.value = clientsData.map((client) => ({
-      id: String(client.id),
-      code: client.code,
-      name: client.name,
-      country: countryMap.get(String(client.countryId)) ?? '-',
-      city: client.city ?? '-',
-      currency: currencyMap.get(String(client.currencyId)) ?? 'USD',
-      manager: client.manager ?? '-',
-      status: client.status ?? '-',
-      address: client.address ?? '',
-      tel: client.tel ?? '',
-      email: client.email ?? '',
-      buyers: buyersByClientId.get(String(client.id)) ?? [],
-    }))
+    clientRowsSource.value = createDocumentClientRows({
+      clientsData,
+      countriesData,
+      currenciesData,
+      buyersData,
+    })
   } catch {
-    clientRowsSource.value = [...fallbackClientRowsSource]
+    clientRowsSource.value = createDocumentClientRows()
   }
 }
 
@@ -365,6 +281,40 @@ function parseAmount(value) {
 function formatAmount(currency, value) {
   const symbol = currencySymbolMap[currency] ?? `${currency} `
   return `${symbol}${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+}
+
+function downloadPdf(row) {
+  const opened = openDocumentOutputByType('PI', row, false)
+  if (opened) {
+    success(`${row.id} PDF 다운로드 창이 열렸습니다.`)
+  }
+}
+
+function downloadTablePdf() {
+  const exportColumns = columns
+    .filter((column) => column.key !== 'actions')
+    .map((column) => ({
+      key: column.key,
+      label: column.label,
+      align: column.align ?? 'left',
+    }))
+
+  openTableOutput({
+    title: 'Proforma Invoice 관리',
+    subtitle: `총 ${filteredRows.value.length}건`,
+    columns: exportColumns,
+    rows: filteredRows.value.map((row) => ({
+      id: row.id,
+      issueDate: row.issueDate,
+      clientName: row.clientName,
+      country: row.country,
+      itemName: row.itemName,
+      amount: row.amount,
+      manager: row.manager,
+      status: row.status,
+      deliveryDate: row.deliveryDate,
+    })),
+  })
 }
 
 function formatSlashDate(value) {
@@ -959,6 +909,12 @@ function handleProductSelect(product) {
   <div class="fade-in space-y-5">
     <PageHeader title="Proforma Invoice 관리" icon-class="fas fa-file-invoice">
       <template #actions>
+        <BaseButton variant="secondary" @click="downloadTablePdf">
+          <template #leading>
+            <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
+          </template>
+          PDF 다운로드
+        </BaseButton>
         <BaseButton @click="openCreateForm">
           <template #leading>
             <i class="fas fa-plus text-xs" aria-hidden="true"></i>

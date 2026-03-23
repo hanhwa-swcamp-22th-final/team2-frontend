@@ -19,12 +19,16 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
+import { useAuthStore } from '@/stores/auth'
 import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
 import { useToast } from '@/composables/useToast'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
+import { canAccessRouteByRole } from '@/utils/roleAccess'
 import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
+import { buildSelectOptionsFromRows } from '@/utils/selectOptions'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const isAdvancedOpen = ref(false)
 const previewTarget = ref(null)
 const toast = useToast()
@@ -34,26 +38,6 @@ const codeSearchOpen = ref(false)
 const codeSearchKeyword = ref('')
 const productSearchOpen = ref(false)
 const productSearchKeyword = ref('')
-
-const managerOptions = [
-  { value: '김영업', label: '김영업' },
-  { value: '정영업', label: '정영업' },
-  { value: '최관리', label: '최관리' },
-]
-
-const countryOptions = [
-  { value: '말레이시아', label: '말레이시아' },
-  { value: '독일', label: '독일' },
-  { value: '미국', label: '미국' },
-  { value: '태국', label: '태국' },
-  { value: '싱가포르', label: '싱가포르' },
-  { value: '인도', label: '인도' },
-]
-
-const statusOptions = [
-  { value: '진행중', label: '진행중' },
-  { value: '생산완료', label: '생산완료' },
-]
 
 const columns = [
   { key: 'id', label: '지시서번호', align: 'center', width: '150px' },
@@ -77,6 +61,10 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
 })
 const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
 const { createClientRows, createProductRows } = useSearchModalLookups()
+
+const managerOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'manager'))
+const countryOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'country'))
+const statusOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'status'))
 
 const previewFields = computed(() => {
   if (!previewTarget.value) {
@@ -138,6 +126,10 @@ function goToDetail(id) {
 
 function goToPoDetail(poId) {
   if (!poId) return
+  if (!canAccessRouteByRole(authStore.currentUser, 'po-detail')) {
+    toast.warning('PO 상세 화면에 대한 접근 권한이 없습니다.')
+    return
+  }
   router.push({ name: 'po-detail', params: { id: poId } })
 }
 
@@ -164,7 +156,7 @@ function printDocument(row) {
 }
 
 function downloadPdf(row) {
-  const opened = openDocumentOutputByType('PRODUCTION', row, true)
+  const opened = openDocumentOutputByType('PRODUCTION', row, false)
   if (opened) {
     toast.info('브라우저 인쇄 창에서 PDF로 저장할 수 있습니다.', 'PDF')
   }
@@ -175,13 +167,7 @@ function downloadPdf(row) {
   <div class="fade-in space-y-5">
     <PageHeader title="생산지시서 관리" icon-class="fas fa-industry">
       <template #actions>
-        <BaseButton variant="secondary" size="sm" @click="currentOutputTarget ? printDocument(currentOutputTarget) : toast.info('출력할 생산지시서가 없습니다.', '인쇄')">
-          <template #leading>
-            <i class="fas fa-print text-xs" aria-hidden="true"></i>
-          </template>
-          인쇄
-        </BaseButton>
-        <BaseButton size="sm" @click="currentOutputTarget ? downloadPdf(currentOutputTarget) : toast.info('출력할 생산지시서가 없습니다.', 'PDF')">
+        <BaseButton variant="secondary" @click="currentOutputTarget ? downloadPdf(currentOutputTarget) : toast.info('출력할 생산지시서가 없습니다.', 'PDF')">
           <template #leading>
             <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
           </template>
@@ -315,12 +301,6 @@ function downloadPdf(row) {
           <button type="button" class="text-xs text-brand-500 transition hover:underline" :title="`${row.id} 미리보기`" @click.stop="openPreview(row)">
             <i class="fas fa-eye" aria-hidden="true"></i>
           </button>
-          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} 인쇄`" @click.stop="printDocument(row)">
-            <i class="fas fa-print" aria-hidden="true"></i>
-          </button>
-          <button type="button" class="text-xs text-slate-400 transition hover:text-slate-700" :title="`${row.id} PDF 다운로드`" @click.stop="downloadPdf(row)">
-            <i class="fas fa-file-pdf" aria-hidden="true"></i>
-          </button>
         </div>
       </template>
     </BaseTable>
@@ -336,7 +316,7 @@ function downloadPdf(row) {
       :document-title="previewTarget?.id ?? ''"
       :fields="previewFields"
       @close="closePreview"
-      @print="previewTarget ? printDocument(previewTarget) : null"
+      @download="previewTarget ? downloadPdf(previewTarget) : null"
     >
       <ProductionOrderTemplate v-if="previewTarget" :document="previewTarget" />
     </DocumentPreviewModal>

@@ -11,7 +11,7 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import PIDocumentTemplate from '@/components/domain/document/PIDocumentTemplate.vue'
 import PIFormModal from '@/components/domain/document/PIFormModal.vue'
-import { fetchBuyers, fetchClients, fetchCountries } from '@/api/master'
+import { fetchBuyers, fetchClients, fetchCountries, fetchCurrencies } from '@/api/master'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
@@ -29,6 +29,7 @@ import {
   EDIT_REQUEST_STATUS,
 } from '@/utils/documentApproval'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
+import { createDocumentClientRows } from '@/utils/documentClientRows'
 import {
   formatPiShipmentLockMessage,
   getPiShipmentLockInfo,
@@ -71,12 +72,7 @@ const approvalChangeColumns = [
   { key: 'after', label: '변경값', align: 'left' },
 ]
 
-const fallbackClientRowsSource = [
-  { id: 'CL001', code: 'CL001', name: 'COOLSAY SDN BHD', country: '말레이시아', city: 'Port Klang', currency: 'USD', manager: 'Ahmad Razak', tel: '+60-3-555-0101', status: '활성', buyers: ['Mr. Ahmad Razak (Purchasing Manager)', 'Ms. Siti Nurhaliza (Director)'] },
-  { id: 'CL002', code: 'CL002', name: 'TechBridge GmbH', country: '독일', city: 'Hamburg', currency: 'EUR', manager: 'Hanna Schneider', tel: '+49-40-555-0202', status: '활성', buyers: ['Ms. Hanna Schneider (Procurement Lead)'] },
-  { id: 'CL003', code: 'CL003', name: 'Pacific Trading Inc.', country: '미국', city: 'Seattle', currency: 'USD', manager: 'Jacob Miller', tel: '+1-206-555-0303', status: '활성', buyers: ['Mr. Jacob Miller (Import Manager)'] },
-]
-const clientRowsSource = ref([...fallbackClientRowsSource])
+const clientRowsSource = ref(createDocumentClientRows())
 
 const clientRows = computed(() => {
   const keyword = clientSearchKeyword.value.trim().toLowerCase()
@@ -489,39 +485,21 @@ const deleteApprovalItemSummaryRows = computed(() => {
 
 async function loadClientRows() {
   try {
-    const [clientsData, countriesData, buyersData] = await Promise.all([
+    const [clientsData, countriesData, buyersData, currenciesData] = await Promise.all([
       fetchClients(),
       fetchCountries(),
       fetchBuyers(),
+      fetchCurrencies(),
     ])
 
-    const countryMap = new Map(
-      countriesData.map((country) => [String(country.id), country.nameKr ?? country.name ?? '-']),
-    )
-
-    const buyersByClientId = buyersData.reduce((map, buyer) => {
-      const clientId = String(buyer.clientId)
-      const label = buyer.position ? `${buyer.name} (${buyer.position})` : buyer.name
-      const rows = map.get(clientId) ?? []
-      rows.push(label)
-      map.set(clientId, rows)
-      return map
-    }, new Map())
-
-    clientRowsSource.value = clientsData.map((client) => ({
-      id: String(client.id),
-      code: client.code,
-      name: client.name,
-      country: countryMap.get(String(client.countryId)) ?? '-',
-      city: client.city ?? '-',
-      currency: '-',
-      manager: client.manager ?? '-',
-      tel: client.tel ?? '-',
-      status: client.status ?? '-',
-      buyers: buyersByClientId.get(String(client.id)) ?? [],
-    }))
+    clientRowsSource.value = createDocumentClientRows({
+      clientsData,
+      countriesData,
+      currenciesData,
+      buyersData,
+    })
   } catch {
-    clientRowsSource.value = [...fallbackClientRowsSource]
+    clientRowsSource.value = createDocumentClientRows()
   }
 }
 
@@ -970,7 +948,7 @@ function cancelDeleteApprovalRequest() {
       :document-title="detail.id"
       :fields="previewFields"
       @close="previewOpen = false"
-      @print="handlePreviewPrint"
+      @download="handlePdfDownload"
     >
       <PIDocumentTemplate :document="detail" />
     </DocumentPreviewModal>

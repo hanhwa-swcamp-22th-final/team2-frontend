@@ -19,7 +19,8 @@ import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
 import { usePlDocuments } from '@/stores/plDocuments'
 import { useToast } from '@/composables/useToast'
-import { openDocumentOutputByType } from '@/utils/documentOutput'
+import { openDocumentOutputByType, openTableOutput } from '@/utils/documentOutput'
+import { buildSelectOptionsFromRows } from '@/utils/selectOptions'
 
 const router = useRouter()
 const toast = useToast()
@@ -31,14 +32,6 @@ const codeSearchOpen = ref(false)
 const codeSearchKeyword = ref('')
 const productSearchOpen = ref(false)
 const productSearchKeyword = ref('')
-
-const countryOptions = [
-  { value: '말레이시아', label: '말레이시아' },
-  { value: '독일', label: '독일' },
-  { value: '미국', label: '미국' },
-  { value: '태국', label: '태국' },
-  { value: '싱가포르', label: '싱가포르' },
-]
 
 const clientSearchColumns = [
   { key: 'name', label: '거래처명', align: 'left', width: '220px' },
@@ -74,6 +67,7 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
   issueDateField: 'issueDate',
 })
 const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
+const countryOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'country'))
 
 function includesKeyword(values, keyword) {
   if (!keyword) return true
@@ -181,6 +175,30 @@ function downloadCurrentPdf() {
   }
 }
 
+function downloadTablePdf() {
+  const exportColumns = columns
+    .filter((column) => column.key !== 'actions')
+    .map((column) => ({
+      key: column.key,
+      label: column.label,
+      align: column.align ?? 'left',
+    }))
+
+  openTableOutput({
+    title: 'Packing List 관리',
+    subtitle: `총 ${filteredRows.value.length}건`,
+    columns: exportColumns,
+    rows: filteredRows.value.map((row) => ({
+      id: row.id,
+      issueDate: row.issueDate,
+      clientName: row.clientName,
+      country: row.country,
+      itemName: row.itemName,
+      grossWeight: row.grossWeight,
+    })),
+  })
+}
+
 function openClientSearch() {
   clientSearchOpen.value = true
 }
@@ -232,13 +250,7 @@ function handleProductSelect(row) {
   <div class="fade-in space-y-5">
     <PageHeader title="Packing List 관리" icon-class="fas fa-box-open">
       <template #actions>
-        <BaseButton variant="secondary" size="sm" @click="printCurrentDocument">
-          <template #leading>
-            <i class="fas fa-print text-xs" aria-hidden="true"></i>
-          </template>
-          인쇄
-        </BaseButton>
-        <BaseButton size="sm" @click="downloadCurrentPdf">
+        <BaseButton variant="secondary" @click="downloadTablePdf">
           <template #leading>
             <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
           </template>
@@ -354,7 +366,7 @@ function handleProductSelect(row) {
       title="PL 미리보기"
       preview-background="white"
       @close="closePreview"
-      @print="handlePrint"
+      @download="downloadCurrentPdf"
     >
       <PLDocumentTemplate v-if="previewTarget" :document="previewTarget" />
     </DocumentPreviewModal>
