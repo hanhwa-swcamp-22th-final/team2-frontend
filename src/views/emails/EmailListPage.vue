@@ -12,6 +12,7 @@ import {
 import { useToast } from '@/composables/useToast'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
+import BasePagination from '@/components/common/BasePagination.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
@@ -83,6 +84,7 @@ function applySearch() {
     dateFrom:  filterDateFrom.value,
     dateTo:    filterDateTo.value,
   }
+  currentPage.value = 1
 }
 
 function resetFilters() {
@@ -95,22 +97,38 @@ function resetFilters() {
   filterDateTo.value    = ''
   applied.value = { keyword: '', type: '', status: '', sender: '', recipient: '', dateFrom: '', dateTo: '' }
   recipientKey.value++
+  currentPage.value = 1
 }
 
 const filteredEmails = computed(() => {
-  return emails.value.filter((e) => {
-    const q = applied.value.keyword.trim().toLowerCase()
-    const matchKeyword   = !q || e.title.toLowerCase().includes(q) || e.client.toLowerCase().includes(q)
-    const matchType      = !applied.value.type      || (e.types ?? []).includes(applied.value.type)
-    const matchStatus    = !applied.value.status    || e.status === applied.value.status
-    const matchSender    = !applied.value.sender    || e.sender === applied.value.sender
-    const matchRecipient = !applied.value.recipient || e.recipient === applied.value.recipient
-    const dateFrom = applied.value.dateFrom.replaceAll('-', '/')
-    const dateTo   = applied.value.dateTo.replaceAll('-', '/')
-    const matchFrom = !dateFrom || e.sentAt >= dateFrom
-    const matchTo   = !dateTo   || e.sentAt <= dateTo
-    return matchKeyword && matchType && matchStatus && matchSender && matchRecipient && matchFrom && matchTo
-  })
+  return emails.value
+    .filter((e) => {
+      const q = applied.value.keyword.trim().toLowerCase()
+      const matchKeyword   = !q || e.title.toLowerCase().includes(q) || e.client.toLowerCase().includes(q)
+      const matchType      = !applied.value.type      || (e.types ?? []).includes(applied.value.type)
+      const matchStatus    = !applied.value.status    || e.status === applied.value.status
+      const matchSender    = !applied.value.sender    || e.sender === applied.value.sender
+      const matchRecipient = !applied.value.recipient || e.recipient === applied.value.recipient
+      const dateFrom = applied.value.dateFrom.replaceAll('-', '/')
+      const dateTo   = applied.value.dateTo.replaceAll('-', '/')
+      const matchFrom = !dateFrom || e.sentAt >= dateFrom
+      const matchTo   = !dateTo   || e.sentAt <= dateTo
+      return matchKeyword && matchType && matchStatus && matchSender && matchRecipient && matchFrom && matchTo
+    })
+    .slice()
+    .reverse()
+    .sort((a, b) => (b.sentAt ?? '').localeCompare(a.sentAt ?? ''))
+})
+
+// ── 페이지네이션 ─────────────────────────────────────────────
+const PAGE_SIZE = 10
+const currentPage = ref(1)
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredEmails.value.length / PAGE_SIZE)))
+
+const pagedEmails = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return filteredEmails.value.slice(start, start + PAGE_SIZE)
 })
 
 // ── 첨부파일 열기 ───────────────────────────────────────────
@@ -285,12 +303,12 @@ const columns = [
     </CollapsibleFilterCard>
 
     <!-- 테이블 -->
-    <BaseTable :columns="columns" :rows="filteredEmails" row-key="id" class="cursor-pointer" :footer-text="`총 ${filteredEmails.length}건`" @row-click="openDetail">
+    <BaseTable :columns="columns" :rows="pagedEmails" row-key="id" class="cursor-pointer" :footer-text="`총 ${filteredEmails.length}건`" @row-click="openDetail">
 
       <!-- 항목 번호 -->
       <template #cell-index="{ row }">
         <span class="text-xs font-medium text-slate-500">
-          {{ filteredEmails.findIndex((e) => e.id === row.id) + 1 }}
+          {{ filteredEmails.length - ((currentPage - 1) * PAGE_SIZE + pagedEmails.findIndex((e) => e.id === row.id)) }}
         </span>
       </template>
 
@@ -343,6 +361,14 @@ const columns = [
       </template>
 
     </BaseTable>
+
+    <!-- 페이지네이션 -->
+    <BasePagination
+      v-if="totalPages > 1"
+      :current-page="currentPage"
+      :total-pages="totalPages"
+      @update:current-page="currentPage = $event"
+    />
 
     <!-- 첨부파일 문서 미리보기 모달 -->
     <BaseModal
