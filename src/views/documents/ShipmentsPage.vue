@@ -100,6 +100,11 @@ function goToDetail(id) {
   router.push({ name: 'shipment-detail', params: { id } })
 }
 
+function goToPoDetail(poId) {
+  if (!poId) return
+  router.push({ name: 'po-detail', params: { id: poId } })
+}
+
 function searchRows() {
   applyFilters()
 }
@@ -217,7 +222,13 @@ function searchRows() {
       </template>
 
       <template #cell-poId="{ value }">
-        <span class="font-medium text-brand-500 hover:text-brand-700">{{ value }}</span>
+        <button
+          type="button"
+          class="font-mono text-xs font-semibold text-brand-600 hover:underline"
+          @click.stop="goToPoDetail(value)"
+        >
+          {{ value }}
+        </button>
       </template>
 
       <template #cell-clientName="{ value }">
