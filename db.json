@@ -752,6 +752,7 @@
       "paymentTermsId": 1,
       "currencyId": 1,
       "manager": "John Smith",
+      "departmentId": 1,
       "status": "활성",
       "regDate": "2025/01/15"
     },
@@ -769,6 +770,7 @@
       "paymentTermsId": 2,
       "currencyId": 2,
       "manager": "Hans Mueller",
+      "departmentId": 1,
       "status": "활성",
       "regDate": "2025/02/10"
     },
@@ -786,6 +788,7 @@
       "paymentTermsId": 1,
       "currencyId": 3,
       "manager": "Tanaka Yuki",
+      "departmentId": 1,
       "status": "활성",
       "regDate": "2025/03/05"
     },
@@ -803,6 +806,7 @@
       "paymentTermsId": 3,
       "currencyId": 4,
       "manager": "Wang Lei",
+      "departmentId": 1,
       "status": "활성",
       "regDate": "2025/03/20"
     },
@@ -820,6 +824,7 @@
       "paymentTermsId": 2,
       "currencyId": 6,
       "manager": "James Brown",
+      "departmentId": 1,
       "status": "비활성",
       "regDate": "2025/04/01"
     },
@@ -837,6 +842,7 @@
       "paymentTermsId": 4,
       "currencyId": 2,
       "manager": "Pierre Dupont",
+      "departmentId": 1,
       "status": "활성",
       "regDate": "2025/04/15"
     },
@@ -854,6 +860,7 @@
       "paymentTermsId": 1,
       "currencyId": 1,
       "manager": "Raj Patel",
+      "departmentId": 1,
       "status": "활성",
       "regDate": "2025/05/01"
     },
@@ -871,6 +878,7 @@
       "paymentTermsId": 5,
       "currencyId": 1,
       "manager": "Carlos Silva",
+      "departmentId": 1,
       "status": "활성",
       "regDate": "2025/05/20"
     },
@@ -888,6 +896,7 @@
       "paymentTermsId": 1,
       "currencyId": 1,
       "manager": "Lim Wei",
+      "departmentId": 1,
       "status": "비활성",
       "regDate": "2025/06/10"
     },
@@ -905,6 +914,7 @@
       "paymentTermsId": 1,
       "currencyId": 1,
       "manager": "Nguyen Van",
+      "departmentId": 1,
       "status": "활성",
       "regDate": "2025/06/25"
     },
@@ -922,6 +932,7 @@
       "paymentTermsId": 1,
       "currencyId": 1,
       "manager": "David Kim",
+      "departmentId": 2,
       "status": "활성",
       "regDate": "2025/07/01"
     },
@@ -939,6 +950,7 @@
       "paymentTermsId": 2,
       "currencyId": 2,
       "manager": "Lukas Weber",
+      "departmentId": 2,
       "status": "활성",
       "regDate": "2025/07/05"
     },
@@ -956,6 +968,7 @@
       "paymentTermsId": 1,
       "currencyId": 3,
       "manager": "Suzuki Ichiro",
+      "departmentId": 2,
       "status": "활성",
       "regDate": "2025/07/10"
     },
@@ -973,6 +986,7 @@
       "paymentTermsId": 3,
       "currencyId": 4,
       "manager": "Li Fang",
+      "departmentId": 2,
       "status": "활성",
       "regDate": "2025/07/15"
     },
@@ -990,6 +1004,7 @@
       "paymentTermsId": 2,
       "currencyId": 6,
       "manager": "Emma Wilson",
+      "departmentId": 2,
       "status": "활성",
       "regDate": "2025/07/20"
     },
@@ -1007,6 +1022,7 @@
       "paymentTermsId": 4,
       "currencyId": 2,
       "manager": "Sophie Martin",
+      "departmentId": 2,
       "status": "활성",
       "regDate": "2025/07/25"
     },
@@ -1024,6 +1040,7 @@
       "paymentTermsId": 1,
       "currencyId": 1,
       "manager": "Tan Ah Kow",
+      "departmentId": 2,
       "status": "활성",
       "regDate": "2025/08/01"
     },
@@ -1041,6 +1058,7 @@
       "paymentTermsId": 1,
       "currencyId": 1,
       "manager": "Chris Anderson",
+      "departmentId": 2,
       "status": "비활성",
       "regDate": "2025/08/05"
     },
@@ -1058,6 +1076,7 @@
       "paymentTermsId": 1,
       "currencyId": 1,
       "manager": "Mark Johnson",
+      "departmentId": 2,
       "status": "활성",
       "regDate": "2025/08/10"
     },
@@ -1075,6 +1094,7 @@
       "paymentTermsId": 1,
       "currencyId": 1,
       "manager": "Pham Thi Lan",
+      "departmentId": 2,
       "status": "활성",
       "regDate": "2025/08/15"
     }

@@ -47,3 +47,11 @@ export function getRoleHomePath(role) {
   if (role === 'shipping') return '/shipments'
   return '/'
 }
+
+export function canManageItems(role) {
+  return role === 'admin'
+}
+
+export function canManageClients(role) {
+  return role === 'admin' || role === 'sales'
+}

@@ -9,10 +9,14 @@ import DocumentLinkButton from '@/components/domain/master/DocumentLinkButton.vu
 import ItemFormModal from '@/components/domain/master/ItemFormModal.vue'
 import { deleteItem, fetchItem, fetchItems, updateItem } from '@/api/master'
 import { useToast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
+import { canManageItems } from '@/utils/roleAccess'
 
 const route = useRoute()
 const router = useRouter()
 const { success, error } = useToast()
+const authStore = useAuthStore()
+const isItemAdmin = computed(() => canManageItems(authStore.currentUser?.role))
 
 const item = ref(null)
 const allItems = ref([]) // used for code uniqueness check in edit modal
@@ -132,7 +136,7 @@ function goBack() {
 
   <div v-else-if="item" class="space-y-6">
     <DetailPageHeader :title="`${item.code} · ${item.name}`" :status="item.status" @back="goBack">
-      <template #actions>
+      <template v-if="isItemAdmin" #actions>
         <BaseButton variant="secondary" size="sm" @click="openEditModal">수정</BaseButton>
         <BaseButton variant="ghost" size="sm" @click="showConfirmModal = true">삭제</BaseButton>
       </template>

@@ -8,6 +8,7 @@ import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
 import ClientBuyerCard from '@/components/domain/master/ClientBuyerCard.vue'
 import ClientFormModal from '@/components/domain/master/ClientFormModal.vue'
 import DocumentLinkButton from '@/components/domain/master/DocumentLinkButton.vue'
+import { useAuthStore } from '@/stores/auth'
 import {
   deleteClient,
   fetchBuyersByClient,
@@ -21,6 +22,9 @@ import { useToast } from '@/composables/useToast'
 const route = useRoute()
 const router = useRouter()
 const { success, error } = useToast()
+const authStore = useAuthStore()
+const currentUser = computed(() => authStore.currentUser)
+const isAdmin = computed(() => currentUser.value?.role === 'admin')
 
 const { countries, ports, currencies, paymentTerms, loadReferenceData, getCountryName, getPortName, getPaymentTermsLabel, getCurrencyLabel } = useMasterLookup()
 
@@ -93,6 +97,15 @@ async function loadData() {
       return
     }
     client.value = clientData
+
+    // 영업 사용자가 타부서 거래처에 접근 시 리다이렉트
+    if (!isAdmin.value && currentUser.value?.role === 'sales' &&
+        clientData.departmentId !== Number(currentUser.value?.departmentId)) {
+      error('접근 권한이 없는 거래처입니다.')
+      router.push({ name: 'client-list' })
+      return
+    }
+
     allClients.value = clientsData
     buyers.value = buyersData.map((b) => ({
       name: b.name,
