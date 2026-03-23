@@ -62,6 +62,7 @@ const routes = [
         meta: {
           title: 'Dashboard',
           serviceName: '공통 대시보드',
+          description: '역할별 주요 업무 현황을 한눈에 확인하는 메인 화면입니다.',
         },
       },
       {
@@ -71,7 +72,7 @@ const routes = [
         meta: {
           title: 'Common Preview',
           serviceName: '공통 컴포넌트 프리뷰',
-          description: '1차 구현한 공통 컴포넌트의 동작 검증용 화면',
+          description: '공통 컴포넌트의 동작을 검증하는 개발용 화면입니다.',
         },
       },
       {
@@ -81,7 +82,7 @@ const routes = [
         meta: {
           title: 'Domain Preview',
           serviceName: '도메인 공통 컴포넌트 프리뷰',
-          description: '2차 구현한 문서/활동 도메인 공통 컴포넌트 검증용 화면',
+          description: '도메인 공통 컴포넌트의 동작을 검증하는 개발용 화면입니다.',
         },
       },
       {
@@ -91,7 +92,7 @@ const routes = [
         meta: {
           title: 'Activities',
           serviceName: '기록 관리',
-          description: '활동 기록을 조회하고 관리합니다.',
+          description: '영업 활동 기록을 조회하고 관리합니다.',
         },
       },
       {
@@ -101,7 +102,7 @@ const routes = [
         meta: {
           title: 'Activities - 등록',
           serviceName: '기록 등록',
-          description: '새로운 활동 기록을 등록합니다.',
+          description: '새로운 영업 활동 기록을 등록합니다.',
         },
       },
       {
@@ -112,25 +113,25 @@ const routes = [
             path: 'clients',
             name: 'client-list',
             component: () => import('@/views/master/ClientListPage.vue'),
-            meta: { title: 'Master', serviceName: '거래처 관리' },
+            meta: { title: 'Master', serviceName: '거래처 관리', description: '해외 거래처 정보를 조회하고 관리합니다.' },
           },
           {
             path: 'clients/:id',
             name: 'client-detail',
             component: () => import('@/views/master/ClientDetailPage.vue'),
-            meta: { title: 'Master', serviceName: '거래처 상세' },
+            meta: { title: 'Master', serviceName: '거래처 상세', description: '거래처의 상세 정보를 확인합니다.' },
           },
           {
             path: 'items',
             name: 'item-list',
             component: () => import('@/views/master/ItemListPage.vue'),
-            meta: { title: 'Master', serviceName: '품목 관리' },
+            meta: { title: 'Master', serviceName: '품목 관리', description: '취급 품목 정보를 조회하고 관리합니다.' },
           },
           {
             path: 'items/:id',
             name: 'item-detail',
             component: () => import('@/views/master/ItemDetailPage.vue'),
-            meta: { title: 'Master', serviceName: '품목 상세' },
+            meta: { title: 'Master', serviceName: '품목 상세', description: '품목의 상세 정보를 확인합니다.' },
           },
         ],
       },
@@ -141,7 +142,7 @@ const routes = [
         meta: {
           title: 'PI',
           serviceName: 'PI 관리',
-          description: 'PI 조회 및 상세 화면',
+          description: 'Proforma Invoice(견적송장)를 조회하고 관리합니다.',
         },
       },
       {
@@ -151,7 +152,7 @@ const routes = [
         meta: {
           title: 'PI Detail',
           serviceName: 'PI 상세',
-          description: 'PI 상세 화면',
+          description: 'Proforma Invoice(견적송장)의 상세 내용을 확인합니다.',
         },
       },
       {
@@ -161,7 +162,7 @@ const routes = [
         meta: {
           title: 'PO',
           serviceName: 'PO 관리',
-          description: 'PO 조회 및 상세 화면',
+          description: 'Purchase Order(발주서)를 조회하고 관리합니다.',
         },
       },
       {
@@ -171,7 +172,7 @@ const routes = [
         meta: {
           title: 'PO Detail',
           serviceName: 'PO 상세',
-          description: 'PO 상세 화면',
+          description: 'Purchase Order(발주서)의 상세 내용을 확인합니다.',
         },
       },
       {
@@ -181,7 +182,7 @@ const routes = [
         meta: {
           title: 'CI',
           serviceName: 'CI 관리',
-          description: 'CI 조회 및 상세 화면',
+          description: 'Commercial Invoice(상업송장)를 조회하고 관리합니다.',
         },
       },
       {
@@ -191,7 +192,7 @@ const routes = [
         meta: {
           title: 'CI Detail',
           serviceName: 'Commercial Invoice 상세',
-          description: 'Commercial Invoice 상세 화면',
+          description: 'Commercial Invoice(상업송장)의 상세 내용을 확인합니다.',
         },
       },
       {
@@ -201,7 +202,7 @@ const routes = [
         meta: {
           title: 'PL',
           serviceName: 'PL 관리',
-          description: 'PL 조회 및 상세 화면',
+          description: 'Packing List(포장명세서)를 조회하고 관리합니다.',
         },
       },
       {
@@ -211,7 +212,7 @@ const routes = [
         meta: {
           title: 'PL Detail',
           serviceName: 'Packing List 상세',
-          description: 'Packing List 상세 화면',
+          description: 'Packing List(포장명세서)의 상세 내용을 확인합니다.',
         },
       },
       {
@@ -221,7 +222,7 @@ const routes = [
         meta: {
           title: 'Production',
           serviceName: '생산 관리',
-          description: '생산지시서 관리 화면',
+          description: '생산지시서를 조회하고 생산 현황을 관리합니다.',
         },
       },
       {
@@ -231,7 +232,7 @@ const routes = [
         meta: {
           title: 'Production Detail',
           serviceName: '생산지시서 상세',
-          description: '생산지시서 상세 조회 화면',
+          description: '생산지시서의 상세 내용을 확인합니다.',
         },
       },
       {
@@ -241,7 +242,7 @@ const routes = [
         meta: {
           title: 'Shipment Orders',
           serviceName: '출하 관리',
-          description: '출하지시서 관리 화면',
+          description: '출하지시서를 조회하고 출하 업무를 관리합니다.',
         },
       },
       {
@@ -251,7 +252,7 @@ const routes = [
         meta: {
           title: 'Shipment Order Detail',
           serviceName: '출하지시서 상세',
-          description: '출하지시서 상세 조회 화면',
+          description: '출하지시서의 상세 내용을 확인합니다.',
         },
       },
       {
@@ -261,7 +262,7 @@ const routes = [
         meta: {
           title: 'Collections',
           serviceName: '매출·수금 현황',
-          description: '매출 및 수금 현황 화면',
+          description: '매출 실적 및 수금 내역을 조회하고 관리합니다.',
         },
       },
       {
@@ -271,7 +272,7 @@ const routes = [
         meta: {
           title: 'Shipments',
           serviceName: '출하현황',
-          description: '출하 진행 현황 화면',
+          description: '전체 출하 건의 진행 상태를 모니터링합니다.',
         },
       },
       {
@@ -281,7 +282,7 @@ const routes = [
         meta: {
           title: 'Shipment Detail',
           serviceName: '출하현황 상세',
-          description: '출하현황 상세 조회 화면',
+          description: '개별 출하 건의 상세 진행 상태를 확인합니다.',
         },
       },
       {
@@ -291,7 +292,7 @@ const routes = [
         meta: {
           title: 'Contacts',
           serviceName: '컨택 리스트',
-          description: '거래처 연락처 관리 화면',
+          description: '거래처 담당자 연락처를 조회하고 관리합니다.',
         },
       },
       {
@@ -301,7 +302,7 @@ const routes = [
         meta: {
           title: 'Emails',
           serviceName: '메일 이력',
-          description: '메일 발송 이력 화면',
+          description: '거래처 발송 메일 이력을 조회합니다.',
         },
       },
       {
@@ -311,7 +312,7 @@ const routes = [
         meta: {
           title: 'Package',
           serviceName: '활동기록 패키지',
-          description: '활동기록 패키지 화면',
+          description: '활동기록을 패키지 단위로 묶어 조회합니다.',
         },
       },
       {
@@ -321,6 +322,7 @@ const routes = [
         meta: {
           title: 'Users',
           serviceName: '사용자 관리',
+          description: '시스템 사용자 계정을 조회하고 관리합니다.',
           requiredRole: 'admin',
         },
       },

@@ -18,7 +18,42 @@ const salesCollectionDocuments = useSalesCollectionDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
 const route = useRoute()
 const router = useRouter()
-const pageTitle = computed(() => String(route.meta.serviceName ?? '공통 대시보드'))
+const roleDashboardTitles = { admin: '관리자 대시보드', sales: '영업 대시보드', production: '생산 대시보드', shipping: '출하 대시보드' }
+
+const pageTitle = computed(() => {
+  const currentPath = route.path
+  const role = authStore.currentUser?.role
+  const home = getRoleHomePath(role)
+
+  if (currentPath === home) {
+    return roleDashboardTitles[role] || '대시보드'
+  }
+  if (currentPath === '/') {
+    return '대시보드'
+  }
+
+  return String(route.meta.serviceName ?? '대시보드')
+})
+
+const roleDashboardDescriptions = {
+  admin: '전체 부서의 주요 업무 현황을 한눈에 확인하는 관리자 화면입니다.',
+  sales: '영업 문서 현황과 결재 요청을 확인하는 영업 전용 화면입니다.',
+  production: '생산지시서 현황과 진행 상태를 확인하는 생산 전용 화면입니다.',
+  shipping: '출하 현황과 출하 일정을 확인하는 출하 전용 화면입니다.',
+}
+
+const pageTooltip = computed(() => {
+  const currentPath = route.path
+  const role = authStore.currentUser?.role
+  const home = getRoleHomePath(role)
+
+  if (currentPath === home || currentPath === '/') {
+    return roleDashboardDescriptions[role] || '역할별 주요 업무 현황을 한눈에 확인하는 메인 화면입니다.'
+  }
+
+  return route.meta.description || ''
+})
+
 const isNotificationOpen = ref(false)
 const isPasswordModalOpen = ref(false)
 const notificationRef = ref(null)
@@ -186,7 +221,23 @@ onBeforeUnmount(() => {
         <span class="sr-only">사이드바 토글</span>
         <i class="fas text-sm" :class="uiStore.sidebarOpen ? 'fa-bars-staggered' : 'fa-bars'" aria-hidden="true"></i>
       </button>
-      <span class="min-w-0 flex-1 truncate text-sm font-semibold text-[#32363A] sm:max-w-none">{{ pageTitle }}</span>
+      <div class="group/tip relative min-w-0 flex-1">
+        <span class="flex items-center gap-1.5 truncate text-sm font-semibold text-[#32363A] sm:max-w-none">
+          {{ pageTitle }}
+          <i
+            v-if="pageTooltip"
+            class="fas fa-circle-info text-sm text-slate-300 transition group-hover/tip:text-slate-400"
+            aria-hidden="true"
+          />
+        </span>
+        <div
+          v-if="pageTooltip"
+          class="pointer-events-none absolute left-0 top-full z-50 mt-1.5 w-max max-w-sm rounded-lg border border-slate-200 bg-white px-4 py-3 opacity-0 shadow-lg transition-opacity group-hover/tip:opacity-100"
+        >
+          <p class="text-xs font-semibold text-slate-700">{{ pageTitle }}</p>
+          <p class="mt-1 text-xs font-normal leading-relaxed text-slate-500">{{ pageTooltip }}</p>
+        </div>
+      </div>
     </div>
 
     <div class="ml-2 flex flex-shrink-0 items-center gap-2 sm:gap-3">

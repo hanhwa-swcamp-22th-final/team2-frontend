@@ -4,7 +4,7 @@ import App from './App.vue'
 import router from './router'
 import { useAuthStore } from './stores/auth'
 import { setupApiInterceptors } from './lib/api'
-import { canAccessRouteByRole } from './utils/roleAccess'
+import { canAccessRouteByRole, getRoleHomePath } from './utils/roleAccess'
 import './styles/tailwind.css'
 
 const app = createApp(App)
@@ -23,17 +23,17 @@ router.beforeEach(async (to) => {
   // 공개 페이지는 통과
   if (PUBLIC_ROUTES.includes(to.name)) {
     // 이미 로그인 상태면 대시보드로
-    if (authStore.isLoggedIn) return { name: 'dashboard' }
+    if (authStore.isLoggedIn) return getRoleHomePath(authStore.currentUser?.role)
     return true
   }
 
   // 로그인 상태면 통과
   if (authStore.isLoggedIn) {
     if (to.meta.requiredRole && authStore.currentUser?.role !== to.meta.requiredRole) {
-      return { name: 'dashboard' }
+      return getRoleHomePath(authStore.currentUser?.role)
     }
     if (!canAccessRouteByRole(authStore.currentUser, to.name)) {
-      return { name: 'dashboard' }
+      return getRoleHomePath(authStore.currentUser?.role)
     }
     return true
   }
@@ -42,10 +42,10 @@ router.beforeEach(async (to) => {
   const restored = await authStore.restoreSession()
   if (restored) {
     if (to.meta.requiredRole && authStore.currentUser?.role !== to.meta.requiredRole) {
-      return { name: 'dashboard' }
+      return getRoleHomePath(authStore.currentUser?.role)
     }
     if (!canAccessRouteByRole(authStore.currentUser, to.name)) {
-      return { name: 'dashboard' }
+      return getRoleHomePath(authStore.currentUser?.role)
     }
     return true
   }
