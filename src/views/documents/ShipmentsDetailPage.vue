@@ -6,15 +6,18 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useDocumentItemCatalog } from '@/composables/useDocumentItemCatalog'
+import { useAuthStore } from '@/stores/auth'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import { useToast } from '@/composables/useToast'
 import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
+import { canAccessRouteByRole } from '@/utils/roleAccess'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const authStore = useAuthStore()
 const poDocuments = usePoDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
@@ -71,6 +74,10 @@ function goBack() {
 }
 
 function goToPo() {
+  if (!canAccessRouteByRole(authStore.currentUser, 'po-detail')) {
+    toast.warning('PO 상세 화면에 대한 접근 권한이 없습니다.')
+    return
+  }
   router.push({ name: 'po-detail', params: { id: detail.value?.poId } })
 }
 

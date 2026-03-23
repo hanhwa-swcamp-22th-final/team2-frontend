@@ -15,6 +15,7 @@ import { useToast } from '@/composables/useToast'
 import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
 import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
+import { canAccessRouteByRole } from '@/utils/roleAccess'
 
 const route = useRoute()
 const router = useRouter()
@@ -89,6 +90,10 @@ const summaryRows = computed(() => {
 
 function goToLinkedDocument(documentId) {
   if (documentId?.startsWith('PO')) {
+    if (!canAccessRouteByRole(authStore.currentUser, 'po-detail')) {
+      toast.warning('PO 상세 화면에 대한 접근 권한이 없습니다.')
+      return
+    }
     router.push({ name: 'po-detail', params: { id: documentId } })
   }
 }
@@ -144,7 +149,7 @@ function handlePrint() {
 
 function handlePdfDownload() {
   if (!documentForOutput.value) return
-  const opened = openDocumentOutputByType('PRODUCTION', documentForOutput.value, true)
+  const opened = openDocumentOutputByType('PRODUCTION', documentForOutput.value, false)
   if (opened) {
     toast.info('브라우저 인쇄 창에서 "PDF로 저장"을 선택하세요.', 'PDF')
   }
@@ -306,7 +311,7 @@ onMounted(() => {
       :document-title="detail.id"
       :fields="previewFields"
       @close="previewOpen = false"
-      @print="handlePreviewPrint"
+      @download="handlePdfDownload"
     >
       <ProductionOrderTemplate :document="documentForOutput || detail" />
     </DocumentPreviewModal>

@@ -15,8 +15,11 @@ import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
+import { useSalesCollectionDocuments, normalizeSalesCollectionRow } from '@/stores/salesCollectionDocuments'
+import { openTableOutput } from '@/utils/documentOutput'
 import { convertCurrencyAmountToKrw } from '@/utils/exchangeRate'
 import { clientSearchColumns } from '@/utils/searchModalColumns'
+import { buildSelectOptionsFromRows } from '@/utils/selectOptions'
 
 const isAdvancedOpen = ref(false)
 const clientSearchOpen = ref(false)
@@ -29,106 +32,31 @@ const appliedCurrencyFilter = ref('')
 const statusConfirmOpen = ref(false)
 const pendingStatusChange = ref(null)
 
-const countryOptions = [
-  { value: '말레이시아', label: '말레이시아' },
-  { value: '일본', label: '일본' },
-  { value: '베트남', label: '베트남' },
-  { value: 'UAE', label: 'UAE' },
-]
-
-const currencyOptions = [
-  { value: 'USD', label: 'USD' },
-  { value: 'JPY', label: 'JPY' },
-]
-
-const managerOptions = [
-  { value: '김영업', label: '김영업' },
-  { value: '정영업', label: '정영업' },
-  { value: '최관리', label: '최관리' },
-]
-
-const statusOptions = [
-  { value: '미수금', label: '미수금' },
-  { value: '수금완료', label: '수금완료' },
-]
-
 const columns = [
   { key: 'poId', label: 'PO 번호', width: '140px' },
   { key: 'clientName', label: '거래처', width: '220px' },
   { key: 'country', label: '국가', width: '110px' },
   { key: 'manager', label: '영업담당자', width: '120px' },
   { key: 'currency', label: '통화', width: '90px' },
-  { key: 'salesAmount', label: '원문매출액', width: '150px' },
-  { key: 'salesAmountKrw', label: '환산매출액(KRW)', width: '170px' },
-  { key: 'issueDate', label: '발행일', width: '130px' },
-  { key: 'collectionDate', label: '수금일', width: '130px' },
-  { key: 'status', label: '상태', width: '120px' },
+  { key: 'salesAmount', label: '외화금액', width: '150px' },
+  { key: 'salesAmountKrw', label: '원화환산액', width: '170px' },
+  { key: 'issueDate', label: '발행일자', width: '130px' },
+  { key: 'collectionDate', label: '수금일자', width: '130px' },
+  { key: 'status', label: '수금상태', width: '120px' },
 ]
 
-function normalizeCollectionRow(row) {
-  return {
-    ...row,
-    collectionDate: row.status === '수금완료' ? row.collectionDate || null : null,
-  }
+const rowsData = useSalesCollectionDocuments()
+const statusOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'status'))
+
+function createOptionList(values) {
+  return [...new Set(values.filter(Boolean))]
+    .sort((left, right) => String(left).localeCompare(String(right), 'ko'))
+    .map((value) => ({ value, label: value }))
 }
 
-const rowsData = ref([
-  {
-    poId: 'PO26001',
-    clientName: 'COOLSAY SDN BHD',
-    country: '말레이시아',
-    manager: '김영업',
-    currency: 'USD',
-    salesAmount: 42400,
-    issueDate: '2026/02/10',
-    collectionDate: null,
-    status: '미수금',
-  },
-  {
-    poId: 'PO26003',
-    clientName: 'Sakura Electronics Co., Ltd.',
-    country: '일본',
-    manager: '정영업',
-    currency: 'JPY',
-    salesAmount: 8388000,
-    issueDate: '2026/02/20',
-    collectionDate: null,
-    status: '미수금',
-  },
-  {
-    poId: 'PO26004',
-    clientName: 'Viet Steel JSC',
-    country: '베트남',
-    manager: '정영업',
-    currency: 'USD',
-    salesAmount: 53600,
-    issueDate: '2025/12/20',
-    collectionDate: null,
-    status: '미수금',
-  },
-  {
-    poId: 'PO26006',
-    clientName: 'Al Baraka Trading LLC',
-    country: 'UAE',
-    manager: '김영업',
-    currency: 'USD',
-    salesAmount: 28500,
-    issueDate: '2025/08/15',
-    collectionDate: null,
-    status: '미수금',
-  },
-  {
-    poId: 'PO26008',
-    clientName: 'COOLSAY SDN BHD',
-    country: '말레이시아',
-    manager: '김영업',
-    currency: 'USD',
-    salesAmount: 18400,
-    issueDate: '2025/09/20',
-    collectionDate: null,
-    status: '미수금',
-  },
-].map(normalizeCollectionRow))
+const countryOptions = computed(() => createOptionList(rowsData.value.map((row) => row.country)))
+const currencyOptions = computed(() => createOptionList(rowsData.value.map((row) => row.currency)))
+const managerOptions = computed(() => createOptionList(rowsData.value.map((row) => row.manager)))
 
 const { createClientRows } = useSearchModalLookups()
 
@@ -245,9 +173,9 @@ const statusConfirmRows = computed(() => {
   return [
     { label: 'PO 번호', value: pendingStatusChange.value.poId },
     { label: '거래처', value: pendingStatusChange.value.clientName },
-    { label: '현재 상태', value: pendingStatusChange.value.currentStatus },
-    { label: '변경 상태', value: pendingStatusChange.value.nextStatus },
-    { label: '수금일 처리', value: pendingStatusChange.value.collectionDatePolicy, fullWidth: true },
+    { label: '현재 수금상태', value: pendingStatusChange.value.currentStatus },
+    { label: '변경 수금상태', value: pendingStatusChange.value.nextStatus },
+    { label: '수금일자 처리', value: pendingStatusChange.value.collectionDatePolicy, fullWidth: true },
   ]
 })
 
@@ -330,8 +258,8 @@ function openStatusConfirm(row, nextStatusValue) {
     nextStatusValue,
     nextCollectionDate,
     collectionDatePolicy: nextStatus === '수금완료'
-      ? `수금일이 ${formatCollectionDate(nextCollectionDate)} 로 반영됩니다.`
-      : '수금일이 초기화되고 화면에는 - 로 표시됩니다.',
+      ? `수금일자가 ${formatCollectionDate(nextCollectionDate)} 로 반영됩니다.`
+      : '수금일자가 초기화되고 화면에는 - 로 표시됩니다.',
   }
   statusConfirmOpen.value = true
 }
@@ -339,7 +267,7 @@ function openStatusConfirm(row, nextStatusValue) {
 function updateStatus(poId, value) {
   rowsData.value = rowsData.value.map((row) => (
     row.poId === poId
-      ? normalizeCollectionRow({
+      ? normalizeSalesCollectionRow({
         ...row,
         status: value === 'PAID' ? '수금완료' : '미수금',
         collectionDate: resolveNextCollectionDate(row, value),
@@ -360,11 +288,119 @@ function cancelStatusChange() {
   statusConfirmOpen.value = false
   pendingStatusChange.value = null
 }
+
+function downloadCurrentTablePdf() {
+  const exportColumns = [
+    { key: 'poId', label: 'PO 번호', align: 'center' },
+    { key: 'clientName', label: '거래처', align: 'left' },
+    { key: 'country', label: '국가', align: 'center' },
+    { key: 'manager', label: '영업담당자', align: 'center' },
+    { key: 'currency', label: '통화', align: 'center' },
+    { key: 'salesAmount', label: '외화금액', align: 'right' },
+    { key: 'salesAmountKrw', label: '원화환산액', align: 'right' },
+    { key: 'issueDate', label: '발행일자', align: 'center' },
+    { key: 'collectionDate', label: '수금일자', align: 'center' },
+    { key: 'status', label: '수금상태', align: 'center' },
+  ]
+
+  const exportRows = []
+  let currentCurrency = ''
+  let originalSubtotal = 0
+  let krwSubtotal = 0
+  let rowCount = 0
+
+  sortedRows.value.forEach((row, index) => {
+    if (currentCurrency && currentCurrency !== row.currency) {
+      exportRows.push({
+        poId: `${currentCurrency} 통화 소계 (${rowCount}건)`,
+        clientName: '',
+        country: '',
+        manager: '',
+        currency: currentCurrency,
+        salesAmount: formatAmount(originalSubtotal, currentCurrency),
+        salesAmountKrw: formatAmount(krwSubtotal, 'KRW'),
+        issueDate: '',
+        collectionDate: '',
+        status: '',
+        rowType: 'summary',
+      })
+      originalSubtotal = 0
+      krwSubtotal = 0
+      rowCount = 0
+    }
+
+    currentCurrency = row.currency
+    originalSubtotal += row.salesAmount
+    krwSubtotal += row.salesAmountKrw
+    rowCount += 1
+
+    exportRows.push({
+      poId: row.poId,
+      clientName: row.clientName,
+      country: row.country,
+      manager: row.manager,
+      currency: row.currency,
+      salesAmount: formatAmount(row.salesAmount, row.currency),
+      salesAmountKrw: formatAmount(row.salesAmountKrw, 'KRW'),
+      issueDate: row.issueDate,
+      collectionDate: formatCollectionDate(row.collectionDate),
+      status: row.status,
+    })
+
+    if (index === sortedRows.value.length - 1) {
+      exportRows.push({
+        poId: `${currentCurrency} 통화 소계 (${rowCount}건)`,
+        clientName: '',
+        country: '',
+        manager: '',
+        currency: currentCurrency,
+        salesAmount: formatAmount(originalSubtotal, currentCurrency),
+        salesAmountKrw: formatAmount(krwSubtotal, 'KRW'),
+        issueDate: '',
+        collectionDate: '',
+        status: '',
+        rowType: 'summary',
+      })
+    }
+  })
+
+  if (sortedRows.value.length > 0) {
+    exportRows.push({
+      poId: '원화환산 총계',
+      clientName: '',
+      country: '',
+      manager: '',
+      currency: 'KRW',
+      salesAmount: '',
+      salesAmountKrw: formatAmount(totalKrwAmount.value, 'KRW'),
+      issueDate: '',
+      collectionDate: '',
+      status: '',
+      rowType: 'summary',
+    })
+  }
+
+  openTableOutput({
+    title: '매출·수금 현황 관리',
+    subtitle: `총 ${sortedRows.value.length}건`,
+    columns: exportColumns,
+    rows: exportRows,
+  })
+}
 </script>
 
 <template>
   <div class="fade-in space-y-5">
-    <PageHeader title="매출·수금 현황 관리" icon-class="fas fa-chart-bar" />
+    <PageHeader title="매출·수금 현황 관리" icon-class="fas fa-chart-bar">
+      <template #actions>
+        <BaseButton variant="secondary" @click="downloadCurrentTablePdf">
+          <template #leading>
+            <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
+          </template>
+          PDF 다운로드
+        </BaseButton>
+      </template>
+    </PageHeader>
 
     <FilterToolbarCard
       v-model="filters.keyword"
@@ -374,7 +410,7 @@ function cancelStatusChange() {
 
     <CollapsibleFilterCard :open="isAdvancedOpen">
       <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-4">
-        <FormField label="발행일" class="col-span-2">
+        <FormField label="발행일자" class="col-span-2">
           <div class="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
             <DateField v-model="filters.registeredFrom" />
             <span class="text-center text-sm text-slate-400 sm:pb-2">~</span>
@@ -382,7 +418,7 @@ function cancelStatusChange() {
           </div>
         </FormField>
 
-        <FormField label="수금일" class="col-span-2">
+        <FormField label="수금일자" class="col-span-2">
           <div class="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
             <DateField v-model="filters.deliveryFrom" />
             <span class="text-center text-sm text-slate-400 sm:pb-2">~</span>
@@ -423,7 +459,7 @@ function cancelStatusChange() {
           />
         </FormField>
 
-        <FormField label="상태">
+        <FormField label="수금상태">
           <SearchableCombobox
             v-model="filters.status"
             :options="statusOptions"
@@ -447,42 +483,6 @@ function cancelStatusChange() {
         </BaseButton>
       </div>
     </CollapsibleFilterCard>
-
-    <section class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-semibold text-slate-700">표시 기준</span>
-        <div class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1">
-          <button
-            type="button"
-            class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-            :class="viewScope === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-            @click="viewScope = 'all'"
-          >
-            전체
-          </button>
-          <button
-            type="button"
-            class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-            :class="viewScope === 'krw' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-            @click="viewScope = 'krw'"
-          >
-            원화
-          </button>
-          <button
-            type="button"
-            class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-            :class="viewScope === 'foreign' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-            @click="viewScope = 'foreign'"
-          >
-            외화
-          </button>
-        </div>
-      </div>
-
-      <div class="text-xs text-slate-500">
-        통화별 소계와 맨 아래 KRW 총액을 한 테이블에서 확인합니다.
-      </div>
-    </section>
 
     <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div class="overflow-x-auto">
@@ -509,7 +509,7 @@ function cancelStatusChange() {
             >
               <template v-if="row.rowType === 'subtotal'">
                 <td colspan="5" class="border-b border-r border-slate-200 px-4 py-3 text-left text-sm font-semibold text-slate-800">
-                  {{ row.currency }} 소계 ({{ row.rowCount }}건)
+                  {{ row.currency }} 통화 소계 ({{ row.rowCount }}건)
                 </td>
                 <td class="border-b border-r border-slate-200 px-4 py-3 text-right text-sm font-semibold text-slate-800">
                   {{ formatAmount(row.originalSubtotal, row.currency) }}
@@ -571,7 +571,7 @@ function cancelStatusChange() {
           <tfoot v-if="tableRows.length > 0" class="bg-slate-50">
             <tr>
               <td colspan="6" class="border-t border-r border-slate-200 px-4 py-3 text-left text-sm font-bold text-slate-900">
-                전체 환산 총액
+                원화환산 총계
               </td>
               <td class="border-t border-r border-slate-200 px-4 py-3 text-right text-sm font-extrabold text-slate-900">
                 {{ formatAmount(totalKrwAmount, 'KRW') }}
@@ -614,7 +614,7 @@ function cancelStatusChange() {
       :columns="[
         { key: 'poId', label: 'PO 번호' },
         { key: 'clientName', label: '거래처명' },
-        { key: 'issueDate', label: '발행일' },
+        { key: 'issueDate', label: '발행일자' },
       ]"
       :rows="poRows"
       :search-keyword="poSearchKeyword"
@@ -625,11 +625,11 @@ function cancelStatusChange() {
 
     <ConfirmModal
       :open="statusConfirmOpen"
-      title="수금 상태 변경"
-      message="선택한 수금 상태를 반영하시겠습니까?"
+      title="수금상태 변경"
+      message="선택한 수금상태를 반영하시겠습니까?"
       :detail-rows="statusConfirmRows"
       confirm-label="변경"
-      helper-text="상태 변경 시 수금일도 함께 조정됩니다."
+      helper-text="수금상태 변경 시 수금일자도 함께 조정됩니다."
       width="max-w-lg"
       @confirm="confirmStatusChange"
       @cancel="cancelStatusChange"

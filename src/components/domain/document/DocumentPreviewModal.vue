@@ -37,7 +37,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['close', 'print'])
+const emit = defineEmits(['close', 'download'])
 
 const slots = useSlots()
 
@@ -83,14 +83,14 @@ const useSlotMode = computed(() => Boolean(slots.default))
       </div>
     </template>
 
-    <!-- 하단 버튼 영역 — 인쇄 버튼 제공 -->
+    <!-- 하단 버튼 영역 -->
     <template #footer>
       <BaseButton variant="secondary" @click="$emit('close')">닫기</BaseButton>
-      <BaseButton @click="$emit('print')">
+      <BaseButton variant="secondary" @click="$emit('download')">
         <template #leading>
-          <i class="fas fa-print text-xs" aria-hidden="true"></i>
+          <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
         </template>
-        인쇄
+        PDF 다운로드
       </BaseButton>
     </template>
   </BaseModal>

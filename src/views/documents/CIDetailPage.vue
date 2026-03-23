@@ -259,7 +259,7 @@ function goToLinkedDocument(document) {
       :document-title="detail.id"
       :fields="previewFields"
       @close="previewOpen = false"
-      @print="handlePreviewPrint"
+      @download="handlePdfDownload"
     >
       <CIDocumentTemplate :document="detail" />
     </DocumentPreviewModal>

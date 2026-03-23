@@ -531,7 +531,7 @@ function handlePrint() {
 
 function handlePdfDownload() {
   if (!detail.value) return
-  const opened = openDocumentOutputByType('PO', detail.value, true)
+  const opened = openDocumentOutputByType('PO', detail.value, false)
   if (opened) {
     info('브라우저 인쇄 창에서 "PDF로 저장"을 선택하세요.', 'PDF')
   }
@@ -840,18 +840,7 @@ function cancelDeleteApprovalRequest() {
       <DetailPageHeader :title="detail.id" :status="detail.status" @back="goBack">
         <template #actions>
           <BaseButton
-            v-if="linkedProductionOrder"
-            variant="secondary"
-            size="sm"
-            @click="goToLinkedDocument(linkedProductionOrder.id)"
-          >
-            <template #leading>
-              <i class="fas fa-industry text-xs" aria-hidden="true"></i>
-            </template>
-            생산지시서 보기
-          </BaseButton>
-          <BaseButton
-            v-else-if="canIssueProductionOrder"
+            v-if="canIssueProductionOrder"
             variant="secondary"
             size="sm"
             @click="openProductionIssueConfirm"
@@ -1086,7 +1075,7 @@ function cancelDeleteApprovalRequest() {
       :document-title="detail.id"
       :fields="previewFields"
       @close="previewOpen = false"
-      @print="handlePreviewPrint"
+      @download="handlePdfDownload"
     >
       <PODocumentTemplate :document="detail" />
     </DocumentPreviewModal>

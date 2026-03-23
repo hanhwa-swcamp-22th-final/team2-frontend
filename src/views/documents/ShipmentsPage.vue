@@ -18,12 +18,19 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
+import { useAuthStore } from '@/stores/auth'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
+import { useToast } from '@/composables/useToast'
+import { openTableOutput } from '@/utils/documentOutput'
+import { canAccessRouteByRole } from '@/utils/roleAccess'
 import { clientSearchColumns } from '@/utils/searchModalColumns'
+import { buildSelectOptionsFromRows } from '@/utils/selectOptions'
 
 const router = useRouter()
+const authStore = useAuthStore()
+const toast = useToast()
 const isAdvancedOpen = ref(false)
 const clientSearchOpen = ref(false)
 const clientSearchKeyword = ref('')
@@ -31,18 +38,6 @@ const shipmentSearchOpen = ref(false)
 const shipmentSearchKeyword = ref('')
 const poDocuments = usePoDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
-
-const countryOptions = [
-  { value: '말레이시아', label: '말레이시아' },
-  { value: '베트남', label: '베트남' },
-  { value: '독일', label: '독일' },
-  { value: '미국', label: '미국' },
-]
-
-const statusOptions = [
-  { value: '출하준비', label: '출하준비' },
-  { value: '출하완료', label: '출하완료' },
-]
 
 const columns = [
   { key: 'id', label: '출하번호', align: 'center', width: '140px' },
@@ -67,6 +62,8 @@ function enrichShipmentStatusRow(row) {
 }
 
 const rowsData = computed(() => shipmentStatusDocuments.value.map(enrichShipmentStatusRow))
+const countryOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'country'))
+const statusOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'status'))
 
 const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
   keywordFields: ['id', 'clientName', 'country', 'poId', 'requestDate', 'dueDate', 'status'],
@@ -118,17 +115,57 @@ function goToDetail(id) {
 
 function goToPoDetail(poId) {
   if (!poId) return
+  if (!canAccessRouteByRole(authStore.currentUser, 'po-detail')) {
+    toast.warning('PO 상세 화면에 대한 접근 권한이 없습니다.')
+    return
+  }
   router.push({ name: 'po-detail', params: { id: poId } })
 }
 
 function searchRows() {
   applyFilters()
 }
+
+function downloadCurrentTablePdf() {
+  const exportColumns = [
+    { key: 'id', label: '출하번호', align: 'center' },
+    { key: 'clientName', label: '거래처', align: 'left' },
+    { key: 'country', label: '국가', align: 'center' },
+    { key: 'poId', label: 'PO 번호', align: 'center' },
+    { key: 'requestDate', label: '출하요청일', align: 'center' },
+    { key: 'dueDate', label: '납기일', align: 'center' },
+    { key: 'status', label: '상태', align: 'center' },
+  ]
+
+  openTableOutput({
+    title: '출하 현황 관리',
+    subtitle: `총 ${filteredRows.value.length}건`,
+    columns: exportColumns,
+    rows: filteredRows.value.map((row) => ({
+      id: row.id,
+      clientName: row.clientName,
+      country: row.country,
+      poId: row.poId,
+      requestDate: row.requestDate,
+      dueDate: row.dueDate,
+      status: row.status,
+    })),
+  })
+}
 </script>
 
 <template>
   <div class="fade-in space-y-6">
-    <PageHeader title="출하 현황 관리" icon-class="fas fa-truck" />
+    <PageHeader title="출하 현황 관리" icon-class="fas fa-truck">
+      <template #actions>
+        <BaseButton variant="secondary" @click="downloadCurrentTablePdf">
+          <template #leading>
+            <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
+          </template>
+          PDF 다운로드
+        </BaseButton>
+      </template>
+    </PageHeader>
 
     <FilterToolbarCard
       v-model="filters.keyword"

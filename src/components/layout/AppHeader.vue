@@ -5,66 +5,112 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import PasswordChangeModal from '@/components/domain/auth/PasswordChangeModal.vue'
 import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
+import { usePiDocuments } from '@/stores/piDocuments'
+import { usePoDocuments } from '@/stores/poDocuments'
+import { useSalesCollectionDocuments } from '@/stores/salesCollectionDocuments'
+import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 
 const uiStore = useUiStore()
 const authStore = useAuthStore()
+const piDocuments = usePiDocuments()
+const poDocuments = usePoDocuments()
+const salesCollectionDocuments = useSalesCollectionDocuments()
+const shipmentStatusDocuments = useShipmentStatusDocuments()
 const route = useRoute()
 const router = useRouter()
 const pageTitle = computed(() => String(route.meta.serviceName ?? '공통 대시보드'))
 const isNotificationOpen = ref(false)
 const isPasswordModalOpen = ref(false)
 const notificationRef = ref(null)
+const readNotificationIds = ref([])
 
-const notifications = ref([
-  {
-    id: 1,
+function normalizeTimestamp(value) {
+  if (!value) return 0
+  const normalized = value.includes(' ') ? value.replace(' ', 'T') : `${value}T00:00`
+  const timestamp = Date.parse(normalized.replaceAll('/', '-'))
+  return Number.isFinite(timestamp) ? timestamp : 0
+}
+
+function createApprovalNotifications() {
+  const currentUser = authStore.currentUser
+  if (!currentUser) return []
+
+  const approvalDocuments = [...piDocuments.value, ...poDocuments.value]
+    .filter((row) => row.requestStatus && row.approvalStatus === '대기')
+    .filter((row) => {
+      if (currentUser.role === 'admin') return true
+      if (currentUser.role !== 'sales') return false
+      if (currentUser.positionId === 1) return true
+      return row.approvalRequestedBy === currentUser.name
+    })
+
+  return approvalDocuments.map((row) => ({
+    id: `approval-${row.id}-${row.requestStatus}`,
     title: '결재 요청',
-    message: '김영업(과장)이 PO26002 수정 결재를 요청했습니다.',
-    time: '2026/03/15 10:00',
-    unread: true,
-    to: '/po',
+    message: `${row.approvalRequestedBy || '요청자'}이(가) ${row.id} ${row.requestStatus}을 올렸습니다.`,
+    time: row.approvalRequestedAt || row.issueDate || '-',
+    sortTime: normalizeTimestamp(row.approvalRequestedAt || row.issueDate),
+    to: row.id.startsWith('PI') ? '/pi' : '/po',
     query: {
-      code: 'PO26002',
+      code: row.id,
       source: 'header-notification',
     },
-  },
-  {
-    id: 2,
-    title: '결재 요청',
-    message: '정영업(대리)이 PO26004 삭제 결재를 요청했습니다.',
-    time: '2026/03/14 09:30',
-    unread: true,
-    to: '/po',
-    query: {
-      code: 'PO26004',
-      source: 'header-notification',
-    },
-  },
-  {
-    id: 3,
-    title: '출하 상태 변경',
-    message: 'SH26002 출하완료 처리되었습니다.',
-    time: '2026/04/10 09:00',
-    unread: true,
-    to: '/shipments',
-    query: {
-      code: 'SH26002',
-      source: 'header-notification',
-    },
-  },
-  {
-    id: 4,
-    title: '완납 처리',
-    message: 'PO26003 잔금 입금 확인. 완납 처리.',
-    time: '2026/05/05 11:00',
-    unread: false,
-    to: '/collections',
-    query: {
-      code: 'PO26003',
-      source: 'header-notification',
-    },
-  },
-])
+  }))
+}
+
+function createShipmentNotifications() {
+  const currentUser = authStore.currentUser
+  if (!currentUser || currentUser.role === 'production') return []
+
+  return shipmentStatusDocuments.value
+    .filter((row) => row.status === '출하완료')
+    .map((row) => ({
+      id: `shipment-${row.id}-${row.status}`,
+      title: '출하 상태 변경',
+      message: `${row.id} 건이 출하완료 처리되었습니다.`,
+      time: row.lastUpdated || row.requestDate || '-',
+      sortTime: normalizeTimestamp(row.lastUpdated || row.requestDate),
+      to: '/shipments',
+      query: {
+        code: row.id,
+        source: 'header-notification',
+      },
+    }))
+}
+
+function createCollectionNotifications() {
+  const currentUser = authStore.currentUser
+  if (!currentUser || !['sales', 'admin'].includes(currentUser.role)) return []
+
+  return salesCollectionDocuments.value
+    .filter((row) => row.status === '수금완료')
+    .map((row) => ({
+      id: `collection-${row.poId}-${row.collectionDate}`,
+      title: '수금 완료',
+      message: `${row.poId} 건의 수금이 완료되었습니다.`,
+      time: row.collectionDate || row.issueDate || '-',
+      sortTime: normalizeTimestamp(row.collectionDate || row.issueDate),
+      to: '/collections',
+      query: {
+        code: row.poId,
+        source: 'header-notification',
+      },
+    }))
+}
+
+const notifications = computed(() => (
+  [
+    ...createApprovalNotifications(),
+    ...createShipmentNotifications(),
+    ...createCollectionNotifications(),
+  ]
+    .sort((left, right) => right.sortTime - left.sortTime)
+    .slice(0, 8)
+    .map((notification) => ({
+      ...notification,
+      unread: !readNotificationIds.value.includes(notification.id),
+    }))
+))
 
 const unreadCount = computed(() => notifications.value.filter((item) => item.unread).length)
 
@@ -82,7 +128,9 @@ function closePasswordModal() {
 
 function goToNotification(notification) {
   isNotificationOpen.value = false
-  notification.unread = false
+  if (!readNotificationIds.value.includes(notification.id)) {
+    readNotificationIds.value = [...readNotificationIds.value, notification.id]
+  }
   router.push({
     path: notification.to,
     query: notification.query,

@@ -150,39 +150,40 @@ function renderInstructionSheetOutputHtml(doc, kind) {
     </tr>`).join('')
 
   const styles = `
-    body { margin: 20px; background: #fff; color: #111; font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; }
+    html { background: #e2e8f0; }
+    body { margin: 20px auto; max-width: 960px; background: #fff; color: #111827; font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; border: 1px solid #cbd5e1; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08); }
     .instruction-sheet { font-size: 11px; line-height: 1.25; }
     .sheet-head-table, .meta-table, .approval-table, .detail-table, .sheet-bottom-table, .change-log-table, .sheet-footer-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    .sheet-head-table td, .detail-table th, .detail-table td, .sheet-bottom-table th, .sheet-bottom-table td { border: 1px solid #111; box-sizing: border-box; font-weight: 400; }
-    .meta-table th, .meta-table td, .approval-table th, .approval-table td, .change-log-table th, .change-log-table td { border: 1px solid #111; box-sizing: border-box; font-weight: 400; }
+    .sheet-head-table td, .detail-table th, .detail-table td, .sheet-bottom-table th, .sheet-bottom-table td { border: 1px solid #94a3b8; box-sizing: border-box; font-weight: 400; }
+    .meta-table th, .meta-table td, .approval-table th, .approval-table td, .change-log-table th, .change-log-table td { border: 1px solid #94a3b8; box-sizing: border-box; font-weight: 400; }
     .sheet-head-table > tbody > tr > td { height: 82px; padding: 0; }
     .meta-head-cell, .approval-head-cell { vertical-align: top; }
-    .title-cell { padding: 0 12px; text-align: center; vertical-align: middle; font-size: 18px; letter-spacing: 0.55em; }
-    .brand-cell { border-top: 0; border-left: 0; border-right: 0; padding: 6px 10px; font-size: 19px; font-weight: 700; letter-spacing: 0.04em; text-align: left; }
+    .title-cell { padding: 0 12px; text-align: center; vertical-align: middle; font-size: 18px; font-weight: 700; letter-spacing: 0.45em; color: #0f172a; background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%); }
+    .brand-cell { border-top: 0; border-left: 0; border-right: 0; padding: 6px 10px; font-size: 19px; font-weight: 700; letter-spacing: 0.04em; text-align: left; background: #f8fafc; color: #0f172a; }
     .meta-table th, .meta-table td { padding: 4px 6px; font-size: 10px; }
     .meta-table { height: 100%; }
     .meta-table tr:first-child > * { border-top: 0; }
     .meta-table tr:last-child > * { border-bottom: 0; }
     .meta-table tr > :first-child { border-left: 0; }
     .meta-table tr > :last-child { border-right: 0; }
-    .meta-table th { width: 36%; text-align: center; white-space: nowrap; }
+    .meta-table th { width: 36%; text-align: center; white-space: nowrap; background: #f8fafc; color: #334155; font-weight: 700; }
     .approval-table { width: 100%; height: 100%; table-layout: fixed; }
     .approval-table th, .approval-table td { border: 0; padding: 2px 4px; font-size: 10px; text-align: center; vertical-align: middle; }
-    .approval-label-row th:not(.approval-side) { border-right: 1px solid #111; border-bottom: 1px solid #111; height: 24px; }
+    .approval-label-row th:not(.approval-side) { border-right: 1px solid #94a3b8; border-bottom: 1px solid #94a3b8; height: 24px; background: #f8fafc; color: #334155; font-weight: 700; }
     .approval-label-row th:last-child { border-right: 0; }
-    .approval-sign-row td { border-right: 1px solid #111; height: 54px; }
+    .approval-sign-row td { border-right: 1px solid #94a3b8; height: 54px; background: #fff; }
     .approval-sign-row td:last-child { border-right: 0; }
     .approval-side { position: relative; line-height: 1.2; width: 14.2857%; }
-    .approval-side::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px; background: #111; }
+    .approval-side::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px; background: #94a3b8; }
     .detail-table { margin-top: -1px; table-layout: fixed; }
     .detail-table th, .detail-table td { padding: 3px 4px; font-size: 10px; vertical-align: middle; }
-    .detail-table thead th { text-align: center; word-break: keep-all; }
+    .detail-table thead th { text-align: center; word-break: keep-all; background: #eef2f7; color: #334155; font-weight: 700; }
     .detail-table tbody td { height: 22px; }
     .due-date-head, .due-date-cell { white-space: nowrap; font-size: 9px; }
     .sheet-bottom-table { margin-top: -1px; table-layout: fixed; }
     .sheet-bottom-table > tbody > tr > th, .sheet-bottom-table > tbody > tr > td { height: 136px; }
     .sheet-bottom-table th, .sheet-bottom-table td { padding: 6px 8px; font-size: 10px; vertical-align: top; }
-    .remarks-side { text-align: center; white-space: nowrap; vertical-align: middle !important; }
+    .remarks-side { text-align: center; white-space: nowrap; vertical-align: middle !important; background: #f8fafc; color: #334155; font-weight: 700; }
     .remarks-body { height: 136px; white-space: pre-wrap; }
     .change-log-cell { padding: 0; height: 136px; }
     .change-log-table { height: 100%; table-layout: fixed; }
@@ -191,13 +192,14 @@ function renderInstructionSheetOutputHtml(doc, kind) {
     .change-log-table tr:last-child > * { border-bottom: 0; }
     .change-log-table th:first-child, .change-log-table td:first-child { border-left: 0; }
     .change-log-table th:last-child, .change-log-table td:last-child { border-right: 0; }
+    .change-log-table th { background: #f8fafc; color: #334155; font-weight: 700; }
     .sheet-footer-table { margin-top: 6px; }
-    .sheet-footer-table td { border: 0; padding: 0 2px; font-size: 9px; }
+    .sheet-footer-table td { border: 0; padding: 0 2px; font-size: 9px; color: #64748b; }
     .footer-left { text-align: left; }
     .footer-center { text-align: center; }
     .footer-right { text-align: right; }
     .text-center { text-align: center; }
-    @media print { body { margin: 12px; } }
+    @media print { html { background: #fff; } body { margin: 12px; border: 0; box-shadow: none; } }
   `
 
   return `<!doctype html>
@@ -840,6 +842,60 @@ export function openDocumentOutput({ title, documentId, fields, lineItems, autoP
   return openPrintWindow(html, autoPrint)
 }
 
+function buildTableOutputHtml({ title, subtitle = '', columns = [], rows = [] }) {
+  const headCells = columns.map((column) => `<th>${esc(column.label)}</th>`).join('')
+  const bodyRows = rows.length > 0
+    ? rows.map((row) => {
+      const cells = columns.map((column) => {
+        const value = row[column.key]
+        const align = column.align === 'right' ? 'right' : column.align === 'center' ? 'center' : 'left'
+        return `<td class="${align}">${esc(value ?? '-')}</td>`
+      }).join('')
+      const rowClass = row.rowType === 'summary' ? 'summary-row' : ''
+      return `<tr class="${rowClass}">${cells}</tr>`
+    }).join('')
+    : `<tr><td colspan="${columns.length || 1}" class="empty center">데이터가 없습니다.</td></tr>`
+
+  return `<!doctype html>
+  <html lang="ko">
+    <head>
+      <meta charset="UTF-8" />
+      <title>${esc(title)}</title>
+      <style>
+        html { background: #e2e8f0; }
+        body { max-width: 1120px; box-sizing: border-box; font-family: 'Noto Sans KR', Arial, sans-serif; margin: 24px auto; padding: 32px 36px 36px; background: #fff; border: 1px solid #cbd5e1; color: #0f172a; }
+        .header { margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1.5px solid #0f172a; }
+        .title { font-size: 24px; font-weight: 700; letter-spacing: 0.08em; margin: 0 0 6px; text-transform: uppercase; }
+        .subtitle { font-size: 12px; color: #64748b; margin: 0; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border: 1px solid #cbd5e1; padding: 10px 12px; font-size: 11px; }
+        th { background: #eef2f7; text-align: center; font-weight: 700; color: #334155; }
+        td.left { text-align: left; }
+        td.center { text-align: center; }
+        td.right { text-align: right; }
+        .summary-row td { background: #f8fafc; font-weight: 700; color: #0f172a; }
+        .empty { color: #94a3b8; }
+        @media print { html { background: #fff; } body { margin: 16px; border: 0; } }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1 class="title">${esc(title)}</h1>
+        ${subtitle ? `<p class="subtitle">${esc(subtitle)}</p>` : ''}
+      </div>
+      <table>
+        <thead><tr>${headCells}</tr></thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+    </body>
+  </html>`
+}
+
+export function openTableOutput({ title, subtitle = '', columns = [], rows = [], autoPrint = false }) {
+  const html = buildTableOutputHtml({ title, subtitle, columns, rows })
+  return openPrintWindow(html, autoPrint)
+}
+
 /**
  * openDocumentOutputByType — 문서 유형별 양식으로 출력
  * @param {'PI'|'PO'|'CI'|'PL'|'PRODUCTION'|'SHIPMENT'} type - 문서 유형
@@ -867,22 +923,35 @@ export function openDocumentOutputByType(type, doc, autoPrint = false) {
 }
 
 /**
- * openPrintWindow — 새 창에 HTML을 렌더링하고 선택적으로 인쇄 호출
+ * openPrintWindow — 새 창에 HTML 문서를 열고 선택적으로 인쇄 호출
  */
 function openPrintWindow(html, autoPrint) {
-  const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=960,height=800')
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+  const previewUrl = URL.createObjectURL(blob)
+  const printWindow = window.open(previewUrl, '_blank', 'width=960,height=800')
   if (!printWindow) return false
 
-  printWindow.document.open()
-  printWindow.document.write(html)
-  printWindow.document.close()
-  printWindow.focus()
-
-  if (autoPrint) {
-    setTimeout(() => {
-      printWindow.print()
-    }, 250)
+  const revokePreviewUrl = () => {
+    URL.revokeObjectURL(previewUrl)
   }
+
+  printWindow.addEventListener(
+    'load',
+    () => {
+      printWindow.focus()
+
+      if (autoPrint) {
+        setTimeout(() => {
+          printWindow.print()
+        }, 250)
+      }
+
+      setTimeout(revokePreviewUrl, 1000)
+    },
+    { once: true },
+  )
+
+  setTimeout(revokePreviewUrl, 5000)
 
   return true
 }

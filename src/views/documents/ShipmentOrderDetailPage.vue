@@ -9,15 +9,18 @@ import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewMo
 import ShipmentOrderTemplate from '@/components/domain/document/ShipmentOrderTemplate.vue'
 import { useDocumentItemCatalog } from '@/composables/useDocumentItemCatalog'
 import { usePoDocuments } from '@/stores/poDocuments'
+import { useAuthStore } from '@/stores/auth'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import { useToast } from '@/composables/useToast'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
 import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
+import { canAccessRouteByRole } from '@/utils/roleAccess'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const authStore = useAuthStore()
 const poDocuments = usePoDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
@@ -114,6 +117,10 @@ const summaryRows = computed(() => {
 
 function goToLinkedDocument(document) {
   if (!document?.routeName || !document?.id) return
+  if (document.routeName === 'po-detail' && !canAccessRouteByRole(authStore.currentUser, 'po-detail')) {
+    toast.warning('PO 상세 화면에 대한 접근 권한이 없습니다.')
+    return
+  }
   router.push({ name: document.routeName, params: { id: document.id } })
 }
 
@@ -283,7 +290,7 @@ onMounted(() => {
       :document-title="detail.id"
       :fields="previewFields"
       @close="previewOpen = false"
-      @print="handlePreviewPrint"
+      @download="handlePdfDownload"
     >
       <ShipmentOrderTemplate :document="documentForOutput || detail" />
     </DocumentPreviewModal>

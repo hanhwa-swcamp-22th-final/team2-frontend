@@ -38,12 +38,14 @@ import {
   REGISTRATION_DOCUMENT_STATUS,
   REGISTRATION_REQUEST_STATUS,
 } from '@/utils/documentApproval'
+import { openDocumentOutputByType, openTableOutput } from '@/utils/documentOutput'
 import {
   formatPoShipmentLockMessage,
   getPoShipmentLockInfo,
   resolvePoShipmentDocumentStatus,
 } from '@/utils/documentShipmentLock'
 import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
+import { buildSelectOptionsFromRows } from '@/utils/selectOptions'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -69,30 +71,6 @@ const productSearchKeyword = ref('')
 const clientSearchContext = ref('filter')
 const pendingCreateFormValue = ref(null)
 const pendingEditRequest = ref(null)
-
-const managerOptions = [
-  { value: '김영업', label: '김영업' },
-  { value: '정영업', label: '정영업' },
-  { value: '최관리', label: '최관리' },
-]
-
-const countryOptions = [
-  { value: '말레이시아', label: '말레이시아' },
-  { value: '독일', label: '독일' },
-  { value: '미국', label: '미국' },
-  { value: '태국', label: '태국' },
-  { value: '싱가포르', label: '싱가포르' },
-  { value: '인도', label: '인도' },
-  { value: '호주', label: '호주' },
-]
-
-const statusOptions = [
-  { value: '초안', label: '초안' },
-  { value: '발송', label: '발송' },
-  { value: '확정', label: '확정' },
-  { value: '출하완료', label: '출하완료' },
-  { value: '취소', label: '취소' },
-]
 const piRowsSource = usePiDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
@@ -144,6 +122,10 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
   deliveryDateField: 'deliveryDate',
 })
 const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
+
+const managerOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'manager'))
+const countryOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'country'))
+const statusOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'status'))
 
 const shipmentLockInfoByPoId = computed(() => (
   new Map(
@@ -388,6 +370,40 @@ function getRequestedAt() {
 
 function buildNextPoId() {
   return `PO26${String(poRowsData.value.length + 1).padStart(3, '0')}`
+}
+
+function downloadPdf(row) {
+  const opened = openDocumentOutputByType('PO', row, false)
+  if (opened) {
+    success(`${row.id} PDF 다운로드 창이 열렸습니다.`)
+  }
+}
+
+function downloadTablePdf() {
+  const exportColumns = columns
+    .filter((column) => column.key !== 'actions')
+    .map((column) => ({
+      key: column.key,
+      label: column.label,
+      align: column.align ?? 'left',
+    }))
+
+  openTableOutput({
+    title: 'Purchase Order 관리',
+    subtitle: `총 ${filteredRows.value.length}건`,
+    columns: exportColumns,
+    rows: filteredRows.value.map((row) => ({
+      id: row.id,
+      issueDate: row.issueDate,
+      clientName: row.clientName,
+      country: row.country,
+      itemName: row.itemName,
+      amount: row.amount,
+      manager: row.manager,
+      status: row.status,
+      deliveryDate: row.deliveryDate,
+    })),
+  })
 }
 
 function createApprovalReviewSnapshot({
@@ -893,6 +909,12 @@ function handleProductSelect(product) {
   <div class="fade-in space-y-5">
     <PageHeader title="Purchase Order 관리" icon-class="fas fa-file-contract">
       <template #actions>
+        <BaseButton variant="secondary" @click="downloadTablePdf">
+          <template #leading>
+            <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
+          </template>
+          PDF 다운로드
+        </BaseButton>
         <BaseButton @click="openCreateForm">
           <template #leading>
             <i class="fas fa-plus text-xs" aria-hidden="true"></i>

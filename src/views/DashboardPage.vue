@@ -6,115 +6,155 @@ import BaseCard from '@/components/common/BaseCard.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useCiDocuments } from '@/stores/ciDocuments'
 import { usePiDocuments } from '@/stores/piDocuments'
+import { usePlDocuments } from '@/stores/plDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
+import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
+import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
+import masterData from '../../db.json'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const ciDocuments = useCiDocuments()
 const piDocuments = usePiDocuments()
+const plDocuments = usePlDocuments()
 const poDocuments = usePoDocuments()
+const productionOrderDocuments = useProductionOrderDocuments()
+const shipmentStatusDocuments = useShipmentStatusDocuments()
 const selectedRequest = ref(null)
 const decisionConfirmOpen = ref(false)
 const pendingDecision = ref('')
 
-const summaryCards = ref([
-  {
-    id: 'pi',
-    title: 'PI 문서',
-    count: '3',
-    status: '확정',
-    helper: '최근 발행 2026/03/10',
-    to: '/pi',
-  },
-  {
-    id: 'po',
-    title: 'PO 문서',
-    count: '3',
-    status: '발송',
-    helper: '최근 발행 2026/03/03',
-    to: '/po',
-  },
-  {
-    id: 'cipl',
-    title: 'CI/PL 문서',
-    count: '1',
-    status: '준비완료',
-    helper: '최근 발행 2026/03/12',
-    to: '/ci',
-  },
-])
-
-const shipmentItems = [
-  {
-    id: 1,
-    shipmentNo: 'SH26002',
-    company: 'COOLSAY SDN BHD',
-    sourcePo: 'PO26002',
-    dueDate: '2026/04/10',
-    status: '출하완료',
-  },
-  {
-    id: 2,
-    shipmentNo: 'SH26004',
-    company: 'Viet Steel JSC',
-    sourcePo: 'PO26004',
-    dueDate: '2026/04/15',
-    status: '준비중',
-  },
-  {
-    id: 3,
-    shipmentNo: 'SH26005',
-    company: 'Pacific Trading Inc.',
-    sourcePo: 'PO26005',
-    dueDate: '2026/04/18',
-    status: '준비완료',
-  },
-]
-
-const recentActivities = [
-  {
-    id: 1,
-    icon: 'fa-users',
-    title: '초도 미팅 - 제품 사양 논의',
-    company: 'COOLSAY SDN BHD',
-    date: '2026/01/20',
-  },
-  {
-    id: 2,
-    icon: 'fa-sticky-note',
-    title: '결제조건 특이사항',
-    company: 'COOLSAY SDN BHD',
-    date: '2026/01/25',
-  },
-  {
-    id: 3,
-    icon: 'fa-flag',
-    title: '포장 규격 변경 요청',
-    company: 'COOLSAY SDN BHD',
-    date: '2026/02/05',
-  },
-  {
-    id: 4,
-    icon: 'fa-comment',
-    title: 'PI 송부 완료',
-    company: 'COOLSAY SDN BHD',
-    date: '2026/02/01',
-  },
-  {
-    id: 5,
-    icon: 'fa-users',
-    title: 'Hannover Messe 미팅',
-    company: 'TechBridge GmbH',
-    date: '2026/02/10',
-  },
-]
-
 const currentUser = computed(() => authStore.currentUser ?? null)
 const isSalesManager = computed(() => currentUser.value?.role === 'sales' && Number(currentUser.value?.positionId) === 1)
 const isSalesMember = computed(() => currentUser.value?.role === 'sales' && Number(currentUser.value?.positionId) === 2)
+const isProductionUser = computed(() => currentUser.value?.role === 'production')
+const isShippingUser = computed(() => currentUser.value?.role === 'shipping')
 const canApproveRequests = computed(() => isSalesManager.value)
 const showApprovalSection = computed(() => canApproveRequests.value || isSalesMember.value)
 const requestSectionTitle = computed(() => (canApproveRequests.value ? '결재 요청함' : '내 요청 현황'))
+
+function parseSlashDate(value) {
+  if (!value) return 0
+  return new Date(String(value).replace(/\./g, '-').replace(/\//g, '-')).getTime() || 0
+}
+
+function findLatestRow(rows, dateField) {
+  return [...rows].sort((left, right) => parseSlashDate(right?.[dateField]) - parseSlashDate(left?.[dateField]))[0] ?? null
+}
+
+function createSummaryCard(id, title, rows, dateField, to, iconClass, helperPrefix = '최근 발행') {
+  const latestRow = findLatestRow(rows, dateField)
+  return {
+    id,
+    title,
+    count: String(rows.length),
+    status: latestRow?.status || '-',
+    helper: latestRow?.[dateField] ? `${helperPrefix} ${latestRow[dateField]}` : '데이터 없음',
+    to,
+    iconClass,
+  }
+}
+
+const summaryCards = computed(() => {
+  if (isProductionUser.value) {
+    const inProgressCount = productionOrderDocuments.value.filter((row) => row.status !== '생산완료').length
+    return [
+      {
+        id: 'production',
+        title: '생산 관리',
+        count: String(productionOrderDocuments.value.length),
+        status: inProgressCount > 0 ? '진행중' : '생산완료',
+        helper: `진행중 ${inProgressCount}건`,
+        to: '/production-orders',
+        iconClass: 'fa-industry',
+      },
+    ]
+  }
+
+  if (isShippingUser.value) {
+    const pendingCount = shipmentStatusDocuments.value.filter((row) => row.status !== '출하완료').length
+    return [
+      {
+        id: 'shipments',
+        title: '출하현황',
+        count: String(shipmentStatusDocuments.value.length),
+        status: pendingCount > 0 ? '출하준비' : '출하완료',
+        helper: `출하완료 대기 ${pendingCount}건`,
+        to: '/shipments',
+        iconClass: 'fa-truck',
+      },
+      {
+        id: 'shipment-pending',
+        title: '출하완료 대기',
+        count: String(pendingCount),
+        status: pendingCount > 0 ? '출하준비' : '출하완료',
+        helper: pendingCount > 0 ? '미완료 출하 건 확인' : '대기 건이 없습니다.',
+        to: { path: '/shipments', query: { status: '출하준비' } },
+        iconClass: 'fa-hourglass-half',
+      },
+    ]
+  }
+
+  return [
+    createSummaryCard('pi', 'PI 관리', piDocuments.value, 'issueDate', '/pi', 'fa-file-invoice'),
+    createSummaryCard('po', 'PO 관리', poDocuments.value, 'issueDate', '/po', 'fa-file-contract'),
+    {
+      id: 'cipl',
+      title: 'CI/PL 관리',
+      count: String(ciDocuments.value.length + plDocuments.value.length),
+      status: findLatestRow([...ciDocuments.value, ...plDocuments.value], 'issueDate')?.status || '-',
+      helper: findLatestRow([...ciDocuments.value, ...plDocuments.value], 'issueDate')?.issueDate
+        ? `최근 발행 ${findLatestRow([...ciDocuments.value, ...plDocuments.value], 'issueDate')?.issueDate}`
+        : '데이터 없음',
+      to: '/ci',
+      iconClass: 'fa-file-pdf',
+    },
+  ]
+})
+
+const summaryGridClass = computed(() => {
+  if (summaryCards.value.length === 1) return 'sm:grid-cols-1 xl:grid-cols-1'
+  if (summaryCards.value.length === 2) return 'sm:grid-cols-2 xl:grid-cols-2'
+  return 'sm:grid-cols-2 xl:grid-cols-3'
+})
+
+const shipmentItems = computed(() => {
+  return [...shipmentStatusDocuments.value]
+    .sort((left, right) => parseSlashDate(right.updatedAt || right.requestDate) - parseSlashDate(left.updatedAt || left.requestDate))
+    .slice(0, 3)
+    .map((row) => ({
+      id: row.id,
+      shipmentNo: row.id,
+      company: row.clientName,
+      sourcePo: row.poId,
+      dueDate: row.dueDate,
+      status: row.status,
+    }))
+})
+
+const clientNameById = new Map((masterData.clients ?? []).map((client) => [Number(client.id), client.name]))
+
+function resolveActivityIcon(type) {
+  if (type === '미팅/협의') return 'fa-users'
+  if (type === '이슈') return 'fa-flag'
+  if (type === '메모/노트') return 'fa-sticky-note'
+  return 'fa-comment'
+}
+
+const recentActivities = computed(() => {
+  return [...(masterData.activities ?? [])]
+    .sort((left, right) => parseSlashDate(right.date) - parseSlashDate(left.date))
+    .slice(0, 5)
+    .map((item) => ({
+      id: item.id,
+      icon: resolveActivityIcon(item.type),
+      title: item.title,
+      company: clientNameById.get(Number(item.clientId)) || '-',
+      date: item.date,
+    }))
+})
 
 function parseRequestedAt(value) {
   const normalized = String(value ?? '').trim()
@@ -351,7 +391,7 @@ function goToShipmentItem(item) {
 
 <template>
   <div class="fade-in space-y-6">
-    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <section class="grid gap-4" :class="summaryGridClass">
       <RouterLink
         v-for="card in summaryCards"
         :key="card.id"
@@ -362,7 +402,7 @@ function goToShipmentItem(item) {
           <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-50">
             <i
               class="fas text-sm text-slate-500"
-              :class="card.id === 'pi' ? 'fa-file-invoice' : card.id === 'po' ? 'fa-file-contract' : 'fa-file-pdf'"
+              :class="card.iconClass"
             />
           </div>
           <StatusBadge :value="card.status" />
