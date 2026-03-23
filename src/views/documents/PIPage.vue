@@ -23,6 +23,9 @@ import { usePagination } from '@/composables/usePagination'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
+import { usePoDocuments } from '@/stores/poDocuments'
+import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
+import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import { useToast } from '@/composables/useToast'
 import {
   buildApprovalRequestRows,
@@ -36,6 +39,10 @@ import {
   REGISTRATION_DOCUMENT_STATUS,
   REGISTRATION_REQUEST_STATUS,
 } from '@/utils/documentApproval'
+import {
+  formatPiShipmentLockMessage,
+  getPiShipmentLockInfo,
+} from '@/utils/documentShipmentLock'
 import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
 import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
 
@@ -130,6 +137,9 @@ const fallbackClientRowsSource = [
 const clientRowsSource = ref([...fallbackClientRowsSource])
 const { createProductRows } = useSearchModalLookups()
 const rowsData = usePiDocuments()
+const poDocuments = usePoDocuments()
+const shipmentOrderDocuments = useShipmentOrderDocuments()
+const shipmentStatusDocuments = useShipmentStatusDocuments()
 
 const columns = [
   { key: 'id', label: 'PI번호', align: 'center', width: '140px' },
@@ -165,6 +175,20 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
   deliveryDateField: 'deliveryDate',
 })
 const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
+
+const shipmentLockInfoByPiId = computed(() => (
+  new Map(
+    rowsData.value.map((row) => [
+      row.id,
+      getPiShipmentLockInfo(
+        row.id,
+        poDocuments.value,
+        shipmentOrderDocuments.value,
+        shipmentStatusDocuments.value,
+      ),
+    ]),
+  )
+))
 
 const clientRows = computed(() => {
   const keyword = clientSearchKeyword.value.trim().toLowerCase()
@@ -288,6 +312,12 @@ function closeForm() {
 }
 
 function openEditForm(row) {
+  const shipmentLockInfo = shipmentLockInfoByPiId.value.get(row.id)
+  if (shipmentLockInfo?.locked) {
+    warning(formatPiShipmentLockMessage(shipmentLockInfo))
+    return
+  }
+
   const matchedClient = clientRowsSource.value.find((client) => client.name === row.clientName) ?? null
   const normalizedIncoterms = resolveIncotermState(row.incoterms, row.namedPlace)
   selectedClient.value = matchedClient
@@ -796,6 +826,15 @@ function cancelEditApprovalRequest() {
 }
 
 function handleSave(formValue) {
+  if (formMode.value === 'edit') {
+    const shipmentLockInfo = shipmentLockInfoByPiId.value.get(selectedRow.value?.id)
+    if (shipmentLockInfo?.locked) {
+      warning(formatPiShipmentLockMessage(shipmentLockInfo))
+      formOpen.value = false
+      return
+    }
+  }
+
   const { nextRow } = buildRowPayload(formValue)
 
   if (formMode.value === 'create') {
@@ -831,12 +870,26 @@ function handleSave(formValue) {
 }
 
 function openDeleteApprovalRequest(row) {
+  const shipmentLockInfo = shipmentLockInfoByPiId.value.get(row.id)
+  if (shipmentLockInfo?.locked) {
+    warning(formatPiShipmentLockMessage(shipmentLockInfo))
+    return
+  }
+
   selectedRow.value = row
   deleteApprovalRequestOpen.value = true
 }
 
 function confirmDeleteApprovalRequest() {
   if (!selectedRow.value) return
+
+  const shipmentLockInfo = shipmentLockInfoByPiId.value.get(selectedRow.value.id)
+  if (shipmentLockInfo?.locked) {
+    warning(formatPiShipmentLockMessage(shipmentLockInfo))
+    deleteApprovalRequestOpen.value = false
+    selectedRow.value = null
+    return
+  }
 
   const requesterName = getCurrentRequesterName()
   const requestedAt = getRequestedAt()
@@ -1022,7 +1075,12 @@ function handleProductSelect(product) {
       </template>
 
       <template #cell-actions="{ row }">
-        <TableActions @edit="openEditForm(row)" @delete="openDeleteApprovalRequest(row)" />
+        <TableActions
+          :show-edit="!shipmentLockInfoByPiId.get(row.id)?.locked"
+          :show-delete="!shipmentLockInfoByPiId.get(row.id)?.locked"
+          @edit="openEditForm(row)"
+          @delete="openDeleteApprovalRequest(row)"
+        />
       </template>
     </BaseTable>
 

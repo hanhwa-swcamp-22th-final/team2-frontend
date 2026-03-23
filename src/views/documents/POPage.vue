@@ -23,6 +23,8 @@ import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
+import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
+import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import { useToast } from '@/composables/useToast'
 import {
   buildApprovalRequestRows,
@@ -36,6 +38,10 @@ import {
   REGISTRATION_DOCUMENT_STATUS,
   REGISTRATION_REQUEST_STATUS,
 } from '@/utils/documentApproval'
+import {
+  formatPoShipmentLockMessage,
+  getPoShipmentLockInfo,
+} from '@/utils/documentShipmentLock'
 import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
 
 const router = useRouter()
@@ -86,6 +92,8 @@ const statusOptions = [
   { value: '취소', label: '취소' },
 ]
 const piRowsSource = usePiDocuments()
+const shipmentOrderDocuments = useShipmentOrderDocuments()
+const shipmentStatusDocuments = useShipmentStatusDocuments()
 const { clientRowsSource, createClientRows, createProductRows } = useSearchModalLookups()
 
 const columns = [
@@ -123,6 +131,19 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
   deliveryDateField: 'deliveryDate',
 })
 const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
+
+const shipmentLockInfoByPoId = computed(() => (
+  new Map(
+    rowsData.value.map((row) => [
+      row.id,
+      getPoShipmentLockInfo(
+        row.id,
+        shipmentOrderDocuments.value,
+        shipmentStatusDocuments.value,
+      ),
+    ]),
+  )
+))
 
 const piRows = computed(() => {
   const keyword = piSearchKeyword.value.trim().toLowerCase()
@@ -177,6 +198,12 @@ function closeForm() {
 }
 
 function openEditForm(row) {
+  const shipmentLockInfo = shipmentLockInfoByPoId.value.get(row.id)
+  if (shipmentLockInfo?.locked) {
+    warning(formatPoShipmentLockMessage(shipmentLockInfo))
+    return
+  }
+
   selectedPi.value = piRowsSource.value.find((pi) => pi.id === (row.piId || row.linkedPiId || '')) ?? null
   selectedClient.value = clientRowsSource.value.find((client) => client.name === row.clientName) ?? null
   formMode.value = 'edit'
@@ -713,6 +740,15 @@ function cancelEditApprovalRequest() {
 }
 
 function handleSave(formValue) {
+  if (formMode.value === 'edit') {
+    const shipmentLockInfo = shipmentLockInfoByPoId.value.get(selectedRow.value?.id)
+    if (shipmentLockInfo?.locked) {
+      warning(formatPoShipmentLockMessage(shipmentLockInfo))
+      formOpen.value = false
+      return
+    }
+  }
+
   if (formMode.value === 'create') {
     pendingCreateFormValue.value = { ...formValue }
     createApprovalRequestOpen.value = true
@@ -747,12 +783,26 @@ function handleSave(formValue) {
 }
 
 function openDeleteApprovalRequest(row) {
+  const shipmentLockInfo = shipmentLockInfoByPoId.value.get(row.id)
+  if (shipmentLockInfo?.locked) {
+    warning(formatPoShipmentLockMessage(shipmentLockInfo))
+    return
+  }
+
   selectedRow.value = row
   deleteApprovalRequestOpen.value = true
 }
 
 function confirmDeleteApprovalRequest() {
   if (!selectedRow.value) return
+
+  const shipmentLockInfo = shipmentLockInfoByPoId.value.get(selectedRow.value.id)
+  if (shipmentLockInfo?.locked) {
+    warning(formatPoShipmentLockMessage(shipmentLockInfo))
+    deleteApprovalRequestOpen.value = false
+    selectedRow.value = null
+    return
+  }
 
   const requesterName = getCurrentRequesterName()
   const requestedAt = getRequestedAt()
@@ -942,7 +992,12 @@ function handleProductSelect(product) {
       </template>
 
       <template #cell-actions="{ row }">
-        <TableActions @edit="openEditForm(row)" @delete="openDeleteApprovalRequest(row)" />
+        <TableActions
+          :show-edit="!shipmentLockInfoByPoId.get(row.id)?.locked"
+          :show-delete="!shipmentLockInfoByPoId.get(row.id)?.locked"
+          @edit="openEditForm(row)"
+          @delete="openDeleteApprovalRequest(row)"
+        />
       </template>
     </BaseTable>
 

@@ -16,6 +16,8 @@ import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
+import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
+import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import {
   buildApprovalInfoRows,
   buildApprovalRequestRows,
@@ -27,6 +29,10 @@ import {
   EDIT_REQUEST_STATUS,
 } from '@/utils/documentApproval'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
+import {
+  formatPoShipmentLockMessage,
+  getPoShipmentLockInfo,
+} from '@/utils/documentShipmentLock'
 import { clientSearchColumns } from '@/utils/searchModalColumns'
 
 const route = useRoute()
@@ -48,6 +54,8 @@ const selectedClient = ref(null)
 const pendingEditRequest = ref(null)
 const piDocuments = usePiDocuments()
 const poDocuments = usePoDocuments()
+const shipmentOrderDocuments = useShipmentOrderDocuments()
+const shipmentStatusDocuments = useShipmentStatusDocuments()
 
 const { createClientRows } = useSearchModalLookups()
 
@@ -262,6 +270,14 @@ const sourceRow = computed(() => (
 const detail = computed(() => normalizeDetail(sourceRow.value))
 
 const approvalInfoRows = computed(() => buildApprovalInfoRows(detail.value))
+const shipmentLockInfo = computed(() => (
+  getPoShipmentLockInfo(
+    detail.value?.id,
+    shipmentOrderDocuments.value,
+    shipmentStatusDocuments.value,
+  )
+))
+const shipmentLockMessage = computed(() => formatPoShipmentLockMessage(shipmentLockInfo.value))
 const linkedPiDocument = computed(() => piDocuments.value.find((row) => row.id === (detail.value?.piId || detail.value?.linkedPiId)))
 
 const editApprovalRequestRows = computed(() => {
@@ -452,12 +468,22 @@ function openPreview() {
 }
 
 function handleEdit() {
+  if (shipmentLockInfo.value.locked) {
+    warning(shipmentLockMessage.value)
+    return
+  }
+
   selectedPi.value = null
   selectedClient.value = null
   formOpen.value = true
 }
 
 function handleDelete() {
+  if (shipmentLockInfo.value.locked) {
+    warning(shipmentLockMessage.value)
+    return
+  }
+
   deleteApprovalRequestOpen.value = true
 }
 
@@ -485,6 +511,11 @@ function formatSlashDate(value) {
 
 function handleSave(formValue) {
   if (!sourceRow.value) return
+  if (shipmentLockInfo.value.locked) {
+    warning(shipmentLockMessage.value)
+    formOpen.value = false
+    return
+  }
 
   const linkedPi = piDocuments.value.find((row) => row.id === formValue.linkedPiId)
   const currency = linkedPi?.currency || formValue.currency || sourceRow.value.currency || 'USD'
@@ -629,6 +660,11 @@ function cancelEditApprovalRequest() {
 
 function confirmDeleteApprovalRequest() {
   if (!sourceRow.value) return
+  if (shipmentLockInfo.value.locked) {
+    warning(shipmentLockMessage.value)
+    deleteApprovalRequestOpen.value = false
+    return
+  }
 
   const requesterName = getCurrentRequesterName()
   const requestedAt = getRequestedAt()
@@ -674,13 +710,13 @@ function cancelDeleteApprovalRequest() {
     <div class="mb-6">
       <DetailPageHeader :title="detail.id" :status="detail.status" @back="goBack">
         <template #actions>
-          <BaseButton size="sm" @click="handleEdit">
+          <BaseButton v-if="!shipmentLockInfo.locked" size="sm" @click="handleEdit">
             <template #leading>
               <i class="fas fa-edit text-xs" aria-hidden="true"></i>
             </template>
             수정
           </BaseButton>
-          <BaseButton variant="secondary" size="sm" @click="handleDelete">
+          <BaseButton v-if="!shipmentLockInfo.locked" variant="secondary" size="sm" @click="handleDelete">
             <template #leading>
               <i class="fas fa-trash text-xs" aria-hidden="true"></i>
             </template>
@@ -710,6 +746,23 @@ function cancelDeleteApprovalRequest() {
       >
         <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">{{ row.label }}</div>
         <div class="mt-1 text-sm font-semibold text-slate-900">{{ row.value }}</div>
+      </div>
+    </div>
+
+    <div
+      v-if="shipmentLockInfo.locked"
+      class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900"
+    >
+      <div class="font-semibold">출하완료 문서가 연결되어 있어 수정 및 삭제가 제한됩니다.</div>
+      <div class="mt-1">{{ shipmentLockMessage }}</div>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <span
+          v-for="reference in shipmentLockInfo.references"
+          :key="`${reference.type}-${reference.id}`"
+          class="rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-medium text-amber-800"
+        >
+          {{ reference.type }} {{ reference.id }}
+        </span>
       </div>
     </div>
 
