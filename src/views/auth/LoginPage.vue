@@ -22,7 +22,9 @@ const loading = ref(false)
 
 const demoAccounts = [
   { label: '관리자', email: 'admin@salesboost.com', pw: 'test1234' },
-  { label: '영업', email: 'kim@salesboost.com', pw: 'test1234' },
+  { label: '영업1팀 팀장', email: 'kim@salesboost.com', pw: 'test1234' },
+  { label: '영업1팀 팀원', email: 'jo@salesboost.com', pw: 'test1234' },
+  { label: '영업2팀', email: 'jung@salesboost.com', pw: 'test1234' },
   { label: '생산', email: 'lee@salesboost.com', pw: 'test1234' },
   { label: '출하', email: 'park@salesboost.com', pw: 'test1234' },
 ]
@@ -142,7 +144,7 @@ async function handleLogin() {
     <!-- Demo 계정 안내 -->
     <div v-if="isDev" class="w-full rounded-2xl bg-white p-4 shadow-panel">
       <p class="mb-2 text-xs font-semibold text-slate-600">Demo 계정 (클릭하면 자동 입력)</p>
-      <div class="grid grid-cols-2 gap-2">
+      <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
         <button
           v-for="account in demoAccounts"
           :key="account.email"
