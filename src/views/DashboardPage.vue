@@ -6,43 +6,24 @@ import BaseCard from '@/components/common/BaseCard.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useCiDocuments } from '@/stores/ciDocuments'
+import { usePlDocuments } from '@/stores/plDocuments'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
+import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
+import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const ciDocuments = useCiDocuments()
+const plDocuments = usePlDocuments()
 const piDocuments = usePiDocuments()
 const poDocuments = usePoDocuments()
+const productionOrderDocuments = useProductionOrderDocuments()
+const shipmentStatusDocuments = useShipmentStatusDocuments()
 const selectedRequest = ref(null)
 const decisionConfirmOpen = ref(false)
 const pendingDecision = ref('')
-
-const summaryCards = ref([
-  {
-    id: 'pi',
-    title: 'PI 문서',
-    count: '3',
-    status: '확정',
-    helper: '최근 발행 2026/03/10',
-    to: '/pi',
-  },
-  {
-    id: 'po',
-    title: 'PO 문서',
-    count: '3',
-    status: '발송',
-    helper: '최근 발행 2026/03/03',
-    to: '/po',
-  },
-  {
-    id: 'cipl',
-    title: 'CI/PL 문서',
-    count: '1',
-    status: '준비완료',
-    helper: '최근 발행 2026/03/12',
-    to: '/ci',
-  },
-])
 
 const shipmentItems = [
   {
@@ -110,11 +91,128 @@ const recentActivities = [
 ]
 
 const currentUser = computed(() => authStore.currentUser ?? null)
+const isAdmin = computed(() => currentUser.value?.role === 'admin')
+const isProductionUser = computed(() => currentUser.value?.role === 'production')
+const isShippingUser = computed(() => currentUser.value?.role === 'shipping')
+const isSalesUser = computed(() => currentUser.value?.role === 'sales')
 const isSalesManager = computed(() => currentUser.value?.role === 'sales' && Number(currentUser.value?.positionId) === 1)
 const isSalesMember = computed(() => currentUser.value?.role === 'sales' && Number(currentUser.value?.positionId) === 2)
 const canApproveRequests = computed(() => isSalesManager.value)
 const showApprovalSection = computed(() => canApproveRequests.value || isSalesMember.value)
 const requestSectionTitle = computed(() => (canApproveRequests.value ? '결재 요청함' : '내 요청 현황'))
+
+function parseDocumentDate(value) {
+  const normalized = String(value ?? '').trim().replace(/\./g, '-').replace(/\//g, '-')
+  if (!normalized) return 0
+  return new Date(normalized).getTime() || 0
+}
+
+function getLatestDocument(rows, dateField = 'issueDate') {
+  return [...rows].sort((a, b) => parseDocumentDate(b?.[dateField]) - parseDocumentDate(a?.[dateField]))[0] ?? null
+}
+
+const piCard = computed(() => {
+  const latest = getLatestDocument(piDocuments.value)
+
+  return {
+    id: 'pi',
+    title: 'PI 관리',
+    count: String(piDocuments.value.length),
+    status: latest?.status || '-',
+    helper: latest?.issueDate ? `최근 발행 ${latest.issueDate}` : '문서 없음',
+    to: '/pi',
+  }
+})
+
+const poCard = computed(() => {
+  const latest = getLatestDocument(poDocuments.value)
+
+  return {
+    id: 'po',
+    title: 'PO 관리',
+    count: String(poDocuments.value.length),
+    status: latest?.status || '-',
+    helper: latest?.issueDate ? `최근 발행 ${latest.issueDate}` : '문서 없음',
+    to: '/po',
+  }
+})
+
+const ciplCard = computed(() => {
+  const mergedRows = [...ciDocuments.value, ...plDocuments.value]
+  const latest = getLatestDocument(mergedRows)
+
+  return {
+    id: 'cipl',
+    title: 'CI/PL 관리',
+    count: String(mergedRows.length),
+    status: latest?.status || '-',
+    helper: latest?.issueDate ? `최근 발행 ${latest.issueDate}` : '문서 없음',
+    to: '/ci',
+  }
+})
+
+const productionCard = computed(() => {
+  const totalCount = productionOrderDocuments.value.length
+  const inProgressCount = productionOrderDocuments.value.filter((row) => row.status === '진행중').length
+  const completedCount = productionOrderDocuments.value.filter((row) => row.status === '생산완료').length
+
+  return {
+    id: 'production',
+    title: '생산 관리',
+    count: String(totalCount),
+    status: inProgressCount > 0 ? '진행중' : '생산완료',
+    helper: `진행중 ${inProgressCount}건 · 완료 ${completedCount}건`,
+    to: '/production',
+  }
+})
+
+const shipmentsCard = computed(() => {
+  const totalCount = shipmentStatusDocuments.value.length
+  const preparingCount = shipmentStatusDocuments.value.filter((row) => row.status !== '출하완료').length
+  const completedCount = shipmentStatusDocuments.value.filter((row) => row.status === '출하완료').length
+
+  return {
+    id: 'shipments',
+    title: '출하현황',
+    count: String(totalCount),
+    status: preparingCount > 0 ? '출하준비' : '출하완료',
+    helper: `출하준비 ${preparingCount}건 · 완료 ${completedCount}건`,
+    to: '/shipments',
+  }
+})
+
+const shipmentPendingCard = computed(() => {
+  const pendingCount = shipmentStatusDocuments.value.filter((row) => row.status !== '출하완료').length
+  const latestPending = getLatestDocument(
+    shipmentStatusDocuments.value.filter((row) => row.status !== '출하완료'),
+    'dueDate',
+  )
+
+  return {
+    id: 'shipment-pending',
+    title: '출하완료 대기',
+    count: String(pendingCount),
+    status: '출하준비',
+    helper: latestPending?.dueDate ? `가장 빠른 납기 ${latestPending.dueDate}` : '대기 건 없음',
+    to: { path: '/shipments', query: { status: '출하준비' } },
+  }
+})
+
+const summaryCards = computed(() => {
+  if (isProductionUser.value) {
+    return [productionCard.value]
+  }
+
+  if (isShippingUser.value) {
+    return [shipmentsCard.value, shipmentPendingCard.value]
+  }
+
+  if (isSalesUser.value || isAdmin.value) {
+    return [piCard.value, poCard.value, ciplCard.value]
+  }
+
+  return []
+})
 
 function parseRequestedAt(value) {
   const normalized = String(value ?? '').trim()
@@ -351,7 +449,11 @@ function goToShipmentItem(item) {
 
 <template>
   <div class="fade-in space-y-6">
-    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <section
+      v-if="summaryCards.length"
+      class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+      :class="{ 'xl:grid-cols-2': summaryCards.length === 2, 'xl:grid-cols-1': summaryCards.length === 1 }"
+    >
       <RouterLink
         v-for="card in summaryCards"
         :key="card.id"
@@ -362,7 +464,19 @@ function goToShipmentItem(item) {
           <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-50">
             <i
               class="fas text-sm text-slate-500"
-              :class="card.id === 'pi' ? 'fa-file-invoice' : card.id === 'po' ? 'fa-file-contract' : 'fa-file-pdf'"
+              :class="
+                card.id === 'pi'
+                  ? 'fa-file-invoice'
+                  : card.id === 'po'
+                    ? 'fa-file-contract'
+                    : card.id === 'cipl'
+                      ? 'fa-file-pdf'
+                      : card.id === 'production'
+                        ? 'fa-industry'
+                        : card.id === 'shipment-orders'
+                          ? 'fa-truck-loading'
+                          : 'fa-shipping-fast'
+              "
             />
           </div>
           <StatusBadge :value="card.status" />
