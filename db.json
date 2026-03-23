@@ -4698,7 +4698,7 @@
         "CI2025021.pdf",
         "PL2025021.pdf"
       ],
-      "poId": "PO26021",
+      "poId": "PO2025001",
       "status": "발송",
       "sentAt": "2026/03/23",
       "sender": "김영업"
@@ -4719,7 +4719,7 @@
         "CI2025021.pdf",
         "PL2025021.pdf"
       ],
-      "poId": "PO26021",
+      "poId": "PO2025002",
       "status": "발송",
       "sentAt": "2026/03/23",
       "sender": "김영업"
@@ -4740,7 +4740,7 @@
         "CI2025021.pdf",
         "PL2025021.pdf"
       ],
-      "poId": "PO26021",
+      "poId": "PO2025003",
       "status": "발송",
       "sentAt": "2026/03/23",
       "sender": "김영업"
@@ -4761,7 +4761,7 @@
         "CI2025021.pdf",
         "PL2025021.pdf"
       ],
-      "poId": "PO26021",
+      "poId": "PO2025004",
       "status": "발송",
       "sentAt": "2026/03/23",
       "sender": "김영업"
@@ -4782,7 +4782,7 @@
         "CI2025021.pdf",
         "PL2025021.pdf"
       ],
-      "poId": "PO26021",
+      "poId": "PO2025005",
       "status": "발송",
       "sentAt": "2026/03/23",
       "sender": "정영업"
@@ -4803,7 +4803,7 @@
         "CI2025021.pdf",
         "PL2025021.pdf"
       ],
-      "poId": "PO26021",
+      "poId": "PO2025006",
       "status": "발송",
       "sentAt": "2026/03/23",
       "sender": "정영업"
@@ -4824,7 +4824,7 @@
         "CI2025021.pdf",
         "PL2025021.pdf"
       ],
-      "poId": "PO26021",
+      "poId": "PO2025007",
       "status": "발송",
       "sentAt": "2026/03/23",
       "sender": "정영업"
@@ -4845,7 +4845,7 @@
         "CI2025021.pdf",
         "PL2025021.pdf"
       ],
-      "poId": "PO26021",
+      "poId": "PO2025008",
       "status": "발송",
       "sentAt": "2026/03/23",
       "sender": "정영업"
@@ -4866,7 +4866,7 @@
         "CI2025021.pdf",
         "PL2025021.pdf"
       ],
-      "poId": "PO26021",
+      "poId": "PO2025009",
       "status": "발송",
       "sentAt": "2026/03/23",
       "sender": "정영업"
@@ -5484,7 +5484,7 @@
     {
       "id": "CI2025001",
       "invoiceDate": "2025/03/01",
-      "poId": "PO-2025-001",
+      "poId": "PO2025001",
       "clientName": "Global Steel Corp.",
       "country": "USA",
       "itemName": "Business Laptop 15\"",
@@ -5494,7 +5494,7 @@
     {
       "id": "CI2025002",
       "invoiceDate": "2025/03/10",
-      "poId": "PO-2025-002",
+      "poId": "PO2025002",
       "clientName": "Hamburg Metal GmbH",
       "country": "Germany",
       "itemName": "LED Monitor 27\"",
@@ -5504,7 +5504,7 @@
     {
       "id": "CI2025003",
       "invoiceDate": "2025/03/20",
-      "poId": "PO-2025-003",
+      "poId": "PO2025003",
       "clientName": "Tokyo Trading Co.",
       "country": "Japan",
       "itemName": "Laser Printer A4",
@@ -5514,7 +5514,7 @@
     {
       "id": "CI2025004",
       "invoiceDate": "2025/04/01",
-      "poId": "PO-2025-004",
+      "poId": "PO2025004",
       "clientName": "Shanghai Import Ltd.",
       "country": "China",
       "itemName": "Desktop PC Set",
@@ -5524,7 +5524,7 @@
     {
       "id": "CI2025005",
       "invoiceDate": "2025/02/28",
-      "poId": "PO-2025-005",
+      "poId": "PO2025005",
       "clientName": "London Metals Plc",
       "country": "UK",
       "itemName": "Video Conference Camera",
@@ -5534,7 +5534,7 @@
     {
       "id": "CI2025006",
       "invoiceDate": "2025/04/20",
-      "poId": "PO-2025-006",
+      "poId": "PO2025006",
       "clientName": "Paris Acier SA",
       "country": "France",
       "itemName": "Smart Projector FHD",
@@ -5544,7 +5544,7 @@
     {
       "id": "CI2025007",
       "invoiceDate": "2025/04/25",
-      "poId": "PO-2025-007",
+      "poId": "PO2025007",
       "clientName": "Mumbai Steel Works",
       "country": "India",
       "itemName": "UPS 1000VA",
@@ -5554,7 +5554,7 @@
     {
       "id": "CI2025008",
       "invoiceDate": "2025/05/01",
-      "poId": "PO-2025-008",
+      "poId": "PO2025008",
       "clientName": "São Paulo Metals",
       "country": "Brazil",
       "itemName": "Document Scanner",
@@ -5564,7 +5564,7 @@
     {
       "id": "CI2025009",
       "invoiceDate": "2025/05/10",
-      "poId": "PO-2025-009",
+      "poId": "PO2025009",
       "clientName": "Singapore Pipe Pte",
       "country": "Singapore",
       "itemName": "Mechanical Keyboard",
@@ -5574,7 +5574,7 @@
     {
       "id": "CI2025010",
       "invoiceDate": "2025/05/20",
-      "poId": "PO-2025-010",
+      "poId": "PO2025010",
       "clientName": "Hanoi Industries",
       "country": "Vietnam",
       "itemName": "Wireless Mouse",
@@ -5584,7 +5584,7 @@
     {
       "id": "CI2025011",
       "invoiceDate": "2025/06/01",
-      "poId": "PO-2025-011",
+      "poId": "PO2025011",
       "clientName": "Dtech Electronics Inc.",
       "country": "USA",
       "itemName": "All-in-One PC 24\"",
@@ -5594,7 +5594,7 @@
     {
       "id": "CI2025012",
       "invoiceDate": "2025/06/05",
-      "poId": "PO-2025-012",
+      "poId": "PO2025012",
       "clientName": "Berlin Digital AG",
       "country": "Germany",
       "itemName": "Multifunction Printer A3",
@@ -5604,7 +5604,7 @@
     {
       "id": "CI2025013",
       "invoiceDate": "2025/06/15",
-      "poId": "PO-2025-013",
+      "poId": "PO2025013",
       "clientName": "Osaka Tech Corp.",
       "country": "Japan",
       "itemName": "NAS Storage 4-Bay",
@@ -5614,7 +5614,7 @@
     {
       "id": "CI2025014",
       "invoiceDate": "2025/06/20",
-      "poId": "PO-2025-014",
+      "poId": "PO2025014",
       "clientName": "Shenzhen Gadgets Co.",
       "country": "China",
       "itemName": "USB-C Hub 7-in-1",
@@ -5624,7 +5624,7 @@
     {
       "id": "CI2025015",
       "invoiceDate": "2025/07/01",
-      "poId": "PO-2025-015",
+      "poId": "PO2025015",
       "clientName": "London Tech Ltd",
       "country": "UK",
       "itemName": "Bluetooth Headset",
@@ -5634,7 +5634,7 @@
     {
       "id": "CI2025016",
       "invoiceDate": "2025/07/05",
-      "poId": "PO-2025-016",
+      "poId": "PO2025016",
       "clientName": "Paris Digital SAS",
       "country": "France",
       "itemName": "Smart Whiteboard 65\"",
@@ -5644,7 +5644,7 @@
     {
       "id": "CI2025017",
       "invoiceDate": "2025/07/20",
-      "poId": "PO-2025-017",
+      "poId": "PO2025017",
       "clientName": "Singapore Electronics Pte",
       "country": "Singapore",
       "itemName": "Network Switch 24Port",
@@ -5654,7 +5654,7 @@
     {
       "id": "CI2025018",
       "invoiceDate": "2025/07/25",
-      "poId": "PO-2025-018",
+      "poId": "PO2025018",
       "clientName": "Sydney Tech Pty",
       "country": "Australia",
       "itemName": "Wireless Presenter",
@@ -5664,7 +5664,7 @@
     {
       "id": "CI2025019",
       "invoiceDate": "2025/08/01",
-      "poId": "PO-2025-019",
+      "poId": "PO2025019",
       "clientName": "Toronto Systems Inc.",
       "country": "Canada",
       "itemName": "Tablet PC 10\"",
@@ -5674,7 +5674,7 @@
     {
       "id": "CI2025020",
       "invoiceDate": "2025/08/20",
-      "poId": "PO-2025-020",
+      "poId": "PO2025020",
       "clientName": "Hanoi Digital JSC",
       "country": "Vietnam",
       "itemName": "External SSD 1TB",
@@ -5686,7 +5686,7 @@
     {
       "id": "PL2025001",
       "invoiceDate": "2025/03/01",
-      "poId": "PO-2025-001",
+      "poId": "PO2025001",
       "clientName": "Global Steel Corp.",
       "country": "USA",
       "itemName": "Business Laptop 15\"",
@@ -5695,7 +5695,7 @@
     {
       "id": "PL2025002",
       "invoiceDate": "2025/03/10",
-      "poId": "PO-2025-002",
+      "poId": "PO2025002",
       "clientName": "Hamburg Metal GmbH",
       "country": "Germany",
       "itemName": "LED Monitor 27\"",
@@ -5704,7 +5704,7 @@
     {
       "id": "PL2025003",
       "invoiceDate": "2025/03/20",
-      "poId": "PO-2025-003",
+      "poId": "PO2025003",
       "clientName": "Tokyo Trading Co.",
       "country": "Japan",
       "itemName": "Laser Printer A4",
@@ -5713,7 +5713,7 @@
     {
       "id": "PL2025004",
       "invoiceDate": "2025/04/01",
-      "poId": "PO-2025-004",
+      "poId": "PO2025004",
       "clientName": "Shanghai Import Ltd.",
       "country": "China",
       "itemName": "Desktop PC Set",
@@ -5722,7 +5722,7 @@
     {
       "id": "PL2025005",
       "invoiceDate": "2025/02/28",
-      "poId": "PO-2025-005",
+      "poId": "PO2025005",
       "clientName": "London Metals Plc",
       "country": "UK",
       "itemName": "Video Conference Camera",
@@ -5731,7 +5731,7 @@
     {
       "id": "PL2025006",
       "invoiceDate": "2025/04/20",
-      "poId": "PO-2025-006",
+      "poId": "PO2025006",
       "clientName": "Paris Acier SA",
       "country": "France",
       "itemName": "Smart Projector FHD",
@@ -5740,7 +5740,7 @@
     {
       "id": "PL2025007",
       "invoiceDate": "2025/04/25",
-      "poId": "PO-2025-007",
+      "poId": "PO2025007",
       "clientName": "Mumbai Steel Works",
       "country": "India",
       "itemName": "UPS 1000VA",
@@ -5749,7 +5749,7 @@
     {
       "id": "PL2025008",
       "invoiceDate": "2025/05/01",
-      "poId": "PO-2025-008",
+      "poId": "PO2025008",
       "clientName": "São Paulo Metals",
       "country": "Brazil",
       "itemName": "Document Scanner",
@@ -5758,7 +5758,7 @@
     {
       "id": "PL2025009",
       "invoiceDate": "2025/05/10",
-      "poId": "PO-2025-009",
+      "poId": "PO2025009",
       "clientName": "Singapore Pipe Pte",
       "country": "Singapore",
       "itemName": "Mechanical Keyboard",
@@ -5767,7 +5767,7 @@
     {
       "id": "PL2025010",
       "invoiceDate": "2025/05/20",
-      "poId": "PO-2025-010",
+      "poId": "PO2025010",
       "clientName": "Hanoi Industries",
       "country": "Vietnam",
       "itemName": "Wireless Mouse",
@@ -5776,7 +5776,7 @@
     {
       "id": "PL2025011",
       "invoiceDate": "2025/06/01",
-      "poId": "PO-2025-011",
+      "poId": "PO2025011",
       "clientName": "Dtech Electronics Inc.",
       "country": "USA",
       "itemName": "All-in-One PC 24\"",
@@ -5785,7 +5785,7 @@
     {
       "id": "PL2025012",
       "invoiceDate": "2025/06/05",
-      "poId": "PO-2025-012",
+      "poId": "PO2025012",
       "clientName": "Berlin Digital AG",
       "country": "Germany",
       "itemName": "Multifunction Printer A3",
@@ -5794,7 +5794,7 @@
     {
       "id": "PL2025013",
       "invoiceDate": "2025/06/15",
-      "poId": "PO-2025-013",
+      "poId": "PO2025013",
       "clientName": "Osaka Tech Corp.",
       "country": "Japan",
       "itemName": "NAS Storage 4-Bay",
@@ -5803,7 +5803,7 @@
     {
       "id": "PL2025014",
       "invoiceDate": "2025/06/20",
-      "poId": "PO-2025-014",
+      "poId": "PO2025014",
       "clientName": "Shenzhen Gadgets Co.",
       "country": "China",
       "itemName": "USB-C Hub 7-in-1",
@@ -5812,7 +5812,7 @@
     {
       "id": "PL2025015",
       "invoiceDate": "2025/07/01",
-      "poId": "PO-2025-015",
+      "poId": "PO2025015",
       "clientName": "London Tech Ltd",
       "country": "UK",
       "itemName": "Bluetooth Headset",
@@ -5821,7 +5821,7 @@
     {
       "id": "PL2025016",
       "invoiceDate": "2025/07/05",
-      "poId": "PO-2025-016",
+      "poId": "PO2025016",
       "clientName": "Paris Digital SAS",
       "country": "France",
       "itemName": "Smart Whiteboard 65\"",
@@ -5830,7 +5830,7 @@
     {
       "id": "PL2025017",
       "invoiceDate": "2025/07/20",
-      "poId": "PO-2025-017",
+      "poId": "PO2025017",
       "clientName": "Singapore Electronics Pte",
       "country": "Singapore",
       "itemName": "Network Switch 24Port",
@@ -5839,7 +5839,7 @@
     {
       "id": "PL2025018",
       "invoiceDate": "2025/07/25",
-      "poId": "PO-2025-018",
+      "poId": "PO2025018",
       "clientName": "Sydney Tech Pty",
       "country": "Australia",
       "itemName": "Wireless Presenter",
@@ -5848,7 +5848,7 @@
     {
       "id": "PL2025019",
       "invoiceDate": "2025/08/01",
-      "poId": "PO-2025-019",
+      "poId": "PO2025019",
       "clientName": "Toronto Systems Inc.",
       "country": "Canada",
       "itemName": "Tablet PC 10\"",
@@ -5857,7 +5857,7 @@
     {
       "id": "PL2025020",
       "invoiceDate": "2025/08/20",
-      "poId": "PO-2025-020",
+      "poId": "PO2025020",
       "clientName": "Hanoi Digital JSC",
       "country": "Vietnam",
       "itemName": "External SSD 1TB",
@@ -5868,7 +5868,7 @@
     {
       "id": "MO2025001",
       "issueDate": "2025/02/01",
-      "poId": "PO-2025-001",
+      "poId": "PO2025001",
       "clientName": "Global Steel Corp.",
       "country": "USA",
       "itemName": "Business Laptop 15\"",
@@ -5879,7 +5879,7 @@
     {
       "id": "MO2025002",
       "issueDate": "2025/02/10",
-      "poId": "PO-2025-002",
+      "poId": "PO2025002",
       "clientName": "Hamburg Metal GmbH",
       "country": "Germany",
       "itemName": "LED Monitor 27\"",
@@ -5890,7 +5890,7 @@
     {
       "id": "MO2025003",
       "issueDate": "2025/02/20",
-      "poId": "PO-2025-003",
+      "poId": "PO2025003",
       "clientName": "Tokyo Trading Co.",
       "country": "Japan",
       "itemName": "Laser Printer A4",
@@ -5901,7 +5901,7 @@
     {
       "id": "MO2025004",
       "issueDate": "2025/03/01",
-      "poId": "PO-2025-004",
+      "poId": "PO2025004",
       "clientName": "Shanghai Import Ltd.",
       "country": "China",
       "itemName": "Desktop PC Set",
@@ -5912,7 +5912,7 @@
     {
       "id": "MO2025005",
       "issueDate": "2025/03/05",
-      "poId": "PO-2025-005",
+      "poId": "PO2025005",
       "clientName": "London Metals Plc",
       "country": "UK",
       "itemName": "Video Conference Camera",
@@ -5923,7 +5923,7 @@
     {
       "id": "MO2025006",
       "issueDate": "2025/03/20",
-      "poId": "PO-2025-006",
+      "poId": "PO2025006",
       "clientName": "Paris Acier SA",
       "country": "France",
       "itemName": "Smart Projector FHD",
@@ -5934,7 +5934,7 @@
     {
       "id": "MO2025007",
       "issueDate": "2025/03/25",
-      "poId": "PO-2025-007",
+      "poId": "PO2025007",
       "clientName": "Mumbai Steel Works",
       "country": "India",
       "itemName": "UPS 1000VA",
@@ -5945,7 +5945,7 @@
     {
       "id": "MO2025008",
       "issueDate": "2025/04/01",
-      "poId": "PO-2025-008",
+      "poId": "PO2025008",
       "clientName": "São Paulo Metals",
       "country": "Brazil",
       "itemName": "Document Scanner",
@@ -5956,7 +5956,7 @@
     {
       "id": "MO2025009",
       "issueDate": "2025/04/05",
-      "poId": "PO-2025-009",
+      "poId": "PO2025009",
       "clientName": "Singapore Pipe Pte",
       "country": "Singapore",
       "itemName": "Mechanical Keyboard",
@@ -5967,7 +5967,7 @@
     {
       "id": "MO2025010",
       "issueDate": "2025/04/20",
-      "poId": "PO-2025-010",
+      "poId": "PO2025010",
       "clientName": "Hanoi Industries",
       "country": "Vietnam",
       "itemName": "Wireless Mouse",
@@ -5978,7 +5978,7 @@
     {
       "id": "MO2025011",
       "issueDate": "2025/04/25",
-      "poId": "PO-2025-011",
+      "poId": "PO2025011",
       "clientName": "Dtech Electronics Inc.",
       "country": "USA",
       "itemName": "All-in-One PC 24\"",
@@ -5989,7 +5989,7 @@
     {
       "id": "MO2025012",
       "issueDate": "2025/05/01",
-      "poId": "PO-2025-012",
+      "poId": "PO2025012",
       "clientName": "Berlin Digital AG",
       "country": "Germany",
       "itemName": "Multifunction Printer A3",
@@ -6000,7 +6000,7 @@
     {
       "id": "MO2025013",
       "issueDate": "2025/05/10",
-      "poId": "PO-2025-013",
+      "poId": "PO2025013",
       "clientName": "Osaka Tech Corp.",
       "country": "Japan",
       "itemName": "NAS Storage 4-Bay",
@@ -6011,7 +6011,7 @@
     {
       "id": "MO2025014",
       "issueDate": "2025/05/20",
-      "poId": "PO-2025-014",
+      "poId": "PO2025014",
       "clientName": "Shenzhen Gadgets Co.",
       "country": "China",
       "itemName": "USB-C Hub 7-in-1",
@@ -6022,7 +6022,7 @@
     {
       "id": "MO2025015",
       "issueDate": "2025/06/01",
-      "poId": "PO-2025-015",
+      "poId": "PO2025015",
       "clientName": "London Tech Ltd",
       "country": "UK",
       "itemName": "Bluetooth Headset",
@@ -6033,7 +6033,7 @@
     {
       "id": "MO2025016",
       "issueDate": "2025/06/05",
-      "poId": "PO-2025-016",
+      "poId": "PO2025016",
       "clientName": "Paris Digital SAS",
       "country": "France",
       "itemName": "Smart Whiteboard 65\"",
@@ -6044,7 +6044,7 @@
     {
       "id": "MO2025017",
       "issueDate": "2025/06/20",
-      "poId": "PO-2025-017",
+      "poId": "PO2025017",
       "clientName": "Singapore Electronics Pte",
       "country": "Singapore",
       "itemName": "Network Switch 24Port",
@@ -6055,7 +6055,7 @@
     {
       "id": "MO2025018",
       "issueDate": "2025/06/25",
-      "poId": "PO-2025-018",
+      "poId": "PO2025018",
       "clientName": "Sydney Tech Pty",
       "country": "Australia",
       "itemName": "Wireless Presenter",
@@ -6066,7 +6066,7 @@
     {
       "id": "MO2025019",
       "issueDate": "2025/07/01",
-      "poId": "PO-2025-019",
+      "poId": "PO2025019",
       "clientName": "Toronto Systems Inc.",
       "country": "Canada",
       "itemName": "Tablet PC 10\"",
@@ -6077,7 +6077,7 @@
     {
       "id": "MO2025020",
       "issueDate": "2025/07/20",
-      "poId": "PO-2025-020",
+      "poId": "PO2025020",
       "clientName": "Hanoi Digital JSC",
       "country": "Vietnam",
       "itemName": "External SSD 1TB",
@@ -6090,7 +6090,7 @@
     {
       "id": "SO2025001",
       "issueDate": "2025/03/01",
-      "poId": "PO-2025-001",
+      "poId": "PO2025001",
       "clientName": "Global Steel Corp.",
       "country": "USA",
       "itemName": "Business Laptop 15\"",
@@ -6101,7 +6101,7 @@
     {
       "id": "SO2025002",
       "issueDate": "2025/03/10",
-      "poId": "PO-2025-002",
+      "poId": "PO2025002",
       "clientName": "Hamburg Metal GmbH",
       "country": "Germany",
       "itemName": "LED Monitor 27\"",
@@ -6112,7 +6112,7 @@
     {
       "id": "SO2025003",
       "issueDate": "2025/03/20",
-      "poId": "PO-2025-003",
+      "poId": "PO2025003",
       "clientName": "Tokyo Trading Co.",
       "country": "Japan",
       "itemName": "Laser Printer A4",
@@ -6123,7 +6123,7 @@
     {
       "id": "SO2025004",
       "issueDate": "2025/04/01",
-      "poId": "PO-2025-004",
+      "poId": "PO2025004",
       "clientName": "Shanghai Import Ltd.",
       "country": "China",
       "itemName": "Desktop PC Set",
@@ -6134,7 +6134,7 @@
     {
       "id": "SO2025005",
       "issueDate": "2025/02/28",
-      "poId": "PO-2025-005",
+      "poId": "PO2025005",
       "clientName": "London Metals Plc",
       "country": "UK",
       "itemName": "Video Conference Camera",
@@ -6145,7 +6145,7 @@
     {
       "id": "SO2025006",
       "issueDate": "2025/04/20",
-      "poId": "PO-2025-006",
+      "poId": "PO2025006",
       "clientName": "Paris Acier SA",
       "country": "France",
       "itemName": "Smart Projector FHD",
@@ -6156,7 +6156,7 @@
     {
       "id": "SO2025007",
       "issueDate": "2025/04/25",
-      "poId": "PO-2025-007",
+      "poId": "PO2025007",
       "clientName": "Mumbai Steel Works",
       "country": "India",
       "itemName": "UPS 1000VA",
@@ -6167,7 +6167,7 @@
     {
       "id": "SO2025008",
       "issueDate": "2025/05/01",
-      "poId": "PO-2025-008",
+      "poId": "PO2025008",
       "clientName": "São Paulo Metals",
       "country": "Brazil",
       "itemName": "Document Scanner",
@@ -6178,7 +6178,7 @@
     {
       "id": "SO2025009",
       "issueDate": "2025/05/10",
-      "poId": "PO-2025-009",
+      "poId": "PO2025009",
       "clientName": "Singapore Pipe Pte",
       "country": "Singapore",
       "itemName": "Mechanical Keyboard",
@@ -6189,7 +6189,7 @@
     {
       "id": "SO2025010",
       "issueDate": "2025/05/20",
-      "poId": "PO-2025-010",
+      "poId": "PO2025010",
       "clientName": "Hanoi Industries",
       "country": "Vietnam",
       "itemName": "Wireless Mouse",
@@ -6200,7 +6200,7 @@
     {
       "id": "SO2025011",
       "issueDate": "2025/06/01",
-      "poId": "PO-2025-011",
+      "poId": "PO2025011",
       "clientName": "Dtech Electronics Inc.",
       "country": "USA",
       "itemName": "All-in-One PC 24\"",
@@ -6211,7 +6211,7 @@
     {
       "id": "SO2025012",
       "issueDate": "2025/06/05",
-      "poId": "PO-2025-012",
+      "poId": "PO2025012",
       "clientName": "Berlin Digital AG",
       "country": "Germany",
       "itemName": "Multifunction Printer A3",
@@ -6222,7 +6222,7 @@
     {
       "id": "SO2025013",
       "issueDate": "2025/06/15",
-      "poId": "PO-2025-013",
+      "poId": "PO2025013",
       "clientName": "Osaka Tech Corp.",
       "country": "Japan",
       "itemName": "NAS Storage 4-Bay",
@@ -6233,7 +6233,7 @@
     {
       "id": "SO2025014",
       "issueDate": "2025/06/20",
-      "poId": "PO-2025-014",
+      "poId": "PO2025014",
       "clientName": "Shenzhen Gadgets Co.",
       "country": "China",
       "itemName": "USB-C Hub 7-in-1",
@@ -6244,7 +6244,7 @@
     {
       "id": "SO2025015",
       "issueDate": "2025/07/01",
-      "poId": "PO-2025-015",
+      "poId": "PO2025015",
       "clientName": "London Tech Ltd",
       "country": "UK",
       "itemName": "Bluetooth Headset",
@@ -6255,7 +6255,7 @@
     {
       "id": "SO2025016",
       "issueDate": "2025/07/05",
-      "poId": "PO-2025-016",
+      "poId": "PO2025016",
       "clientName": "Paris Digital SAS",
       "country": "France",
       "itemName": "Smart Whiteboard 65\"",
@@ -6266,7 +6266,7 @@
     {
       "id": "SO2025017",
       "issueDate": "2025/07/20",
-      "poId": "PO-2025-017",
+      "poId": "PO2025017",
       "clientName": "Singapore Electronics Pte",
       "country": "Singapore",
       "itemName": "Network Switch 24Port",
@@ -6277,7 +6277,7 @@
     {
       "id": "SO2025018",
       "issueDate": "2025/07/25",
-      "poId": "PO-2025-018",
+      "poId": "PO2025018",
       "clientName": "Sydney Tech Pty",
       "country": "Australia",
       "itemName": "Wireless Presenter",
@@ -6288,7 +6288,7 @@
     {
       "id": "SO2025019",
       "issueDate": "2025/08/01",
-      "poId": "PO-2025-019",
+      "poId": "PO2025019",
       "clientName": "Toronto Systems Inc.",
       "country": "Canada",
       "itemName": "Tablet PC 10\"",
@@ -6299,7 +6299,7 @@
     {
       "id": "SO2025020",
       "issueDate": "2025/08/20",
-      "poId": "PO-2025-020",
+      "poId": "PO2025020",
       "clientName": "Hanoi Digital JSC",
       "country": "Vietnam",
       "itemName": "External SSD 1TB",
@@ -6311,7 +6311,7 @@
   "salesCollections": [
     {
       "id": "1",
-      "poId": "PO-2025-001",
+      "poId": "PO2025001",
       "clientName": "Global Steel Corp.",
       "country": "USA",
       "manager": "김영업",
@@ -6323,7 +6323,7 @@
     },
     {
       "id": "2",
-      "poId": "PO-2025-002",
+      "poId": "PO2025002",
       "clientName": "Hamburg Metal GmbH",
       "country": "Germany",
       "manager": "정영업",
@@ -6335,7 +6335,7 @@
     },
     {
       "id": "3",
-      "poId": "PO-2025-003",
+      "poId": "PO2025003",
       "clientName": "Tokyo Trading Co.",
       "country": "Japan",
       "manager": "김영업",
@@ -6347,7 +6347,7 @@
     },
     {
       "id": "4",
-      "poId": "PO-2025-004",
+      "poId": "PO2025004",
       "clientName": "Shanghai Import Ltd.",
       "country": "China",
       "manager": "조영업",
@@ -6359,7 +6359,7 @@
     },
     {
       "id": "5",
-      "poId": "PO-2025-005",
+      "poId": "PO2025005",
       "clientName": "London Metals Plc",
       "country": "UK",
       "manager": "강영업",
@@ -6371,7 +6371,7 @@
     },
     {
       "id": "6",
-      "poId": "PO-2025-006",
+      "poId": "PO2025006",
       "clientName": "Paris Acier SA",
       "country": "France",
       "manager": "정영업",
@@ -6383,7 +6383,7 @@
     },
     {
       "id": "7",
-      "poId": "PO-2025-007",
+      "poId": "PO2025007",
       "clientName": "Mumbai Steel Works",
       "country": "India",
       "manager": "서영업",
@@ -6395,7 +6395,7 @@
     },
     {
       "id": "8",
-      "poId": "PO-2025-008",
+      "poId": "PO2025008",
       "clientName": "São Paulo Metals",
       "country": "Brazil",
       "manager": "김영업",
@@ -6407,7 +6407,7 @@
     },
     {
       "id": "9",
-      "poId": "PO-2025-009",
+      "poId": "PO2025009",
       "clientName": "Singapore Pipe Pte",
       "country": "Singapore",
       "manager": "황영업",
@@ -6419,7 +6419,7 @@
     },
     {
       "id": "10",
-      "poId": "PO-2025-010",
+      "poId": "PO2025010",
       "clientName": "Hanoi Industries",
       "country": "Vietnam",
       "manager": "정영업",
@@ -6431,7 +6431,7 @@
     },
     {
       "id": "11",
-      "poId": "PO-2025-011",
+      "poId": "PO2025011",
       "clientName": "Dtech Electronics Inc.",
       "country": "USA",
       "manager": "강영업",
@@ -6443,7 +6443,7 @@
     },
     {
       "id": "12",
-      "poId": "PO-2025-012",
+      "poId": "PO2025012",
       "clientName": "Berlin Digital AG",
       "country": "Germany",
       "manager": "전영업",
@@ -6455,7 +6455,7 @@
     },
     {
       "id": "13",
-      "poId": "PO-2025-013",
+      "poId": "PO2025013",
       "clientName": "Osaka Tech Corp.",
       "country": "Japan",
       "manager": "김영업",
@@ -6467,7 +6467,7 @@
     },
     {
       "id": "14",
-      "poId": "PO-2025-014",
+      "poId": "PO2025014",
       "clientName": "Shenzhen Gadgets Co.",
       "country": "China",
       "manager": "정영업",
@@ -6479,7 +6479,7 @@
     },
     {
       "id": "15",
-      "poId": "PO-2025-015",
+      "poId": "PO2025015",
       "clientName": "London Tech Ltd",
       "country": "UK",
       "manager": "서영업",
@@ -6491,7 +6491,7 @@
     },
     {
       "id": "16",
-      "poId": "PO-2025-016",
+      "poId": "PO2025016",
       "clientName": "Paris Digital SAS",
       "country": "France",
       "manager": "강영업",
@@ -6503,7 +6503,7 @@
     },
     {
       "id": "17",
-      "poId": "PO-2025-017",
+      "poId": "PO2025017",
       "clientName": "Singapore Electronics Pte",
       "country": "Singapore",
       "manager": "황영업",
@@ -6515,7 +6515,7 @@
     },
     {
       "id": "18",
-      "poId": "PO-2025-018",
+      "poId": "PO2025018",
       "clientName": "Sydney Tech Pty",
       "country": "Australia",
       "manager": "정영업",
@@ -6527,7 +6527,7 @@
     },
     {
       "id": "19",
-      "poId": "PO-2025-019",
+      "poId": "PO2025019",
       "clientName": "Toronto Systems Inc.",
       "country": "Canada",
       "manager": "전영업",
@@ -6539,7 +6539,7 @@
     },
     {
       "id": "20",
-      "poId": "PO-2025-020",
+      "poId": "PO2025020",
       "clientName": "Hanoi Digital JSC",
       "country": "Vietnam",
       "manager": "김영업",
@@ -6552,181 +6552,181 @@
   ],
   "shipments": [
     {
-      "id": "SH-2025-001",
+      "id": "SH2025001",
       "clientName": "Global Steel Corp.",
       "country": "USA",
-      "poId": "PO-2025-001",
+      "poId": "PO2025001",
       "requestDate": "2025/03/01",
       "dueDate": "2025/03/01",
       "status": "출하완료"
     },
     {
-      "id": "SH-2025-002",
+      "id": "SH2025002",
       "clientName": "Hamburg Metal GmbH",
       "country": "Germany",
-      "poId": "PO-2025-002",
+      "poId": "PO2025002",
       "requestDate": "2025/03/10",
       "dueDate": "2025/03/10",
       "status": "출하완료"
     },
     {
-      "id": "SH-2025-003",
+      "id": "SH2025003",
       "clientName": "Tokyo Trading Co.",
       "country": "Japan",
-      "poId": "PO-2025-003",
+      "poId": "PO2025003",
       "requestDate": "2025/03/20",
       "dueDate": "2025/03/20",
       "status": "출하완료"
     },
     {
-      "id": "SH-2025-004",
+      "id": "SH2025004",
       "clientName": "Shanghai Import Ltd.",
       "country": "China",
-      "poId": "PO-2025-004",
+      "poId": "PO2025004",
       "requestDate": "2025/04/01",
       "dueDate": "2025/04/01",
       "status": "출하준비"
     },
     {
-      "id": "SH-2025-005",
+      "id": "SH2025005",
       "clientName": "London Metals Plc",
       "country": "UK",
-      "poId": "PO-2025-005",
+      "poId": "PO2025005",
       "requestDate": "2025/02/28",
       "dueDate": "2025/04/10",
       "status": "출하준비"
     },
     {
-      "id": "SH-2025-006",
+      "id": "SH2025006",
       "clientName": "Paris Acier SA",
       "country": "France",
-      "poId": "PO-2025-006",
+      "poId": "PO2025006",
       "requestDate": "2025/04/20",
       "dueDate": "2025/04/20",
       "status": "출하완료"
     },
     {
-      "id": "SH-2025-007",
+      "id": "SH2025007",
       "clientName": "Mumbai Steel Works",
       "country": "India",
-      "poId": "PO-2025-007",
+      "poId": "PO2025007",
       "requestDate": "2025/04/25",
       "dueDate": "2025/04/25",
       "status": "출하완료"
     },
     {
-      "id": "SH-2025-008",
+      "id": "SH2025008",
       "clientName": "São Paulo Metals",
       "country": "Brazil",
-      "poId": "PO-2025-008",
+      "poId": "PO2025008",
       "requestDate": "2025/05/01",
       "dueDate": "2025/05/01",
       "status": "출하완료"
     },
     {
-      "id": "SH-2025-009",
+      "id": "SH2025009",
       "clientName": "Singapore Pipe Pte",
       "country": "Singapore",
-      "poId": "PO-2025-009",
+      "poId": "PO2025009",
       "requestDate": "2025/05/10",
       "dueDate": "2025/05/10",
       "status": "출하준비"
     },
     {
-      "id": "SH-2025-010",
+      "id": "SH2025010",
       "clientName": "Hanoi Industries",
       "country": "Vietnam",
-      "poId": "PO-2025-010",
+      "poId": "PO2025010",
       "requestDate": "2025/05/20",
       "dueDate": "2025/05/20",
       "status": "출하완료"
     },
     {
-      "id": "SH-2025-011",
+      "id": "SH2025011",
       "clientName": "Dtech Electronics Inc.",
       "country": "USA",
-      "poId": "PO-2025-011",
+      "poId": "PO2025011",
       "requestDate": "2025/06/01",
       "dueDate": "2025/06/01",
       "status": "출하완료"
     },
     {
-      "id": "SH-2025-012",
+      "id": "SH2025012",
       "clientName": "Berlin Digital AG",
       "country": "Germany",
-      "poId": "PO-2025-012",
+      "poId": "PO2025012",
       "requestDate": "2025/06/05",
       "dueDate": "2025/06/05",
       "status": "출하준비"
     },
     {
-      "id": "SH-2025-013",
+      "id": "SH2025013",
       "clientName": "Osaka Tech Corp.",
       "country": "Japan",
-      "poId": "PO-2025-013",
+      "poId": "PO2025013",
       "requestDate": "2025/06/15",
       "dueDate": "2025/06/15",
       "status": "출하완료"
     },
     {
-      "id": "SH-2025-014",
+      "id": "SH2025014",
       "clientName": "Shenzhen Gadgets Co.",
       "country": "China",
-      "poId": "PO-2025-014",
+      "poId": "PO2025014",
       "requestDate": "2025/06/20",
       "dueDate": "2025/06/20",
       "status": "출하준비"
     },
     {
-      "id": "SH-2025-015",
+      "id": "SH2025015",
       "clientName": "London Tech Ltd",
       "country": "UK",
-      "poId": "PO-2025-015",
+      "poId": "PO2025015",
       "requestDate": "2025/07/01",
       "dueDate": "2025/07/01",
       "status": "출하완료"
     },
     {
-      "id": "SH-2025-016",
+      "id": "SH2025016",
       "clientName": "Paris Digital SAS",
       "country": "France",
-      "poId": "PO-2025-016",
+      "poId": "PO2025016",
       "requestDate": "2025/07/05",
       "dueDate": "2025/07/05",
       "status": "출하완료"
     },
     {
-      "id": "SH-2025-017",
+      "id": "SH2025017",
       "clientName": "Singapore Electronics Pte",
       "country": "Singapore",
-      "poId": "PO-2025-017",
+      "poId": "PO2025017",
       "requestDate": "2025/07/20",
       "dueDate": "2025/07/20",
       "status": "출하완료"
     },
     {
-      "id": "SH-2025-018",
+      "id": "SH2025018",
       "clientName": "Sydney Tech Pty",
       "country": "Australia",
-      "poId": "PO-2025-018",
+      "poId": "PO2025018",
       "requestDate": "2025/07/25",
       "dueDate": "2025/07/25",
       "status": "출하준비"
     },
     {
-      "id": "SH-2025-019",
+      "id": "SH2025019",
       "clientName": "Toronto Systems Inc.",
       "country": "Canada",
-      "poId": "PO-2025-019",
+      "poId": "PO2025019",
       "requestDate": "2025/08/01",
       "dueDate": "2025/08/01",
       "status": "출하준비"
     },
     {
-      "id": "SH-2025-020",
+      "id": "SH2025020",
       "clientName": "Hanoi Digital JSC",
       "country": "Vietnam",
-      "poId": "PO-2025-020",
+      "poId": "PO2025020",
       "requestDate": "2025/08/20",
       "dueDate": "2025/08/20",
       "status": "출하준비"
