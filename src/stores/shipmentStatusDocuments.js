@@ -14,10 +14,10 @@ function createInitialShipmentStatusDocuments() {
       manager: '김영업',
       remarks: '출하 서류 검토 후 출하완료 처리 예정',
       items: [
-        { name: 'H-Beam 482x300x11x15', quantity: '30 EA' },
-        { name: 'Lubricant Oil SAE 10W-40', quantity: '200 EA' },
-        { name: 'Industrial Grease EP-2', quantity: '100 EA' },
-        { name: 'Hydraulic Oil ISO VG 46', quantity: '32 EA' },
+        { name: 'Wireless Presenter', quantity: '30 EA' },
+        { name: 'USB-C Hub 7-in-1', quantity: '200 EA' },
+        { name: 'Bluetooth Headset', quantity: '100 EA' },
+        { name: 'Wireless Mouse', quantity: '32 EA' },
       ],
     },
     {
@@ -32,7 +32,8 @@ function createInitialShipmentStatusDocuments() {
       manager: '정영업',
       remarks: '독일향 선적 일정 확정 대기',
       items: [
-        { name: 'H-Beam 482x300x11x15', quantity: '40 EA' },
+        { name: 'Smart Projector FHD', quantity: '40 EA' },
+        { name: 'All-in-One PC 24"', quantity: '18 EA' },
       ],
     },
     {
@@ -47,7 +48,9 @@ function createInitialShipmentStatusDocuments() {
       manager: '정영업',
       remarks: '출하완료 및 후속 수출서류 전달 완료',
       items: [
-        { name: 'Lubricant Oil SAE 10W-40', quantity: '520 EA' },
+        { name: 'External SSD 1TB', quantity: '80 EA' },
+        { name: 'Mechanical Keyboard', quantity: '40 EA' },
+        { name: 'Wireless Presenter', quantity: '40 EA' },
       ],
     },
   ]

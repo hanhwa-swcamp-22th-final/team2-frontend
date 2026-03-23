@@ -2,9 +2,12 @@
 import { computed, onMounted, ref } from 'vue'
 import { fetchNavigationItems } from '@/api/navigation'
 import { RouterLink, useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
+import { canAccessPathByRole } from '@/utils/roleAccess'
 
 const uiStore = useUiStore()
+const authStore = useAuthStore()
 const route = useRoute()
 const navigationItems = ref([])
 
@@ -13,7 +16,9 @@ const sectionOrder = ['basic', 'sales', 'orders', 'status', 'activity', 'admin']
 const groupedNavigationItems = computed(() => {
   const sectionMap = new Map()
 
-  navigationItems.value.forEach((item) => {
+  navigationItems.value
+    .filter((item) => canAccessPathByRole(authStore.currentUser, item.path))
+    .forEach((item) => {
     const sectionKey = item.section || 'service'
 
     if (!sectionMap.has(sectionKey)) {
@@ -24,8 +29,8 @@ const groupedNavigationItems = computed(() => {
       })
     }
 
-    sectionMap.get(sectionKey).items.push(item)
-  })
+      sectionMap.get(sectionKey).items.push(item)
+    })
 
   return [...sectionMap.values()].sort((a, b) => {
     return sectionOrder.indexOf(a.key) - sectionOrder.indexOf(b.key)

@@ -1,8 +1,10 @@
 <script setup>
+import { computed, ref } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 
-defineProps({
+const props = defineProps({
   open: {
     type: Boolean,
     default: false,
@@ -94,11 +96,29 @@ defineProps({
 })
 
 const emit = defineEmits(['confirm', 'cancel'])
+const confirmIntentOpen = ref(false)
+
+const confirmIntentTitle = computed(() => `${props.confirmLabel} 확인`)
+const confirmIntentMessage = computed(() => `${props.confirmLabel}을 진행하시겠습니까?`)
+const confirmIntentRows = computed(() => props.requestRows.slice(0, 6))
 
 function getItemAlignmentClass(align) {
   if (align === 'right') return 'text-right'
   if (align === 'center') return 'text-center'
   return 'text-left'
+}
+
+function openConfirmIntent() {
+  confirmIntentOpen.value = true
+}
+
+function closeConfirmIntent() {
+  confirmIntentOpen.value = false
+}
+
+function confirmIntent() {
+  confirmIntentOpen.value = false
+  emit('confirm')
 }
 </script>
 
@@ -332,7 +352,21 @@ function getItemAlignmentClass(align) {
 
     <template #footer>
       <BaseButton variant="secondary" @click="emit('cancel')">{{ cancelLabel }}</BaseButton>
-      <BaseButton @click="emit('confirm')">{{ confirmLabel }}</BaseButton>
+      <BaseButton @click="openConfirmIntent">{{ confirmLabel }}</BaseButton>
     </template>
   </BaseModal>
+
+  <ConfirmModal
+    :open="confirmIntentOpen"
+    :title="confirmIntentTitle"
+    :message="confirmIntentMessage"
+    :detail-rows="confirmIntentRows"
+    :confirm-label="confirmLabel"
+    cancel-label="돌아가기"
+    :helper-text="helperText"
+    width="max-w-2xl"
+    :z-index="zIndex + 20"
+    @confirm="confirmIntent"
+    @cancel="closeConfirmIntent"
+  />
 </template>

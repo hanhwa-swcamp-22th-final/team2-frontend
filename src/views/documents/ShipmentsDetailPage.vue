@@ -1,14 +1,16 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import { useDocumentItemCatalog } from '@/composables/useDocumentItemCatalog'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import { useToast } from '@/composables/useToast'
+import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
 
 const route = useRoute()
 const router = useRouter()
@@ -16,11 +18,43 @@ const toast = useToast()
 const poDocuments = usePoDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
-const detail = computed(() => shipmentStatusDocuments.value.find((row) => row.id === route.params.id) ?? null)
+const { loadItemCatalog, enrichDocumentItems } = useDocumentItemCatalog()
+
+function enrichShipmentStatusRow(row) {
+  if (!row) return null
+
+  const linkedShipmentOrder = shipmentOrderDocuments.value.find((document) => document.id === row.shipmentOrderId)
+  const linkedPo = poDocuments.value.find((document) => document.id === row.poId)
+
+  return {
+    ...row,
+    country: row.country || linkedShipmentOrder?.country || linkedPo?.country || '-',
+  }
+}
+
+const detail = computed(() => {
+  const row = shipmentStatusDocuments.value.find((document) => document.id === route.params.id)
+  return enrichShipmentStatusRow(row)
+})
 const linkedPo = computed(() => poDocuments.value.find((row) => row.id === detail.value?.poId))
 const linkedShipmentOrder = computed(() => shipmentOrderDocuments.value.find((row) => row.id === detail.value?.shipmentOrderId))
+const displayItems = computed(() => enrichDocumentItems(detail.value?.items ?? []))
 
 const currentStep = computed(() => (detail.value?.status === '출하완료' ? 2 : 1))
+function parseNumericValue(value) {
+  const numeric = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+const totalItemQuantity = computed(() => (
+  displayItems.value.reduce((sum, item) => sum + parseNumericValue(item.quantity), 0)
+))
+
+const totalWeight = computed(() => {
+  const weight = displayItems.value.reduce((sum, item) => sum + (item.rowWeight ?? 0), 0)
+  return weight > 0 ? `${weight.toFixed(2)} kg` : '-'
+})
+
 const summaryRows = computed(() => {
   if (!detail.value) return []
 
@@ -51,8 +85,38 @@ function completeShipment() {
       ? { ...row, status: '출하완료', updatedAt: '2026/03/31 10:00' }
       : row
   ))
+  shipmentOrderDocuments.value = shipmentOrderDocuments.value.map((row) => (
+    row.id === detail.value.shipmentOrderId
+      ? { ...row, status: '출하완료' }
+      : row
+  ))
+  poDocuments.value = poDocuments.value.map((row) => {
+    if (row.id !== detail.value.poId) return row
+
+    const currentLinks = row.linkedDocuments ?? []
+    const hasShipmentOrderLink = currentLinks.some((document) => document.id === detail.value.shipmentOrderId)
+
+    return {
+      ...row,
+      status: '출하완료',
+      linkedDocuments: [
+        ...currentLinks.map((document) => (
+          document.id === detail.value.shipmentOrderId
+            ? { ...document, status: '출하완료' }
+            : document
+        )),
+        ...(!hasShipmentOrderLink
+          ? [{ id: detail.value.shipmentOrderId, status: '출하완료' }]
+          : []),
+      ],
+    }
+  })
   toast.success(`${detail.value.id}가 출하완료 처리되었습니다.`)
 }
+
+onMounted(() => {
+  loadItemCatalog()
+})
 </script>
 
 <template>
@@ -135,23 +199,55 @@ function completeShipment() {
             <button type="button" class="flex w-full items-center gap-2 rounded-lg p-2.5 text-left text-brand-500 transition hover:bg-slate-50" @click="goToPo">
               <i class="fas fa-file-contract" aria-hidden="true"></i>
               PO: {{ detail.poId }}
-              <StatusBadge v-if="linkedPo" :value="linkedPo.status" />
+              <StatusBadge v-if="linkedPo" :value="linkedPo.status" :variant="linkedPo.status">
+                {{ formatReferenceDocumentStatus(linkedPo.id, linkedPo.status) }}
+              </StatusBadge>
             </button>
             <button type="button" class="flex w-full cursor-pointer items-center gap-2 rounded-lg bg-slate-50 p-2.5 text-left text-slate-600 transition hover:bg-slate-100" @click="goToShipmentOrder">
               <i class="fas fa-truck" aria-hidden="true"></i>
               출하지시서: {{ detail.shipmentOrderId }}
-              <StatusBadge v-if="linkedShipmentOrder" :value="linkedShipmentOrder.status" />
+              <StatusBadge v-if="linkedShipmentOrder" :value="linkedShipmentOrder.status" :variant="linkedShipmentOrder.status">
+                {{ formatReferenceDocumentStatus(linkedShipmentOrder.id, linkedShipmentOrder.status) }}
+              </StatusBadge>
             </button>
           </div>
         </div>
 
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 class="mb-3 font-bold text-slate-800">품목 내역</h3>
-          <div class="space-y-2 text-xs">
-            <div v-for="item in detail.items" :key="item.name" class="flex justify-between rounded bg-slate-50 p-2">
-              <span>{{ item.name }}</span>
-              <span class="font-medium">{{ item.quantity }}</span>
-            </div>
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[820px] text-sm">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="p-3 text-left">품목</th>
+                  <th class="p-3 text-left">규격</th>
+                  <th class="p-3 text-center">HS Code</th>
+                  <th class="p-3 text-center">단위</th>
+                  <th class="p-3 text-right">수량</th>
+                  <th class="p-3 text-right">중량(kg)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y">
+                <tr v-for="item in displayItems" :key="item.name">
+                  <td class="p-3">{{ item.name }}</td>
+                  <td class="p-3 text-slate-600">{{ item.spec || '-' }}</td>
+                  <td class="p-3 text-center">{{ item.hsCode || '-' }}</td>
+                  <td class="p-3 text-center">{{ item.unit || '-' }}</td>
+                  <td class="p-3 text-right">{{ item.quantity }}</td>
+                  <td class="p-3 text-right">{{ item.rowWeight != null ? item.rowWeight.toFixed(2) : '-' }}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="border-t border-slate-200 bg-slate-50">
+                  <td class="p-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">합계</td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalItemQuantity.toLocaleString('ko-KR') }}</td>
+                  <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ totalWeight }}</td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
         </div>
       </div>

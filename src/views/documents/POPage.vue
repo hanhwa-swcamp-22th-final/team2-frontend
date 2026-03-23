@@ -23,6 +23,8 @@ import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
+import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
+import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import { useToast } from '@/composables/useToast'
 import {
   buildApprovalRequestRows,
@@ -36,6 +38,11 @@ import {
   REGISTRATION_DOCUMENT_STATUS,
   REGISTRATION_REQUEST_STATUS,
 } from '@/utils/documentApproval'
+import {
+  formatPoShipmentLockMessage,
+  getPoShipmentLockInfo,
+  resolvePoShipmentDocumentStatus,
+} from '@/utils/documentShipmentLock'
 import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
 
 const router = useRouter()
@@ -83,9 +90,12 @@ const statusOptions = [
   { value: '초안', label: '초안' },
   { value: '발송', label: '발송' },
   { value: '확정', label: '확정' },
+  { value: '출하완료', label: '출하완료' },
   { value: '취소', label: '취소' },
 ]
 const piRowsSource = usePiDocuments()
+const shipmentOrderDocuments = useShipmentOrderDocuments()
+const shipmentStatusDocuments = useShipmentStatusDocuments()
 const { clientRowsSource, createClientRows, createProductRows } = useSearchModalLookups()
 
 const columns = [
@@ -116,13 +126,37 @@ const approvalChangeColumns = [
   { key: 'after', label: '변경값', align: 'left' },
 ]
 
-const rowsData = usePoDocuments()
+const poRowsData = usePoDocuments()
+const rowsData = computed(() => (
+  poRowsData.value.map((row) => ({
+    ...row,
+    status: resolvePoShipmentDocumentStatus(
+      row.id,
+      row.status,
+      shipmentOrderDocuments.value,
+      shipmentStatusDocuments.value,
+    ),
+  }))
+))
 const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
   keywordFields: ['id', 'clientName', 'country', 'itemName', 'amount', 'manager', 'status', 'issueDate', 'deliveryDate'],
   issueDateField: 'issueDate',
   deliveryDateField: 'deliveryDate',
 })
 const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
+
+const shipmentLockInfoByPoId = computed(() => (
+  new Map(
+    rowsData.value.map((row) => [
+      row.id,
+      getPoShipmentLockInfo(
+        row.id,
+        shipmentOrderDocuments.value,
+        shipmentStatusDocuments.value,
+      ),
+    ]),
+  )
+))
 
 const piRows = computed(() => {
   const keyword = piSearchKeyword.value.trim().toLowerCase()
@@ -177,6 +211,12 @@ function closeForm() {
 }
 
 function openEditForm(row) {
+  const shipmentLockInfo = shipmentLockInfoByPoId.value.get(row.id)
+  if (shipmentLockInfo?.locked) {
+    warning(formatPoShipmentLockMessage(shipmentLockInfo))
+    return
+  }
+
   selectedPi.value = piRowsSource.value.find((pi) => pi.id === (row.piId || row.linkedPiId || '')) ?? null
   selectedClient.value = clientRowsSource.value.find((client) => client.name === row.clientName) ?? null
   formMode.value = 'edit'
@@ -347,7 +387,7 @@ function getRequestedAt() {
 }
 
 function buildNextPoId() {
-  return `PO26${String(rowsData.value.length + 1).padStart(3, '0')}`
+  return `PO26${String(poRowsData.value.length + 1).padStart(3, '0')}`
 }
 
 function createApprovalReviewSnapshot({
@@ -637,7 +677,7 @@ function confirmCreateApprovalRequest() {
     helperText: '등록 요청은 팀장 승인 후 확정되며, 승인 전까지 문서는 결재대기 상태로 유지됩니다.',
   })
 
-  rowsData.value = [
+  poRowsData.value = [
     {
       id: buildNextPoId(),
       ...nextRow,
@@ -649,7 +689,7 @@ function confirmCreateApprovalRequest() {
         requestedAt,
       }),
     },
-    ...rowsData.value,
+    ...poRowsData.value,
   ]
 
   createApprovalRequestOpen.value = false
@@ -685,7 +725,7 @@ function confirmEditApprovalRequest() {
     helperText: '수정 요청은 승인 전까지 확정되지 않으며, 반려 시 요청 상태만 반영됩니다.',
   })
 
-  rowsData.value = rowsData.value.map((row) => (
+  poRowsData.value = poRowsData.value.map((row) => (
     row.id === pendingEditRequest.value.id
       ? {
         ...row,
@@ -713,6 +753,15 @@ function cancelEditApprovalRequest() {
 }
 
 function handleSave(formValue) {
+  if (formMode.value === 'edit') {
+    const shipmentLockInfo = shipmentLockInfoByPoId.value.get(selectedRow.value?.id)
+    if (shipmentLockInfo?.locked) {
+      warning(formatPoShipmentLockMessage(shipmentLockInfo))
+      formOpen.value = false
+      return
+    }
+  }
+
   if (formMode.value === 'create') {
     pendingCreateFormValue.value = { ...formValue }
     createApprovalRequestOpen.value = true
@@ -747,12 +796,26 @@ function handleSave(formValue) {
 }
 
 function openDeleteApprovalRequest(row) {
+  const shipmentLockInfo = shipmentLockInfoByPoId.value.get(row.id)
+  if (shipmentLockInfo?.locked) {
+    warning(formatPoShipmentLockMessage(shipmentLockInfo))
+    return
+  }
+
   selectedRow.value = row
   deleteApprovalRequestOpen.value = true
 }
 
 function confirmDeleteApprovalRequest() {
   if (!selectedRow.value) return
+
+  const shipmentLockInfo = shipmentLockInfoByPoId.value.get(selectedRow.value.id)
+  if (shipmentLockInfo?.locked) {
+    warning(formatPoShipmentLockMessage(shipmentLockInfo))
+    deleteApprovalRequestOpen.value = false
+    selectedRow.value = null
+    return
+  }
 
   const requesterName = getCurrentRequesterName()
   const requestedAt = getRequestedAt()
@@ -770,7 +833,7 @@ function confirmDeleteApprovalRequest() {
     helperText: '삭제 요청은 승인 전까지 실제 삭제되지 않으며, 승인 시 문서 상태가 취소로 전환됩니다.',
   })
 
-  rowsData.value = rowsData.value.map((row) => (
+  poRowsData.value = poRowsData.value.map((row) => (
     row.id === selectedRow.value?.id
       ? {
         ...row,
@@ -942,7 +1005,12 @@ function handleProductSelect(product) {
       </template>
 
       <template #cell-actions="{ row }">
-        <TableActions @edit="openEditForm(row)" @delete="openDeleteApprovalRequest(row)" />
+        <TableActions
+          :show-edit="!shipmentLockInfoByPoId.get(row.id)?.locked"
+          :show-delete="!shipmentLockInfoByPoId.get(row.id)?.locked"
+          @edit="openEditForm(row)"
+          @delete="openDeleteApprovalRequest(row)"
+        />
       </template>
     </BaseTable>
 

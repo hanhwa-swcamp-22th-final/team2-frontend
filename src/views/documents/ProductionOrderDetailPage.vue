@@ -1,19 +1,31 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import ProductionOrderTemplate from '@/components/domain/document/ProductionOrderTemplate.vue'
+import { useDocumentItemCatalog } from '@/composables/useDocumentItemCatalog'
+import { useAuthStore } from '@/stores/auth'
+import { usePoDocuments } from '@/stores/poDocuments'
 import { useToast } from '@/composables/useToast'
+import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
+import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const authStore = useAuthStore()
+const poDocuments = usePoDocuments()
+const productionOrderDocuments = useProductionOrderDocuments()
+const { loadItemCatalog, enrichDocumentItems } = useDocumentItemCatalog()
 
 const previewOpen = ref(false)
+const completeConfirmOpen = ref(false)
 
 function parseNumericValue(value) {
   const numeric = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))
@@ -27,82 +39,28 @@ function detectCurrencySymbol(value) {
   return '$'
 }
 
-const detailMap = {
-  MO2026001: {
-    id: 'MO2026001',
-    status: '완료',
-    issueDate: '2026/02/24',
-    poId: 'PO26001',
-    country: '말레이시아',
-    clientName: 'COOLSAY SDN BHD',
-    clientAddress: 'Lot 18, Jalan Pelabuhan Utara 27, 42000 Port Klang, Selangor, Malaysia',
-    itemName: 'H-Beam 482x300x11x15',
-    manager: '김영업',
-    dueDate: '2026/04/20',
-    department: '영업부',
-    productionSite: '부산 1공장',
-    requestedBy: '김영업',
-    completionTarget: '2026/04/18',
-    remarks: 'PO 기준 납기보다 2일 선행 생산 완료 요청',
-    linkedDocuments: [{ id: 'PO26001', status: '확정' }],
-    items: [
-      { name: 'H-Beam 482x300x11x15', quantity: '30', unit: 'EA', unitPrice: '$850', amount: '$25,500', remark: '절단 사양 확인 완료' },
-    ],
-  },
-  MO2026002: {
-    id: 'MO2026002',
-    status: '진행중',
-    issueDate: '2026/03/03',
-    poId: 'PO26002',
-    country: '독일',
-    clientName: 'TechBridge GmbH',
-    clientAddress: 'Am Sandtorkai 35, 20457 Hamburg, Germany',
-    itemName: 'H-Beam 482x300x11x15',
-    manager: '김영업',
-    dueDate: '2026/05/25',
-    department: '영업부',
-    productionSite: '포항 2공장',
-    requestedBy: '김영업',
-    completionTarget: '2026/05/22',
-    remarks: '도장 공정 포함, 출하 전 외관 검사 필요',
-    linkedDocuments: [{ id: 'PO26002', status: '발송' }],
-    items: [
-      { name: 'H-Beam 482x300x11x15', quantity: '80', unit: 'EA', unitPrice: '€855', amount: '€68,400', remark: '도장 공정 대기' },
-    ],
-  },
-  MO2026003: {
-    id: 'MO2026003',
-    status: '대기',
-    issueDate: '2026/03/14',
-    poId: 'PO26003',
-    country: '미국',
-    clientName: 'Pacific Trading Inc.',
-    clientAddress: '1201 Harbor Avenue SW, Seattle, WA 98134, USA',
-    itemName: 'Lubricant Oil SAE 10W-40',
-    manager: '정영업',
-    dueDate: '2026/06/05',
-    department: '영업부',
-    productionSite: '울산 포장센터',
-    requestedBy: '정영업',
-    completionTarget: '2026/06/03',
-    remarks: '신규 거래처 첫 생산, 라벨링 시안 확인 필요',
-    linkedDocuments: [{ id: 'PO26003', status: '초안' }],
-    items: [
-      { name: 'Lubricant Oil SAE 10W-40', quantity: '520', unit: 'EA', unitPrice: '$30', amount: '$15,600', remark: '라벨 확인 대기' },
-    ],
-  },
-}
-
-const detail = computed(() => detailMap[route.params.id] ?? null)
+const detail = computed(() => productionOrderDocuments.value.find((row) => row.id === route.params.id) ?? null)
+const displayItems = computed(() => enrichDocumentItems(detail.value?.items ?? []))
+const isProductionUser = computed(() => authStore.currentUser?.role === 'production')
+const canCompleteProduction = computed(() => isProductionUser.value && detail.value?.status === '진행중')
 const totalQuantity = computed(() => (
-  detail.value?.items.reduce((sum, item) => sum + Number.parseInt(item.quantity, 10), 0) ?? 0
+  displayItems.value.reduce((sum, item) => sum + Number.parseInt(item.quantity, 10), 0)
 ))
-const totalAmount = computed(() => {
-  if (!detail.value?.items.length) return '-'
-  const symbol = detectCurrencySymbol(detail.value.items[0].amount)
-  const amount = detail.value.items.reduce((sum, item) => sum + parseNumericValue(item.amount), 0)
-  return `${symbol}${amount.toLocaleString('en-US')}`
+const totalWeight = computed(() => {
+  const weight = displayItems.value.reduce((sum, item) => sum + (item.rowWeight ?? 0), 0)
+  return weight > 0 ? `${weight.toFixed(2)} kg` : '-'
 })
+const documentForOutput = computed(() => (
+  detail.value
+    ? {
+        ...detail.value,
+        items: displayItems.value.map((item) => ({
+          ...item,
+          spec: item.spec || '-',
+        })),
+      }
+    : null
+))
 
 const previewFields = computed(() => {
   if (!detail.value) return []
@@ -143,14 +101,50 @@ function openPreview() {
   previewOpen.value = true
 }
 
+function openCompleteConfirm() {
+  if (!canCompleteProduction.value) return
+  completeConfirmOpen.value = true
+}
+
+function closeCompleteConfirm() {
+  completeConfirmOpen.value = false
+}
+
+function confirmCompleteProduction() {
+  if (!detail.value || !canCompleteProduction.value) return
+
+  productionOrderDocuments.value = productionOrderDocuments.value.map((row) => (
+    row.id === detail.value.id
+      ? { ...row, status: '생산완료' }
+      : row
+  ))
+
+  poDocuments.value = poDocuments.value.map((row) => {
+    if (row.id !== detail.value.poId) return row
+
+    const currentLinks = row.linkedDocuments ?? []
+    return {
+      ...row,
+      linkedDocuments: currentLinks.map((document) => (
+        document.id === detail.value.id
+          ? { ...document, status: '생산완료' }
+          : document
+      )),
+    }
+  })
+
+  completeConfirmOpen.value = false
+  toast.success(`${detail.value.id}가 생산완료 처리되었습니다.`)
+}
+
 function handlePrint() {
-  if (!detail.value) return
-  openDocumentOutputByType('PRODUCTION', detail.value, true)
+  if (!documentForOutput.value) return
+  openDocumentOutputByType('PRODUCTION', documentForOutput.value, true)
 }
 
 function handlePdfDownload() {
-  if (!detail.value) return
-  const opened = openDocumentOutputByType('PRODUCTION', detail.value, true)
+  if (!documentForOutput.value) return
+  const opened = openDocumentOutputByType('PRODUCTION', documentForOutput.value, true)
   if (opened) {
     toast.info('브라우저 인쇄 창에서 "PDF로 저장"을 선택하세요.', 'PDF')
   }
@@ -160,6 +154,10 @@ function handlePreviewPrint() {
   previewOpen.value = false
   handlePrint()
 }
+
+onMounted(() => {
+  loadItemCatalog()
+})
 </script>
 
 <template>
@@ -167,6 +165,17 @@ function handlePreviewPrint() {
     <div class="mb-6">
       <DetailPageHeader :title="detail.id" :status="detail.status" @back="goBack">
         <template #actions>
+          <BaseButton
+            v-if="isProductionUser"
+            size="sm"
+            :disabled="!canCompleteProduction"
+            @click="openCompleteConfirm"
+          >
+            <template #leading>
+              <i class="fas fa-check-circle text-xs" aria-hidden="true"></i>
+            </template>
+            생산완료 처리
+          </BaseButton>
           <BaseButton variant="secondary" size="sm" @click="openPreview">
             <template #leading>
               <i class="fas fa-eye text-xs text-brand-500" aria-hidden="true"></i>
@@ -224,32 +233,37 @@ function handlePreviewPrint() {
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 class="mb-4 font-bold text-slate-800">품목 내역</h3>
           <div class="overflow-x-auto">
-            <table class="w-full min-w-[760px] text-sm">
+            <table class="w-full min-w-[920px] text-sm">
               <thead class="bg-gray-50">
                 <tr>
                   <th class="p-3 text-left">품목</th>
+                  <th class="p-3 text-left">규격</th>
+                  <th class="p-3 text-center">HS Code</th>
                   <th class="p-3 text-center">단위</th>
                   <th class="p-3 text-right">수량</th>
-                  <th class="p-3 text-right">단가</th>
-                  <th class="p-3 text-right">금액</th>
+                  <th class="p-3 text-right">중량(kg)</th>
                   <th class="p-3 text-left">비고</th>
                 </tr>
               </thead>
               <tbody class="divide-y">
-                <tr v-for="item in detail.items" :key="`${detail.id}-${item.name}`">
+                <tr v-for="item in displayItems" :key="`${detail.id}-${item.name}`">
                   <td class="p-3">{{ item.name }}</td>
+                  <td class="p-3 text-slate-600">{{ item.spec || '-' }}</td>
+                  <td class="p-3 text-center">{{ item.hsCode || '-' }}</td>
                   <td class="p-3 text-center">{{ item.unit || '-' }}</td>
                   <td class="p-3 text-right">{{ item.quantity }}</td>
-                  <td class="p-3 text-right">{{ item.unitPrice }}</td>
-                  <td class="p-3 text-right font-semibold">{{ item.amount }}</td>
+                  <td class="p-3 text-right">{{ item.rowWeight != null ? item.rowWeight.toFixed(2) : '-' }}</td>
                   <td class="p-3 text-slate-600">{{ item.remark || '-' }}</td>
                 </tr>
               </tbody>
               <tfoot>
-                <tr class="border-t border-slate-200">
-                  <td colspan="3" class="p-3 text-right text-xs font-bold uppercase tracking-wider text-slate-600">총수량</td>
-                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalQuantity }} EA</td>
-                  <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ totalAmount }}</td>
+                <tr class="border-t border-slate-200 bg-slate-50">
+                  <td class="p-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">합계</td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalQuantity.toLocaleString('ko-KR') }} EA</td>
+                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalWeight }}</td>
                   <td></td>
                 </tr>
               </tfoot>
@@ -276,6 +290,9 @@ function handlePreviewPrint() {
             >
               <i class="fas fa-file-contract" aria-hidden="true"></i>
               {{ document.id }}
+              <StatusBadge :value="document.status" :variant="document.status">
+                {{ formatReferenceDocumentStatus(document.id, document.status) }}
+              </StatusBadge>
             </button>
           </div>
         </div>
@@ -291,8 +308,26 @@ function handlePreviewPrint() {
       @close="previewOpen = false"
       @print="handlePreviewPrint"
     >
-      <ProductionOrderTemplate :document="detail" />
+      <ProductionOrderTemplate :document="documentForOutput || detail" />
     </DocumentPreviewModal>
+
+    <ConfirmModal
+      :open="completeConfirmOpen"
+      title="생산완료 처리"
+      message="선택한 생산지시서를 생산완료 상태로 변경하시겠습니까?"
+      :detail-rows="[
+        { label: '지시번호', value: detail.id },
+        { label: '원천 PO', value: detail.poId },
+        { label: '거래처', value: detail.clientName },
+        { label: '현재 상태', value: detail.status },
+      ]"
+      confirm-label="생산완료 처리"
+      cancel-label="취소"
+      helper-text="생산완료 처리 후 생산팀 기준 작업 완료 문서로 표시됩니다."
+      width="max-w-2xl"
+      @confirm="confirmCompleteProduction"
+      @cancel="closeCompleteConfirm"
+    />
   </div>
 
   <div v-else class="flex items-center justify-center py-20 text-slate-400">

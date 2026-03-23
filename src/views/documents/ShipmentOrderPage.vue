@@ -136,6 +136,11 @@ function goToDetail(id) {
   router.push({ name: 'shipment-order-detail', params: { id } })
 }
 
+function goToPoDetail(poId) {
+  if (!poId) return
+  router.push({ name: 'po-detail', params: { id: poId } })
+}
+
 function handleClientSelect(client) {
   filters.value.clientName = client.name
   clientSearchOpen.value = false
@@ -292,7 +297,13 @@ function downloadPdf(row) {
       </template>
 
       <template #cell-poId="{ value }">
-        <span class="text-brand-500 hover:underline">{{ value }}</span>
+        <button
+          type="button"
+          class="font-mono text-xs font-semibold text-brand-600 hover:underline"
+          @click.stop="goToPoDetail(value)"
+        >
+          {{ value }}
+        </button>
       </template>
 
       <template #cell-status="{ value }">

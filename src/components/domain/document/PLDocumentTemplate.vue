@@ -151,10 +151,10 @@ const consigneeAttention = computed(() => resolveConsigneeAttention(props.docume
 
     <div class="total-row">
       <span class="total-left accent-blue">TOTAL {{ itemCount }} Packages</span>
-      <span class="total-qty accent-blue">{{ document.totalQuantity || '' }}</span>
-      <span class="total-nw accent-blue">{{ document.totalNetWeight || '' }}</span>
-      <span class="total-gw accent-blue">{{ document.totalGrossWeight || '' }}</span>
-      <span class="total-vol accent-blue">{{ document.totalMeasurement || '' }}</span>
+      <span class="total-qty accent-blue">{{ document.totalQuantity ? `${document.totalQuantity} EA` : '' }}</span>
+      <span class="total-nw accent-blue">{{ document.totalNetWeight ? `${document.totalNetWeight} KG` : '' }}</span>
+      <span class="total-gw accent-blue">{{ document.totalGrossWeight ? `${document.totalGrossWeight} KG` : '' }}</span>
+      <span class="total-vol accent-blue">{{ document.totalMeasurement ? `${document.totalMeasurement} CBM` : '' }}</span>
     </div>
 
     <div class="signature-area">

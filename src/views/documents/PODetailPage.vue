@@ -16,6 +16,9 @@ import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
+import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
+import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
+import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import {
   buildApprovalInfoRows,
   buildApprovalRequestRows,
@@ -27,6 +30,12 @@ import {
   EDIT_REQUEST_STATUS,
 } from '@/utils/documentApproval'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
+import {
+  formatPoShipmentLockMessage,
+  getPoShipmentLockInfo,
+  resolvePoShipmentDocumentStatus,
+} from '@/utils/documentShipmentLock'
+import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
 import { clientSearchColumns } from '@/utils/searchModalColumns'
 
 const route = useRoute()
@@ -39,6 +48,7 @@ const formOpen = ref(false)
 const editConfirmOpen = ref(false)
 const editApprovalRequestOpen = ref(false)
 const deleteApprovalRequestOpen = ref(false)
+const productionIssueConfirmOpen = ref(false)
 const piSearchOpen = ref(false)
 const piSearchKeyword = ref('')
 const clientSearchOpen = ref(false)
@@ -48,6 +58,9 @@ const selectedClient = ref(null)
 const pendingEditRequest = ref(null)
 const piDocuments = usePiDocuments()
 const poDocuments = usePoDocuments()
+const productionOrderDocuments = useProductionOrderDocuments()
+const shipmentOrderDocuments = useShipmentOrderDocuments()
+const shipmentStatusDocuments = useShipmentStatusDocuments()
 
 const { createClientRows } = useSearchModalLookups()
 
@@ -85,15 +98,27 @@ function formatCurrencyValue(currency, value) {
   return `${symbol}${Math.round(value).toLocaleString('en-US')}`
 }
 
-function buildLinkedDocuments(row) {
-  const currentLinks = row.linkedDocuments ?? []
+const totalItemQuantity = computed(() => (
+  detail.value?.items.reduce((sum, item) => sum + parseNumericValue(item.quantity ?? item.qty), 0) ?? 0
+))
 
-  if (currentLinks.length) {
-    return currentLinks
+const quantityUnitLabel = computed(() => detail.value?.items?.[0]?.unit || '')
+const itemAmountSummary = computed(() => detail.value?.totalAmount || '-')
+
+function buildLinkedDocuments(row) {
+  const currentLinks = [...(row.linkedDocuments ?? [])]
+  const linkedPi = piDocuments.value.find((pi) => pi.id === (row.piId || row.linkedPiId))
+  const linkedProductionOrder = productionOrderDocuments.value.find((production) => production.poId === row.id)
+
+  if (linkedPi && !currentLinks.some((document) => document.id === linkedPi.id)) {
+    currentLinks.unshift({ id: linkedPi.id, status: linkedPi.status })
   }
 
-  const linkedPi = piDocuments.value.find((pi) => pi.id === (row.piId || row.linkedPiId))
-  return linkedPi ? [{ id: linkedPi.id, status: linkedPi.status }] : []
+  if (linkedProductionOrder && !currentLinks.some((document) => document.id === linkedProductionOrder.id)) {
+    currentLinks.push({ id: linkedProductionOrder.id, status: linkedProductionOrder.status })
+  }
+
+  return currentLinks
 }
 
 function getCurrentRequesterName() {
@@ -246,6 +271,12 @@ function normalizeDetail(row) {
 
   return {
     ...row,
+    status: resolvePoShipmentDocumentStatus(
+      row.id,
+      row.status,
+      shipmentOrderDocuments.value,
+      shipmentStatusDocuments.value,
+    ),
     buyer: row.buyerName || row.buyer || '-',
     incoterms: row.incoterms ? `${row.incoterms}${row.namedPlace ? ` ${row.namedPlace}` : ''}` : '-',
     linkedDocuments: buildLinkedDocuments(row),
@@ -262,7 +293,29 @@ const sourceRow = computed(() => (
 const detail = computed(() => normalizeDetail(sourceRow.value))
 
 const approvalInfoRows = computed(() => buildApprovalInfoRows(detail.value))
+const shipmentLockInfo = computed(() => (
+  getPoShipmentLockInfo(
+    detail.value?.id,
+    shipmentOrderDocuments.value,
+    shipmentStatusDocuments.value,
+  )
+))
+const shipmentLockMessage = computed(() => formatPoShipmentLockMessage(shipmentLockInfo.value))
 const linkedPiDocument = computed(() => piDocuments.value.find((row) => row.id === (detail.value?.piId || detail.value?.linkedPiId)))
+const linkedProductionOrder = computed(() => productionOrderDocuments.value.find((row) => row.poId === detail.value?.id) ?? null)
+const canIssueProductionOrder = computed(() => Boolean(detail.value && !linkedProductionOrder.value && !shipmentLockInfo.value.locked))
+const productionIssueConfirmRows = computed(() => {
+  if (!detail.value) return []
+
+  return [
+    { label: '대상 PO 번호', value: detail.value.id },
+    { label: '거래처', value: detail.value.clientName || '-' },
+    { label: '영업담당자', value: detail.value.manager || '-' },
+    { label: '납기일', value: detail.value.deliveryDate || '-' },
+    { label: '품목 건수', value: `${detail.value.items?.length ?? 0}건` },
+    { label: '총액', value: detail.value.totalAmount || '-' },
+  ]
+})
 
 const editApprovalRequestRows = computed(() => {
   if (!pendingEditRequest.value) return []
@@ -452,12 +505,22 @@ function openPreview() {
 }
 
 function handleEdit() {
+  if (shipmentLockInfo.value.locked) {
+    warning(shipmentLockMessage.value)
+    return
+  }
+
   selectedPi.value = null
   selectedClient.value = null
   formOpen.value = true
 }
 
 function handleDelete() {
+  if (shipmentLockInfo.value.locked) {
+    warning(shipmentLockMessage.value)
+    return
+  }
+
   deleteApprovalRequestOpen.value = true
 }
 
@@ -485,6 +548,11 @@ function formatSlashDate(value) {
 
 function handleSave(formValue) {
   if (!sourceRow.value) return
+  if (shipmentLockInfo.value.locked) {
+    warning(shipmentLockMessage.value)
+    formOpen.value = false
+    return
+  }
 
   const linkedPi = piDocuments.value.find((row) => row.id === formValue.linkedPiId)
   const currency = linkedPi?.currency || formValue.currency || sourceRow.value.currency || 'USD'
@@ -566,9 +634,101 @@ function goToLinkedDocument(documentId) {
     return
   }
 
+  if (documentId?.startsWith('MO')) {
+    router.push({ name: 'production-detail', params: { id: documentId } })
+    return
+  }
+
   if (documentId?.startsWith('SO')) {
     router.push({ name: 'shipment-order-detail', params: { id: documentId } })
   }
+}
+
+function openProductionIssueConfirm() {
+  if (!canIssueProductionOrder.value) return
+  productionIssueConfirmOpen.value = true
+}
+
+function closeProductionIssueConfirm() {
+  productionIssueConfirmOpen.value = false
+}
+
+function formatTodaySlashDate() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}/${month}/${day}`
+}
+
+function createNextProductionOrderId() {
+  const maxNumber = productionOrderDocuments.value.reduce((max, row) => {
+    const numeric = Number.parseInt(String(row.id).replace(/[^0-9]/g, ''), 10)
+    return Number.isFinite(numeric) ? Math.max(max, numeric) : max
+  }, 2026000)
+
+  return `MO${String(maxNumber + 1)}`
+}
+
+function confirmIssueProductionOrder() {
+  if (!sourceRow.value || !canIssueProductionOrder.value) return
+
+  const productionOrderId = createNextProductionOrderId()
+  const currency = sourceRow.value.currency || 'USD'
+  const items = (sourceRow.value.items ?? []).map((item) => {
+    const quantity = String(item.qty ?? item.quantity ?? '')
+    const unit = item.unit ?? 'EA'
+    const unitPriceValue = parseNumericValue(item.unitPrice)
+    const amountValue = parseNumericValue(item.amount)
+
+    return {
+      name: item.name ?? '',
+      quantity,
+      unit,
+      unitPrice: formatCurrencyValue(currency, unitPriceValue),
+      amount: formatCurrencyValue(currency, amountValue),
+      remark: item.remark ?? '',
+    }
+  })
+
+  const nextProductionOrder = {
+    id: productionOrderId,
+    status: '진행중',
+    issueDate: formatTodaySlashDate(),
+    poId: sourceRow.value.id,
+    country: sourceRow.value.country || '-',
+    clientName: sourceRow.value.clientName,
+    clientAddress: sourceRow.value.clientAddress || '',
+    itemName: sourceRow.value.itemName || items[0]?.name || '-',
+    manager: sourceRow.value.manager || authStore.currentUser?.name || '-',
+    dueDate: sourceRow.value.deliveryDate || '-',
+    department: '영업부',
+    productionSite: '-',
+    requestedBy: authStore.currentUser?.name || sourceRow.value.manager || '-',
+    completionTarget: sourceRow.value.deliveryDate || '-',
+    remarks: 'PO 기준으로 생산지시서가 발행되었습니다.',
+    linkedDocuments: [{ id: sourceRow.value.id, status: sourceRow.value.status }],
+    items,
+  }
+
+  productionOrderDocuments.value = [nextProductionOrder, ...productionOrderDocuments.value]
+  poDocuments.value = poDocuments.value.map((row) => {
+    if (row.id !== sourceRow.value.id) return row
+
+    const currentLinks = row.linkedDocuments ?? []
+    const hasProductionLink = currentLinks.some((document) => document.id === productionOrderId)
+
+    return {
+      ...row,
+      linkedDocuments: hasProductionLink
+        ? currentLinks
+        : [...currentLinks, { id: productionOrderId, status: nextProductionOrder.status }],
+    }
+  })
+
+  productionIssueConfirmOpen.value = false
+  success(`${productionOrderId} 생산지시서가 발행되었습니다.`)
+  router.push({ name: 'production-detail', params: { id: productionOrderId } })
 }
 
 function confirmEditRequestIntent() {
@@ -629,6 +789,11 @@ function cancelEditApprovalRequest() {
 
 function confirmDeleteApprovalRequest() {
   if (!sourceRow.value) return
+  if (shipmentLockInfo.value.locked) {
+    warning(shipmentLockMessage.value)
+    deleteApprovalRequestOpen.value = false
+    return
+  }
 
   const requesterName = getCurrentRequesterName()
   const requestedAt = getRequestedAt()
@@ -674,13 +839,35 @@ function cancelDeleteApprovalRequest() {
     <div class="mb-6">
       <DetailPageHeader :title="detail.id" :status="detail.status" @back="goBack">
         <template #actions>
-          <BaseButton size="sm" @click="handleEdit">
+          <BaseButton
+            v-if="linkedProductionOrder"
+            variant="secondary"
+            size="sm"
+            @click="goToLinkedDocument(linkedProductionOrder.id)"
+          >
+            <template #leading>
+              <i class="fas fa-industry text-xs" aria-hidden="true"></i>
+            </template>
+            생산지시서 보기
+          </BaseButton>
+          <BaseButton
+            v-else-if="canIssueProductionOrder"
+            variant="secondary"
+            size="sm"
+            @click="openProductionIssueConfirm"
+          >
+            <template #leading>
+              <i class="fas fa-industry text-xs" aria-hidden="true"></i>
+            </template>
+            생산지시서 발행
+          </BaseButton>
+          <BaseButton v-if="!shipmentLockInfo.locked" size="sm" @click="handleEdit">
             <template #leading>
               <i class="fas fa-edit text-xs" aria-hidden="true"></i>
             </template>
             수정
           </BaseButton>
-          <BaseButton variant="secondary" size="sm" @click="handleDelete">
+          <BaseButton v-if="!shipmentLockInfo.locked" variant="secondary" size="sm" @click="handleDelete">
             <template #leading>
               <i class="fas fa-trash text-xs" aria-hidden="true"></i>
             </template>
@@ -710,6 +897,23 @@ function cancelDeleteApprovalRequest() {
       >
         <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">{{ row.label }}</div>
         <div class="mt-1 text-sm font-semibold text-slate-900">{{ row.value }}</div>
+      </div>
+    </div>
+
+    <div
+      v-if="shipmentLockInfo.locked"
+      class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900"
+    >
+      <div class="font-semibold">출하완료 문서가 연결되어 있어 수정 및 삭제가 제한됩니다.</div>
+      <div class="mt-1">{{ shipmentLockMessage }}</div>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <span
+          v-for="reference in shipmentLockInfo.references"
+          :key="`${reference.type}-${reference.id}`"
+          class="rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-medium text-amber-800"
+        >
+          {{ reference.type }} {{ reference.id }}
+        </span>
       </div>
     </div>
 
@@ -800,11 +1004,14 @@ function cancelDeleteApprovalRequest() {
                 </tr>
               </tbody>
               <tfoot>
-                <tr class="border-t border-slate-200">
-                  <td colspan="4" class="p-3 text-right text-xs font-bold uppercase tracking-wider text-slate-600">
-                    합계
+                <tr class="border-t border-slate-200 bg-slate-50">
+                  <td class="p-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">합계</td>
+                  <td></td>
+                  <td class="p-3 text-right font-semibold text-slate-900">
+                    {{ totalItemQuantity.toLocaleString('ko-KR') }}{{ quantityUnitLabel ? ` ${quantityUnitLabel}` : '' }}
                   </td>
-                  <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ detail.totalAmount }}</td>
+                  <td></td>
+                  <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ itemAmountSummary }}</td>
                   <td></td>
                 </tr>
               </tfoot>
@@ -855,7 +1062,9 @@ function cancelDeleteApprovalRequest() {
                 aria-hidden="true"
               ></i>
               {{ document.id }}
-              <StatusBadge :value="document.status" />
+              <StatusBadge :value="document.status" :variant="document.status">
+                {{ formatReferenceDocumentStatus(document.id, document.status) }}
+              </StatusBadge>
             </button>
           </div>
         </div>
@@ -956,6 +1165,19 @@ function cancelDeleteApprovalRequest() {
       confirm-label="삭제 요청"
       @confirm="confirmDeleteApprovalRequest"
       @cancel="cancelDeleteApprovalRequest"
+    />
+
+    <ConfirmModal
+      :open="productionIssueConfirmOpen"
+      title="생산지시서 발행"
+      message="선택한 PO를 기준으로 생산지시서를 발행하시겠습니까?"
+      :detail-rows="productionIssueConfirmRows"
+      confirm-label="발행"
+      cancel-label="취소"
+      helper-text="생산지시서는 선택 분기 문서이며, 발행 후 참조 문서에 자동 연결됩니다."
+      width="max-w-2xl"
+      @confirm="confirmIssueProductionOrder"
+      @cancel="closeProductionIssueConfirm"
     />
 
     <SearchModal
