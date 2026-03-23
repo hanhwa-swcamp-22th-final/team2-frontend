@@ -25,6 +25,7 @@ import { useCiDocuments } from '@/stores/ciDocuments'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { usePlDocuments } from '@/stores/plDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
+import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import { useToast } from '@/composables/useToast'
@@ -49,7 +50,9 @@ import {
   recordDocumentEmailActivities,
 } from '@/utils/documentActivityEmail'
 import {
+  formatPiPoSelectionMessage,
   formatPoShipmentLockMessage,
+  getPiPoSelectionInfo,
   getPoShipmentLockInfo,
   resolvePoShipmentDocumentStatus,
 } from '@/utils/documentShipmentLock'
@@ -83,6 +86,7 @@ const pendingEditRequest = ref(null)
 const ciDocuments = useCiDocuments()
 const piRowsSource = usePiDocuments()
 const plDocuments = usePlDocuments()
+const productionOrderDocuments = useProductionOrderDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
 const { clientRowsSource, createClientRows, createProductRows } = useSearchModalLookups()
@@ -151,10 +155,28 @@ const shipmentLockInfoByPoId = computed(() => (
   )
 ))
 
+const availablePiRows = computed(() => (
+  piRowsSource.value.filter((row) => (
+    getPiPoSelectionInfo(
+      row,
+      poRowsData.value,
+      shipmentOrderDocuments.value,
+      shipmentStatusDocuments.value,
+      productionOrderDocuments.value,
+      ciDocuments.value,
+      plDocuments.value,
+      formMode.value === 'edit' ? selectedRow.value?.id || '' : '',
+    ).selectable
+  ))
+))
+
 const piRows = computed(() => {
   const keyword = piSearchKeyword.value.trim().toLowerCase()
-  if (!keyword) return piRowsSource.value
-  return piRowsSource.value.filter((row) => [row.id, row.clientName, row.currency, row.deliveryDate].some((value) => value.toLowerCase().includes(keyword)))
+  if (!keyword) return availablePiRows.value
+  return availablePiRows.value.filter((row) => (
+    [row.id, row.clientName, row.currency, row.deliveryDate]
+      .some((value) => String(value ?? '').toLowerCase().includes(keyword))
+  ))
 })
 
 const clientRows = createClientRows(clientSearchKeyword)
@@ -938,6 +960,22 @@ function goToDetail(id) {
 }
 
 function handlePiSelect(pi) {
+  const selectionInfo = getPiPoSelectionInfo(
+    pi,
+    poRowsData.value,
+    shipmentOrderDocuments.value,
+    shipmentStatusDocuments.value,
+    productionOrderDocuments.value,
+    ciDocuments.value,
+    plDocuments.value,
+    formMode.value === 'edit' ? selectedRow.value?.id || '' : '',
+  )
+
+  if (!selectionInfo.selectable) {
+    warning(formatPiPoSelectionMessage(selectionInfo, pi?.id))
+    return
+  }
+
   selectedPi.value = pi
   piSearchOpen.value = false
   piSearchKeyword.value = ''

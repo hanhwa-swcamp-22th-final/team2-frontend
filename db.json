@@ -5180,6 +5180,42 @@
       "manager": "김영업",
       "status": "발송",
       "deliveryDate": "2025/08/20"
+    },
+    {
+      "id": "PI2025021",
+      "issueDate": "2025/07/15",
+      "clientName": "Berlin Digital AG",
+      "country": "Germany",
+      "itemName": "Wireless Presenter",
+      "amount": 7800,
+      "currency": "EUR",
+      "manager": "정영업",
+      "status": "확정",
+      "deliveryDate": "2025/08/28"
+    },
+    {
+      "id": "PI2025022",
+      "issueDate": "2025/07/18",
+      "clientName": "Singapore Electronics Pte",
+      "country": "Singapore",
+      "itemName": "USB-C Hub 7-in-1",
+      "amount": 11800,
+      "currency": "USD",
+      "manager": "황영업",
+      "status": "확정",
+      "deliveryDate": "2025/09/02"
+    },
+    {
+      "id": "PI2025023",
+      "issueDate": "2025/07/22",
+      "clientName": "Paris Digital SAS",
+      "country": "France",
+      "itemName": "Mechanical Keyboard",
+      "amount": 9600,
+      "currency": "EUR",
+      "manager": "강영업",
+      "status": "확정",
+      "deliveryDate": "2025/09/05"
     }
   ],
   "po": [
