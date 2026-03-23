@@ -8,6 +8,10 @@ const ROLE_ROUTE_ALLOWLIST = {
 export function canAccessRouteByRole(user, routeName) {
   if (!user || !routeName) return false
 
+  if (String(routeName) === 'users') {
+    return user.role === 'admin'
+  }
+
   if (user.role === 'admin' || user.role === 'sales') {
     return true
   }
@@ -22,6 +26,10 @@ export function canAccessRouteByRole(user, routeName) {
 
 export function canAccessPathByRole(user, path) {
   if (!user || !path) return false
+
+  if (path.startsWith('/users')) {
+    return user.role === 'admin'
+  }
 
   if (user.role === 'admin' || user.role === 'sales') {
     return true
