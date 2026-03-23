@@ -21,6 +21,15 @@ const linkedPo = computed(() => poDocuments.value.find((row) => row.id === detai
 const linkedShipmentOrder = computed(() => shipmentOrderDocuments.value.find((row) => row.id === detail.value?.shipmentOrderId))
 
 const currentStep = computed(() => (detail.value?.status === '출하완료' ? 2 : 1))
+function parseNumericValue(value) {
+  const numeric = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+const totalItemQuantity = computed(() => (
+  detail.value?.items.reduce((sum, item) => sum + parseNumericValue(item.quantity), 0) ?? 0
+))
+
 const summaryRows = computed(() => {
   if (!detail.value) return []
 
@@ -147,11 +156,30 @@ function completeShipment() {
 
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 class="mb-3 font-bold text-slate-800">품목 내역</h3>
-          <div class="space-y-2 text-xs">
-            <div v-for="item in detail.items" :key="item.name" class="flex justify-between rounded bg-slate-50 p-2">
-              <span>{{ item.name }}</span>
-              <span class="font-medium">{{ item.quantity }}</span>
-            </div>
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[420px] text-sm">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="p-3 text-left">품목</th>
+                  <th class="p-3 text-right">수량</th>
+                  <th class="p-3 text-right">금액</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y">
+                <tr v-for="item in detail.items" :key="item.name">
+                  <td class="p-3">{{ item.name }}</td>
+                  <td class="p-3 text-right">{{ item.quantity }}</td>
+                  <td class="p-3 text-right text-slate-500">-</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="border-t border-slate-200 bg-slate-50">
+                  <td class="p-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">합계</td>
+                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalItemQuantity.toLocaleString('ko-KR') }}</td>
+                  <td class="p-3 text-right text-slate-500">-</td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
         </div>
       </div>

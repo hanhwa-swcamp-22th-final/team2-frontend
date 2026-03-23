@@ -96,6 +96,13 @@ function formatCurrencyValue(currency, value) {
   return `${symbol}${Math.round(value).toLocaleString('en-US')}`
 }
 
+const totalItemQuantity = computed(() => (
+  detail.value?.items.reduce((sum, item) => sum + parseNumericValue(item.quantity ?? item.qty), 0) ?? 0
+))
+
+const quantityUnitLabel = computed(() => detail.value?.items?.[0]?.unit || '')
+const itemAmountSummary = computed(() => detail.value?.totalAmount || '-')
+
 function buildLinkedDocuments(row) {
   const currentLinks = [...(row.linkedDocuments ?? [])]
   const linkedPi = piDocuments.value.find((pi) => pi.id === (row.piId || row.linkedPiId))
@@ -989,11 +996,14 @@ function cancelDeleteApprovalRequest() {
                 </tr>
               </tbody>
               <tfoot>
-                <tr class="border-t border-slate-200">
-                  <td colspan="4" class="p-3 text-right text-xs font-bold uppercase tracking-wider text-slate-600">
-                    합계
+                <tr class="border-t border-slate-200 bg-slate-50">
+                  <td class="p-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">합계</td>
+                  <td></td>
+                  <td class="p-3 text-right font-semibold text-slate-900">
+                    {{ totalItemQuantity.toLocaleString('ko-KR') }}{{ quantityUnitLabel ? ` ${quantityUnitLabel}` : '' }}
                   </td>
-                  <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ detail.totalAmount }}</td>
+                  <td></td>
+                  <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ itemAmountSummary }}</td>
                   <td></td>
                 </tr>
               </tfoot>

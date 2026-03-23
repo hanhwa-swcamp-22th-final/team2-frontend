@@ -26,6 +26,22 @@ const detail = computed(() => ciDocuments.value.find((row) => row.id === route.p
 const linkedPo = computed(() => poDocuments.value.find((row) => row.id === detail.value?.poId))
 const linkedShipmentOrder = computed(() => shipmentOrderDocuments.value.find((row) => row.id === detail.value?.shipmentOrderId))
 
+function parseNumericValue(value) {
+  const numeric = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+const totalItemQuantity = computed(() => (
+  detail.value?.items.reduce((sum, item) => sum + parseNumericValue(item.quantity), 0) ?? 0
+))
+
+const totalItemAmount = computed(() => {
+  if (!detail.value?.items.length) return detail.value?.amount || '-'
+  const symbol = detail.value.currency === 'EUR' ? '€' : detail.value.currency === 'JPY' ? '¥' : detail.value.currency === 'KRW' ? '₩' : '$'
+  const amount = detail.value.items.reduce((sum, item) => sum + parseNumericValue(item.amount), 0)
+  return `${symbol}${amount.toLocaleString('en-US')}`
+})
+
 const summaryRows = computed(() => {
   if (!detail.value) return []
 
@@ -192,6 +208,16 @@ function goToLinkedDocument(document) {
                   <td class="p-3 text-slate-600">{{ item.remark || '-' }}</td>
                 </tr>
               </tbody>
+              <tfoot>
+                <tr class="border-t border-slate-200 bg-slate-50">
+                  <td class="p-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">합계</td>
+                  <td></td>
+                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalItemQuantity.toLocaleString('ko-KR') }}</td>
+                  <td></td>
+                  <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ totalItemAmount }}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>

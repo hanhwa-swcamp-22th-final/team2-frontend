@@ -26,6 +26,27 @@ const detail = computed(() => plDocuments.value.find((row) => row.id === route.p
 const linkedPo = computed(() => poDocuments.value.find((row) => row.id === detail.value?.poId))
 const linkedShipmentOrder = computed(() => shipmentOrderDocuments.value.find((row) => row.id === detail.value?.shipmentOrderId))
 
+function parseNumericValue(value) {
+  const numeric = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+const totalItemQuantity = computed(() => (
+  detail.value?.items.reduce((sum, item) => sum + parseNumericValue(item.quantity), 0) ?? 0
+))
+
+const totalNetWeight = computed(() => (
+  detail.value?.items.reduce((sum, item) => sum + parseNumericValue(item.netWeight), 0) ?? 0
+))
+
+const totalGrossWeight = computed(() => (
+  detail.value?.items.reduce((sum, item) => sum + parseNumericValue(item.grossWeight), 0) ?? 0
+))
+
+const totalMeasurement = computed(() => (
+  detail.value?.items.reduce((sum, item) => sum + parseNumericValue(item.measurement), 0) ?? 0
+))
+
 const summaryRows = computed(() => {
   if (!detail.value) return []
 
@@ -190,6 +211,15 @@ function goToLinkedDocument(document) {
                   <td class="p-3 text-right">{{ item.measurement }}</td>
                 </tr>
               </tbody>
+              <tfoot>
+                <tr class="border-t border-slate-200 bg-slate-50">
+                  <td class="p-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">합계</td>
+                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalItemQuantity.toLocaleString('ko-KR') }}</td>
+                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalNetWeight.toLocaleString('ko-KR') }}</td>
+                  <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ totalGrossWeight.toLocaleString('ko-KR') }}</td>
+                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalMeasurement.toFixed(2) }}</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>

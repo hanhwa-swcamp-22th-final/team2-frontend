@@ -237,9 +237,11 @@ function handlePreviewPrint() {
                 </tr>
               </tbody>
               <tfoot>
-                <tr class="border-t border-slate-200">
-                  <td colspan="3" class="p-3 text-right text-xs font-bold uppercase tracking-wider text-slate-600">총수량</td>
-                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalQuantity }} EA</td>
+                <tr class="border-t border-slate-200 bg-slate-50">
+                  <td class="p-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">합계</td>
+                  <td></td>
+                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalQuantity.toLocaleString('ko-KR') }} EA</td>
+                  <td></td>
                   <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ totalAmount }}</td>
                   <td></td>
                 </tr>
