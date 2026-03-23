@@ -41,6 +41,7 @@ import {
 import {
   formatPoShipmentLockMessage,
   getPoShipmentLockInfo,
+  resolvePoShipmentDocumentStatus,
 } from '@/utils/documentShipmentLock'
 import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
 
@@ -89,6 +90,7 @@ const statusOptions = [
   { value: '초안', label: '초안' },
   { value: '발송', label: '발송' },
   { value: '확정', label: '확정' },
+  { value: '출하완료', label: '출하완료' },
   { value: '취소', label: '취소' },
 ]
 const piRowsSource = usePiDocuments()
@@ -124,7 +126,18 @@ const approvalChangeColumns = [
   { key: 'after', label: '변경값', align: 'left' },
 ]
 
-const rowsData = usePoDocuments()
+const poRowsData = usePoDocuments()
+const rowsData = computed(() => (
+  poRowsData.value.map((row) => ({
+    ...row,
+    status: resolvePoShipmentDocumentStatus(
+      row.id,
+      row.status,
+      shipmentOrderDocuments.value,
+      shipmentStatusDocuments.value,
+    ),
+  }))
+))
 const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
   keywordFields: ['id', 'clientName', 'country', 'itemName', 'amount', 'manager', 'status', 'issueDate', 'deliveryDate'],
   issueDateField: 'issueDate',
@@ -374,7 +387,7 @@ function getRequestedAt() {
 }
 
 function buildNextPoId() {
-  return `PO26${String(rowsData.value.length + 1).padStart(3, '0')}`
+  return `PO26${String(poRowsData.value.length + 1).padStart(3, '0')}`
 }
 
 function createApprovalReviewSnapshot({
@@ -664,7 +677,7 @@ function confirmCreateApprovalRequest() {
     helperText: '등록 요청은 팀장 승인 후 확정되며, 승인 전까지 문서는 결재대기 상태로 유지됩니다.',
   })
 
-  rowsData.value = [
+  poRowsData.value = [
     {
       id: buildNextPoId(),
       ...nextRow,
@@ -676,7 +689,7 @@ function confirmCreateApprovalRequest() {
         requestedAt,
       }),
     },
-    ...rowsData.value,
+    ...poRowsData.value,
   ]
 
   createApprovalRequestOpen.value = false
@@ -712,7 +725,7 @@ function confirmEditApprovalRequest() {
     helperText: '수정 요청은 승인 전까지 확정되지 않으며, 반려 시 요청 상태만 반영됩니다.',
   })
 
-  rowsData.value = rowsData.value.map((row) => (
+  poRowsData.value = poRowsData.value.map((row) => (
     row.id === pendingEditRequest.value.id
       ? {
         ...row,
@@ -820,7 +833,7 @@ function confirmDeleteApprovalRequest() {
     helperText: '삭제 요청은 승인 전까지 실제 삭제되지 않으며, 승인 시 문서 상태가 취소로 전환됩니다.',
   })
 
-  rowsData.value = rowsData.value.map((row) => (
+  poRowsData.value = poRowsData.value.map((row) => (
     row.id === selectedRow.value?.id
       ? {
         ...row,

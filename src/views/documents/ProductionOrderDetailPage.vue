@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import ProductionOrderTemplate from '@/components/domain/document/ProductionOrderTemplate.vue'
 import { useDocumentItemCatalog } from '@/composables/useDocumentItemCatalog'
@@ -13,6 +14,7 @@ import { usePoDocuments } from '@/stores/poDocuments'
 import { useToast } from '@/composables/useToast'
 import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
+import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
 
 const route = useRoute()
 const router = useRouter()
@@ -261,7 +263,7 @@ onMounted(() => {
                   <td></td>
                   <td></td>
                   <td class="p-3 text-right font-semibold text-slate-900">{{ totalQuantity.toLocaleString('ko-KR') }} EA</td>
-                  <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ totalWeight }}</td>
+                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalWeight }}</td>
                   <td></td>
                 </tr>
               </tfoot>
@@ -288,6 +290,9 @@ onMounted(() => {
             >
               <i class="fas fa-file-contract" aria-hidden="true"></i>
               {{ document.id }}
+              <StatusBadge :value="document.status" :variant="document.status">
+                {{ formatReferenceDocumentStatus(document.id, document.status) }}
+              </StatusBadge>
             </button>
           </div>
         </div>

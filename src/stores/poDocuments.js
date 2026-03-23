@@ -30,7 +30,7 @@ function createInitialPoDocuments() {
       ],
       linkedDocuments: [
         { id: 'PI26001', status: '확정' },
-        { id: 'SO2026001', status: '준비중' },
+        { id: 'SO2026001', status: '준비완료' },
       ],
       revisionHistory: [],
     },
@@ -79,7 +79,7 @@ function createInitialPoDocuments() {
       incoterms: 'CFR',
       namedPlace: 'LOS ANGELES',
       manager: '정영업',
-      status: '초안',
+      status: '출하완료',
       deliveryDate: '2026/06/05',
       sourceDeliveryDate: '2026/06/01',
       deliveryDateOverride: true,

@@ -4,7 +4,7 @@ function createInitialShipmentOrderDocuments() {
   return [
     {
       id: 'SO2026001',
-      status: '출하완료',
+      status: '준비완료',
       issueDate: '2026/02/24',
       poId: 'PO26001',
       clientName: 'COOLSAY SDN BHD',
@@ -44,7 +44,7 @@ function createInitialShipmentOrderDocuments() {
     },
     {
       id: 'SO2026003',
-      status: '준비완료',
+      status: '출하완료',
       issueDate: '2026/03/14',
       poId: 'PO26003',
       clientName: 'Pacific Trading Inc.',

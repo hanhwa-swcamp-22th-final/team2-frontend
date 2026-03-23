@@ -33,6 +33,7 @@ import {
   formatPiShipmentLockMessage,
   getPiShipmentLockInfo,
 } from '@/utils/documentShipmentLock'
+import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
 import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
 import { clientSearchColumns } from '@/utils/searchModalColumns'
 
@@ -943,7 +944,9 @@ function cancelDeleteApprovalRequest() {
               >
                 <i class="fas fa-file-contract" aria-hidden="true"></i>
                 {{ document.id }}
-                <StatusBadge :value="document.status" />
+                <StatusBadge :value="document.status" :variant="document.status">
+                  {{ formatReferenceDocumentStatus(document.id, document.status) }}
+                </StatusBadge>
               </button>
             </template>
             <div v-else class="text-xs text-slate-400">연결 문서 없음</div>

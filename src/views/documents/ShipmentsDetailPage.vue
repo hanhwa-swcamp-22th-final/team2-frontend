@@ -10,6 +10,7 @@ import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import { useToast } from '@/composables/useToast'
+import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
 
 const route = useRoute()
 const router = useRouter()
@@ -84,6 +85,32 @@ function completeShipment() {
       ? { ...row, status: '출하완료', updatedAt: '2026/03/31 10:00' }
       : row
   ))
+  shipmentOrderDocuments.value = shipmentOrderDocuments.value.map((row) => (
+    row.id === detail.value.shipmentOrderId
+      ? { ...row, status: '출하완료' }
+      : row
+  ))
+  poDocuments.value = poDocuments.value.map((row) => {
+    if (row.id !== detail.value.poId) return row
+
+    const currentLinks = row.linkedDocuments ?? []
+    const hasShipmentOrderLink = currentLinks.some((document) => document.id === detail.value.shipmentOrderId)
+
+    return {
+      ...row,
+      status: '출하완료',
+      linkedDocuments: [
+        ...currentLinks.map((document) => (
+          document.id === detail.value.shipmentOrderId
+            ? { ...document, status: '출하완료' }
+            : document
+        )),
+        ...(!hasShipmentOrderLink
+          ? [{ id: detail.value.shipmentOrderId, status: '출하완료' }]
+          : []),
+      ],
+    }
+  })
   toast.success(`${detail.value.id}가 출하완료 처리되었습니다.`)
 }
 
@@ -172,12 +199,16 @@ onMounted(() => {
             <button type="button" class="flex w-full items-center gap-2 rounded-lg p-2.5 text-left text-brand-500 transition hover:bg-slate-50" @click="goToPo">
               <i class="fas fa-file-contract" aria-hidden="true"></i>
               PO: {{ detail.poId }}
-              <StatusBadge v-if="linkedPo" :value="linkedPo.status" />
+              <StatusBadge v-if="linkedPo" :value="linkedPo.status" :variant="linkedPo.status">
+                {{ formatReferenceDocumentStatus(linkedPo.id, linkedPo.status) }}
+              </StatusBadge>
             </button>
             <button type="button" class="flex w-full cursor-pointer items-center gap-2 rounded-lg bg-slate-50 p-2.5 text-left text-slate-600 transition hover:bg-slate-100" @click="goToShipmentOrder">
               <i class="fas fa-truck" aria-hidden="true"></i>
               출하지시서: {{ detail.shipmentOrderId }}
-              <StatusBadge v-if="linkedShipmentOrder" :value="linkedShipmentOrder.status" />
+              <StatusBadge v-if="linkedShipmentOrder" :value="linkedShipmentOrder.status" :variant="linkedShipmentOrder.status">
+                {{ formatReferenceDocumentStatus(linkedShipmentOrder.id, linkedShipmentOrder.status) }}
+              </StatusBadge>
             </button>
           </div>
         </div>

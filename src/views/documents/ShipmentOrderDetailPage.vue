@@ -13,6 +13,7 @@ import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import { useToast } from '@/composables/useToast'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
+import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
 
 const route = useRoute()
 const router = useRouter()
@@ -239,7 +240,7 @@ onMounted(() => {
                   <td></td>
                   <td></td>
                   <td class="p-3 text-right font-semibold text-slate-900">{{ totalQuantity.toLocaleString('ko-KR') }} EA</td>
-                  <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ totalWeight }}</td>
+                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalWeight }}</td>
                   <td></td>
                 </tr>
               </tfoot>
@@ -266,7 +267,9 @@ onMounted(() => {
             >
               <i :class="document.iconClass" aria-hidden="true"></i>
               {{ document.label }}
-              <StatusBadge :value="document.status" />
+              <StatusBadge :value="document.status" :variant="document.status">
+                {{ formatReferenceDocumentStatus(document.id, document.status) }}
+              </StatusBadge>
             </button>
           </div>
         </div>

@@ -12,6 +12,7 @@ import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useToast } from '@/composables/useToast'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
+import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
 
 const route = useRoute()
 const router = useRouter()
@@ -241,7 +242,9 @@ function goToLinkedDocument(document) {
             >
               <i :class="document.iconClass" aria-hidden="true"></i>
               {{ document.label }}
-              <StatusBadge :value="document.status" />
+              <StatusBadge :value="document.status" :variant="document.status">
+                {{ formatReferenceDocumentStatus(document.id, document.status) }}
+              </StatusBadge>
             </button>
             <div v-if="!linkedDocuments.length" class="text-xs text-slate-400">참조 문서 없음</div>
           </div>

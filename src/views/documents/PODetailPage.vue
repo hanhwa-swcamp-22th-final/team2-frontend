@@ -33,7 +33,9 @@ import { openDocumentOutputByType } from '@/utils/documentOutput'
 import {
   formatPoShipmentLockMessage,
   getPoShipmentLockInfo,
+  resolvePoShipmentDocumentStatus,
 } from '@/utils/documentShipmentLock'
+import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
 import { clientSearchColumns } from '@/utils/searchModalColumns'
 
 const route = useRoute()
@@ -269,6 +271,12 @@ function normalizeDetail(row) {
 
   return {
     ...row,
+    status: resolvePoShipmentDocumentStatus(
+      row.id,
+      row.status,
+      shipmentOrderDocuments.value,
+      shipmentStatusDocuments.value,
+    ),
     buyer: row.buyerName || row.buyer || '-',
     incoterms: row.incoterms ? `${row.incoterms}${row.namedPlace ? ` ${row.namedPlace}` : ''}` : '-',
     linkedDocuments: buildLinkedDocuments(row),
@@ -1054,7 +1062,9 @@ function cancelDeleteApprovalRequest() {
                 aria-hidden="true"
               ></i>
               {{ document.id }}
-              <StatusBadge :value="document.status" />
+              <StatusBadge :value="document.status" :variant="document.status">
+                {{ formatReferenceDocumentStatus(document.id, document.status) }}
+              </StatusBadge>
             </button>
           </div>
         </div>

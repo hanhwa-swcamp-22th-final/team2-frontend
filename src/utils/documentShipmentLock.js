@@ -2,6 +2,29 @@ function isShipmentCompletedStatus(status) {
   return String(status ?? '').trim() === '출하완료'
 }
 
+export function resolvePoShipmentDocumentStatus(
+  poId,
+  currentStatus,
+  shipmentOrderDocuments = [],
+  shipmentStatusDocuments = [],
+) {
+  if (!poId) return currentStatus
+
+  const linkedShipmentStatuses = shipmentStatusDocuments.filter((row) => row.poId === poId)
+  if (linkedShipmentStatuses.length > 0) {
+    return linkedShipmentStatuses.some((row) => isShipmentCompletedStatus(row.status))
+      ? '출하완료'
+      : currentStatus
+  }
+
+  const linkedShipmentOrders = shipmentOrderDocuments.filter((row) => row.poId === poId)
+  if (linkedShipmentOrders.some((row) => isShipmentCompletedStatus(row.status))) {
+    return '출하완료'
+  }
+
+  return currentStatus
+}
+
 function getShipmentCompletionReferencesForPo(poId, shipmentOrderDocuments = [], shipmentStatusDocuments = []) {
   if (!poId) return []
 

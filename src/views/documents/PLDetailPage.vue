@@ -12,6 +12,7 @@ import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useToast } from '@/composables/useToast'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
+import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
 
 const route = useRoute()
 const router = useRouter()
@@ -52,8 +53,8 @@ const summaryRows = computed(() => {
 
   return [
     { label: '거래처', value: detail.value.clientName },
-    { label: '총수량', value: detail.value.totalQuantity || '-' },
-    { label: '총중량', value: detail.value.totalGrossWeight || '-' },
+    { label: '총수량', value: detail.value.totalQuantity ? `${detail.value.totalQuantity} EA` : '-' },
+    { label: '총중량', value: detail.value.totalGrossWeight ? `${detail.value.totalGrossWeight} kg` : '-' },
     { label: '발행일', value: detail.value.issueDate || '-' },
   ]
 })
@@ -66,8 +67,8 @@ const previewFields = computed(() => {
     { label: '거래처', value: detail.value.clientName },
     { label: '국가', value: detail.value.country },
     { label: '인코텀즈', value: detail.value.incoterms || '-' },
-    { label: '총수량', value: detail.value.totalQuantity },
-    { label: '총중량', value: detail.value.totalGrossWeight },
+    { label: '총수량', value: detail.value.totalQuantity ? `${detail.value.totalQuantity} EA` : '-' },
+    { label: '총중량', value: detail.value.totalGrossWeight ? `${detail.value.totalGrossWeight} kg` : '-' },
   ]
 })
 
@@ -184,8 +185,8 @@ function goToLinkedDocument(document) {
             <div><span class="text-slate-500">결제조건</span><div class="mt-0.5">{{ detail.paymentTerms || '-' }}</div></div>
             <div><span class="text-slate-500">Port of Discharge</span><div class="mt-0.5">{{ detail.portOfDischarge || '-' }}</div></div>
             <div><span class="text-slate-500">Sailing on or about</span><div class="mt-0.5">{{ detail.deliveryDate || '-' }}</div></div>
-            <div><span class="text-slate-500">총수량</span><div class="mt-0.5 font-semibold text-slate-900">{{ detail.totalQuantity || '-' }}</div></div>
-            <div><span class="text-slate-500">총중량</span><div class="mt-0.5 font-semibold text-slate-900">{{ detail.totalGrossWeight || '-' }}</div></div>
+            <div><span class="text-slate-500">총수량</span><div class="mt-0.5 font-semibold text-slate-900">{{ detail.totalQuantity ? `${detail.totalQuantity} EA` : '-' }}</div></div>
+            <div><span class="text-slate-500">총중량</span><div class="mt-0.5 font-semibold text-slate-900">{{ detail.totalGrossWeight ? `${detail.totalGrossWeight} kg` : '-' }}</div></div>
           </div>
         </div>
 
@@ -197,9 +198,9 @@ function goToLinkedDocument(document) {
                 <tr>
                   <th class="p-3 text-left">품목</th>
                   <th class="p-3 text-right">수량</th>
-                  <th class="p-3 text-right">Net Weight</th>
-                  <th class="p-3 text-right">Gross Weight</th>
-                  <th class="p-3 text-right">Volume</th>
+                  <th class="p-3 text-right">Net Weight (kg)</th>
+                  <th class="p-3 text-right">Gross Weight (kg)</th>
+                  <th class="p-3 text-right">Volume (CBM)</th>
                 </tr>
               </thead>
               <tbody class="divide-y">
@@ -214,10 +215,10 @@ function goToLinkedDocument(document) {
               <tfoot>
                 <tr class="border-t border-slate-200 bg-slate-50">
                   <td class="p-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">합계</td>
-                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalItemQuantity.toLocaleString('ko-KR') }}</td>
-                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalNetWeight.toLocaleString('ko-KR') }}</td>
-                  <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ totalGrossWeight.toLocaleString('ko-KR') }}</td>
-                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalMeasurement.toFixed(2) }}</td>
+                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalItemQuantity.toLocaleString('ko-KR') }} EA</td>
+                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalNetWeight.toLocaleString('ko-KR') }} kg</td>
+                  <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ totalGrossWeight.toLocaleString('ko-KR') }} kg</td>
+                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalMeasurement.toFixed(2) }} CBM</td>
                 </tr>
               </tfoot>
             </table>
@@ -243,7 +244,9 @@ function goToLinkedDocument(document) {
             >
               <i :class="document.iconClass" aria-hidden="true"></i>
               {{ document.label }}
-              <StatusBadge :value="document.status" />
+              <StatusBadge :value="document.status" :variant="document.status">
+                {{ formatReferenceDocumentStatus(document.id, document.status) }}
+              </StatusBadge>
             </button>
             <div v-if="!linkedDocuments.length" class="text-xs text-slate-400">참조 문서 없음</div>
           </div>
