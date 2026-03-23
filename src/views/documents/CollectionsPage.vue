@@ -33,16 +33,16 @@ const statusConfirmOpen = ref(false)
 const pendingStatusChange = ref(null)
 
 const columns = [
-  { key: 'poId', label: 'PO 번호', width: '140px' },
-  { key: 'clientName', label: '거래처', width: '220px' },
-  { key: 'country', label: '국가', width: '110px' },
-  { key: 'manager', label: '영업담당자', width: '120px' },
-  { key: 'currency', label: '통화', width: '90px' },
-  { key: 'salesAmount', label: '외화금액', width: '150px' },
-  { key: 'salesAmountKrw', label: '원화환산액', width: '170px' },
-  { key: 'issueDate', label: '발행일자', width: '130px' },
-  { key: 'collectionDate', label: '수금일자', width: '130px' },
-  { key: 'status', label: '수금상태', width: '120px' },
+  { key: 'poId', label: 'PO 번호', align: 'center', width: '140px' },
+  { key: 'clientName', label: '거래처', align: 'left', width: '220px' },
+  { key: 'country', label: '국가', align: 'center', width: '110px' },
+  { key: 'manager', label: '영업담당자', align: 'left', width: '120px' },
+  { key: 'currency', label: '통화', align: 'center', width: '90px' },
+  { key: 'salesAmount', label: '매출액(외화)', align: 'right', width: '150px' },
+  { key: 'salesAmountKrw', label: '환산매출액(KRW)', align: 'right', width: '170px' },
+  { key: 'issueDate', label: '발행일', align: 'center', width: '130px' },
+  { key: 'collectionDate', label: '수금일', align: 'center', width: '130px' },
+  { key: 'status', label: '수금 상태', align: 'center', width: '120px' },
 ]
 
 const rowsData = useSalesCollectionDocuments()
@@ -294,13 +294,13 @@ function downloadCurrentTablePdf() {
     { key: 'poId', label: 'PO 번호', align: 'center' },
     { key: 'clientName', label: '거래처', align: 'left' },
     { key: 'country', label: '국가', align: 'center' },
-    { key: 'manager', label: '영업담당자', align: 'center' },
+    { key: 'manager', label: '영업담당자', align: 'left' },
     { key: 'currency', label: '통화', align: 'center' },
-    { key: 'salesAmount', label: '외화금액', align: 'right' },
-    { key: 'salesAmountKrw', label: '원화환산액', align: 'right' },
-    { key: 'issueDate', label: '발행일자', align: 'center' },
-    { key: 'collectionDate', label: '수금일자', align: 'center' },
-    { key: 'status', label: '수금상태', align: 'center' },
+    { key: 'salesAmount', label: '매출액(외화)', align: 'right' },
+    { key: 'salesAmountKrw', label: '환산매출액(KRW)', align: 'right' },
+    { key: 'issueDate', label: '발행일', align: 'center' },
+    { key: 'collectionDate', label: '수금일', align: 'center' },
+    { key: 'status', label: '수금 상태', align: 'center' },
   ]
 
   const exportRows = []
@@ -532,7 +532,7 @@ function downloadCurrentTablePdf() {
                 <td class="border-b border-r border-slate-200 px-4 py-3 text-center text-sm text-slate-700">
                   {{ row.country }}
                 </td>
-                <td class="border-b border-r border-slate-200 px-4 py-3 text-center text-sm text-slate-700">
+                <td class="border-b border-r border-slate-200 px-4 py-3 text-left text-sm text-slate-700">
                   {{ row.manager }}
                 </td>
                 <td class="border-b border-r border-slate-200 px-4 py-3 text-center text-sm">

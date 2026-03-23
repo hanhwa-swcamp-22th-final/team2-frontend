@@ -21,7 +21,9 @@ import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useAuthStore } from '@/stores/auth'
+import { useCiDocuments } from '@/stores/ciDocuments'
 import { usePiDocuments } from '@/stores/piDocuments'
+import { usePlDocuments } from '@/stores/plDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
@@ -39,6 +41,13 @@ import {
   REGISTRATION_REQUEST_STATUS,
 } from '@/utils/documentApproval'
 import { openDocumentOutputByType, openTableOutput } from '@/utils/documentOutput'
+import {
+  applyShipmentOrderToCommercialDocuments,
+  createShipmentOrderFromPo,
+  createShipmentStatusFromOrder,
+  ensureCommercialDocumentsForPo,
+  recordDocumentEmailActivities,
+} from '@/utils/documentActivityEmail'
 import {
   formatPoShipmentLockMessage,
   getPoShipmentLockInfo,
@@ -71,19 +80,21 @@ const productSearchKeyword = ref('')
 const clientSearchContext = ref('filter')
 const pendingCreateFormValue = ref(null)
 const pendingEditRequest = ref(null)
+const ciDocuments = useCiDocuments()
 const piRowsSource = usePiDocuments()
+const plDocuments = usePlDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
 const { clientRowsSource, createClientRows, createProductRows } = useSearchModalLookups()
 
 const columns = [
-  { key: 'id', label: 'PO번호', align: 'center', width: '140px' },
+  { key: 'id', label: 'PO 번호', align: 'center', width: '140px' },
   { key: 'issueDate', label: '발행일', align: 'center', width: '130px' },
-  { key: 'clientName', label: '거래처', align: 'center', width: '220px' },
+  { key: 'clientName', label: '거래처', align: 'left', width: '220px' },
   { key: 'country', label: '국가', align: 'center', width: '120px' },
-  { key: 'itemName', label: '품목명', align: 'center', width: '220px' },
+  { key: 'itemName', label: '품목명', align: 'left', width: '220px' },
   { key: 'amount', label: '총액', align: 'right', width: '140px' },
-  { key: 'manager', label: '영업담당자', align: 'center', width: '120px' },
+  { key: 'manager', label: '영업담당자', align: 'left', width: '120px' },
   { key: 'status', label: '상태', align: 'center', width: '120px' },
   { key: 'deliveryDate', label: '납기', align: 'center', width: '130px' },
   { key: 'actions', label: '', align: 'center', width: '90px' },
@@ -673,12 +684,18 @@ const deleteApprovalItemSummaryRows = computed(() => {
   ]
 })
 
-function confirmCreateApprovalRequest() {
+async function confirmCreateApprovalRequest() {
   if (!pendingCreateFormValue.value) return
 
+  const nextPoId = buildNextPoId()
   const nextRow = buildRowPayload(pendingCreateFormValue.value)
   const requesterName = getCurrentRequesterName()
   const requestedAt = getRequestedAt()
+  const approvalMeta = createRegistrationApprovalMeta({
+    approver: pendingCreateFormValue.value.approver,
+    requesterName,
+    requestedAt,
+  })
   const approvalReview = createApprovalReviewSnapshot({
     title: 'PO 등록 결재 검토',
     message: '선택한 결재자에게 PO 등록 결재 요청이 접수되었습니다. 연결 PI 기준 정보와 품목 내역을 검토합니다.',
@@ -693,26 +710,70 @@ function confirmCreateApprovalRequest() {
     helperText: '등록 요청은 팀장 승인 후 확정되며, 승인 전까지 문서는 결재대기 상태로 유지됩니다.',
   })
 
-  poRowsData.value = [
-    {
-      id: buildNextPoId(),
-      ...nextRow,
-      manager: requesterName,
-      approvalReview,
-      ...createRegistrationApprovalMeta({
-        approver: pendingCreateFormValue.value.approver,
-        requesterName,
-        requestedAt,
-      }),
-    },
-    ...poRowsData.value,
+  const createdPoRow = {
+    id: nextPoId,
+    ...nextRow,
+    manager: requesterName,
+    approvalReview,
+    ...approvalMeta,
+  }
+
+  const { ciDocument, plDocument, ciCreated, plCreated } = ensureCommercialDocumentsForPo(
+    createdPoRow,
+    ciDocuments.value,
+    plDocuments.value,
+  )
+  const nextShipmentOrder = createShipmentOrderFromPo(
+    createdPoRow,
+    shipmentOrderDocuments.value,
+    requesterName,
+    createdPoRow.piId ? [{ id: createdPoRow.piId, status: getLinkedPiById(createdPoRow.piId)?.status || '-' }] : [],
+  )
+  const nextShipmentStatus = createShipmentStatusFromOrder(
+    nextShipmentOrder,
+    shipmentStatusDocuments.value,
+    createdPoRow.status,
+  )
+  createdPoRow.linkedDocuments = [
+    ...(createdPoRow.piId ? [{ id: createdPoRow.piId, status: getLinkedPiById(createdPoRow.piId)?.status || '-' }] : []),
+    { id: nextShipmentOrder.id, status: nextShipmentOrder.status },
   ]
+
+  poRowsData.value = [createdPoRow, ...poRowsData.value]
+  shipmentOrderDocuments.value = [nextShipmentOrder, ...shipmentOrderDocuments.value]
+  shipmentStatusDocuments.value = [nextShipmentStatus, ...shipmentStatusDocuments.value]
+
+  if (ciCreated) {
+    ciDocuments.value = [ciDocument, ...ciDocuments.value]
+  }
+
+  if (plCreated) {
+    plDocuments.value = [plDocument, ...plDocuments.value]
+  }
+
+  ciDocuments.value = applyShipmentOrderToCommercialDocuments(ciDocuments.value, createdPoRow.id, nextShipmentOrder.id)
+  plDocuments.value = applyShipmentOrderToCommercialDocuments(plDocuments.value, createdPoRow.id, nextShipmentOrder.id)
 
   createApprovalRequestOpen.value = false
   pendingCreateFormValue.value = null
   formOpen.value = false
   selectedPi.value = null
   selectedClient.value = null
+
+  try {
+    await recordDocumentEmailActivities({
+      clientName: createdPoRow.clientName,
+      poId: createdPoRow.id,
+      sender: requesterName,
+      title: `[SalesBoost] ${createdPoRow.id} 관련 문서 발송`,
+      types: ['출하지시서', 'CI', 'PL'],
+      attachments: [nextShipmentOrder.id, ciDocument.id, plDocument.id].map((id) => `${id}.pdf`),
+    })
+  } catch (emailError) {
+    console.error('PO 생성 후 관련 문서 메일 발송 이력 기록 실패', emailError)
+    warning('PO는 생성되었지만 관련 문서 메일 발송 이력 기록에는 실패했습니다.')
+  }
+
   success('PO 등록 결재 요청이 전송되었습니다.')
 }
 

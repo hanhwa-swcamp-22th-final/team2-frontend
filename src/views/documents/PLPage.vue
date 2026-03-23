@@ -51,11 +51,11 @@ const productSearchColumns = [
 ]
 
 const columns = [
-  { key: 'id', label: 'PL번호', align: 'center', width: '150px' },
+  { key: 'id', label: 'PL 번호', align: 'center', width: '150px' },
   { key: 'issueDate', label: '발행일', align: 'center', width: '130px' },
-  { key: 'clientName', label: '거래처', align: 'center', width: '220px' },
+  { key: 'clientName', label: '거래처', align: 'left', width: '220px' },
   { key: 'country', label: '국가', align: 'center', width: '120px' },
-  { key: 'itemName', label: '품목명', align: 'center', width: '220px' },
+  { key: 'itemName', label: '품목명', align: 'left', width: '220px' },
   { key: 'grossWeight', label: '총중량(kg)', align: 'right', width: '150px' },
   { key: 'actions', label: '', align: 'center', width: '120px' },
 ]

@@ -40,7 +40,10 @@ function detectCurrencySymbol(value) {
   return '$'
 }
 
-const detail = computed(() => productionOrderDocuments.value.find((row) => row.id === route.params.id) ?? null)
+const detail = computed(() => {
+  const targetId = String(route.params.id ?? '')
+  return productionOrderDocuments.value.find((row) => String(row.id) === targetId) ?? null
+})
 const displayItems = computed(() => enrichDocumentItems(detail.value?.items ?? []))
 const isProductionUser = computed(() => authStore.currentUser?.role === 'production')
 const canCompleteProduction = computed(() => isProductionUser.value && detail.value?.status === '진행중')
