@@ -16,6 +16,7 @@ import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
+import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import {
@@ -45,6 +46,7 @@ const formOpen = ref(false)
 const editConfirmOpen = ref(false)
 const editApprovalRequestOpen = ref(false)
 const deleteApprovalRequestOpen = ref(false)
+const productionIssueConfirmOpen = ref(false)
 const piSearchOpen = ref(false)
 const piSearchKeyword = ref('')
 const clientSearchOpen = ref(false)
@@ -54,6 +56,7 @@ const selectedClient = ref(null)
 const pendingEditRequest = ref(null)
 const piDocuments = usePiDocuments()
 const poDocuments = usePoDocuments()
+const productionOrderDocuments = useProductionOrderDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
 
@@ -94,14 +97,19 @@ function formatCurrencyValue(currency, value) {
 }
 
 function buildLinkedDocuments(row) {
-  const currentLinks = row.linkedDocuments ?? []
+  const currentLinks = [...(row.linkedDocuments ?? [])]
+  const linkedPi = piDocuments.value.find((pi) => pi.id === (row.piId || row.linkedPiId))
+  const linkedProductionOrder = productionOrderDocuments.value.find((production) => production.poId === row.id)
 
-  if (currentLinks.length) {
-    return currentLinks
+  if (linkedPi && !currentLinks.some((document) => document.id === linkedPi.id)) {
+    currentLinks.unshift({ id: linkedPi.id, status: linkedPi.status })
   }
 
-  const linkedPi = piDocuments.value.find((pi) => pi.id === (row.piId || row.linkedPiId))
-  return linkedPi ? [{ id: linkedPi.id, status: linkedPi.status }] : []
+  if (linkedProductionOrder && !currentLinks.some((document) => document.id === linkedProductionOrder.id)) {
+    currentLinks.push({ id: linkedProductionOrder.id, status: linkedProductionOrder.status })
+  }
+
+  return currentLinks
 }
 
 function getCurrentRequesterName() {
@@ -279,6 +287,20 @@ const shipmentLockInfo = computed(() => (
 ))
 const shipmentLockMessage = computed(() => formatPoShipmentLockMessage(shipmentLockInfo.value))
 const linkedPiDocument = computed(() => piDocuments.value.find((row) => row.id === (detail.value?.piId || detail.value?.linkedPiId)))
+const linkedProductionOrder = computed(() => productionOrderDocuments.value.find((row) => row.poId === detail.value?.id) ?? null)
+const canIssueProductionOrder = computed(() => Boolean(detail.value && !linkedProductionOrder.value && !shipmentLockInfo.value.locked))
+const productionIssueConfirmRows = computed(() => {
+  if (!detail.value) return []
+
+  return [
+    { label: '대상 PO 번호', value: detail.value.id },
+    { label: '거래처', value: detail.value.clientName || '-' },
+    { label: '영업담당자', value: detail.value.manager || '-' },
+    { label: '납기일', value: detail.value.deliveryDate || '-' },
+    { label: '품목 건수', value: `${detail.value.items?.length ?? 0}건` },
+    { label: '총액', value: detail.value.totalAmount || '-' },
+  ]
+})
 
 const editApprovalRequestRows = computed(() => {
   if (!pendingEditRequest.value) return []
@@ -597,9 +619,101 @@ function goToLinkedDocument(documentId) {
     return
   }
 
+  if (documentId?.startsWith('MO')) {
+    router.push({ name: 'production-detail', params: { id: documentId } })
+    return
+  }
+
   if (documentId?.startsWith('SO')) {
     router.push({ name: 'shipment-order-detail', params: { id: documentId } })
   }
+}
+
+function openProductionIssueConfirm() {
+  if (!canIssueProductionOrder.value) return
+  productionIssueConfirmOpen.value = true
+}
+
+function closeProductionIssueConfirm() {
+  productionIssueConfirmOpen.value = false
+}
+
+function formatTodaySlashDate() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}/${month}/${day}`
+}
+
+function createNextProductionOrderId() {
+  const maxNumber = productionOrderDocuments.value.reduce((max, row) => {
+    const numeric = Number.parseInt(String(row.id).replace(/[^0-9]/g, ''), 10)
+    return Number.isFinite(numeric) ? Math.max(max, numeric) : max
+  }, 2026000)
+
+  return `MO${String(maxNumber + 1)}`
+}
+
+function confirmIssueProductionOrder() {
+  if (!sourceRow.value || !canIssueProductionOrder.value) return
+
+  const productionOrderId = createNextProductionOrderId()
+  const currency = sourceRow.value.currency || 'USD'
+  const items = (sourceRow.value.items ?? []).map((item) => {
+    const quantity = String(item.qty ?? item.quantity ?? '')
+    const unit = item.unit ?? 'EA'
+    const unitPriceValue = parseNumericValue(item.unitPrice)
+    const amountValue = parseNumericValue(item.amount)
+
+    return {
+      name: item.name ?? '',
+      quantity,
+      unit,
+      unitPrice: formatCurrencyValue(currency, unitPriceValue),
+      amount: formatCurrencyValue(currency, amountValue),
+      remark: item.remark ?? '',
+    }
+  })
+
+  const nextProductionOrder = {
+    id: productionOrderId,
+    status: '대기',
+    issueDate: formatTodaySlashDate(),
+    poId: sourceRow.value.id,
+    country: sourceRow.value.country || '-',
+    clientName: sourceRow.value.clientName,
+    clientAddress: sourceRow.value.clientAddress || '',
+    itemName: sourceRow.value.itemName || items[0]?.name || '-',
+    manager: sourceRow.value.manager || authStore.currentUser?.name || '-',
+    dueDate: sourceRow.value.deliveryDate || '-',
+    department: '영업부',
+    productionSite: '-',
+    requestedBy: authStore.currentUser?.name || sourceRow.value.manager || '-',
+    completionTarget: sourceRow.value.deliveryDate || '-',
+    remarks: 'PO 기준으로 생산지시서가 발행되었습니다.',
+    linkedDocuments: [{ id: sourceRow.value.id, status: sourceRow.value.status }],
+    items,
+  }
+
+  productionOrderDocuments.value = [nextProductionOrder, ...productionOrderDocuments.value]
+  poDocuments.value = poDocuments.value.map((row) => {
+    if (row.id !== sourceRow.value.id) return row
+
+    const currentLinks = row.linkedDocuments ?? []
+    const hasProductionLink = currentLinks.some((document) => document.id === productionOrderId)
+
+    return {
+      ...row,
+      linkedDocuments: hasProductionLink
+        ? currentLinks
+        : [...currentLinks, { id: productionOrderId, status: nextProductionOrder.status }],
+    }
+  })
+
+  productionIssueConfirmOpen.value = false
+  success(`${productionOrderId} 생산지시서가 발행되었습니다.`)
+  router.push({ name: 'production-detail', params: { id: productionOrderId } })
 }
 
 function confirmEditRequestIntent() {
@@ -710,6 +824,28 @@ function cancelDeleteApprovalRequest() {
     <div class="mb-6">
       <DetailPageHeader :title="detail.id" :status="detail.status" @back="goBack">
         <template #actions>
+          <BaseButton
+            v-if="linkedProductionOrder"
+            variant="secondary"
+            size="sm"
+            @click="goToLinkedDocument(linkedProductionOrder.id)"
+          >
+            <template #leading>
+              <i class="fas fa-industry text-xs" aria-hidden="true"></i>
+            </template>
+            생산지시서 보기
+          </BaseButton>
+          <BaseButton
+            v-else-if="canIssueProductionOrder"
+            variant="secondary"
+            size="sm"
+            @click="openProductionIssueConfirm"
+          >
+            <template #leading>
+              <i class="fas fa-industry text-xs" aria-hidden="true"></i>
+            </template>
+            생산지시서 발행
+          </BaseButton>
           <BaseButton v-if="!shipmentLockInfo.locked" size="sm" @click="handleEdit">
             <template #leading>
               <i class="fas fa-edit text-xs" aria-hidden="true"></i>
@@ -1009,6 +1145,19 @@ function cancelDeleteApprovalRequest() {
       confirm-label="삭제 요청"
       @confirm="confirmDeleteApprovalRequest"
       @cancel="cancelDeleteApprovalRequest"
+    />
+
+    <ConfirmModal
+      :open="productionIssueConfirmOpen"
+      title="생산지시서 발행"
+      message="선택한 PO를 기준으로 생산지시서를 발행하시겠습니까?"
+      :detail-rows="productionIssueConfirmRows"
+      confirm-label="발행"
+      cancel-label="취소"
+      helper-text="생산지시서는 선택 분기 문서이며, 발행 후 참조 문서에 자동 연결됩니다."
+      width="max-w-2xl"
+      @confirm="confirmIssueProductionOrder"
+      @cancel="closeProductionIssueConfirm"
     />
 
     <SearchModal
