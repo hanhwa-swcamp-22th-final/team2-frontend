@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from './router'
 import { useAuthStore } from './stores/auth'
 import { setupApiInterceptors } from './lib/api'
+import { canAccessRouteByRole } from './utils/roleAccess'
 import './styles/tailwind.css'
 
 const app = createApp(App)
@@ -31,6 +32,9 @@ router.beforeEach(async (to) => {
     if (to.meta.requiredRole && authStore.currentUser?.role !== to.meta.requiredRole) {
       return { name: 'dashboard' }
     }
+    if (!canAccessRouteByRole(authStore.currentUser, to.name)) {
+      return { name: 'dashboard' }
+    }
     return true
   }
 
@@ -38,6 +42,9 @@ router.beforeEach(async (to) => {
   const restored = await authStore.restoreSession()
   if (restored) {
     if (to.meta.requiredRole && authStore.currentUser?.role !== to.meta.requiredRole) {
+      return { name: 'dashboard' }
+    }
+    if (!canAccessRouteByRole(authStore.currentUser, to.name)) {
       return { name: 'dashboard' }
     }
     return true
