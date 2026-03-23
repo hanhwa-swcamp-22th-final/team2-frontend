@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import ApprovalReviewModal from '@/components/common/ApprovalReviewModal.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
@@ -12,7 +12,8 @@ import { usePlDocuments } from '@/stores/plDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
-import masterData from '../../db.json'
+import { fetchActivities } from '@/api/activity'
+import { fetchClients } from '@/api/master'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -25,6 +26,21 @@ const shipmentStatusDocuments = useShipmentStatusDocuments()
 const selectedRequest = ref(null)
 const decisionConfirmOpen = ref(false)
 const pendingDecision = ref('')
+const clientsData = ref([])
+const activitiesData = ref([])
+
+onMounted(async () => {
+  try {
+    const [clients, activities] = await Promise.all([
+      fetchClients(),
+      fetchActivities(),
+    ])
+    clientsData.value = clients
+    activitiesData.value = activities
+  } catch {
+    // silent fail - dashboard still works with store data
+  }
+})
 
 const currentUser = computed(() => authStore.currentUser ?? null)
 const isProductionUser = computed(() => currentUser.value?.role === 'production')
@@ -134,7 +150,7 @@ const shipmentItems = computed(() => {
     }))
 })
 
-const clientNameById = new Map((masterData.clients ?? []).map((client) => [Number(client.id), client.name]))
+const clientNameById = computed(() => new Map(clientsData.value.map((client) => [Number(client.id), client.name])))
 
 function resolveActivityIcon(type) {
   if (type === '미팅/협의') return 'fa-users'
@@ -144,14 +160,14 @@ function resolveActivityIcon(type) {
 }
 
 const recentActivities = computed(() => {
-  return [...(masterData.activities ?? [])]
+  return [...activitiesData.value]
     .sort((left, right) => parseSlashDate(right.date) - parseSlashDate(left.date))
     .slice(0, 5)
     .map((item) => ({
       id: item.id,
       icon: resolveActivityIcon(item.type),
       title: item.title,
-      company: clientNameById.get(Number(item.clientId)) || '-',
+      company: clientNameById.value.get(Number(item.clientId)) || '-',
       date: item.date,
     }))
 })
