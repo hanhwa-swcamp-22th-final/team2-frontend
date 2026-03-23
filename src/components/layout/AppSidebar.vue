@@ -4,11 +4,12 @@ import { fetchNavigationItems } from '@/api/navigation'
 import { RouterLink, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
-import { canAccessPathByRole } from '@/utils/roleAccess'
+import { canAccessPathByRole, getRoleHomePath } from '@/utils/roleAccess'
 
 const uiStore = useUiStore()
 const authStore = useAuthStore()
 const route = useRoute()
+const homePath = computed(() => getRoleHomePath(authStore.currentUser?.role))
 const navigationItems = ref([])
 
 const sectionOrder = ['basic', 'sales', 'orders', 'status', 'activity', 'admin']
@@ -62,7 +63,7 @@ onMounted(async () => {
     :class="uiStore.sidebarOpen ? 'translate-x-0' : '-translate-x-[260px]'"
   >
     <div class="flex h-[77px] flex-shrink-0 items-center border-b border-slate-200 px-4">
-      <RouterLink to="/" class="flex items-center gap-3" @click="uiStore.closeSidebar">
+      <RouterLink :to="homePath" class="flex items-center gap-3" @click="uiStore.closeSidebar">
         <div class="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm">
           <img src="/salesboost.svg" alt="SalesBoost" class="h-9 w-9 object-contain" />
         </div>
@@ -138,7 +139,7 @@ onMounted(async () => {
       class="flex h-[77px] flex-shrink-0 items-center border-b border-slate-200"
       :class="uiStore.sidebarOpen ? 'px-4' : 'justify-center px-0'"
     >
-      <RouterLink to="/" class="flex items-center gap-3" :class="{ 'justify-center': !uiStore.sidebarOpen }">
+      <RouterLink :to="homePath" class="flex items-center gap-3" :class="{ 'justify-center': !uiStore.sidebarOpen }">
         <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg">
           <img src="/salesboost.svg" alt="SalesBoost" class="h-8 w-8 object-contain" />
         </div>

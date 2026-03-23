@@ -5,12 +5,28 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import PasswordChangeModal from '@/components/domain/auth/PasswordChangeModal.vue'
 import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
+import { getRoleHomePath } from '@/utils/roleAccess'
 
 const uiStore = useUiStore()
 const authStore = useAuthStore()
 const route = useRoute()
 const router = useRouter()
-const pageTitle = computed(() => String(route.meta.serviceName ?? '공통 대시보드'))
+const roleDashboardTitles = { admin: '관리자 대시보드', sales: '영업 대시보드', production: '생산 대시보드', shipping: '출하 대시보드' }
+
+const pageTitle = computed(() => {
+  const currentPath = route.path
+  const role = authStore.currentUser?.role
+  const home = getRoleHomePath(role)
+
+  if (currentPath === home) {
+    return roleDashboardTitles[role] || '대시보드'
+  }
+  if (currentPath === '/') {
+    return '대시보드'
+  }
+
+  return String(route.meta.serviceName ?? '대시보드')
+})
 const isNotificationOpen = ref(false)
 const isPasswordModalOpen = ref(false)
 const notificationRef = ref(null)
