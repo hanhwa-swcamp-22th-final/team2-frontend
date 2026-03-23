@@ -4664,6 +4664,280 @@
       "status": "발송",
       "sentAt": "2026/03/23",
       "sender": "정영업"
+    },
+    {
+      "id": "2868",
+      "client": "Paris Acier SA",
+      "title": "[SalesBoost] SO2025006 출하지시서 발송",
+      "recipient": "박출하",
+      "email": "park@salesboost.com",
+      "types": [
+        "출하지시서"
+      ],
+      "attachments": [
+        "SO2025006.pdf"
+      ],
+      "poId": "PO2025006",
+      "status": "실패",
+      "sentAt": "2025/06/01",
+      "sender": "김영업"
+    },
+    {
+      "id": "5c7e",
+      "client": "Tokyo Trading Co.",
+      "title": "[SalesBoost] PO26021 관련 문서 발송",
+      "recipient": "Tanaka Yuki",
+      "email": "yuki.tanaka@tokyotrading.jp",
+      "types": [
+        "출하지시서",
+        "CI",
+        "PL"
+      ],
+      "attachments": [
+        "SO2025021.pdf",
+        "CI2025021.pdf",
+        "PL2025021.pdf"
+      ],
+      "poId": "PO26021",
+      "status": "발송",
+      "sentAt": "2026/03/23",
+      "sender": "김영업"
+    },
+    {
+      "id": "aa38",
+      "client": "Tokyo Trading Co.",
+      "title": "[SalesBoost] PO26021 관련 문서 발송",
+      "recipient": "Sato Kenji",
+      "email": "kenji.sato@tokyotrading.jp",
+      "types": [
+        "출하지시서",
+        "CI",
+        "PL"
+      ],
+      "attachments": [
+        "SO2025021.pdf",
+        "CI2025021.pdf",
+        "PL2025021.pdf"
+      ],
+      "poId": "PO26021",
+      "status": "발송",
+      "sentAt": "2026/03/23",
+      "sender": "김영업"
+    },
+    {
+      "id": "aab2",
+      "client": "Tokyo Trading Co.",
+      "title": "[SalesBoost] PO26021 관련 문서 발송",
+      "recipient": "Yamamoto Hiroshi",
+      "email": "hiroshi.yamamoto@tokyotrading.jp",
+      "types": [
+        "출하지시서",
+        "CI",
+        "PL"
+      ],
+      "attachments": [
+        "SO2025021.pdf",
+        "CI2025021.pdf",
+        "PL2025021.pdf"
+      ],
+      "poId": "PO26021",
+      "status": "발송",
+      "sentAt": "2026/03/23",
+      "sender": "김영업"
+    },
+    {
+      "id": "1aa0",
+      "client": "Tokyo Trading Co.",
+      "title": "[SalesBoost] PO26021 관련 문서 발송",
+      "recipient": "Nakamura Akiko",
+      "email": "akiko.nakamura@tokyotrading.jp",
+      "types": [
+        "출하지시서",
+        "CI",
+        "PL"
+      ],
+      "attachments": [
+        "SO2025021.pdf",
+        "CI2025021.pdf",
+        "PL2025021.pdf"
+      ],
+      "poId": "PO26021",
+      "status": "발송",
+      "sentAt": "2026/03/23",
+      "sender": "김영업"
+    },
+    {
+      "id": "b78d",
+      "client": "Global Steel Corp.",
+      "title": "[SalesBoost] PO26021 관련 문서 발송",
+      "recipient": "James Carter",
+      "email": "james.carter@globalsteel.com",
+      "types": [
+        "출하지시서",
+        "CI",
+        "PL"
+      ],
+      "attachments": [
+        "SO2025021.pdf",
+        "CI2025021.pdf",
+        "PL2025021.pdf"
+      ],
+      "poId": "PO26021",
+      "status": "발송",
+      "sentAt": "2026/03/23",
+      "sender": "정영업"
+    },
+    {
+      "id": "5f18",
+      "client": "Global Steel Corp.",
+      "title": "[SalesBoost] PO26021 관련 문서 발송",
+      "recipient": "Sarah Johnson",
+      "email": "sarah.johnson@globalsteel.com",
+      "types": [
+        "출하지시서",
+        "CI",
+        "PL"
+      ],
+      "attachments": [
+        "SO2025021.pdf",
+        "CI2025021.pdf",
+        "PL2025021.pdf"
+      ],
+      "poId": "PO26021",
+      "status": "발송",
+      "sentAt": "2026/03/23",
+      "sender": "정영업"
+    },
+    {
+      "id": "d87b",
+      "client": "Global Steel Corp.",
+      "title": "[SalesBoost] PO26021 관련 문서 발송",
+      "recipient": "Michael Brown",
+      "email": "michael.brown@globalsteel.com",
+      "types": [
+        "출하지시서",
+        "CI",
+        "PL"
+      ],
+      "attachments": [
+        "SO2025021.pdf",
+        "CI2025021.pdf",
+        "PL2025021.pdf"
+      ],
+      "poId": "PO26021",
+      "status": "발송",
+      "sentAt": "2026/03/23",
+      "sender": "정영업"
+    },
+    {
+      "id": "3b9d",
+      "client": "Global Steel Corp.",
+      "title": "[SalesBoost] PO26021 관련 문서 발송",
+      "recipient": "Emily Davis",
+      "email": "emily.davis@globalsteel.com",
+      "types": [
+        "출하지시서",
+        "CI",
+        "PL"
+      ],
+      "attachments": [
+        "SO2025021.pdf",
+        "CI2025021.pdf",
+        "PL2025021.pdf"
+      ],
+      "poId": "PO26021",
+      "status": "발송",
+      "sentAt": "2026/03/23",
+      "sender": "정영업"
+    },
+    {
+      "id": "0395",
+      "client": "Global Steel Corp.",
+      "title": "[SalesBoost] PO26021 관련 문서 발송",
+      "recipient": "Robert Wilson",
+      "email": "robert.wilson@globalsteel.com",
+      "types": [
+        "출하지시서",
+        "CI",
+        "PL"
+      ],
+      "attachments": [
+        "SO2025021.pdf",
+        "CI2025021.pdf",
+        "PL2025021.pdf"
+      ],
+      "poId": "PO26021",
+      "status": "발송",
+      "sentAt": "2026/03/23",
+      "sender": "정영업"
+    },
+    {
+      "id": "835e",
+      "client": "Singapore Pipe Pte",
+      "title": "[SalesBoost] MO2026001 생산지시서 발송",
+      "recipient": "Lim Wei Jing",
+      "email": "lim.weijing@singaporepipe.sg",
+      "types": [
+        "생산지시서"
+      ],
+      "attachments": [
+        "MO2026001.pdf"
+      ],
+      "poId": "PO2025009",
+      "status": "발송",
+      "sentAt": "2026/03/23",
+      "sender": "정영업"
+    },
+    {
+      "id": "045e",
+      "client": "Singapore Pipe Pte",
+      "title": "[SalesBoost] MO2026001 생산지시서 발송",
+      "recipient": "Tan Boon Huat",
+      "email": "boon.huat@singaporepipe.sg",
+      "types": [
+        "생산지시서"
+      ],
+      "attachments": [
+        "MO2026001.pdf"
+      ],
+      "poId": "PO2025009",
+      "status": "발송",
+      "sentAt": "2026/03/23",
+      "sender": "정영업"
+    },
+    {
+      "id": "c09d",
+      "client": "Shenzhen Gadgets Co.",
+      "title": "[SalesBoost] MO2026001 생산지시서 발송",
+      "recipient": "Li Xiaoming",
+      "email": "xiaoming.li@szgadgets.cn",
+      "types": [
+        "생산지시서"
+      ],
+      "attachments": [
+        "MO2026001.pdf"
+      ],
+      "poId": "PO2025014",
+      "status": "발송",
+      "sentAt": "2026/03/23",
+      "sender": "정영업"
+    },
+    {
+      "id": "8e22",
+      "client": "Shenzhen Gadgets Co.",
+      "title": "[SalesBoost] MO2026001 생산지시서 발송",
+      "recipient": "Zhang Ying",
+      "email": "ying.zhang@szgadgets.cn",
+      "types": [
+        "생산지시서"
+      ],
+      "attachments": [
+        "MO2026001.pdf"
+      ],
+      "poId": "PO2025014",
+      "status": "발송",
+      "sentAt": "2026/03/23",
+      "sender": "정영업"
     }
   ],
   "pi": [

@@ -100,6 +100,24 @@ function resolveDepartmentName(managerName) {
   return departmentsById.get(String(user.departmentId))?.name ?? '-'
 }
 
+function normalizeProductionStatus(status) {
+  return String(status ?? '').trim() === '완료' ? '생산완료' : '진행중'
+}
+
+function normalizeShipmentStatus(status) {
+  return String(status ?? '').trim() === '출하완료' ? '출하완료' : '출하준비'
+}
+
+function canCreateFollowUpDocuments(poStatus) {
+  const normalized = String(poStatus ?? '').trim()
+  return normalized !== '초안' && normalized !== '취소'
+}
+
+function hasIssuedProductionOrder(rawStatus) {
+  const normalized = String(rawStatus ?? '').trim()
+  return normalized !== '' && normalized !== '대기'
+}
+
 function deriveItemPricing(item, currencyCode, issueDate, totalAmount) {
   if (!item) {
     return {
@@ -267,7 +285,13 @@ function buildAllDocuments() {
 
   const poById = new Map(poDocuments.map((row) => [row.id, row]))
 
-  const productionDocuments = (masterData.productionOrders ?? []).map((row) => {
+  const productionDocuments = (masterData.productionOrders ?? [])
+    .filter((row) => {
+      const poId = normalizeReferenceId(row.poId)
+      const linkedPo = poById.get(poId) ?? null
+      return linkedPo && canCreateFollowUpDocuments(linkedPo.status) && hasIssuedProductionOrder(row.status)
+    })
+    .map((row) => {
     const poId = normalizeReferenceId(row.poId)
     const linkedPo = poById.get(poId) ?? null
     const client = resolveClient(linkedPo ?? row)
@@ -275,7 +299,7 @@ function buildAllDocuments() {
 
     return {
       id: normalizeReferenceId(row.id),
-      status: String(row.status).includes('완료') ? '생산완료' : '진행중',
+      status: normalizeProductionStatus(row.status),
       issueDate: formatDate(row.issueDate),
       poId,
       country: linkedPo?.country || resolveCountryLabel(client, row.country),
@@ -296,7 +320,13 @@ function buildAllDocuments() {
 
   const productionByPoId = new Map(productionDocuments.map((row) => [row.poId, row]))
 
-  const shipmentOrderDocuments = (masterData.shipmentOrders ?? []).map((row) => {
+  const shipmentOrderDocuments = (masterData.shipmentOrders ?? [])
+    .filter((row) => {
+      const poId = normalizeReferenceId(row.poId)
+      const linkedPo = poById.get(poId) ?? null
+      return linkedPo && canCreateFollowUpDocuments(linkedPo.status)
+    })
+    .map((row) => {
     const poId = normalizeReferenceId(row.poId)
     const linkedPo = poById.get(poId) ?? null
     const client = resolveClient(linkedPo ?? row)
@@ -304,7 +334,7 @@ function buildAllDocuments() {
 
     return {
       id: normalizeReferenceId(row.id),
-      status: String(row.status).includes('완료') ? '출하완료' : '출하준비',
+      status: normalizeShipmentStatus(row.status),
       issueDate: formatDate(row.issueDate),
       poId,
       clientName: linkedPo?.clientName || row.clientName,
@@ -323,14 +353,20 @@ function buildAllDocuments() {
   const shipmentOrderByPoId = new Map(shipmentOrderDocuments.map((row) => [row.poId, row]))
   const shipmentOrderById = new Map(shipmentOrderDocuments.map((row) => [row.id, row]))
 
-  const shipmentStatusDocuments = (masterData.shipments ?? []).map((row) => {
+  const shipmentStatusDocuments = (masterData.shipments ?? [])
+    .filter((row) => {
+      const poId = normalizeReferenceId(row.poId)
+      const linkedPo = poById.get(poId) ?? null
+      return linkedPo && canCreateFollowUpDocuments(linkedPo.status)
+    })
+    .map((row) => {
     const poId = normalizeReferenceId(row.poId)
     const linkedPo = poById.get(poId) ?? null
     const linkedShipmentOrder = shipmentOrderByPoId.get(poId) ?? null
 
     return {
       id: normalizeReferenceId(row.id),
-      status: String(row.status).includes('완료') ? '출하완료' : '출하준비',
+      status: normalizeShipmentStatus(row.status),
       clientName: row.clientName,
       country: linkedShipmentOrder?.country || linkedPo?.country || row.country || '-',
       poId,
@@ -366,7 +402,13 @@ function buildAllDocuments() {
     }
   })
 
-  const ciDocuments = (masterData.ci ?? []).map((row) => {
+  const ciDocuments = (masterData.ci ?? [])
+    .filter((row) => {
+      const poId = normalizeReferenceId(row.poId)
+      const linkedPo = poById.get(poId) ?? null
+      return linkedPo && canCreateFollowUpDocuments(linkedPo.status)
+    })
+    .map((row) => {
     const poId = normalizeReferenceId(row.poId)
     const linkedPo = poById.get(poId) ?? null
     const linkedShipmentOrder = shipmentOrderByPoId.get(poId) ?? null
@@ -408,7 +450,13 @@ function buildAllDocuments() {
     }
   })
 
-  const plDocuments = (masterData.pl ?? []).map((row) => {
+  const plDocuments = (masterData.pl ?? [])
+    .filter((row) => {
+      const poId = normalizeReferenceId(row.poId)
+      const linkedPo = poById.get(poId) ?? null
+      return linkedPo && canCreateFollowUpDocuments(linkedPo.status)
+    })
+    .map((row) => {
     const poId = normalizeReferenceId(row.poId)
     const linkedPo = poById.get(poId) ?? null
     const linkedShipmentOrder = shipmentOrderByPoId.get(poId) ?? null

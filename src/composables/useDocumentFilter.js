@@ -45,6 +45,14 @@ export function useDocumentFilter(rows, options = {}) {
     return String(value ?? '').replaceAll('/', '-')
   }
 
+  function parseSortableDate(value) {
+    const normalized = normalizeDate(value)
+    if (!normalized) return 0
+
+    const timestamp = new Date(normalized).getTime()
+    return Number.isFinite(timestamp) ? timestamp : 0
+  }
+
   function resetFilters() {
     filters.value = getEmptyFilters()
     appliedFilters.value = getEmptyFilters()
@@ -55,7 +63,7 @@ export function useDocumentFilter(rows, options = {}) {
   }
 
   const filteredRows = computed(() => {
-    return rows.value.filter((row) => {
+    const nextRows = rows.value.filter((row) => {
       const keyword = appliedFilters.value.keyword.trim().toLowerCase()
 
       if (keyword) {
@@ -81,6 +89,13 @@ export function useDocumentFilter(rows, options = {}) {
       if (appliedFilters.value.deliveryTo && deliveryDate > appliedFilters.value.deliveryTo) return false
 
       return true
+    })
+
+    return [...nextRows].sort((left, right) => {
+      const dateDiff = parseSortableDate(right?.[issueDateField]) - parseSortableDate(left?.[issueDateField])
+      if (dateDiff !== 0) return dateDiff
+
+      return String(right?.[codeField] ?? '').localeCompare(String(left?.[codeField] ?? ''), 'ko')
     })
   })
 

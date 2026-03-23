@@ -3,10 +3,13 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BasePagination from '@/components/common/BasePagination.vue'
-import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import BaseTextField from '@/components/common/BaseTextField.vue'
+import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
-import SearchInput from '@/components/common/SearchInput.vue'
+import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
+import FormField from '@/components/common/FormField.vue'
+import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
@@ -34,8 +37,22 @@ const loading = ref(false)
 const saving = ref(false)
 const deleting = ref(false)
 
-const searchKeyword = ref('')
-const statusFilter = ref('')
+const isAdvancedOpen = ref(false)
+
+const filters = ref({
+  keyword: '',
+  code: '',
+  name: '',
+  country: '',
+  manager: '',
+  status: '',
+})
+
+const statusOptions = [
+  { label: '전체', value: '' },
+  { label: '활성', value: '활성' },
+  { label: '비활성', value: '비활성' },
+]
 
 const PAGE_SIZE = 10
 const currentPage = ref(1)
@@ -47,14 +64,8 @@ const selectedClient = ref(null)
 const showConfirmModal = ref(false)
 const clientToDelete = ref(null)
 
-const statusFilterOptions = [
-  { label: '전체 상태', value: '' },
-  { label: '활성', value: '활성' },
-  { label: '비활성', value: '비활성' },
-]
-
 const columns = [
-  { key: 'code', label: '코드', width: '100px' },
+  { key: 'code', label: '코드', width: '100px', align: 'center' },
   { key: 'name', label: '거래처명' },
   { key: 'location', label: '국가·도시', width: '140px' },
   { key: 'port', label: '도착항', width: '120px' },
@@ -75,16 +86,31 @@ const enrichedClients = computed(() =>
   })),
 )
 
+const countryOptions = computed(() => {
+  const countrySet = [...new Set(enrichedClients.value.map((c) => c.countryName).filter(Boolean))]
+  return [{ label: '전체', value: '' }, ...countrySet.map((name) => ({ label: name, value: name }))]
+})
+
+function resetFilters() {
+  filters.value = { keyword: '', code: '', name: '', country: '', manager: '', status: '' }
+}
+
+function searchRows() {
+  currentPage.value = 1
+}
+
 const filteredClients = computed(() => {
   let result = enrichedClients.value
 
-  // 영업 사용자는 자기 부서 거래처만 표시
+  // RBAC: 영업 사용자는 자기 부서 거래처만 표시
   if (!isAdmin.value && currentUser.value?.role === 'sales') {
     result = result.filter((c) => c.departmentId === Number(currentUser.value.departmentId))
   }
 
-  if (searchKeyword.value) {
-    const kw = searchKeyword.value.toLowerCase()
+  const f = filters.value
+
+  if (f.keyword) {
+    const kw = f.keyword.toLowerCase()
     result = result.filter(
       (c) =>
         c.name.toLowerCase().includes(kw) ||
@@ -93,8 +119,25 @@ const filteredClients = computed(() => {
     )
   }
 
-  if (statusFilter.value) {
-    result = result.filter((c) => c.status === statusFilter.value)
+  if (f.code) {
+    result = result.filter((c) => c.code.toLowerCase().includes(f.code.toLowerCase()))
+  }
+
+  if (f.name) {
+    const kw = f.name.toLowerCase()
+    result = result.filter((c) => c.name.toLowerCase().includes(kw) || (c.nameKr && c.nameKr.includes(kw)))
+  }
+
+  if (f.country) {
+    result = result.filter((c) => c.countryName === f.country)
+  }
+
+  if (f.manager) {
+    result = result.filter((c) => c.manager && c.manager.includes(f.manager))
+  }
+
+  if (f.status) {
+    result = result.filter((c) => c.status === f.status)
   }
 
   return result
@@ -108,9 +151,9 @@ const paginatedClients = computed(() => {
 })
 
 // Reset to page 1 when filters change
-watch([searchKeyword, statusFilter], () => {
+watch(filters, () => {
   currentPage.value = 1
-})
+}, { deep: true })
 
 async function loadData() {
   loading.value = true
@@ -196,21 +239,67 @@ function goToDetail(row) {
       </template>
     </PageHeader>
 
-    <div class="flex flex-wrap items-center gap-3">
-      <div class="min-w-0 flex-1">
-        <SearchInput v-model="searchKeyword" placeholder="코드, 거래처명으로 검색" />
+    <FilterToolbarCard
+      v-model="filters.keyword"
+      :advanced-open="isAdvancedOpen"
+      placeholder="코드, 거래처명으로 검색"
+      @toggle-advanced="isAdvancedOpen = !isAdvancedOpen"
+    />
+
+    <CollapsibleFilterCard :open="isAdvancedOpen">
+      <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3">
+        <FormField label="코드">
+          <BaseTextField v-model="filters.code" placeholder="코드 입력..." />
+        </FormField>
+
+        <FormField label="거래처명">
+          <BaseTextField v-model="filters.name" placeholder="영문 또는 한글명..." />
+        </FormField>
+
+        <FormField label="국가">
+          <SearchableCombobox
+            v-model="filters.country"
+            :options="countryOptions"
+            placeholder="국가 검색..."
+          />
+        </FormField>
+
+        <FormField label="담당자">
+          <BaseTextField v-model="filters.manager" placeholder="담당자명..." />
+        </FormField>
+
+        <FormField label="상태">
+          <SearchableCombobox
+            v-model="filters.status"
+            :options="statusOptions"
+            placeholder="상태 선택..."
+          />
+        </FormField>
       </div>
-      <div class="w-40">
-        <BaseSelect v-model="statusFilter" :options="statusFilterOptions" placeholder="전체 상태" />
+
+      <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+        <BaseButton variant="secondary" size="sm" @click="resetFilters">
+          <template #leading>
+            <i class="fas fa-undo text-xs" aria-hidden="true"></i>
+          </template>
+          초기화
+        </BaseButton>
+
+        <BaseButton size="sm" @click="searchRows">
+          <template #leading>
+            <i class="fas fa-search text-xs" aria-hidden="true"></i>
+          </template>
+          검색
+        </BaseButton>
       </div>
-    </div>
+    </CollapsibleFilterCard>
 
     <div v-if="loading" class="flex items-center justify-center py-20 text-slate-400">
       데이터를 불러오는 중입니다...
     </div>
 
     <BaseTable v-else :columns="columns" :rows="paginatedClients" row-key="id"
-      :empty-text="searchKeyword || statusFilter ? '검색 결과가 없습니다.' : '등록된 거래처가 없습니다.'"
+      :empty-text="filters.keyword || filters.code || filters.name || filters.country || filters.manager || filters.status ? '검색 결과가 없습니다.' : '등록된 거래처가 없습니다.'"
       :footer-text="`총 ${filteredClients.length}건`"
       clickable-rows
       @row-click="goToDetail"

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import ApprovalRequestModal from '@/components/common/ApprovalRequestModal.vue'
@@ -29,6 +29,7 @@ import {
   EDIT_REQUEST_DOCUMENT_STATUS,
   EDIT_REQUEST_STATUS,
 } from '@/utils/documentApproval'
+import { recordDocumentEmailActivities } from '@/utils/documentActivityEmail'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
 import {
   formatPoShipmentLockMessage,
@@ -670,7 +671,7 @@ function createNextProductionOrderId() {
   return `MO${String(maxNumber + 1)}`
 }
 
-function confirmIssueProductionOrder() {
+async function confirmIssueProductionOrder() {
   if (!sourceRow.value || !canIssueProductionOrder.value) return
 
   const productionOrderId = createNextProductionOrderId()
@@ -727,7 +728,21 @@ function confirmIssueProductionOrder() {
   })
 
   productionIssueConfirmOpen.value = false
+  try {
+    await recordDocumentEmailActivities({
+      clientName: nextProductionOrder.clientName,
+      poId: nextProductionOrder.poId,
+      sender: authStore.currentUser?.name || nextProductionOrder.requestedBy,
+      title: `[SalesBoost] ${nextProductionOrder.id} 생산지시서 발송`,
+      types: ['생산지시서'],
+      attachments: [`${nextProductionOrder.id}.pdf`],
+    })
+  } catch (emailError) {
+    console.error('생산지시서 메일 발송 이력 기록 실패', emailError)
+    warning('생산지시서는 발행되었지만 메일 발송 이력 기록에는 실패했습니다.')
+  }
   success(`${productionOrderId} 생산지시서가 발행되었습니다.`)
+  await nextTick()
   router.push({ name: 'production-detail', params: { id: productionOrderId } })
 }
 
