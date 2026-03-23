@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BasePagination from '@/components/common/BasePagination.vue'
@@ -40,6 +40,8 @@ const filters = ref({
   status: '',
 })
 
+const appliedFilters = ref({ keyword: '', code: '', name: '', category: '', unit: '', status: '' })
+
 const statusOptions = [
   { label: '전체', value: '' },
   { label: '활성', value: '활성' },
@@ -53,9 +55,12 @@ const unitOptions = computed(() => {
 
 function resetFilters() {
   filters.value = { keyword: '', code: '', name: '', category: '', unit: '', status: '' }
+  appliedFilters.value = { keyword: '', code: '', name: '', category: '', unit: '', status: '' }
+  currentPage.value = 1
 }
 
 function searchRows() {
+  appliedFilters.value = { ...filters.value }
   currentPage.value = 1
 }
 
@@ -94,7 +99,7 @@ const columns = computed(() => {
 
 const filteredItems = computed(() => {
   let result = items.value
-  const f = filters.value
+  const f = appliedFilters.value
 
   if (f.keyword) {
     const kw = f.keyword.toLowerCase()
@@ -136,11 +141,6 @@ const paginatedItems = computed(() => {
   const start = (currentPage.value - 1) * PAGE_SIZE
   return filteredItems.value.slice(start, start + PAGE_SIZE)
 })
-
-// Reset to page 1 when filters change
-watch(filters, () => {
-  currentPage.value = 1
-}, { deep: true })
 
 async function loadData() {
   loading.value = true
@@ -222,71 +222,73 @@ function goToDetail(row) {
       </template>
     </PageHeader>
 
-    <FilterToolbarCard
-      v-model="filters.keyword"
-      :advanced-open="isAdvancedOpen"
-      placeholder="코드, 품목명으로 검색"
-      @toggle-advanced="isAdvancedOpen = !isAdvancedOpen"
-    />
+    <div @keyup.enter="searchRows" class="space-y-6">
+      <FilterToolbarCard
+        v-model="filters.keyword"
+        :advanced-open="isAdvancedOpen"
+        placeholder="코드, 품목명으로 검색"
+        @toggle-advanced="isAdvancedOpen = !isAdvancedOpen"
+      />
 
-    <CollapsibleFilterCard :open="isAdvancedOpen">
-      <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3">
-        <FormField label="코드">
-          <BaseTextField v-model="filters.code" placeholder="코드 입력..." />
-        </FormField>
+      <CollapsibleFilterCard :open="isAdvancedOpen">
+        <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-3">
+          <FormField label="코드">
+            <BaseTextField v-model="filters.code" placeholder="코드 입력..." />
+          </FormField>
 
-        <FormField label="품목명">
-          <BaseTextField v-model="filters.name" placeholder="영문 또는 한글명..." />
-        </FormField>
+          <FormField label="품목명">
+            <BaseTextField v-model="filters.name" placeholder="영문 또는 한글명..." />
+          </FormField>
 
-        <FormField label="카테고리">
-          <SearchableCombobox
-            v-model="filters.category"
-            :options="categoryOptions"
-            placeholder="카테고리 선택..."
-          />
-        </FormField>
+          <FormField label="카테고리">
+            <SearchableCombobox
+              v-model="filters.category"
+              :options="categoryOptions"
+              placeholder="카테고리 선택..."
+            />
+          </FormField>
 
-        <FormField label="단위">
-          <SearchableCombobox
-            v-model="filters.unit"
-            :options="unitOptions"
-            placeholder="단위 선택..."
-          />
-        </FormField>
+          <FormField label="단위">
+            <SearchableCombobox
+              v-model="filters.unit"
+              :options="unitOptions"
+              placeholder="단위 선택..."
+            />
+          </FormField>
 
-        <FormField label="상태">
-          <SearchableCombobox
-            v-model="filters.status"
-            :options="statusOptions"
-            placeholder="상태 선택..."
-          />
-        </FormField>
-      </div>
+          <FormField label="상태">
+            <SearchableCombobox
+              v-model="filters.status"
+              :options="statusOptions"
+              placeholder="상태 선택..."
+            />
+          </FormField>
+        </div>
 
-      <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
-        <BaseButton variant="secondary" size="sm" @click="resetFilters">
-          <template #leading>
-            <i class="fas fa-undo text-xs" aria-hidden="true"></i>
-          </template>
-          초기화
-        </BaseButton>
+        <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+          <BaseButton variant="secondary" size="sm" @click="resetFilters">
+            <template #leading>
+              <i class="fas fa-undo text-xs" aria-hidden="true"></i>
+            </template>
+            초기화
+          </BaseButton>
 
-        <BaseButton size="sm" @click="searchRows">
-          <template #leading>
-            <i class="fas fa-search text-xs" aria-hidden="true"></i>
-          </template>
-          검색
-        </BaseButton>
-      </div>
-    </CollapsibleFilterCard>
+          <BaseButton size="sm" @click="searchRows">
+            <template #leading>
+              <i class="fas fa-search text-xs" aria-hidden="true"></i>
+            </template>
+            검색
+          </BaseButton>
+        </div>
+      </CollapsibleFilterCard>
+    </div>
 
     <div v-if="loading" class="flex items-center justify-center py-20 text-slate-400">
       데이터를 불러오는 중입니다...
     </div>
 
     <BaseTable v-else :columns="columns" :rows="paginatedItems" row-key="id"
-      :empty-text="filters.keyword || filters.code || filters.name || filters.category || filters.unit || filters.status ? '검색 결과가 없습니다.' : '등록된 품목이 없습니다.'"
+      :empty-text="appliedFilters.keyword || appliedFilters.code || appliedFilters.name || appliedFilters.category || appliedFilters.unit || appliedFilters.status ? '검색 결과가 없습니다.' : '등록된 품목이 없습니다.'"
       clickable-rows
       :footer-text="`총 ${filteredItems.length}건`"
       @row-click="goToDetail"
