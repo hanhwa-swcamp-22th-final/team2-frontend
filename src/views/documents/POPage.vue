@@ -138,6 +138,8 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
 })
 const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
 
+const isTeamLeader = computed(() => Number(authStore.currentUser?.positionId) === 1)
+
 const managerOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'manager'))
 const countryOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'country'))
 const statusOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'status'))
@@ -862,6 +864,60 @@ function handleSave(formValue) {
   }
 
   if (formMode.value === 'create') {
+    if (isTeamLeader.value) {
+      const nextPoId = buildNextPoId()
+      const nextRow = buildRowPayload(formValue)
+      const requesterName = getCurrentRequesterName()
+
+      const createdPoRow = {
+        id: nextPoId,
+        ...nextRow,
+        manager: requesterName,
+        status: '확정',
+      }
+
+      const { ciDocument, plDocument, ciCreated, plCreated } = ensureCommercialDocumentsForPo(
+        createdPoRow,
+        ciDocuments.value,
+        plDocuments.value,
+      )
+      const nextShipmentOrder = createShipmentOrderFromPo(
+        createdPoRow,
+        shipmentOrderDocuments.value,
+        requesterName,
+        createdPoRow.piId ? [{ id: createdPoRow.piId, status: getLinkedPiById(createdPoRow.piId)?.status || '-' }] : [],
+      )
+      const nextShipmentStatus = createShipmentStatusFromOrder(
+        nextShipmentOrder,
+        shipmentStatusDocuments.value,
+        createdPoRow.status,
+      )
+      createdPoRow.linkedDocuments = [
+        ...(createdPoRow.piId ? [{ id: createdPoRow.piId, status: getLinkedPiById(createdPoRow.piId)?.status || '-' }] : []),
+        { id: nextShipmentOrder.id, status: nextShipmentOrder.status },
+      ]
+
+      poRowsData.value = [createdPoRow, ...poRowsData.value]
+      shipmentOrderDocuments.value = [nextShipmentOrder, ...shipmentOrderDocuments.value]
+      shipmentStatusDocuments.value = [nextShipmentStatus, ...shipmentStatusDocuments.value]
+
+      if (ciCreated) {
+        ciDocuments.value = [ciDocument, ...ciDocuments.value]
+      }
+      if (plCreated) {
+        plDocuments.value = [plDocument, ...plDocuments.value]
+      }
+
+      ciDocuments.value = applyShipmentOrderToCommercialDocuments(ciDocuments.value, createdPoRow.id, nextShipmentOrder.id)
+      plDocuments.value = applyShipmentOrderToCommercialDocuments(plDocuments.value, createdPoRow.id, nextShipmentOrder.id)
+
+      formOpen.value = false
+      selectedPi.value = null
+      selectedClient.value = null
+      success('PO가 즉시 확정 등록되었습니다.')
+      return
+    }
+
     pendingCreateFormValue.value = { ...formValue }
     createApprovalRequestOpen.value = true
     return
@@ -884,6 +940,20 @@ function handleSave(formValue) {
     return
   }
 
+  if (isTeamLeader.value) {
+    poRowsData.value = poRowsData.value.map((row) => (
+      row.id === selectedRow.value?.id
+        ? { ...row, ...nextRow }
+        : row
+    ))
+
+    formOpen.value = false
+    selectedPi.value = null
+    selectedClient.value = null
+    success('PO가 즉시 수정되었습니다.')
+    return
+  }
+
   pendingEditRequest.value = {
     id: selectedRow.value?.id,
     approver: formValue.approver || '',
@@ -898,6 +968,14 @@ function openDeleteApprovalRequest(row) {
   const shipmentLockInfo = shipmentLockInfoByPoId.value.get(row.id)
   if (shipmentLockInfo?.locked) {
     warning(formatPoShipmentLockMessage(shipmentLockInfo))
+    return
+  }
+
+  if (isTeamLeader.value) {
+    poRowsData.value = poRowsData.value.map((r) => (
+      r.id === row.id ? { ...r, status: '취소' } : r
+    ))
+    success(`${row.id} PO가 즉시 삭제(취소) 처리되었습니다.`)
     return
   }
 

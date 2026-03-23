@@ -112,6 +112,8 @@ const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(
 })
 const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
 
+const isTeamLeader = computed(() => Number(authStore.currentUser?.positionId) === 1)
+
 const managerOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'manager'))
 const countryOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'country'))
 const statusOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'status'))
@@ -788,11 +790,29 @@ function handleSave(formValue) {
   const { nextRow } = buildRowPayload(formValue)
 
   if (formMode.value === 'create') {
+    if (isTeamLeader.value) {
+      const newId = buildNextPiId()
+      rowsData.value = [{ id: newId, ...nextRow, manager: authStore.currentUser?.name || '', status: '확정' }, ...rowsData.value]
+      formOpen.value = false
+      selectedClient.value = null
+      success('PI가 등록되었습니다.')
+      return
+    }
     pendingCreateFormValue.value = {
       ...formValue,
       items: (formValue.items ?? []).map((item) => ({ ...item })),
     }
     createApprovalRequestOpen.value = true
+    return
+  }
+
+  if (isTeamLeader.value) {
+    rowsData.value = rowsData.value.map((r) =>
+      r.id === selectedRow.value?.id ? { ...r, ...nextRow } : r
+    )
+    formOpen.value = false
+    selectedClient.value = null
+    success('PI가 수정되었습니다.')
     return
   }
 
@@ -823,6 +843,12 @@ function openDeleteApprovalRequest(row) {
   const shipmentLockInfo = shipmentLockInfoByPiId.value.get(row.id)
   if (shipmentLockInfo?.locked) {
     warning(formatPiShipmentLockMessage(shipmentLockInfo))
+    return
+  }
+
+  if (isTeamLeader.value) {
+    rowsData.value = rowsData.value.filter((r) => r.id !== row.id)
+    success(`${row.id} PI가 삭제되었습니다.`)
     return
   }
 
