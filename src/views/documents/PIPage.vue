@@ -78,13 +78,13 @@ const shipmentOrderDocuments = useShipmentOrderDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
 
 const columns = [
-  { key: 'id', label: 'PI번호', align: 'center', width: '140px' },
+  { key: 'id', label: 'PI 번호', align: 'center', width: '140px' },
   { key: 'issueDate', label: '발행일', align: 'center', width: '130px' },
-  { key: 'clientName', label: '거래처', align: 'center', width: '220px' },
+  { key: 'clientName', label: '거래처', align: 'left', width: '220px' },
   { key: 'country', label: '국가', align: 'center', width: '120px' },
-  { key: 'itemName', label: '품목명', align: 'center', width: '220px' },
+  { key: 'itemName', label: '품목명', align: 'left', width: '220px' },
   { key: 'amount', label: '총액', align: 'right', width: '140px' },
-  { key: 'manager', label: '영업담당자', align: 'center', width: '120px' },
+  { key: 'manager', label: '영업담당자', align: 'left', width: '120px' },
   { key: 'status', label: '상태', align: 'center', width: '120px' },
   { key: 'deliveryDate', label: '납기', align: 'center', width: '130px' },
   { key: 'actions', label: '', align: 'center', width: '90px' },

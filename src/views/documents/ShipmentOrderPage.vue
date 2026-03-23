@@ -40,13 +40,13 @@ const productSearchOpen = ref(false)
 const productSearchKeyword = ref('')
 
 const columns = [
-  { key: 'id', label: '지시서번호', align: 'center', width: '150px' },
+  { key: 'id', label: '지시서 번호', align: 'center', width: '150px' },
   { key: 'issueDate', label: '출하지시일', align: 'center', width: '130px' },
-  { key: 'poId', label: 'PO', align: 'center', width: '140px' },
-  { key: 'clientName', label: '거래처', align: 'center', width: '220px' },
+  { key: 'poId', label: 'PO 번호', align: 'center', width: '140px' },
+  { key: 'clientName', label: '거래처', align: 'left', width: '220px' },
   { key: 'country', label: '국가', align: 'center', width: '120px' },
-  { key: 'itemName', label: '품목명', align: 'center', width: '220px' },
-  { key: 'manager', label: '영업담당자', align: 'center', width: '120px' },
+  { key: 'itemName', label: '품목명', align: 'left', width: '220px' },
+  { key: 'manager', label: '영업담당자', align: 'left', width: '120px' },
   { key: 'status', label: '상태', align: 'center', width: '120px' },
   { key: 'dueDate', label: '납기일', align: 'center', width: '130px' },
   { key: 'actions', label: '', align: 'center', width: '120px' },

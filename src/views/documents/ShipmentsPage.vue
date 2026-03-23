@@ -40,10 +40,10 @@ const poDocuments = usePoDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 
 const columns = [
-  { key: 'id', label: '출하번호', align: 'center', width: '140px' },
-  { key: 'clientName', label: '거래처', align: 'center', width: '220px' },
+  { key: 'id', label: '출하 번호', align: 'center', width: '140px' },
+  { key: 'clientName', label: '거래처', align: 'left', width: '220px' },
   { key: 'country', label: '국가', align: 'center', width: '120px' },
-  { key: 'poId', label: 'PO', align: 'center', width: '140px' },
+  { key: 'poId', label: 'PO 번호', align: 'center', width: '140px' },
   { key: 'requestDate', label: '출하요청일', align: 'center', width: '130px' },
   { key: 'dueDate', label: '납기일', align: 'center', width: '130px' },
   { key: 'status', label: '상태', align: 'center', width: '120px' },

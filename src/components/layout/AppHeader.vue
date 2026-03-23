@@ -9,6 +9,7 @@ import { usePiDocuments } from '@/stores/piDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useSalesCollectionDocuments } from '@/stores/salesCollectionDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
+import { getRoleHomePath } from '@/utils/roleAccess'
 
 const uiStore = useUiStore()
 const authStore = useAuthStore()
