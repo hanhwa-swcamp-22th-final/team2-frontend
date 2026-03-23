@@ -24,6 +24,7 @@ export function generateTokens(user) {
     sub: user.id,
     email: user.email,
     role: user.role,
+    departmentId: user.departmentId,
     name: user.name,
     iat: now,
     exp: now + AT_EXPIRY_MS,

@@ -11,6 +11,7 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import ClientFormModal from '@/components/domain/master/ClientFormModal.vue'
+import { useAuthStore } from '@/stores/auth'
 import {
   createClient,
   deleteClient,
@@ -21,6 +22,9 @@ import { useMasterLookup } from '@/composables/useMasterLookup'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
+const authStore = useAuthStore()
+const currentUser = computed(() => authStore.currentUser)
+const isAdmin = computed(() => currentUser.value?.role === 'admin')
 const { success, error } = useToast()
 
 const { countries, ports, currencies, paymentTerms, loadReferenceData, getCountryName, getPortName, getPaymentTermsLabel, getCurrencyLabel } = useMasterLookup()
@@ -73,6 +77,11 @@ const enrichedClients = computed(() =>
 
 const filteredClients = computed(() => {
   let result = enrichedClients.value
+
+  // 영업 사용자는 자기 부서 거래처만 표시
+  if (!isAdmin.value && currentUser.value?.role === 'sales') {
+    result = result.filter((c) => c.departmentId === Number(currentUser.value.departmentId))
+  }
 
   if (searchKeyword.value) {
     const kw = searchKeyword.value.toLowerCase()
@@ -158,7 +167,8 @@ async function handleSave(formData) {
   saving.value = true
   try {
     if (formMode.value === 'create') {
-      await createClient({ ...formData, regDate: new Date().toISOString().slice(0, 10) })
+      const deptId = isAdmin.value ? undefined : Number(currentUser.value?.departmentId)
+      await createClient({ ...formData, regDate: new Date().toISOString().slice(0, 10), ...(deptId && { departmentId: deptId }) })
       success('거래처가 등록되었습니다.')
     } else {
       await updateClient(selectedClient.value.id, formData)

@@ -13,9 +13,13 @@ import PageHeader from '@/components/common/PageHeader.vue'
 import ItemFormModal from '@/components/domain/master/ItemFormModal.vue'
 import { createItem, deleteItem, fetchItems, updateItem } from '@/api/master'
 import { useToast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
+import { canManageItems } from '@/utils/roleAccess'
 
 const router = useRouter()
 const { success, error } = useToast()
+const authStore = useAuthStore()
+const isItemAdmin = computed(() => canManageItems(authStore.currentUser?.role))
 
 const items = ref([])
 const loading = ref(false)
@@ -40,18 +44,23 @@ const categoryOptions = computed(() => {
   return [{ label: '전체 카테고리', value: '' }, ...cats.map((c) => ({ label: c, value: c }))]
 })
 
-const columns = [
-  { key: 'code', label: '코드', width: '100px' },
-  { key: 'name', label: '품목명' },
-  { key: 'spec', label: '규격', width: '200px' },
-  { key: 'packUnit', label: '포장단위', width: '100px', align: 'center' },
-  { key: 'unit', label: '단위', width: '80px', align: 'center' },
-  { key: 'unitPrice', label: '단가 (KRW)', width: '140px', align: 'right' },
-  { key: 'weight', label: '중량 (kg)', width: '110px', align: 'right' },
-  { key: 'hsCode', label: 'HS Code', width: '100px', align: 'center' },
-  { key: 'status', label: '상태', width: '80px', align: 'center' },
-  { key: 'actions', label: '액션', width: '120px', align: 'center' },
-]
+const columns = computed(() => {
+  const base = [
+    { key: 'code', label: '코드', width: '100px' },
+    { key: 'name', label: '품목명' },
+    { key: 'spec', label: '규격', width: '200px' },
+    { key: 'packUnit', label: '포장단위', width: '100px', align: 'center' },
+    { key: 'unit', label: '단위', width: '80px', align: 'center' },
+    { key: 'unitPrice', label: '단가 (KRW)', width: '140px', align: 'right' },
+    { key: 'weight', label: '중량 (kg)', width: '110px', align: 'right' },
+    { key: 'hsCode', label: 'HS Code', width: '100px', align: 'center' },
+    { key: 'status', label: '상태', width: '80px', align: 'center' },
+  ]
+  if (isItemAdmin.value) {
+    base.push({ key: 'actions', label: '액션', width: '120px', align: 'center' })
+  }
+  return base
+})
 
 const filteredItems = computed(() => {
   let result = items.value
@@ -161,7 +170,7 @@ function goToDetail(row) {
   <div class="space-y-6">
     <PageHeader title="품목 관리" icon-class="fas fa-cube">
       <template #actions>
-        <BaseButton variant="primary" @click="openCreateModal">신규등록</BaseButton>
+        <BaseButton v-if="isItemAdmin" variant="primary" @click="openCreateModal">신규등록</BaseButton>
       </template>
     </PageHeader>
 
