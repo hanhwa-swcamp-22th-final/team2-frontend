@@ -14,7 +14,9 @@ import POFormModal from '@/components/domain/document/POFormModal.vue'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
+import { useCiDocuments } from '@/stores/ciDocuments'
 import { usePiDocuments } from '@/stores/piDocuments'
+import { usePlDocuments } from '@/stores/plDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
@@ -32,7 +34,9 @@ import {
 import { recordDocumentEmailActivities } from '@/utils/documentActivityEmail'
 import { openDocumentOutputByType } from '@/utils/documentOutput'
 import {
+  formatPiPoSelectionMessage,
   formatPoShipmentLockMessage,
+  getPiPoSelectionInfo,
   getPoShipmentLockInfo,
   resolvePoShipmentDocumentStatus,
 } from '@/utils/documentShipmentLock'
@@ -57,7 +61,9 @@ const clientSearchKeyword = ref('')
 const selectedPi = ref(null)
 const selectedClient = ref(null)
 const pendingEditRequest = ref(null)
+const ciDocuments = useCiDocuments()
 const piDocuments = usePiDocuments()
+const plDocuments = usePlDocuments()
 const poDocuments = usePoDocuments()
 const productionOrderDocuments = useProductionOrderDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
@@ -80,10 +86,28 @@ const approvalChangeColumns = [
   { key: 'after', label: '변경값', align: 'left' },
 ]
 
+const availablePiRows = computed(() => (
+  piDocuments.value.filter((row) => (
+    getPiPoSelectionInfo(
+      row,
+      poDocuments.value,
+      shipmentOrderDocuments.value,
+      shipmentStatusDocuments.value,
+      productionOrderDocuments.value,
+      ciDocuments.value,
+      plDocuments.value,
+      String(route.params.id ?? ''),
+    ).selectable
+  ))
+))
+
 const piRows = computed(() => {
   const keyword = piSearchKeyword.value.trim().toLowerCase()
-  if (!keyword) return piDocuments.value
-  return piDocuments.value.filter((row) => [row.id, row.clientName, row.currency, row.deliveryDate].some((value) => String(value ?? '').toLowerCase().includes(keyword)))
+  if (!keyword) return availablePiRows.value
+  return availablePiRows.value.filter((row) => (
+    [row.id, row.clientName, row.currency, row.deliveryDate]
+      .some((value) => String(value ?? '').toLowerCase().includes(keyword))
+  ))
 })
 
 const clientRows = createClientRows(clientSearchKeyword)
@@ -618,6 +642,22 @@ function openClientSearch() {
 }
 
 function handlePiSelect(pi) {
+  const selectionInfo = getPiPoSelectionInfo(
+    pi,
+    poDocuments.value,
+    shipmentOrderDocuments.value,
+    shipmentStatusDocuments.value,
+    productionOrderDocuments.value,
+    ciDocuments.value,
+    plDocuments.value,
+    String(route.params.id ?? ''),
+  )
+
+  if (!selectionInfo.selectable) {
+    warning(formatPiPoSelectionMessage(selectionInfo, pi?.id))
+    return
+  }
+
   selectedPi.value = pi
   piSearchOpen.value = false
   piSearchKeyword.value = ''
