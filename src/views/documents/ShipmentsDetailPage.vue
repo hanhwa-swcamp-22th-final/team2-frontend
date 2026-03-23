@@ -1,10 +1,11 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import { useDocumentItemCatalog } from '@/composables/useDocumentItemCatalog'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
@@ -16,9 +17,27 @@ const toast = useToast()
 const poDocuments = usePoDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
-const detail = computed(() => shipmentStatusDocuments.value.find((row) => row.id === route.params.id) ?? null)
+const { loadItemCatalog, enrichDocumentItems } = useDocumentItemCatalog()
+
+function enrichShipmentStatusRow(row) {
+  if (!row) return null
+
+  const linkedShipmentOrder = shipmentOrderDocuments.value.find((document) => document.id === row.shipmentOrderId)
+  const linkedPo = poDocuments.value.find((document) => document.id === row.poId)
+
+  return {
+    ...row,
+    country: row.country || linkedShipmentOrder?.country || linkedPo?.country || '-',
+  }
+}
+
+const detail = computed(() => {
+  const row = shipmentStatusDocuments.value.find((document) => document.id === route.params.id)
+  return enrichShipmentStatusRow(row)
+})
 const linkedPo = computed(() => poDocuments.value.find((row) => row.id === detail.value?.poId))
 const linkedShipmentOrder = computed(() => shipmentOrderDocuments.value.find((row) => row.id === detail.value?.shipmentOrderId))
+const displayItems = computed(() => enrichDocumentItems(detail.value?.items ?? []))
 
 const currentStep = computed(() => (detail.value?.status === '출하완료' ? 2 : 1))
 function parseNumericValue(value) {
@@ -27,8 +46,13 @@ function parseNumericValue(value) {
 }
 
 const totalItemQuantity = computed(() => (
-  detail.value?.items.reduce((sum, item) => sum + parseNumericValue(item.quantity), 0) ?? 0
+  displayItems.value.reduce((sum, item) => sum + parseNumericValue(item.quantity), 0)
 ))
+
+const totalWeight = computed(() => {
+  const weight = displayItems.value.reduce((sum, item) => sum + (item.rowWeight ?? 0), 0)
+  return weight > 0 ? `${weight.toFixed(2)} kg` : '-'
+})
 
 const summaryRows = computed(() => {
   if (!detail.value) return []
@@ -62,6 +86,10 @@ function completeShipment() {
   ))
   toast.success(`${detail.value.id}가 출하완료 처리되었습니다.`)
 }
+
+onMounted(() => {
+  loadItemCatalog()
+})
 </script>
 
 <template>
@@ -157,26 +185,35 @@ function completeShipment() {
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 class="mb-3 font-bold text-slate-800">품목 내역</h3>
           <div class="overflow-x-auto">
-            <table class="w-full min-w-[420px] text-sm">
+            <table class="w-full min-w-[820px] text-sm">
               <thead class="bg-gray-50">
                 <tr>
                   <th class="p-3 text-left">품목</th>
+                  <th class="p-3 text-left">규격</th>
+                  <th class="p-3 text-center">HS Code</th>
+                  <th class="p-3 text-center">단위</th>
                   <th class="p-3 text-right">수량</th>
-                  <th class="p-3 text-right">금액</th>
+                  <th class="p-3 text-right">중량(kg)</th>
                 </tr>
               </thead>
               <tbody class="divide-y">
-                <tr v-for="item in detail.items" :key="item.name">
+                <tr v-for="item in displayItems" :key="item.name">
                   <td class="p-3">{{ item.name }}</td>
+                  <td class="p-3 text-slate-600">{{ item.spec || '-' }}</td>
+                  <td class="p-3 text-center">{{ item.hsCode || '-' }}</td>
+                  <td class="p-3 text-center">{{ item.unit || '-' }}</td>
                   <td class="p-3 text-right">{{ item.quantity }}</td>
-                  <td class="p-3 text-right text-slate-500">-</td>
+                  <td class="p-3 text-right">{{ item.rowWeight != null ? item.rowWeight.toFixed(2) : '-' }}</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr class="border-t border-slate-200 bg-slate-50">
                   <td class="p-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">합계</td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
                   <td class="p-3 text-right font-semibold text-slate-900">{{ totalItemQuantity.toLocaleString('ko-KR') }}</td>
-                  <td class="p-3 text-right text-slate-500">-</td>
+                  <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ totalWeight }}</td>
                 </tr>
               </tfoot>
             </table>

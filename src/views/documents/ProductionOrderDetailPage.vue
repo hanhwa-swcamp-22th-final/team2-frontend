@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import BaseButton from '@/components/common/BaseButton.vue'
@@ -7,6 +7,7 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import ProductionOrderTemplate from '@/components/domain/document/ProductionOrderTemplate.vue'
+import { useDocumentItemCatalog } from '@/composables/useDocumentItemCatalog'
 import { useAuthStore } from '@/stores/auth'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useToast } from '@/composables/useToast'
@@ -19,6 +20,7 @@ const toast = useToast()
 const authStore = useAuthStore()
 const poDocuments = usePoDocuments()
 const productionOrderDocuments = useProductionOrderDocuments()
+const { loadItemCatalog, enrichDocumentItems } = useDocumentItemCatalog()
 
 const previewOpen = ref(false)
 const completeConfirmOpen = ref(false)
@@ -36,17 +38,27 @@ function detectCurrencySymbol(value) {
 }
 
 const detail = computed(() => productionOrderDocuments.value.find((row) => row.id === route.params.id) ?? null)
+const displayItems = computed(() => enrichDocumentItems(detail.value?.items ?? []))
 const isProductionUser = computed(() => authStore.currentUser?.role === 'production')
 const canCompleteProduction = computed(() => isProductionUser.value && detail.value?.status === '진행중')
 const totalQuantity = computed(() => (
-  detail.value?.items.reduce((sum, item) => sum + Number.parseInt(item.quantity, 10), 0) ?? 0
+  displayItems.value.reduce((sum, item) => sum + Number.parseInt(item.quantity, 10), 0)
 ))
-const totalAmount = computed(() => {
-  if (!detail.value?.items.length) return '-'
-  const symbol = detectCurrencySymbol(detail.value.items[0].amount)
-  const amount = detail.value.items.reduce((sum, item) => sum + parseNumericValue(item.amount), 0)
-  return `${symbol}${amount.toLocaleString('en-US')}`
+const totalWeight = computed(() => {
+  const weight = displayItems.value.reduce((sum, item) => sum + (item.rowWeight ?? 0), 0)
+  return weight > 0 ? `${weight.toFixed(2)} kg` : '-'
 })
+const documentForOutput = computed(() => (
+  detail.value
+    ? {
+        ...detail.value,
+        items: displayItems.value.map((item) => ({
+          ...item,
+          spec: item.spec || '-',
+        })),
+      }
+    : null
+))
 
 const previewFields = computed(() => {
   if (!detail.value) return []
@@ -124,13 +136,13 @@ function confirmCompleteProduction() {
 }
 
 function handlePrint() {
-  if (!detail.value) return
-  openDocumentOutputByType('PRODUCTION', detail.value, true)
+  if (!documentForOutput.value) return
+  openDocumentOutputByType('PRODUCTION', documentForOutput.value, true)
 }
 
 function handlePdfDownload() {
-  if (!detail.value) return
-  const opened = openDocumentOutputByType('PRODUCTION', detail.value, true)
+  if (!documentForOutput.value) return
+  const opened = openDocumentOutputByType('PRODUCTION', documentForOutput.value, true)
   if (opened) {
     toast.info('브라우저 인쇄 창에서 "PDF로 저장"을 선택하세요.', 'PDF')
   }
@@ -140,6 +152,10 @@ function handlePreviewPrint() {
   previewOpen.value = false
   handlePrint()
 }
+
+onMounted(() => {
+  loadItemCatalog()
+})
 </script>
 
 <template>
@@ -215,24 +231,26 @@ function handlePreviewPrint() {
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 class="mb-4 font-bold text-slate-800">품목 내역</h3>
           <div class="overflow-x-auto">
-            <table class="w-full min-w-[760px] text-sm">
+            <table class="w-full min-w-[920px] text-sm">
               <thead class="bg-gray-50">
                 <tr>
                   <th class="p-3 text-left">품목</th>
+                  <th class="p-3 text-left">규격</th>
+                  <th class="p-3 text-center">HS Code</th>
                   <th class="p-3 text-center">단위</th>
                   <th class="p-3 text-right">수량</th>
-                  <th class="p-3 text-right">단가</th>
-                  <th class="p-3 text-right">금액</th>
+                  <th class="p-3 text-right">중량(kg)</th>
                   <th class="p-3 text-left">비고</th>
                 </tr>
               </thead>
               <tbody class="divide-y">
-                <tr v-for="item in detail.items" :key="`${detail.id}-${item.name}`">
+                <tr v-for="item in displayItems" :key="`${detail.id}-${item.name}`">
                   <td class="p-3">{{ item.name }}</td>
+                  <td class="p-3 text-slate-600">{{ item.spec || '-' }}</td>
+                  <td class="p-3 text-center">{{ item.hsCode || '-' }}</td>
                   <td class="p-3 text-center">{{ item.unit || '-' }}</td>
                   <td class="p-3 text-right">{{ item.quantity }}</td>
-                  <td class="p-3 text-right">{{ item.unitPrice }}</td>
-                  <td class="p-3 text-right font-semibold">{{ item.amount }}</td>
+                  <td class="p-3 text-right">{{ item.rowWeight != null ? item.rowWeight.toFixed(2) : '-' }}</td>
                   <td class="p-3 text-slate-600">{{ item.remark || '-' }}</td>
                 </tr>
               </tbody>
@@ -240,9 +258,10 @@ function handlePreviewPrint() {
                 <tr class="border-t border-slate-200 bg-slate-50">
                   <td class="p-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">합계</td>
                   <td></td>
-                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalQuantity.toLocaleString('ko-KR') }} EA</td>
                   <td></td>
-                  <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ totalAmount }}</td>
+                  <td></td>
+                  <td class="p-3 text-right font-semibold text-slate-900">{{ totalQuantity.toLocaleString('ko-KR') }} EA</td>
+                  <td class="p-3 text-right text-base font-extrabold text-slate-900">{{ totalWeight }}</td>
                   <td></td>
                 </tr>
               </tfoot>
@@ -284,7 +303,7 @@ function handlePreviewPrint() {
       @close="previewOpen = false"
       @print="handlePreviewPrint"
     >
-      <ProductionOrderTemplate :document="detail" />
+      <ProductionOrderTemplate :document="documentForOutput || detail" />
     </DocumentPreviewModal>
 
     <ConfirmModal

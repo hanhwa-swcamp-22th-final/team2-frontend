@@ -18,6 +18,8 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
+import { usePoDocuments } from '@/stores/poDocuments'
+import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import { clientSearchColumns } from '@/utils/searchModalColumns'
 
@@ -27,6 +29,8 @@ const clientSearchOpen = ref(false)
 const clientSearchKeyword = ref('')
 const shipmentSearchOpen = ref(false)
 const shipmentSearchKeyword = ref('')
+const poDocuments = usePoDocuments()
+const shipmentOrderDocuments = useShipmentOrderDocuments()
 
 const countryOptions = [
   { value: '말레이시아', label: '말레이시아' },
@@ -50,7 +54,19 @@ const columns = [
   { key: 'status', label: '상태', align: 'center', width: '120px' },
 ]
 
-const rowsData = useShipmentStatusDocuments()
+const shipmentStatusDocuments = useShipmentStatusDocuments()
+
+function enrichShipmentStatusRow(row) {
+  const linkedShipmentOrder = shipmentOrderDocuments.value.find((document) => document.id === row.shipmentOrderId)
+  const linkedPo = poDocuments.value.find((document) => document.id === row.poId)
+
+  return {
+    ...row,
+    country: row.country || linkedShipmentOrder?.country || linkedPo?.country || '-',
+  }
+}
+
+const rowsData = computed(() => shipmentStatusDocuments.value.map(enrichShipmentStatusRow))
 
 const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
   keywordFields: ['id', 'clientName', 'country', 'poId', 'requestDate', 'dueDate', 'status'],
