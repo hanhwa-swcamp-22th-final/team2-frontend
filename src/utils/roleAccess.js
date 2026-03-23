@@ -41,3 +41,9 @@ export function canAccessPathByRole(user, path) {
 
   return false
 }
+
+export function getRoleHomePath(role) {
+  if (role === 'production') return '/production'
+  if (role === 'shipping') return '/shipments'
+  return '/'
+}
