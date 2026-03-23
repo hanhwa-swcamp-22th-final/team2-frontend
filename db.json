@@ -4579,42 +4579,6 @@
       "sender": "정영업"
     },
     {
-      "id": "a2c1",
-      "client": "Tokyo Trading Co.",
-      "title": "[SalesBoost] PI2025003 발송",
-      "recipient": "Tanaka Yuki",
-      "email": "yuki.tanaka@tokyotrading.jp",
-      "types": [
-        "PI"
-      ],
-      "attachments": [
-        "PI2025003.pdf"
-      ],
-      "poId": null,
-      "status": "실패",
-      "sentAt": "2025/04/20",
-      "sender": "김영업"
-    },
-    {
-      "id": "9cb3",
-      "client": "Tokyo Trading Co.",
-      "title": "[SalesBoost] CI2025003·PL2025003 발송",
-      "recipient": "Kenji Sato",
-      "email": "kenji.sato@tokyotrading.jp",
-      "types": [
-        "CI",
-        "PL"
-      ],
-      "attachments": [
-        "CI2025003.pdf",
-        "PL2025003.pdf"
-      ],
-      "poId": "PO2025003",
-      "status": "실패",
-      "sentAt": "2025/04/18",
-      "sender": "김영업"
-    },
-    {
       "id": "5e74",
       "client": "Paris Acier SA",
       "title": "[SalesBoost] MO2025006 생산지시서 발송",
@@ -4632,7 +4596,60 @@
       "sender": "김영업"
     },
     {
-      "id": "b0ad",
+      "id": "886b",
+      "client": "Paris Acier SA",
+      "title": "[SalesBoost] SO2025006 출하지시서 발송",
+      "recipient": "박출하",
+      "email": "park@salesboost.com",
+      "types": [
+        "출하지시서"
+      ],
+      "attachments": [
+        "SO2025006.pdf"
+      ],
+      "poId": "PO2025006",
+      "status": "발송",
+      "sentAt": "2026/03/23",
+      "sender": "김영업"
+    },
+    {
+      "id": "dc93",
+      "client": "Tokyo Trading Co.",
+      "title": "[SalesBoost] CI2025003·PL2025003 발송",
+      "recipient": "Kenji Sato",
+      "email": "kenji.sato@tokyotrading.jp",
+      "types": [
+        "CI",
+        "PL"
+      ],
+      "attachments": [
+        "CI2025003.pdf",
+        "PL2025003.pdf"
+      ],
+      "poId": "PO2025003",
+      "status": "발송",
+      "sentAt": "2026/03/23",
+      "sender": "김영업"
+    },
+    {
+      "id": "d4b4",
+      "client": "Tokyo Trading Co.",
+      "title": "[SalesBoost] PI2025003 발송",
+      "recipient": "Tanaka Yuki",
+      "email": "yuki.tanaka@tokyotrading.jp",
+      "types": [
+        "PI"
+      ],
+      "attachments": [
+        "PI2025003.pdf"
+      ],
+      "poId": null,
+      "status": "발송",
+      "sentAt": "2026/03/23",
+      "sender": "김영업"
+    },
+    {
+      "id": "1be9",
       "client": "London Metals Plc",
       "title": "[SalesBoost] SO2025005 출하지시서 발송",
       "recipient": "박출하",
@@ -4644,8 +4661,8 @@
         "SO2025005.pdf"
       ],
       "poId": "PO2025005",
-      "status": "실패",
-      "sentAt": "2025/05/15",
+      "status": "발송",
+      "sentAt": "2026/03/23",
       "sender": "정영업"
     },
     {
