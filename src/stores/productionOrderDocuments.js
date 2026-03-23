@@ -4,7 +4,7 @@ function createInitialProductionOrderDocuments() {
   return [
     {
       id: 'MO2026001',
-      status: '완료',
+      status: '생산완료',
       issueDate: '2026/02/24',
       poId: 'PO26001',
       country: '말레이시아',
@@ -46,7 +46,7 @@ function createInitialProductionOrderDocuments() {
     },
     {
       id: 'MO2026003',
-      status: '대기',
+      status: '진행중',
       issueDate: '2026/03/14',
       poId: 'PO26003',
       country: '미국',

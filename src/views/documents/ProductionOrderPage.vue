@@ -51,9 +51,8 @@ const countryOptions = [
 ]
 
 const statusOptions = [
-  { value: '대기', label: '대기' },
   { value: '진행중', label: '진행중' },
-  { value: '완료', label: '완료' },
+  { value: '생산완료', label: '생산완료' },
 ]
 
 const columns = [

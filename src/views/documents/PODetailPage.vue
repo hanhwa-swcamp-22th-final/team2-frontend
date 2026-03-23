@@ -678,7 +678,7 @@ function confirmIssueProductionOrder() {
 
   const nextProductionOrder = {
     id: productionOrderId,
-    status: '대기',
+    status: '진행중',
     issueDate: formatTodaySlashDate(),
     poId: sourceRow.value.id,
     country: sourceRow.value.country || '-',
