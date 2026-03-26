@@ -1,8 +1,8 @@
 const COMMON_ROUTE_NAMES = new Set(['dashboard'])
 
 const ROLE_ROUTE_ALLOWLIST = {
-  production: new Set(['dashboard', 'production', 'production-detail', 'package']),
-  shipping: new Set(['dashboard', 'shipment-orders', 'shipment-order-detail', 'shipments', 'shipment-detail', 'package']),
+  production: new Set(['dashboard', 'production', 'production-detail']),
+  shipping: new Set(['dashboard', 'shipment-orders', 'shipment-order-detail', 'shipments', 'shipment-detail']),
 }
 
 export function canAccessRouteByRole(user, routeName) {
@@ -40,19 +40,17 @@ export function canAccessPathByRole(user, path) {
   }
 
   if (user.role === 'production') {
-    return path.startsWith('/production') || path.startsWith('/package')
+    return path.startsWith('/production')
   }
 
   if (user.role === 'shipping') {
-    return path.startsWith('/shipment-orders') || path.startsWith('/shipments') || path.startsWith('/package')
+    return path.startsWith('/shipment-orders') || path.startsWith('/shipments')
   }
 
   return false
 }
 
 export function getRoleHomePath(role) {
-  if (role === 'production') return '/production'
-  if (role === 'shipping') return '/shipments'
   return '/'
 }
 
