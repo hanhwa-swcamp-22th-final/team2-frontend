@@ -502,11 +502,6 @@ async function confirmPackageDelete() {
           공유 활동기록 패키지
         </h3>
       </template>
-      <template #header-actions>
-        <RouterLink to="/package" class="text-xs font-medium text-brand-500 hover:text-brand-700">
-          전체보기 <i class="fas fa-chevron-right ml-0.5 text-[9px]" />
-        </RouterLink>
-      </template>
       <div class="space-y-2">
         <div
           v-for="pkg in visiblePackages"

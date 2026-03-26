@@ -1,6 +1,8 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { jsPDF } from 'jspdf'
+import ActivityDetailModal from '@/components/domain/activity/ActivityDetailModal.vue'
+import ActivityTypeBadge from '@/components/domain/activity/ActivityTypeBadge.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 
@@ -24,6 +26,16 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'edit', 'delete'])
+
+const selectedActivity = ref(null)
+
+function openActivityDetail(act) {
+  selectedActivity.value = act
+}
+
+function closeActivityDetail() {
+  selectedActivity.value = null
+}
 
 const packageActivities = computed(() => {
   if (!props.pkg?.activityIds?.length) return []
@@ -173,12 +185,13 @@ function generatePdf() {
 </script>
 
 <template>
-  <BaseModal
-    :open="open"
-    :title="pkg?.title || '패키지 상세'"
-    width="max-w-3xl"
-    @close="emit('close')"
-  >
+  <div>
+    <BaseModal
+      :open="open"
+      :title="pkg?.title || '패키지 상세'"
+      width="max-w-3xl"
+      @close="emit('close')"
+    >
     <div v-if="pkg" class="space-y-5">
       <!-- 기본 정보 -->
       <div class="space-y-2">
@@ -216,8 +229,10 @@ function generatePdf() {
           <div
             v-for="act in packageActivities"
             :key="act.id"
-            class="flex items-center gap-2 rounded-md bg-white px-2.5 py-1.5 text-sm"
+            class="flex cursor-pointer items-center gap-2 rounded-md bg-white px-2.5 py-1.5 text-sm transition hover:bg-slate-100"
+            @click="openActivityDetail(act)"
           >
+            <ActivityTypeBadge :value="act.type" />
             <span class="truncate font-medium text-slate-700">{{ act.title }}</span>
             <span class="flex-shrink-0 text-xs text-slate-400">{{ act.date }}</span>
           </div>
@@ -267,8 +282,20 @@ function generatePdf() {
         </BaseButton>
       </template>
       <template v-else>
+        <BaseButton variant="secondary" @click="generatePdf">
+          <template #leading>
+            <i class="fas fa-file-pdf text-xs" />
+          </template>
+          PDF 다운로드
+        </BaseButton>
         <BaseButton variant="secondary" @click="emit('close')">닫기</BaseButton>
       </template>
     </template>
-  </BaseModal>
+    </BaseModal>
+    <ActivityDetailModal
+      :open="Boolean(selectedActivity)"
+      :activity="selectedActivity || {}"
+      @close="closeActivityDetail"
+    />
+  </div>
 </template>

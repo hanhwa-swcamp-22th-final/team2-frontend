@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchActivities, fetchAllActivityPOs } from '@/api/activity'
+import { api } from '@/lib/api'
 import { createPackage, fetchAllUsers, fetchPackageById, updatePackage } from '@/api/package'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
@@ -43,18 +44,24 @@ const editId = computed(() => route.query.edit || '')
 const activities = ref([])
 const poList = ref([])
 const allUsers = ref([])
+const departments = ref([])
+const positions = ref([])
 const isSaving = ref(false)
 
 onMounted(async () => {
   try {
-    const [actData, poData, userData] = await Promise.all([
+    const [actData, poData, userData, deptData, posData] = await Promise.all([
       fetchActivities(),
       fetchAllActivityPOs(),
       fetchAllUsers(),
+      api.get('/departments').then(r => r.data),
+      api.get('/positions').then(r => r.data),
     ])
     activities.value = actData
     poList.value = poData
     allUsers.value = userData.filter((u) => u.status === '재직')
+    departments.value = deptData
+    positions.value = posData
 
     if (isEditMode.value) {
       await loadPackageForEdit()
@@ -132,6 +139,9 @@ const dateTo      = ref(todayKr())
 // ── 열람 권한 ──────────────────────────────────────────────
 const selectedViewerIds = ref([])
 const viewerSearchQuery = ref('')
+
+const departmentNameById = computed(() => new Map(departments.value.map(d => [String(d.id), d.name])))
+const positionNameById = computed(() => new Map(positions.value.map(p => [String(p.id), p.name])))
 
 const filteredUsers = computed(() => {
   const q = viewerSearchQuery.value.trim().toLowerCase()
@@ -338,7 +348,7 @@ async function savePackage() {
 
       <!-- ── 좌측: 패키지 생성 폼 ──────────────────────────── -->
       <div class="lg:col-span-2">
-        <BaseCard :title="isEditMode ? '패키지 수정' : '패키지 생성'">
+        <BaseCard :title="isEditMode ? '패키지 수정' : '패키지 작성'">
           <div class="space-y-5">
 
             <!-- 패키지 제목 -->
@@ -448,7 +458,8 @@ async function savePackage() {
                     @change="toggleViewer(user.id)"
                   />
                   <span class="text-sm text-slate-700">{{ user.name }}</span>
-                  <span class="text-xs text-slate-400">{{ user.email }}</span>
+                  <span class="text-xs text-slate-400">{{ departmentNameById.get(String(user.departmentId)) || '' }}</span>
+                  <span class="text-xs text-slate-400">{{ positionNameById.get(String(user.positionId)) || '' }}</span>
                 </label>
               </div>
               <p v-if="errors.viewers" class="mt-1 text-xs text-red-500">{{ errors.viewers }}</p>
@@ -468,7 +479,7 @@ async function savePackage() {
                   <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
                 </svg>
               </template>
-              {{ isEditMode ? '패키지 수정' : '패키지 저장' }}
+              {{ isEditMode ? '패키지 수정' : '패키지 작성' }}
             </BaseButton>
 
           </div>
