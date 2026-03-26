@@ -4073,6 +4073,16 @@
       "email": "thanh.le@hanoidigital.vn",
       "tel": "+84-24-3999-2002",
       "signImageUrl": null
+    },
+    {
+      "id": "2441",
+      "clientId": "2",
+      "name": "정진호",
+      "position": "Team Leader",
+      "email": "wjswldh@naver.com",
+      "tel": "010-1234-1234",
+      "signImageUrl": null,
+      "createdBy": "5"
     }
   ],
   "activityPOs": [

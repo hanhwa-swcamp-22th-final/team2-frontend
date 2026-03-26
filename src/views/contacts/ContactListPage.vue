@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useToast } from '@/composables/useToast'
 import { fetchBuyers, createBuyer, updateBuyer, deleteBuyer } from '@/api/contacts'
 import { fetchActivityClients } from '@/api/activity'
+import { useAuthStore } from '@/stores/auth'
 import BaseButton from '@/components/common/BaseButton.vue'
 import FormField from '@/components/common/FormField.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
@@ -16,9 +17,19 @@ import TableActions from '@/components/common/TableActions.vue'
 
 const { warning, error } = useToast()
 
+const authStore = useAuthStore()
+const currentUser = computed(() => authStore.currentUser)
+const isAdmin = computed(() => currentUser.value?.role === 'admin')
+
 // ── 데이터 ─────────────────────────────────────────────────
 const clients = ref([])
 const contacts = ref([])
+
+// 관리자는 전체, 일반 사용자는 본인 등록 연락처만
+const myContacts = computed(() => {
+  if (isAdmin.value) return contacts.value
+  return contacts.value.filter((c) => c.createdBy === currentUser.value?.id)
+})
 
 onMounted(async () => {
   try {
@@ -46,14 +57,17 @@ function applySearch() {
   searchKeyword.value = searchInput.value
 }
 
-const filteredClients = computed(() => {
-  if (!searchKeyword.value) return clients.value
-  return clients.value.filter((c) => String(c.id) === String(searchKeyword.value))
-})
-
 function getContactsByClient(clientId) {
-  return contacts.value.filter((c) => String(c.clientId) === String(clientId))
+  return myContacts.value.filter((c) => String(c.clientId) === String(clientId))
 }
+
+const filteredClients = computed(() => {
+  let result = clients.value
+  if (searchKeyword.value) {
+    result = result.filter((c) => String(c.id) === String(searchKeyword.value))
+  }
+  return result.filter((c) => getContactsByClient(c.id).length > 0)
+})
 
 // ── 상세 모달 ──────────────────────────────────────────────
 const selectedContact = ref(null)
@@ -144,6 +158,7 @@ async function handleFormSubmit() {
     email:       formEmail.value,
     tel:         formTel.value,
     signImageUrl: null,
+    createdBy:   currentUser.value?.id,
   }
   try {
     if (isEditMode.value) {
