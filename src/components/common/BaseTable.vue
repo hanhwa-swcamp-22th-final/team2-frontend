@@ -73,6 +73,7 @@ function normalizeColumn(column) {
     label: column.label ?? column.key,
     align: column.align ?? 'left',
     width: column.width ?? '',
+    sortable: column.sortable,
   }
 }
 
@@ -97,6 +98,61 @@ function getHeaderAlignmentClass(align) {
 }
 
 const normalizedColumns = computed(() => props.columns.map(normalizeColumn))
+
+// ── 정렬 (3중 토글: 기본 → asc → desc → 기본) ──────────────
+const sortKey = ref('')
+const sortDirection = ref('')   // '' | 'asc' | 'desc'
+
+function toggleSort(column) {
+  if (column.sortable === false) return
+
+  if (sortKey.value !== column.key) {
+    sortKey.value = column.key
+    sortDirection.value = 'asc'
+    return
+  }
+
+  if (sortDirection.value === 'asc') {
+    sortDirection.value = 'desc'
+  } else if (sortDirection.value === 'desc') {
+    sortKey.value = ''
+    sortDirection.value = ''
+  } else {
+    sortDirection.value = 'asc'
+  }
+}
+
+function parseSortValue(val) {
+  if (val == null || val === '' || val === '-') return null
+  // 숫자
+  const num = Number(val)
+  if (!Number.isNaN(num) && typeof val !== 'boolean') return num
+  // 날짜 패턴 (YYYY/MM/DD, YYYY-MM-DD, YYYY.MM.DD)
+  const dateStr = String(val).replace(/\./g, '-').replace(/\//g, '-')
+  const ts = Date.parse(dateStr)
+  if (Number.isFinite(ts)) return ts
+  // 문자열
+  return String(val).toLowerCase()
+}
+
+const sortedRows = computed(() => {
+  if (!sortKey.value || !sortDirection.value) return props.rows
+
+  const key = sortKey.value
+  const dir = sortDirection.value === 'asc' ? 1 : -1
+
+  return [...props.rows].sort((a, b) => {
+    const va = parseSortValue(a?.[key])
+    const vb = parseSortValue(b?.[key])
+    if (va === null && vb === null) return 0
+    if (va === null) return 1
+    if (vb === null) return -1
+    if (typeof va === 'string' && typeof vb === 'string') return va.localeCompare(vb) * dir
+    if (va < vb) return -1 * dir
+    if (va > vb) return 1 * dir
+    return 0
+  })
+})
 
 watch(normalizedColumns, (columns) => {
   const nextWidths = {}
@@ -187,10 +243,48 @@ onBeforeUnmount(() => {
             :key="column.key"
             scope="col"
             class="relative select-none border-b border-r border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 last:border-r-0"
-            :class="getHeaderAlignmentClass(column.align)"
+            :class="[getHeaderAlignmentClass(column.align), column.sortable !== false ? 'cursor-pointer hover:bg-slate-100 transition-colors' : '']"
             :style="getColumnStyle(column)"
+            @click="toggleSort(column)"
           >
-            {{ column.label }}
+            <span class="inline-flex items-center gap-1">
+              {{ column.label }}
+              <svg
+                v-if="column.sortable !== false"
+                class="h-3.5 w-3.5 flex-shrink-0"
+                :class="sortKey === column.key ? 'text-brand-500' : 'text-slate-300'"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+              >
+                <path
+                  v-if="sortKey !== column.key || !sortDirection"
+                  d="M4.5 5.5l3.5-3 3.5 3M4.5 10.5l3.5 3 3.5-3"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  v-else-if="sortDirection === 'asc'"
+                  d="M4.5 10.5l3.5-3 3.5 3M4.5 6l3.5-3 3.5 3"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  v-else
+                  d="M4.5 5.5l3.5 3 3.5-3M4.5 10l3.5 3 3.5-3"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
             <button
               type="button"
               class="absolute right-0 top-0 h-full w-2 cursor-col-resize border-0 bg-transparent p-0 transition hover:bg-brand/20 focus-visible:bg-brand/20 focus-visible:outline-none"
@@ -200,9 +294,9 @@ onBeforeUnmount(() => {
           </th>
         </tr>
       </thead>
-      <tbody v-if="rows.length > 0" class="bg-white">
+      <tbody v-if="sortedRows.length > 0" class="bg-white">
         <tr
-          v-for="row in rows"
+          v-for="row in sortedRows"
           :key="row?.[rowKey] ?? JSON.stringify(row)"
           class="transition hover:bg-slate-50/70"
           :class="props.clickableRows ? 'cursor-pointer' : ''"
@@ -231,7 +325,7 @@ onBeforeUnmount(() => {
       </tfoot>
     </table>
     <div
-      v-if="rows.length === 0"
+      v-if="sortedRows.length === 0"
       class="flex min-h-[160px] items-center justify-center border-t border-slate-200 bg-white px-4 py-12 text-center text-sm text-slate-400"
     >
       {{ emptyText }}
