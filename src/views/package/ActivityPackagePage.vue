@@ -1,19 +1,25 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { fetchActivities, fetchAllActivityPOs } from '@/api/activity'
+import { createPackage, fetchAllUsers, fetchPackageById, updatePackage } from '@/api/package'
 import { useToast } from '@/composables/useToast'
-import { jsPDF } from 'jspdf'
+import { useAuthStore } from '@/stores/auth'
 import ActivityTypeBadge from '@/components/domain/activity/ActivityTypeBadge.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
+import BaseTextarea from '@/components/common/BaseTextarea.vue'
 import DateField from '@/components/common/DateField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 
 const router = useRouter()
-const { warning, error } = useToast()
+const route = useRoute()
+const { success, warning, error } = useToast()
+const authStore = useAuthStore()
+
+const currentUser = computed(() => authStore.currentUser ?? null)
 
 function todayKr() {
   const d = new Date()
@@ -22,20 +28,58 @@ function todayKr() {
   return `${d.getFullYear()}-${m}-${day}`
 }
 
+function nowSlash() {
+  const d = new Date()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}/${m}/${day}`
+}
+
+// ── 편집 모드 ──────────────────────────────────────────────
+const isEditMode = computed(() => !!route.query.edit)
+const editId = computed(() => route.query.edit || '')
+
 // ── 데이터 ─────────────────────────────────────────────────
 const activities = ref([])
 const poList = ref([])
+const allUsers = ref([])
+const isSaving = ref(false)
 
 onMounted(async () => {
   try {
-    const [actData, poData] = await Promise.all([fetchActivities(), fetchAllActivityPOs()])
+    const [actData, poData, userData] = await Promise.all([
+      fetchActivities(),
+      fetchAllActivityPOs(),
+      fetchAllUsers(),
+    ])
     activities.value = actData
     poList.value = poData
+    allUsers.value = userData.filter((u) => u.status === '재직')
+
+    if (isEditMode.value) {
+      await loadPackageForEdit()
+    }
   } catch (e) {
     console.error('데이터 로드 실패', e)
     error('데이터를 불러오지 못했습니다. 페이지를 새로고침해주세요.')
   }
 })
+
+async function loadPackageForEdit() {
+  try {
+    const pkg = await fetchPackageById(editId.value)
+    packageTitle.value = pkg.title || ''
+    packageDescription.value = pkg.description || ''
+    selectedPoId.value = pkg.poId || ''
+    poDisplay.value = pkg.poId || ''
+    dateFrom.value = pkg.dateFrom || ''
+    dateTo.value = pkg.dateTo || ''
+    selectedActivityIds.value = [...(pkg.activityIds || [])]
+    selectedViewerIds.value = [...(pkg.viewers || [])]
+  } catch {
+    error('패키지 정보를 불러오지 못했습니다.')
+  }
+}
 
 const poColumns = [
   { key: 'id',           label: 'PO번호'  },
@@ -78,23 +122,49 @@ function clearPo() {
 }
 
 // ── 패키지 생성 폼 상태 ────────────────────────────────────
+const packageTitle = ref('')
+const packageDescription = ref('')
 const keyword     = ref('')
 const poDisplay   = ref('')
 const dateFrom    = ref('')
 const dateTo      = ref(todayKr())
 
+// ── 열람 권한 ──────────────────────────────────────────────
+const selectedViewerIds = ref([])
+const viewerSearchQuery = ref('')
+
+const filteredUsers = computed(() => {
+  const q = viewerSearchQuery.value.trim().toLowerCase()
+  const userList = allUsers.value.filter((u) => String(u.id) !== String(currentUser.value?.id))
+  if (!q) return userList
+  return userList.filter((u) => u.name.toLowerCase().includes(q) || (u.email ?? '').toLowerCase().includes(q))
+})
+
+function toggleViewer(userId) {
+  const id = String(userId)
+  if (selectedViewerIds.value.includes(id)) {
+    selectedViewerIds.value = selectedViewerIds.value.filter((v) => v !== id)
+  } else {
+    selectedViewerIds.value = [...selectedViewerIds.value, id]
+  }
+}
+
 // ── 유효성 검사 ────────────────────────────────────────────
 const errors = ref({})
 
+watch(packageTitle, (val) => { if (val) errors.value.title = undefined })
 watch(poDisplay,  (val) => { if (val) errors.value.po       = undefined })
 watch(dateFrom,   (val) => { if (val) errors.value.dateFrom = undefined })
 watch(dateTo,     (val) => { if (val) errors.value.dateTo   = undefined })
 
 function validate() {
   const e = {}
+  if (!packageTitle.value.trim()) e.title = '패키지 제목을 입력해주세요.'
   if (!poDisplay.value)  e.po       = '수주건 값이 누락되었습니다.'
   if (!dateFrom.value)   e.dateFrom = '기간 시작일 값이 누락되었습니다.'
   if (!dateTo.value)     e.dateTo   = '기간 종료일 값이 누락되었습니다.'
+  if (selectedViewerIds.value.length === 0) e.viewers = '열람 권한을 1명 이상 선택해주세요.'
+  if (selectedActivityIds.value.length === 0) e.activities = '활동기록을 1건 이상 선택해주세요.'
   errors.value = e
   return Object.keys(e).length === 0
 }
@@ -142,14 +212,26 @@ const filteredActivities = computed(() => {
   return list
 })
 
-// 활동기록 기간 변경 시 필터 결과 전체 선택
+// 활동기록 기간 변경 시 필터 결과 전체 선택 (편집 모드에서는 초기 로드 시 건너뜀)
+const initialLoadDone = ref(false)
+
 watch([actDateFrom, actDateTo], async () => {
+  if (isEditMode.value && !initialLoadDone.value) {
+    initialLoadDone.value = true
+    return
+  }
   await nextTick()
   selectedActivityIds.value = filteredActivities.value.map((a) => a.id)
 })
 
-// PO 변경 시 전체 선택으로 리셋
+// PO 변경 시 전체 선택으로 리셋 (편집 모드 초기 로드 제외)
+const poInitialLoadDone = ref(false)
+
 watch(selectedPoId, async () => {
+  if (isEditMode.value && !poInitialLoadDone.value) {
+    poInitialLoadDone.value = true
+    return
+  }
   await nextTick()
   selectedActivityIds.value = filteredActivities.value.map((a) => a.id)
 })
@@ -187,138 +269,51 @@ const summaryText = computed(() => {
   return `미리보기: ${parts.join(', ')}이 포함됩니다.`
 })
 
-function generatePdf() {
+// ── 저장 ───────────────────────────────────────────────────
+async function savePackage() {
   if (!validate()) {
     warning('입력 내용을 확인해주세요.')
     return
   }
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-  const pageW = doc.internal.pageSize.getWidth()
-  const margin = 20
-  let y = 20
 
-  // ── 헤더 ──────────────────────────────────────────────────
-  doc.setFontSize(20)
-  doc.setFont('helvetica', 'bold')
-  doc.text('Activity Record Package', pageW / 2, y, { align: 'center' })
-  y += 8
+  isSaving.value = true
 
-  doc.setFontSize(10)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(100)
-  doc.text(`Generated: ${new Date().toLocaleDateString('ko-KR')}`, pageW / 2, y, { align: 'center' })
-  y += 4
+  const viewerNames = selectedViewerIds.value.map((vid) => {
+    const u = allUsers.value.find((u) => String(u.id) === String(vid))
+    return u?.name || '-'
+  })
 
-  if (poDisplay.value) {
-    doc.text(`PO: ${poDisplay.value}`, pageW / 2, y, { align: 'center' })
-    y += 4
-  }
-  doc.text(`Period: ${dateFrom.value || '전체'} ~ ${dateTo.value || '전체'}`, pageW / 2, y, { align: 'center' })
-  y += 8
-
-  // 구분선
-  doc.setDrawColor(200)
-  doc.line(margin, y, pageW - margin, y)
-  y += 8
-
-  // ── 선택된 활동기록 목록 ───────────────────────────────────
-  const selected = selectedActivities.value
-
-  doc.setFontSize(13)
-  doc.setFont('helvetica', 'bold')
-  doc.setTextColor(0)
-  doc.text(`Activity Records (${selected.length})`, margin, y)
-  y += 7
-
-  if (selected.length === 0) {
-    doc.setFontSize(10)
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(150)
-    doc.text('No records selected.', margin, y)
-    y += 6
-  } else {
-    // 테이블 헤더
-    const cols = [
-      { label: 'No',     x: margin,      w: 12  },
-      { label: 'Date',   x: margin + 12, w: 25  },
-      { label: 'Type',   x: margin + 37, w: 28  },
-      { label: 'Title',  x: margin + 65, w: 70  },
-      { label: 'Author', x: margin + 135, w: 30 },
-    ]
-
-    doc.setFillColor(240, 244, 255)
-    doc.rect(margin, y - 4, pageW - margin * 2, 7, 'F')
-    doc.setFontSize(9)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(50)
-    cols.forEach((c) => doc.text(c.label, c.x + 1, y))
-    y += 5
-
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(30)
-
-    selected.forEach((a, i) => {
-      if (y > 270) {
-        doc.addPage()
-        y = 20
-      }
-      const bg = i % 2 === 0 ? [255, 255, 255] : [248, 250, 252]
-      doc.setFillColor(...bg)
-      doc.rect(margin, y - 4, pageW - margin * 2, 6, 'F')
-
-      doc.setFontSize(8.5)
-      doc.text(String(i + 1), cols[0].x + 1, y)
-      doc.text(a.date ?? '-',  cols[1].x + 1, y)
-      doc.text(a.type ?? '-',  cols[2].x + 1, y)
-
-      // 제목 말줄임
-      const title = doc.splitTextToSize(a.title ?? '-', cols[3].w - 2)[0]
-      doc.text(title, cols[3].x + 1, y)
-      doc.text(a.author ?? '-', cols[4].x + 1, y)
-      y += 6
-    })
+  const payload = {
+    title: packageTitle.value.trim(),
+    description: packageDescription.value.trim(),
+    poId: selectedPoId.value,
+    creatorId: String(currentUser.value?.id),
+    creatorName: currentUser.value?.name || '-',
+    createdAt: isEditMode.value ? undefined : nowSlash(),
+    updatedAt: nowSlash(),
+    dateFrom: dateFrom.value,
+    dateTo: dateTo.value,
+    activityIds: [...selectedActivityIds.value],
+    viewers: [...selectedViewerIds.value],
+    viewerNames,
   }
 
-  y += 6
-  doc.setDrawColor(200)
-  doc.line(margin, y, pageW - margin, y)
-  y += 6
-
-  // ── 포함 항목 요약 ─────────────────────────────────────────
-  doc.setFontSize(13)
-  doc.setFont('helvetica', 'bold')
-  doc.setTextColor(0)
-  doc.text('Include Options', margin, y)
-  y += 7
-
-  doc.setFontSize(9)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(60)
-  if (includedTypes.value.length === 0) {
-    doc.text('• 선택된 항목 없음', margin + 4, y)
-    y += 5
-  } else {
-    includedTypes.value.forEach((type) => {
-      doc.text(`• ${type}`, margin + 4, y)
-      y += 5
-    })
+  try {
+    if (isEditMode.value) {
+      delete payload.createdAt
+      await updatePackage(editId.value, payload)
+      success('패키지가 수정되었습니다.')
+    } else {
+      payload.id = `PKG${String(Date.now()).slice(-6)}`
+      await createPackage(payload)
+      success('패키지가 저장되었습니다.')
+    }
+    router.push('/')
+  } catch {
+    error('패키지 저장에 실패했습니다.')
+  } finally {
+    isSaving.value = false
   }
-
-  // ── 푸터 ──────────────────────────────────────────────────
-  const totalPages = doc.internal.pages.length - 1
-  for (let p = 1; p <= totalPages; p++) {
-    doc.setPage(p)
-    doc.setFontSize(8)
-    doc.setTextColor(160)
-    doc.text(`Page ${p} / ${totalPages}`, pageW / 2, 290, { align: 'center' })
-    doc.text('SalesBoost - Activity Package', margin, 290)
-  }
-
-  // 새 탭에서 PDF 미리보기
-  const blob = doc.output('blob')
-  const url = URL.createObjectURL(blob)
-  window.open(url, '_blank')
-  setTimeout(() => URL.revokeObjectURL(url), 10000)
 }
 </script>
 
@@ -343,8 +338,31 @@ function generatePdf() {
 
       <!-- ── 좌측: 패키지 생성 폼 ──────────────────────────── -->
       <div class="lg:col-span-2">
-        <BaseCard title="패키지 생성">
+        <BaseCard :title="isEditMode ? '패키지 수정' : '패키지 생성'">
           <div class="space-y-5">
+
+            <!-- 패키지 제목 -->
+            <div class="space-y-1.5">
+              <p class="text-sm font-semibold text-slate-700">
+                패키지 제목 <span class="text-red-500">*</span>
+              </p>
+              <BaseTextField
+                v-model="packageTitle"
+                placeholder="패키지 제목을 입력하세요"
+                :class="errors.title ? 'border-red-400' : ''"
+              />
+              <p v-if="errors.title" class="mt-1 text-xs text-red-500">{{ errors.title }}</p>
+            </div>
+
+            <!-- 설명 -->
+            <div class="space-y-1.5">
+              <p class="text-sm font-semibold text-slate-700">설명</p>
+              <BaseTextarea
+                v-model="packageDescription"
+                placeholder="패키지에 대한 설명을 입력하세요 (선택)"
+                :rows="3"
+              />
+            </div>
 
             <!-- 키워드 검색 -->
             <div class="space-y-1.5">
@@ -399,20 +417,58 @@ function generatePdf() {
               </div>
             </div>
 
+            <!-- 열람 권한 -->
+            <div class="space-y-2">
+              <p class="text-sm font-semibold text-slate-700">
+                열람 권한 <span class="text-red-500">*</span>
+                <span v-if="selectedViewerIds.length > 0" class="ml-2 text-xs font-normal text-brand-600">
+                  {{ selectedViewerIds.length }}명 선택됨
+                </span>
+              </p>
+              <BaseTextField
+                v-model="viewerSearchQuery"
+                placeholder="사용자 이름 또는 이메일로 검색"
+              />
+              <div class="max-h-[200px] space-y-1 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-2">
+                <div
+                  v-if="filteredUsers.length === 0"
+                  class="py-4 text-center text-xs text-slate-400"
+                >
+                  검색 결과가 없습니다.
+                </div>
+                <label
+                  v-for="user in filteredUsers"
+                  :key="user.id"
+                  class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 transition hover:bg-slate-100"
+                >
+                  <input
+                    type="checkbox"
+                    class="rounded border-slate-300 text-brand-500"
+                    :checked="selectedViewerIds.includes(String(user.id))"
+                    @change="toggleViewer(user.id)"
+                  />
+                  <span class="text-sm text-slate-700">{{ user.name }}</span>
+                  <span class="text-xs text-slate-400">{{ user.email }}</span>
+                </label>
+              </div>
+              <p v-if="errors.viewers" class="mt-1 text-xs text-red-500">{{ errors.viewers }}</p>
+            </div>
+
             <!-- 미리보기 요약 -->
             <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
               {{ summaryText }}
             </div>
+            <p v-if="errors.activities" class="text-xs text-red-500">{{ errors.activities }}</p>
 
-            <!-- 생성 버튼 -->
-            <BaseButton :block="true" @click="generatePdf">
+            <!-- 저장 버튼 -->
+            <BaseButton :block="true" :disabled="isSaving" @click="savePackage">
               <template #leading>
                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
                   <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
                 </svg>
               </template>
-              패키지(PDF) 생성
+              {{ isEditMode ? '패키지 수정' : '패키지 저장' }}
             </BaseButton>
 
           </div>
