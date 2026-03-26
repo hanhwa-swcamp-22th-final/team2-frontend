@@ -14,9 +14,13 @@ import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import { fetchActivities } from '@/api/activity'
 import { fetchClients } from '@/api/master'
+import { fetchPackages, deletePackage as deletePackageApi } from '@/api/package'
+import { useToast } from '@/composables/useToast'
+import PackageDetailModal from '@/components/domain/activity/PackageDetailModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { success, error: toastError } = useToast()
 const ciDocuments = useCiDocuments()
 const piDocuments = usePiDocuments()
 const plDocuments = usePlDocuments()
@@ -28,15 +32,20 @@ const decisionConfirmOpen = ref(false)
 const pendingDecision = ref('')
 const clientsData = ref([])
 const activitiesData = ref([])
+const packagesData = ref([])
+const selectedPackage = ref(null)
+const deleteConfirmOpen = ref(false)
 
 onMounted(async () => {
   try {
-    const [clients, activities] = await Promise.all([
+    const [clients, activities, packages] = await Promise.all([
       fetchClients(),
       fetchActivities(),
+      fetchPackages(),
     ])
     clientsData.value = clients
     activitiesData.value = activities
+    packagesData.value = packages
   } catch {
     // silent fail - dashboard still works with store data
   }
@@ -83,7 +92,7 @@ const summaryCards = computed(() => {
         count: String(productionOrderDocuments.value.length),
         status: inProgressCount > 0 ? '진행중' : '생산완료',
         helper: `진행중 ${inProgressCount}건`,
-        to: '/production-orders',
+        to: '/production',
         iconClass: 'fa-industry',
       },
     ]
@@ -403,6 +412,57 @@ function goToShipmentItem(item) {
     },
   })
 }
+
+// ── 패키지 섹션 ────────────────────────────────────────────
+const visiblePackages = computed(() => {
+  if (!currentUser.value) return []
+  const uid = String(currentUser.value.id)
+  return [...packagesData.value]
+    .filter((pkg) => String(pkg.creatorId) === uid || (pkg.viewers ?? []).includes(uid))
+    .sort((a, b) => parseSlashDate(b.createdAt) - parseSlashDate(a.createdAt))
+    .slice(0, 5)
+})
+
+const isPackageOwner = computed(() => {
+  if (!selectedPackage.value || !currentUser.value) return false
+  return String(selectedPackage.value.creatorId) === String(currentUser.value.id)
+})
+
+function openPackageDetail(pkg) {
+  selectedPackage.value = pkg
+}
+
+function closePackageDetail() {
+  selectedPackage.value = null
+}
+
+function handlePackageEdit() {
+  if (!selectedPackage.value) return
+  router.push({ path: '/package', query: { edit: selectedPackage.value.id } })
+  closePackageDetail()
+}
+
+function handlePackageDeleteRequest() {
+  deleteConfirmOpen.value = true
+}
+
+function closeDeleteConfirm() {
+  deleteConfirmOpen.value = false
+}
+
+async function confirmPackageDelete() {
+  if (!selectedPackage.value) return
+  try {
+    await deletePackageApi(selectedPackage.value.id)
+    packagesData.value = packagesData.value.filter((p) => p.id !== selectedPackage.value.id)
+    success('패키지가 삭제되었습니다.')
+    closeDeleteConfirm()
+    closePackageDetail()
+  } catch {
+    toastError('패키지 삭제에 실패했습니다.')
+    closeDeleteConfirm()
+  }
+}
 </script>
 
 <template>
@@ -433,6 +493,38 @@ function goToShipmentItem(item) {
         <div class="mt-3 truncate text-xs text-slate-400">{{ card.helper }}</div>
       </RouterLink>
     </section>
+
+    <!-- 공유 활동기록 패키지 (생산/출하: 요약카드 바로 뒤) -->
+    <BaseCard v-if="visiblePackages.length > 0 && (isProductionUser || isShippingUser)">
+      <template #title>
+        <h3 class="flex items-center gap-2 font-bold text-slate-800">
+          <i class="fas fa-cube text-brand-500" />
+          공유 활동기록 패키지
+        </h3>
+      </template>
+      <template #header-actions>
+        <RouterLink to="/package" class="text-xs font-medium text-brand-500 hover:text-brand-700">
+          전체보기 <i class="fas fa-chevron-right ml-0.5 text-[9px]" />
+        </RouterLink>
+      </template>
+      <div class="space-y-2">
+        <div
+          v-for="pkg in visiblePackages"
+          :key="pkg.id"
+          class="group flex cursor-pointer items-start gap-3 rounded-lg px-1 py-2 text-sm transition hover:bg-slate-50/70"
+          @click="openPackageDetail(pkg)"
+        >
+          <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-xs text-slate-500">
+            <i class="fas fa-cube" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="truncate font-medium text-slate-800 transition group-hover:text-brand-600">{{ pkg.title }}</div>
+            <div class="truncate text-xs text-slate-400 sm:whitespace-normal">{{ pkg.creatorName }} · {{ pkg.createdAt }}</div>
+          </div>
+          <i class="fas fa-chevron-right text-xs text-slate-300 self-center" />
+        </div>
+      </div>
+    </BaseCard>
 
     <BaseCard
       v-if="showApprovalSection"
@@ -487,6 +579,38 @@ function goToShipmentItem(item) {
           </span>
           <StatusBadge :value="item.status" />
           <i class="fas fa-chevron-right text-xs text-slate-300" />
+        </div>
+      </div>
+    </BaseCard>
+
+    <!-- 공유 활동기록 패키지 (생산/출하: 요약카드 바로 뒤에 표시됨, 영업: 결재 뒤에 표시) -->
+    <BaseCard v-if="visiblePackages.length > 0 && !isProductionUser && !isShippingUser">
+      <template #title>
+        <h3 class="flex items-center gap-2 font-bold text-slate-800">
+          <i class="fas fa-cube text-brand-500" />
+          공유 활동기록 패키지
+        </h3>
+      </template>
+      <template #header-actions>
+        <RouterLink to="/package" class="text-xs font-medium text-brand-500 hover:text-brand-700">
+          전체보기 <i class="fas fa-chevron-right ml-0.5 text-[9px]" />
+        </RouterLink>
+      </template>
+      <div class="space-y-2">
+        <div
+          v-for="pkg in visiblePackages"
+          :key="pkg.id"
+          class="group flex cursor-pointer items-start gap-3 rounded-lg px-1 py-2 text-sm transition hover:bg-slate-50/70"
+          @click="openPackageDetail(pkg)"
+        >
+          <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-xs text-slate-500">
+            <i class="fas fa-cube" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="truncate font-medium text-slate-800 transition group-hover:text-brand-600">{{ pkg.title }}</div>
+            <div class="truncate text-xs text-slate-400 sm:whitespace-normal">{{ pkg.creatorName }} · {{ pkg.createdAt }}</div>
+          </div>
+          <i class="fas fa-chevron-right text-xs text-slate-300 self-center" />
         </div>
       </div>
     </BaseCard>
@@ -585,6 +709,28 @@ function goToShipmentItem(item) {
       :z-index="90"
       @confirm="confirmDecision"
       @cancel="closeDecisionConfirm"
+    />
+
+    <PackageDetailModal
+      :open="Boolean(selectedPackage)"
+      :pkg="selectedPackage"
+      :is-owner="isPackageOwner"
+      :activities="activitiesData"
+      @close="closePackageDetail"
+      @edit="handlePackageEdit"
+      @delete="handlePackageDeleteRequest"
+    />
+
+    <ConfirmModal
+      :open="deleteConfirmOpen"
+      title="패키지 삭제"
+      :message="selectedPackage ? `'${selectedPackage.title}' 패키지를 삭제하시겠습니까?` : ''"
+      confirm-label="삭제"
+      confirm-variant="danger"
+      helper-text="삭제 후 복구할 수 없습니다."
+      :z-index="90"
+      @confirm="confirmPackageDelete"
+      @cancel="closeDeleteConfirm"
     />
   </div>
 </template>

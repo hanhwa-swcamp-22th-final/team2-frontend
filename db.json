@@ -6732,5 +6732,67 @@
       "status": "출하준비"
     }
   ],
+  "activityPackages": [
+    {
+      "id": "PKG001",
+      "title": "2025년 1월 영업활동 보고",
+      "description": "1월 주요 거래처 미팅 및 이슈 정리",
+      "poId": "PO2025001",
+      "creatorId": "1",
+      "creatorName": "김영업",
+      "createdAt": "2025/03/20",
+      "updatedAt": "2025/03/20",
+      "dateFrom": "2025-01-01",
+      "dateTo": "2025-01-31",
+      "activityIds": ["1", "2", "3"],
+      "viewers": ["2", "3", "4", "5"],
+      "viewerNames": ["이생산", "박출하", "최관리", "정영업"]
+    },
+    {
+      "id": "PKG002",
+      "title": "2025년 2월 수출 활동 패키지",
+      "description": "2월 해외 바이어 미팅 및 계약 진행 사항 정리",
+      "poId": "PO2025003",
+      "creatorId": "5",
+      "creatorName": "정영업",
+      "createdAt": "2025/03/22",
+      "updatedAt": "2025/03/23",
+      "dateFrom": "2025-02-01",
+      "dateTo": "2025-02-28",
+      "activityIds": ["4", "5", "6"],
+      "viewers": ["1", "2", "8", "9"],
+      "viewerNames": ["김영업", "이생산", "윤생산", "임출하"]
+    },
+    {
+      "id": "PKG003",
+      "title": "Q1 생산 연동 이슈 보고",
+      "description": "1분기 생산 지연 관련 영업-생산 협의 내용",
+      "poId": "PO2025005",
+      "creatorId": "7",
+      "creatorName": "조영업",
+      "createdAt": "2025/03/25",
+      "updatedAt": "2025/03/25",
+      "dateFrom": "2025-01-01",
+      "dateTo": "2025-03-31",
+      "activityIds": ["1", "4", "7"],
+      "viewers": ["2", "3", "8", "11", "12"],
+      "viewerNames": ["이생산", "박출하", "윤생산", "신생산", "오출하"]
+    },
+    {
+      "id": "PKG004",
+      "title": "3월 출하 현황 공유",
+      "description": "3월 출하 일정 및 납기 관련 이슈 공유",
+      "poId": "PO2025007",
+      "creatorId": "1",
+      "creatorName": "김영업",
+      "createdAt": "2025/03/26",
+      "updatedAt": "2025/03/26",
+      "dateFrom": "2025-03-01",
+      "dateTo": "2025-03-31",
+      "activityIds": ["2", "5", "8"],
+      "viewers": ["3", "5", "9", "12"],
+      "viewerNames": ["박출하", "정영업", "임출하", "오출하"]
+    }
+  ],
   "$schema": "./node_modules/json-server/schema.json"
 }
