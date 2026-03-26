@@ -147,7 +147,7 @@ const filteredUsers = computed(() => {
   const q = viewerSearchQuery.value.trim().toLowerCase()
   const userList = allUsers.value.filter((u) => String(u.id) !== String(currentUser.value?.id))
   if (!q) return userList
-  return userList.filter((u) => u.name.toLowerCase().includes(q) || (u.email ?? '').toLowerCase().includes(q))
+  return userList.filter((u) => u.name.toLowerCase().includes(q) || (u.employeeNo ?? '').includes(q))
 })
 
 function toggleViewer(userId) {
@@ -437,7 +437,7 @@ async function savePackage() {
               </p>
               <BaseTextField
                 v-model="viewerSearchQuery"
-                placeholder="사용자 이름 또는 이메일로 검색"
+                placeholder="사번 또는 이름으로 검색"
               />
               <div class="max-h-[200px] space-y-1 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-2">
                 <div
