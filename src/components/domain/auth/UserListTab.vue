@@ -93,7 +93,8 @@ const groupedByDepartment = computed(() => {
     filtered = filtered.filter(
       (u) =>
         u.name.toLowerCase().includes(kw) ||
-        (u.employeeNo && u.employeeNo.includes(kw)),
+        (u.employeeNo && u.employeeNo.includes(kw)) ||
+        (u.email && u.email.toLowerCase().includes(kw)),
     )
   }
 
@@ -228,7 +229,7 @@ defineExpose({ openCreateModal })
     <!-- 상단 필터 바 -->
     <div class="flex flex-wrap items-center gap-3">
       <div class="min-w-0 flex-1">
-        <SearchInput v-model="searchKeyword" placeholder="사번 또는 이름으로 검색" />
+        <SearchInput v-model="searchKeyword" placeholder="사번 · 이름 · 이메일로 검색" />
       </div>
       <div class="w-40">
         <BaseSelect v-model="departmentFilter" :options="departmentFilterOptions" placeholder="전체 부서" />
