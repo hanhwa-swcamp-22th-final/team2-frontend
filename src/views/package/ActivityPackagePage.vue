@@ -11,6 +11,7 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import BaseTextarea from '@/components/common/BaseTextarea.vue'
+import BaseSelect from '@/components/common/BaseSelect.vue'
 import DateField from '@/components/common/DateField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
@@ -139,16 +140,45 @@ const dateTo      = ref(todayKr())
 // ── 열람 권한 ──────────────────────────────────────────────
 const selectedViewerIds = ref([])
 const viewerSearchQuery = ref('')
+const viewerDeptFilter = ref('')
 
 const departmentNameById = computed(() => new Map(departments.value.map(d => [String(d.id), d.name])))
 const positionNameById = computed(() => new Map(positions.value.map(p => [String(p.id), p.name])))
 
+const deptOptions = computed(() => [
+  { label: '전체 부서', value: '' },
+  ...departments.value.map((d) => ({ label: d.name, value: String(d.id) })),
+])
+
 const filteredUsers = computed(() => {
   const q = viewerSearchQuery.value.trim().toLowerCase()
-  const userList = allUsers.value.filter((u) => String(u.id) !== String(currentUser.value?.id))
+  let userList = allUsers.value.filter((u) => String(u.id) !== String(currentUser.value?.id))
+  if (viewerDeptFilter.value) {
+    userList = userList.filter((u) => String(u.departmentId) === viewerDeptFilter.value)
+  }
   if (!q) return userList
   return userList.filter((u) => u.name.toLowerCase().includes(q) || (u.email ?? '').toLowerCase().includes(q))
 })
+
+const groupedUsers = computed(() => {
+  const groups = new Map()
+  for (const user of filteredUsers.value) {
+    const deptId = String(user.departmentId)
+    const deptName = departmentNameById.value.get(deptId) || '기타'
+    if (!groups.has(deptId)) groups.set(deptId, { deptId, deptName, users: [] })
+    groups.get(deptId).users.push(user)
+  }
+  return [...groups.values()]
+})
+
+const isAllViewersSelected = computed(() =>
+  filteredUsers.value.length > 0 &&
+  filteredUsers.value.every((u) => selectedViewerIds.value.includes(String(u.id))),
+)
+
+function isDeptAllSelected(users) {
+  return users.length > 0 && users.every((u) => selectedViewerIds.value.includes(String(u.id)))
+}
 
 function toggleViewer(userId) {
   const id = String(userId)
@@ -156,6 +186,24 @@ function toggleViewer(userId) {
     selectedViewerIds.value = selectedViewerIds.value.filter((v) => v !== id)
   } else {
     selectedViewerIds.value = [...selectedViewerIds.value, id]
+  }
+}
+
+function toggleAllViewers(checked) {
+  const ids = filteredUsers.value.map((u) => String(u.id))
+  if (checked) {
+    selectedViewerIds.value = [...new Set([...selectedViewerIds.value, ...ids])]
+  } else {
+    selectedViewerIds.value = selectedViewerIds.value.filter((id) => !ids.includes(id))
+  }
+}
+
+function toggleDeptViewers(users, checked) {
+  const ids = users.map((u) => String(u.id))
+  if (checked) {
+    selectedViewerIds.value = [...new Set([...selectedViewerIds.value, ...ids])]
+  } else {
+    selectedViewerIds.value = selectedViewerIds.value.filter((id) => !ids.includes(id))
   }
 }
 
@@ -435,32 +483,72 @@ async function savePackage() {
                   {{ selectedViewerIds.length }}명 선택됨
                 </span>
               </p>
-              <BaseTextField
-                v-model="viewerSearchQuery"
-                placeholder="사용자 이름 또는 이메일로 검색"
-              />
-              <div class="max-h-[200px] space-y-1 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-2">
+              <!-- 검색 + 부서 필터 -->
+              <div class="flex gap-2">
+                <BaseTextField
+                  v-model="viewerSearchQuery"
+                  placeholder="이름 또는 이메일 검색"
+                  class="flex-1"
+                />
+                <div class="w-36 shrink-0">
+                  <BaseSelect
+                    v-model="viewerDeptFilter"
+                    :options="deptOptions"
+                    placeholder="전체 부서"
+                  />
+                </div>
+              </div>
+              <div class="max-h-[280px] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-2">
                 <div
                   v-if="filteredUsers.length === 0"
                   class="py-4 text-center text-xs text-slate-400"
                 >
                   검색 결과가 없습니다.
                 </div>
-                <label
-                  v-for="user in filteredUsers"
-                  :key="user.id"
-                  class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 transition hover:bg-slate-100"
-                >
-                  <input
-                    type="checkbox"
-                    class="rounded border-slate-300 text-brand-500"
-                    :checked="selectedViewerIds.includes(String(user.id))"
-                    @change="toggleViewer(user.id)"
-                  />
-                  <span class="text-sm text-slate-700">{{ user.name }}</span>
-                  <span class="text-xs text-slate-400">{{ departmentNameById.get(String(user.departmentId)) || '' }}</span>
-                  <span class="text-xs text-slate-400">{{ positionNameById.get(String(user.positionId)) || '' }}</span>
-                </label>
+                <template v-else>
+                  <!-- 전체선택 -->
+                  <label class="mb-1.5 flex cursor-pointer items-center gap-2 rounded-md border-b border-slate-200 px-2 pb-2 pt-1 transition hover:bg-slate-100">
+                    <input
+                      type="checkbox"
+                      class="rounded border-slate-300 text-brand-500"
+                      :checked="isAllViewersSelected"
+                      @change="toggleAllViewers($event.target.checked)"
+                    />
+                    <span class="text-xs font-semibold text-slate-600">전체선택</span>
+                  </label>
+                  <!-- 부서별 트리 -->
+                  <div v-for="group in groupedUsers" :key="group.deptId" class="mb-1.5">
+                    <!-- 부서 헤더 -->
+                    <label class="flex cursor-pointer items-center gap-2 rounded-md bg-slate-100 px-2 py-1.5 transition hover:bg-slate-200">
+                      <input
+                        type="checkbox"
+                        class="rounded border-slate-300 text-brand-500"
+                        :checked="isDeptAllSelected(group.users)"
+                        @change="toggleDeptViewers(group.users, $event.target.checked)"
+                      />
+                      <span class="text-xs font-bold text-slate-700">{{ group.deptName }}</span>
+                      <span class="ml-auto text-xs text-slate-400">{{ group.users.length }}명</span>
+                    </label>
+                    <!-- 사용자 행 -->
+                    <label
+                      v-for="user in group.users"
+                      :key="user.id"
+                      class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 pl-6 transition hover:bg-slate-100"
+                    >
+                      <input
+                        type="checkbox"
+                        class="rounded border-slate-300 text-brand-500"
+                        :checked="selectedViewerIds.includes(String(user.id))"
+                        @change="toggleViewer(user.id)"
+                      />
+                      <div class="min-w-0 flex-1">
+                        <p class="text-sm text-slate-700">{{ user.name }}</p>
+                        <p class="truncate text-xs text-slate-400">{{ user.email || '' }}</p>
+                      </div>
+                      <span class="ml-auto shrink-0 text-xs text-slate-400">{{ positionNameById.get(String(user.positionId)) || '' }}</span>
+                    </label>
+                  </div>
+                </template>
               </div>
               <p v-if="errors.viewers" class="mt-1 text-xs text-red-500">{{ errors.viewers }}</p>
             </div>
