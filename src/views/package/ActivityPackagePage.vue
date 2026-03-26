@@ -157,7 +157,11 @@ const filteredUsers = computed(() => {
     userList = userList.filter((u) => String(u.departmentId) === viewerDeptFilter.value)
   }
   if (!q) return userList
-  return userList.filter((u) => u.name.toLowerCase().includes(q) || (u.email ?? '').toLowerCase().includes(q))
+  return userList.filter((u) =>
+    u.name.toLowerCase().includes(q) ||
+    (u.employeeNo ?? '').includes(q) ||
+    (u.email ?? '').toLowerCase().includes(q),
+  )
 })
 
 const groupedUsers = computed(() => {
@@ -487,7 +491,7 @@ async function savePackage() {
               <div class="flex gap-2">
                 <BaseTextField
                   v-model="viewerSearchQuery"
-                  placeholder="이름 또는 이메일 검색"
+                  placeholder="사번 · 이름 · 이메일로 검색"
                   class="flex-1"
                 />
                 <div class="w-36 shrink-0">
@@ -542,7 +546,10 @@ async function savePackage() {
                         @change="toggleViewer(user.id)"
                       />
                       <div class="min-w-0 flex-1">
-                        <p class="text-sm text-slate-700">{{ user.name }}</p>
+                        <p class="text-sm text-slate-700">
+                          <span class="mr-1.5 text-xs text-slate-400">{{ user.employeeNo }}</span>
+                          {{ user.name }}
+                        </p>
                         <p class="truncate text-xs text-slate-400">{{ user.email || '' }}</p>
                       </div>
                       <span class="ml-auto shrink-0 text-xs text-slate-400">{{ positionNameById.get(String(user.positionId)) || '' }}</span>

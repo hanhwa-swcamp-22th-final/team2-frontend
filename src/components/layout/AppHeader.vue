@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
+import ProfileEditModal from '@/components/domain/auth/ProfileEditModal.vue'
 import PasswordChangeModal from '@/components/domain/auth/PasswordChangeModal.vue'
 import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
@@ -180,6 +181,31 @@ const userRole = computed(() => {
   const roles = { admin: '관리자', sales: '영업', production: '생산', shipping: '출하' }
   return roles[loggedInUser.value?.role] || ''
 })
+const userEmployeeNo = computed(() => loggedInUser.value?.employeeNo || '-')
+const userEmail = computed(() => loggedInUser.value?.email || '-')
+const userDepartment = computed(() => loggedInUser.value?.departmentName || userRole.value)
+
+const isProfileOpen = ref(false)
+const isProfileEditOpen = ref(false)
+const profileRef = ref(null)
+
+function toggleProfile() {
+  isProfileOpen.value = !isProfileOpen.value
+}
+
+function openProfileEdit() {
+  isProfileOpen.value = false
+  isProfileEditOpen.value = true
+}
+
+function closeProfileEdit() {
+  isProfileEditOpen.value = false
+}
+
+function handleProfileSave(updatedData) {
+  authStore.updateUserInfo(updatedData)
+  isProfileEditOpen.value = false
+}
 
 const isLogoutConfirmOpen = ref(false)
 
@@ -196,6 +222,9 @@ function confirmLogout() {
 function handleClickOutside(event) {
   if (notificationRef.value && !notificationRef.value.contains(event.target)) {
     isNotificationOpen.value = false
+  }
+  if (profileRef.value && !profileRef.value.contains(event.target)) {
+    isProfileOpen.value = false
   }
 }
 
@@ -290,11 +319,60 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <div class="hidden items-center gap-2.5 border-l border-slate-200 pl-3 text-sm sm:flex">
-        <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand text-[11px] font-semibold text-white">{{ userInitial }}</div>
-        <div>
-          <div class="text-[12px] font-semibold text-[#32363A]">{{ userName }}</div>
-          <div class="text-[10px] text-slate-400">{{ userRole }}</div>
+      <div ref="profileRef" class="relative hidden items-center gap-2.5 border-l border-slate-200 pl-3 text-sm sm:flex">
+        <div
+          class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 transition hover:bg-slate-50"
+          @click="toggleProfile"
+        >
+          <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand text-[11px] font-semibold text-white">{{ userInitial }}</div>
+          <div>
+            <div class="text-[12px] font-semibold text-[#32363A]">{{ userName }}</div>
+            <div class="text-[10px] text-slate-400">{{ userRole }}</div>
+          </div>
+          <i class="fas fa-chevron-down text-[9px] text-slate-300" />
+        </div>
+
+        <!-- Profile Dropdown -->
+        <div
+          v-if="isProfileOpen"
+          class="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-slate-200 bg-white shadow-2xl"
+        >
+          <div class="border-b border-slate-100 px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand text-sm font-semibold text-white">{{ userInitial }}</div>
+              <div class="min-w-0 flex-1">
+                <div class="truncate text-sm font-semibold text-slate-800">{{ userName }}</div>
+                <div class="truncate text-xs text-slate-400">{{ userRole }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="space-y-1 px-4 py-3 text-xs">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-id-badge w-4 text-center text-slate-400" />
+              <span class="text-slate-500">사번</span>
+              <span class="ml-auto font-medium text-slate-700">{{ userEmployeeNo }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <i class="fas fa-envelope w-4 text-center text-slate-400" />
+              <span class="text-slate-500">이메일</span>
+              <span class="ml-auto truncate font-medium text-slate-700">{{ userEmail }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <i class="fas fa-building w-4 text-center text-slate-400" />
+              <span class="text-slate-500">부서</span>
+              <span class="ml-auto font-medium text-slate-700">{{ userDepartment }}</span>
+            </div>
+          </div>
+          <div class="border-t border-slate-100 px-4 py-2">
+            <button
+              type="button"
+              class="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-xs text-slate-600 transition hover:bg-slate-50"
+              @click="openProfileEdit"
+            >
+              <i class="fas fa-user-edit w-4 text-center text-slate-400" />
+              내 정보 수정
+            </button>
+          </div>
         </div>
       </div>
 
@@ -319,6 +397,13 @@ onBeforeUnmount(() => {
   </header>
 
   <PasswordChangeModal :open="isPasswordModalOpen" @close="closePasswordModal" @save="closePasswordModal" />
+
+  <ProfileEditModal
+    :open="isProfileEditOpen"
+    :user="loggedInUser"
+    @close="closeProfileEdit"
+    @save="handleProfileSave"
+  />
 
   <ConfirmModal
     :open="isLogoutConfirmOpen"
