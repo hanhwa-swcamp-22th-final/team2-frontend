@@ -1,7 +1,8 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { fetchActivities, fetchActivityClients, deleteActivity, updateActivity } from '@/api/activity'
+import { fetchActivities, deleteActivity, updateActivity } from '@/api/activity'
+import { fetchClients } from '@/api/master'
 import { useToast } from '@/composables/useToast'
 import ActivityDetailModal from '@/components/domain/activity/ActivityDetailModal.vue'
 import ActivityEditModal from '@/components/domain/activity/ActivityEditModal.vue'
@@ -44,7 +45,7 @@ const authorOptions = computed(() => {
 })
 
 const clientOptions = computed(() => {
-  return clients.value.map((c) => ({ label: `${c.name} (${c.nameKr})`, value: c.id }))
+  return clients.value.map((c) => ({ label: `${c.clientName} (${c.clientNameKr})`, value: c.clientId }))
 })
 
 // 실제 적용된 필터 (검색 버튼 클릭 시에만 반영)
@@ -79,7 +80,7 @@ onMounted(async () => {
   try {
     const [activityData, clientData] = await Promise.all([
       fetchActivities(),
-      fetchActivityClients(),
+      fetchClients(),
     ])
     activities.value = activityData
     clients.value = clientData
@@ -91,7 +92,7 @@ onMounted(async () => {
 
 // ── 필터 computed (applied 기준) ───────────────────────────
 const clientMap = computed(() =>
-  Object.fromEntries(clients.value.map((c) => [c.id, c])),
+  Object.fromEntries(clients.value.map((c) => [c.clientId, c])),
 )
 
 const filteredActivities = computed(() => {
@@ -99,7 +100,7 @@ const filteredActivities = computed(() => {
     const client = clientMap.value[a.clientId]
     const matchType   = !applied.value.type   || a.type === applied.value.type
     const matchTitle  = !applied.value.title  || a.title.includes(applied.value.title)
-      || client?.name.includes(applied.value.title) || client?.nameKr.includes(applied.value.title)
+      || client?.clientName.includes(applied.value.title) || client?.clientNameKr.includes(applied.value.title)
     const matchAuthor = !applied.value.author || a.author === applied.value.author
     const matchPo     = !applied.value.po     || (a.poId ?? '').includes(applied.value.po)
     const dateFrom = applied.value.dateFrom.replaceAll('-', '/')
@@ -130,7 +131,7 @@ function openDetail(activity) {
   const client = clientMap.value[activity.clientId]
   selectedActivity.value = {
     ...activity,
-    client: client ? `${client.name} (${client.nameKr})` : '-',
+    client: client ? `${client.clientName} (${client.clientNameKr})` : '-',
   }
   isDetailOpen.value = true
 }

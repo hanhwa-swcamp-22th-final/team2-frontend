@@ -39,9 +39,9 @@ async function loadApproverOptions() {
   try {
     const users = await fetchAllUsers()
     const activeUsers = users
-      .filter((user) => user.status === '재직')
-      .filter((user) => user.role === 'sales' && Number(user.positionId) === 1)
-      .map((user) => user.name)
+      .filter((user) => user.userStatus === 'active')
+      .filter((user) => user.userRole === 'sales' && user.positionName === '사원')
+      .map((user) => user.userName)
       .filter(Boolean)
 
     if (activeUsers.length) {

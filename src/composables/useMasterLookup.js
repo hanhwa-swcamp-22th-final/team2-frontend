@@ -21,26 +21,26 @@ export function useMasterLookup() {
   }
 
   function getCountryName(countryId, { detailed = false } = {}) {
-    const found = countries.value.find((c) => String(c.id) === String(countryId))
+    const found = countries.value.find((c) => String(c.countryId) === String(countryId))
     if (!found) return '-'
-    return detailed ? `${found.nameKr} (${found.name})` : found.name
+    return detailed ? `${found.countryNameKr} (${found.countryName})` : found.countryName
   }
 
   function getPortName(portId) {
     const found = ports.value.find((p) => String(p.id) === String(portId))
-    return found ? found.name : '-'
+    return found ? found.portName : '-'
   }
 
   function getPaymentTermsLabel(paymentTermsId, { detailed = false } = {}) {
-    const found = paymentTerms.value.find((p) => String(p.id) === String(paymentTermsId))
+    const found = paymentTerms.value.find((p) => String(p.paymentTermId) === String(paymentTermsId))
     if (!found) return '-'
-    return detailed ? `${found.code} (${found.description})` : found.code
+    return detailed ? `${found.paymentTermCode} (${found.paymentTermDescription})` : found.paymentTermCode
   }
 
   function getCurrencyLabel(currencyId, { detailed = false } = {}) {
-    const found = currencies.value.find((c) => String(c.id) === String(currencyId))
+    const found = currencies.value.find((c) => String(c.currencyId) === String(currencyId))
     if (!found) return '-'
-    return detailed ? `${found.code} (${found.symbol})` : found.code
+    return detailed ? `${found.currencyCode} (${found.currencySymbol})` : found.currencyCode
   }
 
   return {

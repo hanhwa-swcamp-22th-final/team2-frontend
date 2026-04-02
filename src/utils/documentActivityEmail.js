@@ -1,22 +1,45 @@
-import masterData from '../../db.json'
-
-import { fetchBuyersByClient } from '@/api/master'
+import { fetchBuyersByClient, fetchClients, fetchCurrencies, fetchItems, fetchPorts } from '@/api/master'
 import { api } from '@/lib/api'
 import { resolveMasterCurrency, resolvePaymentTermLabel, resolvePortLabel } from '@/utils/ciplMaster'
 import { resolveIncotermState } from '@/utils/incoterms'
 
-const clientsByName = new Map((masterData.clients ?? []).map((client) => [client.name, client]))
-const currenciesById = new Map((masterData.currencies ?? []).map((currency) => [String(currency.id), currency]))
-const portsById = new Map((masterData.ports ?? []).map((port) => [String(port.id), port]))
-const itemsByName = new Map((masterData.items ?? []).map((item) => [item.name, item]))
+const clientsByName = new Map()
+const currenciesById = new Map()
+const portsById = new Map()
+const itemsByName = new Map()
 const buyersByClientId = new Map()
+let cacheLoaded = false
+let cachePromise = null
 
-;(masterData.buyers ?? []).forEach((buyer) => {
-  const key = String(buyer.clientId)
-  const current = buyersByClientId.get(key) ?? []
-  current.push(buyer)
-  buyersByClientId.set(key, current)
-})
+export async function loadActivityEmailCache() {
+  if (cacheLoaded) return
+  if (cachePromise) return cachePromise
+
+  cachePromise = (async () => {
+    try {
+      const [clients, currencies, ports, items] = await Promise.all([
+        fetchClients(),
+        fetchCurrencies(),
+        fetchPorts(),
+        fetchItems(),
+      ])
+      clients.forEach((c) => clientsByName.set(c.clientName, c))
+      currencies.forEach((c) => currenciesById.set(String(c.currencyId), c))
+      ports.forEach((p) => portsById.set(String(p.id), p))
+      items.forEach((i) => itemsByName.set(i.itemName, i))
+      cacheLoaded = true
+    } catch {
+      // Cache load failed — functions will degrade gracefully.
+    } finally {
+      cachePromise = null
+    }
+  })()
+
+  return cachePromise
+}
+
+// Eagerly start cache loading when this module is first imported.
+loadActivityEmailCache()
 
 function parseNumericValue(value) {
   const numeric = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))
@@ -53,12 +76,12 @@ function getClientByName(clientName) {
 
 function getNamedPlace(client) {
   if (!client?.portId) return ''
-  return portsById.get(String(client.portId))?.name?.toUpperCase() ?? ''
+  return portsById.get(String(client.portId))?.portName?.toUpperCase() ?? ''
 }
 
 function getPrimaryBuyer(client) {
-  if (!client?.id) return null
-  return (buyersByClientId.get(String(client.id)) ?? [])[0] ?? null
+  if (!client?.clientId) return null
+  return (buyersByClientId.get(String(client.clientId)) ?? [])[0] ?? null
 }
 
 function getCurrencyCode(poRow, client) {
@@ -67,7 +90,7 @@ function getCurrencyCode(poRow, client) {
   }
 
   if (client?.currencyId) {
-    return currenciesById.get(String(client.currencyId))?.code ?? 'USD'
+    return currenciesById.get(String(client.currencyId))?.currencyCode ?? 'USD'
   }
 
   return 'USD'
@@ -87,7 +110,7 @@ function buildCiItems(poRow) {
     const masterItem = itemsByName.get(item.name)
     return {
       name: item.name ?? '-',
-      hsCode: masterItem?.hsCode ?? '-',
+      hsCode: masterItem?.itemHsCode ?? '-',
       quantity: String(item.qty ?? item.quantity ?? '0'),
       unitPrice: formatNumber(parseNumericValue(item.unitPrice), 2),
       amount: formatNumber(parseNumericValue(item.amount), 2),
@@ -100,7 +123,7 @@ function buildPlItems(poRow) {
   return (poRow.items ?? []).map((item) => {
     const masterItem = itemsByName.get(item.name)
     const quantity = parseNumericValue(item.qty ?? item.quantity)
-    const netWeight = Number(((masterItem?.weight ?? 0) * quantity).toFixed(2))
+    const netWeight = Number(((masterItem?.itemWeight ?? 0) * quantity).toFixed(2))
     const grossWeight = Number((netWeight * 1.05).toFixed(2))
     const measurement = Number((grossWeight * 0.08).toFixed(2))
 
@@ -116,12 +139,12 @@ function buildPlItems(poRow) {
 
 function getPortLabel(client) {
   if (!client?.portId) return '-'
-  const portCode = portsById.get(String(client.portId))?.code ?? ''
+  const portCode = portsById.get(String(client.portId))?.portCode ?? ''
   return resolvePortLabel(portCode, '-')
 }
 
 function getPaymentTermsLabel(client) {
-  return resolvePaymentTermLabel(client?.paymentTermsId ?? null, '-')
+  return resolvePaymentTermLabel(client?.paymentTermId ?? null, '-')
 }
 
 export function ensureCommercialDocumentsForPo(poRow, ciRows, plRows) {
@@ -143,8 +166,8 @@ export function ensureCommercialDocumentsForPo(poRow, ciRows, plRows) {
     status: '발행대기',
     issueDate: formatDateSlash(poRow.issueDate || new Date()),
     clientName: poRow.clientName,
-    clientAddress: poRow.clientAddress || client?.address || '-',
-    buyer: poRow.buyerName || buyer?.name || '-',
+    clientAddress: poRow.clientAddress || client?.clientAddress || '-',
+    buyer: poRow.buyerName || buyer?.buyerName || '-',
     country: poRow.country || '-',
     currencyCode: currency,
     currency,
@@ -154,7 +177,7 @@ export function ensureCommercialDocumentsForPo(poRow, ciRows, plRows) {
     incotermCode: incotermState.code,
     incoterms: [incotermState.code, incotermState.namedPlace].filter(Boolean).join(' ') || '-',
     namedPlace: incotermState.namedPlace,
-    paymentTermsId: client?.paymentTermsId ?? null,
+    paymentTermsId: client?.paymentTermId ?? null,
     paymentTerms: getPaymentTermsLabel(client),
     deliveryDate: poRow.deliveryDate || '-',
     portOfDischarge: getPortLabel(client),
@@ -171,8 +194,8 @@ export function ensureCommercialDocumentsForPo(poRow, ciRows, plRows) {
     status: '발행대기',
     issueDate: formatDateSlash(poRow.issueDate || new Date()),
     clientName: poRow.clientName,
-    clientAddress: poRow.clientAddress || client?.address || '-',
-    buyer: poRow.buyerName || buyer?.name || '-',
+    clientAddress: poRow.clientAddress || client?.clientAddress || '-',
+    buyer: poRow.buyerName || buyer?.buyerName || '-',
     country: poRow.country || '-',
     itemName: poRow.itemName || plItems[0]?.name || '-',
     grossWeight: formatNumber(totalGrossWeight, 2),
@@ -181,7 +204,7 @@ export function ensureCommercialDocumentsForPo(poRow, ciRows, plRows) {
     bookingNo: 'T.B.A.',
     carrier: '-',
     incoterms: [incotermState.code, incotermState.namedPlace].filter(Boolean).join(' ') || '-',
-    paymentTermsId: client?.paymentTermsId ?? null,
+    paymentTermsId: client?.paymentTermId ?? null,
     paymentTerms: getPaymentTermsLabel(client),
     deliveryDate: poRow.deliveryDate || '-',
     portOfDischarge: getPortLabel(client),
@@ -263,28 +286,28 @@ export function applyShipmentOrderToCommercialDocuments(rows, poId, shipmentOrde
 async function loadRecipients(clientName) {
   const client = getClientByName(clientName)
 
-  if (!client?.id) {
-    return client?.email ? [{ name: client.manager || clientName, email: client.email }] : []
+  if (!client?.clientId) {
+    return client?.clientEmail ? [{ name: client.clientManager || clientName, email: client.clientEmail }] : []
   }
 
   try {
-    const buyers = await fetchBuyersByClient(client.id)
+    const buyers = await fetchBuyersByClient(client.clientId)
     const rows = (buyers ?? [])
-      .filter((buyer) => buyer.email)
-      .map((buyer) => ({ name: buyer.name, email: buyer.email }))
+      .filter((buyer) => buyer.buyerEmail)
+      .map((buyer) => ({ name: buyer.buyerName, email: buyer.buyerEmail }))
 
     if (rows.length) return rows
   } catch {
-    // Fallback to local db snapshot below.
+    // Fallback to cached data below.
   }
 
-  const fallbackBuyers = (buyersByClientId.get(String(client.id)) ?? [])
-    .filter((buyer) => buyer.email)
-    .map((buyer) => ({ name: buyer.name, email: buyer.email }))
+  const fallbackBuyers = (buyersByClientId.get(String(client.clientId)) ?? [])
+    .filter((buyer) => buyer.buyerEmail)
+    .map((buyer) => ({ name: buyer.buyerName, email: buyer.buyerEmail }))
 
   if (fallbackBuyers.length) return fallbackBuyers
 
-  return client.email ? [{ name: client.manager || client.name, email: client.email }] : []
+  return client.clientEmail ? [{ name: client.clientManager || client.clientName, email: client.clientEmail }] : []
 }
 
 export async function recordDocumentEmailActivities({

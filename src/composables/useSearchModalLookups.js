@@ -1,27 +1,6 @@
 import { computed, onMounted, ref } from 'vue'
 
-import { fetchClients, fetchCountries, fetchCurrencies, fetchItems } from '@/api/master'
-import masterData from '../../db.json'
-import { createDocumentClientRows } from '@/utils/documentClientRows'
-
-function createDefaultClientRows() {
-  return createDocumentClientRows()
-}
-
-function createDefaultProductRows() {
-  return (masterData.items ?? []).map((item) => ({
-    id: String(item.id),
-    code: item.code ?? '-',
-    name: item.name ?? '-',
-    nameKr: item.nameKr ?? '-',
-    spec: item.spec ?? '-',
-    unit: item.unit ?? '-',
-    unitPrice: item.unitPrice ?? 0,
-    hsCode: item.hsCode ?? '-',
-    category: item.category ?? '-',
-    status: item.status ?? '-',
-  }))
-}
+import { fetchClients, fetchItems } from '@/api/master'
 
 function includesKeyword(row, fields, keyword) {
   if (!keyword) return true
@@ -30,53 +9,39 @@ function includesKeyword(row, fields, keyword) {
 }
 
 export function useSearchModalLookups() {
-  const clientRowsSource = ref(createDefaultClientRows())
-  const productRowsSource = ref(createDefaultProductRows())
+  const clientRowsSource = ref([])
+  const productRowsSource = ref([])
 
   async function loadSearchModalLookups() {
     try {
-      const [clientsData, countriesData, currenciesData, itemsData] = await Promise.all([
+      const [clientsData, itemsData] = await Promise.all([
         fetchClients(),
-        fetchCountries(),
-        fetchCurrencies(),
         fetchItems(),
       ])
 
-      const countryMap = new Map(
-        countriesData.map((country) => [String(country.id), country.nameKr ?? country.name ?? '-']),
-      )
-
-      const currencyMap = new Map(
-        currenciesData.map((currency) => [String(currency.id), currency.code ?? '-']),
-      )
-
       clientRowsSource.value = clientsData.map((client) => ({
-        id: String(client.id),
-        code: client.code ?? '-',
-        name: client.name ?? '-',
-        country: countryMap.get(String(client.countryId)) ?? '-',
-        city: client.city ?? '-',
-        currency: currencyMap.get(String(client.currencyId)) ?? '-',
-        manager: client.manager ?? '-',
-        tel: client.tel ?? '-',
-        status: client.status ?? '-',
+        id: String(client.clientId),
+        code: client.clientCode ?? '-',
+        name: client.clientName ?? '-',
+        country: client.countryName ?? '-',
+        city: client.clientCity ?? '-',
+        status: client.clientStatus ?? '-',
       }))
 
       productRowsSource.value = itemsData.map((item) => ({
-        id: String(item.id),
-        code: item.code ?? '-',
-        name: item.name ?? '-',
-        nameKr: item.nameKr ?? '-',
-        spec: item.spec ?? '-',
-        unit: item.unit ?? '-',
-        unitPrice: item.unitPrice ?? 0,
-        hsCode: item.hsCode ?? '-',
-        category: item.category ?? '-',
-        status: item.status ?? '-',
+        id: String(item.itemId),
+        code: item.itemCode ?? '-',
+        name: item.itemName ?? '-',
+        nameKr: item.itemNameKr ?? '-',
+        spec: item.itemSpec ?? '-',
+        unit: item.itemUnit ?? '-',
+        unitPrice: item.itemUnitPrice ?? 0,
+        category: item.itemCategory ?? '-',
+        status: item.itemStatus ?? '-',
       }))
     } catch {
-      clientRowsSource.value = createDefaultClientRows()
-      productRowsSource.value = createDefaultProductRows()
+      clientRowsSource.value = []
+      productRowsSource.value = []
     }
   }
 
@@ -87,7 +52,7 @@ export function useSearchModalLookups() {
       const keyword = keywordRef.value.trim().toLowerCase()
       return clientRowsSource.value.filter((row) => includesKeyword(
         row,
-        ['code', 'name', 'country', 'city', 'currency', 'manager', 'tel', 'status'],
+        ['code', 'name', 'country', 'city', 'status'],
         keyword,
       ))
     })
@@ -98,7 +63,7 @@ export function useSearchModalLookups() {
       const keyword = keywordRef.value.trim().toLowerCase()
       return productRowsSource.value.filter((row) => includesKeyword(
         row,
-        ['code', 'name', 'nameKr', 'spec', 'unit', 'hsCode', 'category', 'status'],
+        ['code', 'name', 'nameKr', 'spec', 'unit', 'category', 'status'],
         keyword,
       ))
     })
