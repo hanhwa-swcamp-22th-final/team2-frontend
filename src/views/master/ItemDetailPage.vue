@@ -7,7 +7,7 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
 import DocumentLinkButton from '@/components/domain/master/DocumentLinkButton.vue'
 import ItemFormModal from '@/components/domain/master/ItemFormModal.vue'
-import { deleteItem, fetchItem, fetchItems, updateItem } from '@/api/master'
+import { changeItemStatus, fetchItem, fetchItems, updateItem } from '@/api/master'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 import { canManageItems } from '@/utils/roleAccess'
@@ -112,8 +112,8 @@ async function handleDelete() {
   deleting.value = true
   const name = item.value.name
   try {
-    await deleteItem(item.value.id)
-    success(`${name} 품목이 삭제되었습니다.`)
+    await changeItemStatus(item.value.id, 'INACTIVE')
+    success(`${name} 품목이 비활성화되었습니다.`)
     router.push({ name: 'item-list' })
   } catch {
     error('삭제 중 오류가 발생했습니다.')

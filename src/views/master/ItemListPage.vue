@@ -14,7 +14,7 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import ItemFormModal from '@/components/domain/master/ItemFormModal.vue'
-import { createItem, deleteItem, fetchItems, updateItem } from '@/api/master'
+import { changeItemStatus, createItem, fetchItems, updateItem } from '@/api/master'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 import { canManageItems } from '@/utils/roleAccess'
@@ -176,8 +176,8 @@ async function handleDelete() {
   if (!itemToDelete.value || deleting.value) return
   deleting.value = true
   try {
-    await deleteItem(itemToDelete.value.id)
-    success(`${itemToDelete.value.name} 품목이 삭제되었습니다.`)
+    await changeItemStatus(itemToDelete.value.id, 'INACTIVE')
+    success(`${itemToDelete.value.name} 품목이 비활성화되었습니다.`)
     await loadData()
   } catch {
     error('삭제 중 오류가 발생했습니다.')

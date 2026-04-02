@@ -15,8 +15,8 @@ import {
   fetchCurrencies,
   fetchIncoterms,
   fetchItems,
-  fetchUsers,
 } from '@/api/master'
+import { fetchAllUsers } from '@/api/auth'
 import { useToast } from '@/composables/useToast'
 import {
   fallbackIncotermsCatalog,
@@ -263,7 +263,7 @@ async function loadReferenceData() {
       fetchCountries(),
       fetchCurrencies(),
       fetchItems(),
-      fetchUsers(),
+      fetchAllUsers(),
       fetchIncoterms(),
     ])
 

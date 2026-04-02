@@ -10,7 +10,7 @@ import ClientFormModal from '@/components/domain/master/ClientFormModal.vue'
 import DocumentLinkButton from '@/components/domain/master/DocumentLinkButton.vue'
 import { useAuthStore } from '@/stores/auth'
 import {
-  deleteClient,
+  changeClientStatus,
   fetchBuyersByClient,
   fetchClient,
   fetchClients,
@@ -148,8 +148,8 @@ async function handleDelete() {
   deleting.value = true
   const name = client.value.name
   try {
-    await deleteClient(client.value.id)
-    success(`${name} 거래처가 삭제되었습니다.`)
+    await changeClientStatus(client.value.id, 'INACTIVE')
+    success(`${name} 거래처가 비활성화되었습니다.`)
     router.push({ name: 'client-list' })
   } catch {
     error('삭제 중 오류가 발생했습니다.')

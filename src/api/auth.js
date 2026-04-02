@@ -73,3 +73,8 @@ export async function changeUserStatus(id, status) {
   const { data } = await api.patch(`/users/${id}/status`, { status })
   return data
 }
+
+export async function fetchAllUsers() {
+  const { data } = await api.get('/users')
+  return data.content ?? data
+}

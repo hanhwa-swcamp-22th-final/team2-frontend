@@ -16,8 +16,8 @@ import PageHeader from '@/components/common/PageHeader.vue'
 import ClientFormModal from '@/components/domain/master/ClientFormModal.vue'
 import { useAuthStore } from '@/stores/auth'
 import {
+  changeClientStatus,
   createClient,
-  deleteClient,
   fetchClients,
   updateClient,
 } from '@/api/master'
@@ -193,8 +193,8 @@ async function handleDelete() {
   if (!clientToDelete.value || deleting.value) return
   deleting.value = true
   try {
-    await deleteClient(clientToDelete.value.id)
-    success(`${clientToDelete.value.name} 거래처가 삭제되었습니다.`)
+    await changeClientStatus(clientToDelete.value.id, 'INACTIVE')
+    success(`${clientToDelete.value.name} 거래처가 비활성화되었습니다.`)
     await loadData()
   } catch {
     error('삭제 중 오류가 발생했습니다.')
