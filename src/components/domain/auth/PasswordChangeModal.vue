@@ -5,7 +5,7 @@ import BaseModal from '@/components/common/BaseModal.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import FormField from '@/components/common/FormField.vue'
 import { useToast } from '@/composables/useToast'
-import { changePassword, login as verifyPassword } from '@/api/auth'
+import { changePassword } from '@/api/auth'
 import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps({
@@ -73,23 +73,19 @@ async function handleSave() {
     return
   }
 
-  // 현재 비밀번호를 서버에서 검증 (login API로 확인)
   saving.value = true
   try {
-    const verified = await verifyPassword(currentUser.email, currentPassword.value)
-    if (!verified) {
-      errors.value = { currentPassword: '현재 비밀번호가 올바르지 않습니다.' }
-      warning('현재 비밀번호가 올바르지 않습니다.')
-      saving.value = false
-      return
-    }
-
-    await changePassword(currentUser.id, newPassword.value)
+    await changePassword(currentUser.userId, currentPassword.value, newPassword.value)
     success('비밀번호가 변경되었습니다.')
     emit('save')
     emit('close')
   } catch (e) {
-    error('비밀번호 변경 중 오류가 발생했습니다.')
+    if (e.response?.status === 400) {
+      errors.value = { currentPassword: '현재 비밀번호가 올바르지 않습니다.' }
+      warning('현재 비밀번호가 올바르지 않습니다.')
+    } else {
+      error('비밀번호 변경 중 오류가 발생했습니다.')
+    }
   } finally {
     saving.value = false
   }

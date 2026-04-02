@@ -9,7 +9,7 @@ import { canAccessPathByRole, getRoleHomePath } from '@/utils/roleAccess'
 const uiStore = useUiStore()
 const authStore = useAuthStore()
 const route = useRoute()
-const homePath = computed(() => getRoleHomePath(authStore.currentUser?.role))
+const homePath = computed(() => getRoleHomePath(authStore.currentUser?.userRole ?? authStore.currentUser?.role))
 const navigationItems = ref([])
 
 const sectionOrder = ['basic', 'sales', 'orders', 'status', 'activity', 'admin']

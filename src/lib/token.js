@@ -1,51 +1,19 @@
 /**
- * 토큰 유틸리티
+ * JWT 토큰 유틸리티
  *
- * 현재(프론트 단독 개발 단계):
- *   - json-server에 JWT 발급 기능이 없으므로 간이 토큰을 생성해 시뮬레이션
- *   - AccessToken → 메모리(Pinia store)
- *   - RefreshToken → HttpOnly 쿠키 (시뮬레이션: 일반 쿠키)
- *
- * TODO: 백엔드 연동 시 실제 JWT 발급/검증 흐름으로 교체
+ * AccessToken  → 메모리(Pinia store)
+ * RefreshToken → 쿠키
  */
 
-const AT_EXPIRY_MS = 30 * 60 * 1000 // 30분
-const RT_EXPIRY_DAYS = 7
 const RT_COOKIE_NAME = 'sb_refresh_token'
+const RT_EXPIRY_DAYS = 7
 
-/**
- * 간이 토큰 생성 (base64 인코딩된 JSON)
- * 백엔드 연동 시 서버에서 발급받은 JWT로 대체
- */
-export function generateTokens(user) {
-  const now = Date.now()
-
-  const accessPayload = {
-    sub: user.id,
-    email: user.email,
-    role: user.role,
-    departmentId: user.departmentId,
-    name: user.name,
-    iat: now,
-    exp: now + AT_EXPIRY_MS,
-  }
-
-  const refreshPayload = {
-    sub: user.id,
-    iat: now,
-    exp: now + RT_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
-  }
-
-  const accessToken = btoa(encodeURIComponent(JSON.stringify(accessPayload)))
-  const refreshToken = btoa(encodeURIComponent(JSON.stringify(refreshPayload)))
-
-  return { accessToken, refreshToken }
-}
-
-/** AT 페이로드 디코딩 */
+/** JWT 페이로드 디코딩 (서명 검증은 서버에서 수행) */
 export function decodeToken(token) {
   try {
-    return JSON.parse(decodeURIComponent(atob(token)))
+    const base64Url = token.split('.')[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    return JSON.parse(decodeURIComponent(atob(base64)))
   } catch {
     return null
   }
@@ -55,7 +23,7 @@ export function decodeToken(token) {
 export function isTokenExpired(token) {
   const payload = decodeToken(token)
   if (!payload?.exp) return true
-  return Date.now() > payload.exp
+  return Date.now() > payload.exp * 1000
 }
 
 /** RT를 쿠키에 저장 */

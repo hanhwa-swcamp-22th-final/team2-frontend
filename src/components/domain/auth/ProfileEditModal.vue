@@ -30,8 +30,8 @@ const isSaving = ref(false)
 watch(() => props.open, (val) => {
   if (val && props.user) {
     form.value = {
-      name: props.user.name || '',
-      email: props.user.email || '',
+      name: props.user.userName ?? props.user.name ?? '',
+      email: props.user.userEmail ?? props.user.email ?? '',
     }
     errors.value = {}
   }
@@ -54,7 +54,7 @@ async function save() {
       name: form.value.name.trim(),
       email: form.value.email.trim(),
     }
-    await api.patch(`/users/${props.user.id}`, payload)
+    await api.patch(`/users/${props.user.userId ?? props.user.id}`, payload)
     success('내 정보가 수정되었습니다.')
     emit('save', payload)
   } catch {
@@ -111,7 +111,7 @@ async function save() {
       <div class="space-y-1.5">
         <p class="text-sm font-semibold text-slate-700">역할</p>
         <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-          {{ { admin: '관리자', sales: '영업', production: '생산', shipping: '출하' }[user.role] || '-' }}
+          {{ { ADMIN: '관리자', SALES: '영업', PRODUCTION: '생산', SHIPPING: '출하', admin: '관리자', sales: '영업', production: '생산', shipping: '출하' }[user.userRole ?? user.role] || '-' }}
         </div>
       </div>
     </div>
