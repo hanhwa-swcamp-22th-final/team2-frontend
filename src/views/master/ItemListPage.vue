@@ -18,6 +18,7 @@ import { changeItemStatus, createItem, fetchItems, updateItem } from '@/api/mast
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 import { canManageItems } from '@/utils/roleAccess'
+import { label, ITEM_STATUS_LABEL } from '@/utils/enumLabels'
 
 const router = useRouter()
 const { success, error } = useToast()
@@ -44,12 +45,12 @@ const appliedFilters = ref({ keyword: '', code: '', name: '', category: '', unit
 
 const statusOptions = [
   { label: '전체', value: '' },
-  { label: '활성', value: '활성' },
-  { label: '비활성', value: '비활성' },
+  { label: '활성', value: 'active' },
+  { label: '비활성', value: 'inactive' },
 ]
 
 const unitOptions = computed(() => {
-  const units = [...new Set(items.value.map((i) => i.unit).filter(Boolean))]
+  const units = [...new Set(items.value.map((i) => i.itemUnit).filter(Boolean))]
   return [{ label: '전체', value: '' }, ...units.map((u) => ({ label: u, value: u }))]
 })
 
@@ -75,21 +76,21 @@ const showConfirmModal = ref(false)
 const itemToDelete = ref(null)
 
 const categoryOptions = computed(() => {
-  const cats = [...new Set(items.value.map((i) => i.category).filter(Boolean))]
+  const cats = [...new Set(items.value.map((i) => i.itemCategory).filter(Boolean))]
   return [{ label: '전체', value: '' }, ...cats.map((c) => ({ label: c, value: c }))]
 })
 
 const columns = computed(() => {
   const base = [
-    { key: 'code', label: '코드', width: '100px', align: 'center' },
-    { key: 'name', label: '품목명' },
-    { key: 'spec', label: '규격', width: '200px' },
-    { key: 'packUnit', label: '포장단위', width: '100px', align: 'center' },
-    { key: 'unit', label: '단위', width: '80px', align: 'center' },
-    { key: 'unitPrice', label: '단가 (KRW)', width: '140px', align: 'right' },
-    { key: 'weight', label: '중량 (kg)', width: '110px', align: 'right' },
-    { key: 'hsCode', label: 'HS Code', width: '100px', align: 'center' },
-    { key: 'status', label: '상태', width: '80px', align: 'center' },
+    { key: 'itemCode', label: '코드', width: '100px', align: 'center' },
+    { key: 'itemName', label: '품목명' },
+    { key: 'itemSpec', label: '규격', width: '200px' },
+    { key: 'itemPackUnit', label: '포장단위', width: '100px', align: 'center' },
+    { key: 'itemUnit', label: '단위', width: '80px', align: 'center' },
+    { key: 'itemUnitPrice', label: '단가 (KRW)', width: '140px', align: 'right' },
+    { key: 'itemWeight', label: '중량 (kg)', width: '110px', align: 'right' },
+    { key: 'itemHsCode', label: 'HS Code', width: '100px', align: 'center' },
+    { key: 'itemStatus', label: '상태', width: '80px', align: 'center' },
   ]
   if (isItemAdmin.value) {
     base.push({ key: 'actions', label: '액션', width: '120px', align: 'center' })
@@ -105,31 +106,31 @@ const filteredItems = computed(() => {
     const kw = f.keyword.toLowerCase()
     result = result.filter(
       (item) =>
-        item.name.toLowerCase().includes(kw) ||
-        (item.nameKr && item.nameKr.includes(kw)) ||
-        item.code.toLowerCase().includes(kw),
+        item.itemName.toLowerCase().includes(kw) ||
+        (item.itemNameKr && item.itemNameKr.includes(kw)) ||
+        item.itemCode.toLowerCase().includes(kw),
     )
   }
 
   if (f.code) {
-    result = result.filter((item) => item.code.toLowerCase().includes(f.code.toLowerCase()))
+    result = result.filter((item) => item.itemCode.toLowerCase().includes(f.code.toLowerCase()))
   }
 
   if (f.name) {
     const kw = f.name.toLowerCase()
-    result = result.filter((item) => item.name.toLowerCase().includes(kw) || (item.nameKr && item.nameKr.includes(kw)))
+    result = result.filter((item) => item.itemName.toLowerCase().includes(kw) || (item.itemNameKr && item.itemNameKr.includes(kw)))
   }
 
   if (f.category) {
-    result = result.filter((item) => item.category === f.category)
+    result = result.filter((item) => item.itemCategory === f.category)
   }
 
   if (f.unit) {
-    result = result.filter((item) => item.unit === f.unit)
+    result = result.filter((item) => item.itemUnit === f.unit)
   }
 
   if (f.status) {
-    result = result.filter((item) => item.status === f.status)
+    result = result.filter((item) => item.itemStatus === f.status)
   }
 
   return result
@@ -176,8 +177,8 @@ async function handleDelete() {
   if (!itemToDelete.value || deleting.value) return
   deleting.value = true
   try {
-    await changeItemStatus(itemToDelete.value.id, 'INACTIVE')
-    success(`${itemToDelete.value.name} 품목이 비활성화되었습니다.`)
+    await changeItemStatus(itemToDelete.value.id, 'inactive')
+    success(`${itemToDelete.value.itemName} 품목이 비활성화되었습니다.`)
     await loadData()
   } catch {
     error('삭제 중 오류가 발생했습니다.')
@@ -193,8 +194,7 @@ async function handleSave(formData) {
   saving.value = true
   try {
     if (formMode.value === 'create') {
-      // Use formData.status as-is (set by the form); fallback to '활성' only if absent
-      await createItem({ ...formData, regDate: new Date().toISOString().slice(0, 10), status: formData.status ?? '활성' })
+      await createItem({ ...formData, regDate: new Date().toISOString().slice(0, 10), status: formData.status ?? 'active' })
       success('품목이 등록되었습니다.')
     } else {
       await updateItem(selectedItem.value.id, formData)
@@ -293,27 +293,27 @@ function goToDetail(row) {
       :footer-text="`총 ${filteredItems.length}건`"
       @row-click="goToDetail"
     >
-      <template #cell-code="{ row }">
-        <span class="font-mono text-xs font-semibold text-brand-600">{{ row.code }}</span>
+      <template #cell-itemCode="{ row }">
+        <span class="font-mono text-xs font-semibold text-brand-600">{{ row.itemCode }}</span>
       </template>
 
-      <template #cell-name="{ row }">
+      <template #cell-itemName="{ row }">
         <div>
-          <p class="font-medium text-ink">{{ row.name }}</p>
-          <p class="text-xs text-slate-500">{{ [row.nameKr, row.category].filter(Boolean).join(' · ') }}</p>
+          <p class="font-medium text-ink">{{ row.itemName }}</p>
+          <p class="text-xs text-slate-500">{{ [row.itemNameKr, row.itemCategory].filter(Boolean).join(' · ') }}</p>
         </div>
       </template>
 
-      <template #cell-unitPrice="{ row }">
-        {{ row.unitPrice?.toLocaleString() ?? '-' }}
+      <template #cell-itemUnitPrice="{ row }">
+        {{ row.itemUnitPrice?.toLocaleString() ?? '-' }}
       </template>
 
-      <template #cell-weight="{ row }">
-        {{ row.weight?.toLocaleString() ?? '-' }}
+      <template #cell-itemWeight="{ row }">
+        {{ row.itemWeight?.toLocaleString() ?? '-' }}
       </template>
 
-      <template #cell-status="{ row }">
-        <StatusBadge :value="row.status" />
+      <template #cell-itemStatus="{ row }">
+        <StatusBadge :value="label(ITEM_STATUS_LABEL, row.itemStatus)" />
       </template>
 
       <template #cell-actions="{ row }">
@@ -340,7 +340,7 @@ function goToDetail(row) {
       :open="showConfirmModal"
       title="품목 삭제"
       message="해당 품목을 삭제하시겠습니까?"
-      :detail="itemToDelete?.name"
+      :detail="itemToDelete?.itemName"
       confirm-label="삭제"
       confirm-variant="danger"
       @confirm="handleDelete"

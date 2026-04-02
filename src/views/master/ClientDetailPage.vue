@@ -18,6 +18,7 @@ import {
 } from '@/api/master'
 import { useMasterLookup } from '@/composables/useMasterLookup'
 import { useToast } from '@/composables/useToast'
+import { label, CLIENT_STATUS_LABEL } from '@/utils/enumLabels'
 
 const route = useRoute()
 const router = useRouter()
@@ -44,25 +45,25 @@ const infoGroups = computed(() => {
     {
       title: '기본 정보',
       fields: [
-        { label: '코드', value: client.value.code, highlight: true },
+        { label: '코드', value: client.value.clientCode, highlight: true },
         { label: '한글명', value: client.value.nameKr },
       ],
     },
     {
       title: '위치 정보',
       fields: [
-        { label: '국가', value: getCountryName(client.value.countryId, { detailed: true }) },
-        { label: '도시', value: client.value.city },
-        { label: '도착항', value: getPortName(client.value.portId) },
-        { label: '주소', value: client.value.address, wide: true },
+        { label: '국가', value: client.value.countryName || getCountryName(client.value.countryId, { detailed: true }) },
+        { label: '도시', value: client.value.clientCity },
+        { label: '도착항', value: client.value.portName || getPortName(client.value.portId) },
+        { label: '주소', value: client.value.clientAddress, wide: true },
       ],
     },
     {
       title: '연락처',
       fields: [
-        { label: '담당자', value: client.value.manager },
-        { label: 'TEL', value: client.value.tel },
-        { label: 'Email', value: client.value.email },
+        { label: '담당자', value: client.value.clientManager },
+        { label: 'TEL', value: client.value.clientTel },
+        { label: 'Email', value: client.value.clientEmail },
       ],
     },
     {
@@ -108,10 +109,10 @@ async function loadData() {
 
     allClients.value = clientsData
     buyers.value = buyersData.map((b) => ({
-      name: b.name,
-      position: b.position,
-      email: b.email,
-      phone: b.tel,
+      name: b.buyerName,
+      position: b.buyerPosition,
+      email: b.buyerEmail,
+      phone: b.buyerTel,
     }))
   } catch {
     error('데이터를 불러오는 중 오류가 발생했습니다.')
@@ -148,7 +149,7 @@ async function handleDelete() {
   deleting.value = true
   const name = client.value.name
   try {
-    await changeClientStatus(client.value.id, 'INACTIVE')
+    await changeClientStatus(client.value.id, 'inactive')
     success(`${name} 거래처가 비활성화되었습니다.`)
     router.push({ name: 'client-list' })
   } catch {
@@ -172,7 +173,7 @@ function goBack() {
   </div>
 
   <div v-else-if="client" class="space-y-6">
-    <DetailPageHeader :title="`${client.code} · ${client.name}`" :status="client.status" @back="goBack">
+    <DetailPageHeader :title="`${client.clientCode} · ${client.name}`" :status="label(CLIENT_STATUS_LABEL, client.clientStatus)" @back="goBack">
       <template #actions>
         <BaseButton variant="secondary" size="sm" @click="openEditModal">수정</BaseButton>
         <BaseButton variant="ghost" size="sm" @click="showConfirmModal = true">삭제</BaseButton>

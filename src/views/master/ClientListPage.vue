@@ -23,6 +23,7 @@ import {
 } from '@/api/master'
 import { useMasterLookup } from '@/composables/useMasterLookup'
 import { useToast } from '@/composables/useToast'
+import { label, CLIENT_STATUS_LABEL } from '@/utils/enumLabels'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -51,8 +52,8 @@ const appliedFilters = ref({ keyword: '', code: '', name: '', country: '', manag
 
 const statusOptions = [
   { label: '전체', value: '' },
-  { label: '활성', value: '활성' },
-  { label: '비활성', value: '비활성' },
+  { label: '활성', value: 'active' },
+  { label: '비활성', value: 'inactive' },
 ]
 
 const PAGE_SIZE = 10
@@ -66,22 +67,20 @@ const showConfirmModal = ref(false)
 const clientToDelete = ref(null)
 
 const columns = [
-  { key: 'code', label: '코드', width: '100px', align: 'center' },
+  { key: 'clientCode', label: '코드', width: '100px', align: 'center' },
   { key: 'name', label: '거래처명' },
   { key: 'location', label: '국가·도시', width: '140px' },
   { key: 'port', label: '도착항', width: '120px' },
   { key: 'paymentTerms', label: '결제조건', width: '100px', align: 'center' },
   { key: 'currency', label: '통화', width: '80px', align: 'center' },
-  { key: 'manager', label: '담당자', width: '120px' },
-  { key: 'status', label: '상태', width: '80px', align: 'center' },
+  { key: 'clientManager', label: '담당자', width: '120px' },
+  { key: 'clientStatus', label: '상태', width: '80px', align: 'center' },
   { key: 'actions', label: '액션', width: '120px', align: 'center' },
 ]
 
 const enrichedClients = computed(() =>
   clients.value.map((c) => ({
     ...c,
-    countryName: getCountryName(c.countryId),
-    portName: getPortName(c.portId),
     paymentTermsCode: getPaymentTermsLabel(c.paymentTermsId),
     currencyCode: getCurrencyLabel(c.currencyId),
   })),
@@ -119,12 +118,12 @@ const filteredClients = computed(() => {
       (c) =>
         c.name.toLowerCase().includes(kw) ||
         (c.nameKr && c.nameKr.includes(kw)) ||
-        c.code.toLowerCase().includes(kw),
+        c.clientCode.toLowerCase().includes(kw),
     )
   }
 
   if (f.code) {
-    result = result.filter((c) => c.code.toLowerCase().includes(f.code.toLowerCase()))
+    result = result.filter((c) => c.clientCode.toLowerCase().includes(f.code.toLowerCase()))
   }
 
   if (f.name) {
@@ -137,11 +136,11 @@ const filteredClients = computed(() => {
   }
 
   if (f.manager) {
-    result = result.filter((c) => c.manager && c.manager.includes(f.manager))
+    result = result.filter((c) => c.clientManager && c.clientManager.includes(f.manager))
   }
 
   if (f.status) {
-    result = result.filter((c) => c.status === f.status)
+    result = result.filter((c) => c.clientStatus === f.status)
   }
 
   return result
@@ -193,7 +192,7 @@ async function handleDelete() {
   if (!clientToDelete.value || deleting.value) return
   deleting.value = true
   try {
-    await changeClientStatus(clientToDelete.value.id, 'INACTIVE')
+    await changeClientStatus(clientToDelete.value.id, 'inactive')
     success(`${clientToDelete.value.name} 거래처가 비활성화되었습니다.`)
     await loadData()
   } catch {
@@ -306,8 +305,8 @@ function goToDetail(row) {
       clickable-rows
       @row-click="goToDetail"
     >
-      <template #cell-code="{ row }">
-        <span class="font-mono text-xs font-semibold text-brand-600">{{ row.code }}</span>
+      <template #cell-clientCode="{ row }">
+        <span class="font-mono text-xs font-semibold text-brand-600">{{ row.clientCode }}</span>
       </template>
 
       <template #cell-name="{ row }">
@@ -318,7 +317,7 @@ function goToDetail(row) {
       </template>
 
       <template #cell-location="{ row }">
-        {{ [row.countryName, row.city].filter(v => v && v !== '-').join(', ') || '-' }}
+        {{ [row.countryName, row.clientCity].filter(v => v && v !== '-').join(', ') || '-' }}
       </template>
 
       <template #cell-port="{ row }">
@@ -333,8 +332,8 @@ function goToDetail(row) {
         {{ row.currencyCode }}
       </template>
 
-      <template #cell-status="{ row }">
-        <StatusBadge :value="row.status" />
+      <template #cell-clientStatus="{ row }">
+        <StatusBadge :value="label(CLIENT_STATUS_LABEL, row.clientStatus)" />
       </template>
 
       <template #cell-actions="{ row }">
