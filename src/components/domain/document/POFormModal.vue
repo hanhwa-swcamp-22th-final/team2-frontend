@@ -4,7 +4,7 @@ import { computed, ref, watch } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
-import { fetchUsers } from '@/api/master'
+import { fetchAllUsers } from '@/api/auth'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -37,7 +37,7 @@ const isDeliveryDateLocked = computed(() => isLinkedToPi.value && !form.value.de
 
 async function loadApproverOptions() {
   try {
-    const users = await fetchUsers()
+    const users = await fetchAllUsers()
     const activeUsers = users
       .filter((user) => user.status === '재직')
       .filter((user) => user.role === 'sales' && Number(user.positionId) === 1)
