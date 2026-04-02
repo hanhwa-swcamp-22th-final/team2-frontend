@@ -8,12 +8,14 @@ import DepartmentAccordion from '@/components/domain/auth/DepartmentAccordion.vu
 import UserFormModal from '@/components/domain/auth/UserFormModal.vue'
 import { useToast } from '@/composables/useToast'
 import {
+  changeUserStatus,
   createUser,
   fetchDepartments,
   fetchPositions,
   fetchUsers,
   updateUser,
 } from '@/api/auth'
+import { label, USER_STATUS_LABEL } from '@/utils/enumLabels'
 
 const { success, error } = useToast()
 
@@ -48,12 +50,13 @@ async function loadData() {
       fetchPositions(),
       fetchDepartments(),
     ])
-    users.value = usersData
+    // fetchUsers()는 PagedResponse를 반환 → content 배열 추출
+    users.value = usersData.content ?? usersData
     positions.value = positionsData
     departments.value = departmentsData
     // 첫 번째 부서 펼치기
     if (departmentsData.length > 0) {
-      expandedDepts.value = new Set([departmentsData[0].id])
+      expandedDepts.value = new Set([departmentsData[0].departmentId])
     }
   } catch (e) {
     error('데이터를 불러오는 중 오류가 발생했습니다.')
@@ -64,7 +67,9 @@ async function loadData() {
 
 onMounted(loadData)
 
-const positionMap = computed(() => Object.fromEntries(positions.value.map((p) => [String(p.id), p.name])))
+const positionMap = computed(() =>
+  Object.fromEntries(positions.value.map((p) => [String(p.positionId ?? p.id), p.positionName ?? p.name])),
+)
 
 // 검색 / 필터
 const searchKeyword = ref('')
@@ -92,23 +97,27 @@ const groupedByDepartment = computed(() => {
     const kw = searchKeyword.value.toLowerCase()
     filtered = filtered.filter(
       (u) =>
-        u.name.toLowerCase().includes(kw) ||
+        (u.userName && u.userName.toLowerCase().includes(kw)) ||
         (u.employeeNo && u.employeeNo.includes(kw)) ||
-        (u.email && u.email.toLowerCase().includes(kw)),
+        (u.userEmail && u.userEmail.toLowerCase().includes(kw)),
     )
   }
 
   if (departmentFilter.value) {
-    filtered = filtered.filter((u) => String(u.departmentId) === String(departmentFilter.value))
+    filtered = filtered.filter((u) => String(u.departmentName) === String(departmentFilter.value))
   }
 
   return departments.value
-    .map((dept) => ({
-      department: dept,
-      users: filtered
-        .filter((u) => String(u.departmentId) === String(dept.id))
-        .map((u) => ({ ...u, department: dept.name })),
-    }))
+    .map((dept) => {
+      const deptName = dept.departmentName ?? dept.name
+      const deptId = dept.departmentId ?? dept.id
+      return {
+        department: { id: deptId, name: deptName },
+        users: filtered
+          .filter((u) => String(u.departmentName) === String(deptName))
+          .map((u) => ({ ...u, department: deptName })),
+      }
+    })
     .filter((g) => g.users.length > 0)
 })
 
@@ -118,14 +127,14 @@ const totalUsers = computed(() =>
 )
 const activeUsers = computed(() =>
   groupedByDepartment.value.reduce(
-    (sum, g) => sum + g.users.filter((u) => u.status === '재직').length,
+    (sum, g) => sum + g.users.filter((u) => u.userStatus === 'active').length,
     0,
   ),
 )
 
 const departmentFilterOptions = computed(() => [
   { label: '전체 부서', value: '' },
-  ...departments.value.map((d) => ({ label: d.name, value: d.id })),
+  ...departments.value.map((d) => ({ label: d.departmentName ?? d.name, value: d.departmentName ?? d.name })),
 ])
 
 function toggleDepartment(deptId) {
@@ -176,7 +185,7 @@ async function handleSave(formData) {
         ...formData,
         employeeNo,
         pw: 'test1234',
-        status: formData.status || '재직',
+        userStatus: 'active',
       }
       await createUser(newUser)
       success('사용자가 등록되었습니다.')
@@ -184,6 +193,8 @@ async function handleSave(formData) {
       const original = selectedUser.value
       const { pw: _pw, ...safeOriginal } = original
       const updateData = { ...safeOriginal, ...formData }
+      // status는 PATCH /status로 별도 처리하므로 update에서 제거
+      delete updateData.userStatus
       // 팀 이동 처리
       if (formData.transferDepartmentId) {
         updateData.departmentId = formData.transferDepartmentId
@@ -191,7 +202,8 @@ async function handleSave(formData) {
       delete updateData.transferDepartmentId
       delete updateData.transferReason
       delete updateData.department
-      await updateUser(original.id, updateData)
+      delete updateData.status
+      await updateUser(original.userId, updateData)
       success('사용자 정보가 수정되었습니다.')
     }
     await loadData()
@@ -207,10 +219,8 @@ async function handleDelete() {
   if (!userToDelete.value) return
   deleting.value = true
   try {
-    // 물리 삭제(deleteUser) 대신 소프트 삭제: status를 '퇴직'으로 변경
-    const { pw: _, ...safeUser } = userToDelete.value
-    await updateUser(safeUser.id, { ...safeUser, status: '퇴직' })
-    success(`${userToDelete.value.name} 사용자가 퇴직 처리되었습니다.`)
+    await changeUserStatus(userToDelete.value.userId, 'RETIRED')
+    success(`${userToDelete.value.userName} 사용자가 퇴직 처리되었습니다.`)
     await loadData()
   } catch (e) {
     error('처리 중 오류가 발생했습니다.')
@@ -285,7 +295,7 @@ defineExpose({ openCreateModal })
     <ConfirmModal
       :open="showDeleteModal"
       title="사용자 퇴직 처리"
-      :message="`${userToDelete?.name} 사용자를 퇴직 처리하시겠습니까?`"
+      :message="`${userToDelete?.userName} 사용자를 퇴직 처리하시겠습니까?`"
       confirm-label="퇴직 처리"
       confirm-variant="danger"
       @confirm="handleDelete"

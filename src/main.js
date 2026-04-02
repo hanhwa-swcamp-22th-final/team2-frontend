@@ -23,17 +23,18 @@ router.beforeEach(async (to) => {
   // 공개 페이지는 통과
   if (PUBLIC_ROUTES.includes(to.name)) {
     // 이미 로그인 상태면 대시보드로
-    if (authStore.isLoggedIn) return getRoleHomePath(authStore.currentUser?.role)
+    if (authStore.isLoggedIn) return getRoleHomePath(authStore.currentUser?.userRole ?? authStore.currentUser?.role)
     return true
   }
 
   // 로그인 상태면 통과
+  const getRole = () => authStore.currentUser?.userRole ?? authStore.currentUser?.role
   if (authStore.isLoggedIn) {
-    if (to.meta.requiredRole && authStore.currentUser?.role !== to.meta.requiredRole) {
-      return getRoleHomePath(authStore.currentUser?.role)
+    if (to.meta.requiredRole && getRole() !== to.meta.requiredRole) {
+      return getRoleHomePath(getRole())
     }
     if (!canAccessRouteByRole(authStore.currentUser, to.name)) {
-      return getRoleHomePath(authStore.currentUser?.role)
+      return getRoleHomePath(getRole())
     }
     return true
   }
@@ -41,11 +42,11 @@ router.beforeEach(async (to) => {
   // AT 없으면 RT로 세션 복구 시도
   const restored = await authStore.restoreSession()
   if (restored) {
-    if (to.meta.requiredRole && authStore.currentUser?.role !== to.meta.requiredRole) {
-      return getRoleHomePath(authStore.currentUser?.role)
+    if (to.meta.requiredRole && getRole() !== to.meta.requiredRole) {
+      return getRoleHomePath(getRole())
     }
     if (!canAccessRouteByRole(authStore.currentUser, to.name)) {
-      return getRoleHomePath(authStore.currentUser?.role)
+      return getRoleHomePath(getRole())
     }
     return true
   }

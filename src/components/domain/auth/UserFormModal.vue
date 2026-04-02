@@ -8,7 +8,7 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import FileUploadField from '@/components/common/FileUploadField.vue'
 import FormField from '@/components/common/FormField.vue'
 import { useToast } from '@/composables/useToast'
-import { changePassword } from '@/api/auth'
+import { resetPassword } from '@/api/auth'
 import { isValidEmail } from '@/utils/validators'
 
 const props = defineProps({
@@ -36,8 +36,8 @@ const roleOptions = [
 ]
 
 const statusOptions = [
-  { label: '재직', value: '재직' },
-  { label: '퇴직', value: '퇴직' },
+  { label: '재직', value: 'active' },
+  { label: '퇴직', value: 'retired' },
 ]
 
 function getInitialForm() {
@@ -60,12 +60,12 @@ watch(
     errors.value = {}
     if (isOpen && props.mode === 'edit' && props.user) {
       form.value = {
-        name: props.user.name ?? '',
-        email: props.user.email ?? '',
+        name: props.user.userName ?? props.user.name ?? '',
+        email: props.user.userEmail ?? props.user.email ?? '',
         positionId: String(props.user.positionId ?? ''),
-        role: props.user.role ?? '',
+        role: props.user.userRole ?? props.user.role ?? '',
         departmentId: String(props.user.departmentId ?? ''),
-        status: props.user.status ?? '재직',
+        status: props.user.userStatus ?? props.user.status ?? 'active',
         transferDepartmentId: '',
         transferReason: '',
         sealImage: null,
@@ -91,8 +91,8 @@ function validate() {
     // 중복 이메일 체크
     const duplicate = props.allUsers.find(
       (u) =>
-        u.email === form.value.email.trim() &&
-        (props.mode === 'create' || u.id !== props.user?.id),
+        (u.userEmail ?? u.email) === form.value.email.trim() &&
+        (props.mode === 'create' || (u.userId ?? u.id) !== (props.user?.userId ?? props.user?.id)),
     )
     if (duplicate) {
       e.email = '이미 사용 중인 이메일 주소입니다.'
@@ -132,9 +132,9 @@ function confirmResetPassword() {
 }
 
 async function handleResetPassword() {
-  if (!props.user?.id) return
+  if (!props.user?.userId && !props.user?.id) return
   try {
-    await changePassword(props.user.id, 'test1234')
+    await resetPassword(props.user.userId ?? props.user.id)
     success('비밀번호가 test1234로 초기화되었습니다.')
   } catch (e) {
     error('비밀번호 초기화 중 오류가 발생했습니다.')
@@ -144,15 +144,17 @@ async function handleResetPassword() {
 }
 
 const currentDepartmentName = computed(() => {
-  const dept = props.departments.find(d => String(d.id) === String(props.user?.departmentId))
-  return dept?.name ?? '-'
+  // 백엔드 리스트 응답은 departmentName을 직접 포함
+  if (props.user?.departmentName) return props.user.departmentName
+  const dept = props.departments.find(d => String(d.departmentId ?? d.id) === String(props.user?.departmentId))
+  return dept?.departmentName ?? dept?.name ?? '-'
 })
 </script>
 
 <template>
   <BaseModal
     :open="open"
-    :title="mode === 'create' ? '사용자 등록' : `사용자 정보 수정 – ${user?.name ?? ''}`"
+    :title="mode === 'create' ? '사용자 등록' : `사용자 정보 수정 – ${user?.userName ?? user?.name ?? ''}`"
     width="max-w-2xl"
     @close="emit('close')"
   >
@@ -170,7 +172,7 @@ const currentDepartmentName = computed(() => {
         <FormField label="직급" required :error="errors.positionId">
           <BaseSelect
             v-model="form.positionId"
-            :options="positions.map((p) => ({ label: p.name, value: String(p.id) }))"
+            :options="positions.map((p) => ({ label: p.positionName ?? p.name, value: String(p.positionId ?? p.id) }))"
             placeholder="직급을 선택하세요"
           />
         </FormField>
@@ -183,7 +185,7 @@ const currentDepartmentName = computed(() => {
           <FormField label="팀" required :error="errors.departmentId">
             <BaseSelect
               v-model="form.departmentId"
-              :options="departments.map((d) => ({ label: d.name, value: String(d.id) }))"
+              :options="departments.map((d) => ({ label: d.departmentName ?? d.name, value: String(d.departmentId ?? d.id) }))"
               placeholder="팀을 선택하세요"
             />
           </FormField>
@@ -216,7 +218,7 @@ const currentDepartmentName = computed(() => {
             <FormField label="이동할 팀">
               <BaseSelect
                 v-model="form.transferDepartmentId"
-                :options="[{ label: '변경안함', value: '' }, ...departments.map((d) => ({ label: d.name, value: String(d.id) }))]"
+                :options="[{ label: '변경안함', value: '' }, ...departments.map((d) => ({ label: d.departmentName ?? d.name, value: String(d.departmentId ?? d.id) }))]"
               />
             </FormField>
             <FormField label="이동 사유" :required="!!form.transferDepartmentId" :error="errors.transferReason">
@@ -250,7 +252,7 @@ const currentDepartmentName = computed(() => {
     <ConfirmModal
       :open="showResetConfirm"
       title="비밀번호 초기화"
-      :message="`${user?.name} 사용자의 비밀번호를 초기값(test1234)으로 초기화하시겠습니까?`"
+      :message="`${user?.userName ?? user?.name} 사용자의 비밀번호를 초기값(test1234)으로 초기화하시겠습니까?`"
       confirm-label="초기화"
       confirm-variant="danger"
       @confirm="handleResetPassword"

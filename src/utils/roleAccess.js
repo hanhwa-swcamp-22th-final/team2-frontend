@@ -5,18 +5,29 @@ const ROLE_ROUTE_ALLOWLIST = {
   shipping: new Set(['dashboard', 'shipment-orders', 'shipment-order-detail', 'shipments', 'shipment-detail']),
 }
 
+// 백엔드 UPPER_CASE role → 기존 lowercase role 정규화
+function normalizeRole(role) {
+  if (!role) return role
+  return role.toLowerCase()
+}
+
+function getUserRole(user) {
+  return normalizeRole(user?.userRole ?? user?.role)
+}
+
 export function canAccessRouteByRole(user, routeName) {
   if (!user || !routeName) return false
+  const role = getUserRole(user)
 
   if (String(routeName) === 'users') {
-    return user.role === 'admin'
+    return role === 'admin'
   }
 
-  if (user.role === 'admin' || user.role === 'sales') {
+  if (role === 'admin' || role === 'sales') {
     return true
   }
 
-  const allowedRoutes = ROLE_ROUTE_ALLOWLIST[user.role]
+  const allowedRoutes = ROLE_ROUTE_ALLOWLIST[role]
   if (!allowedRoutes) {
     return COMMON_ROUTE_NAMES.has(String(routeName))
   }
@@ -26,12 +37,13 @@ export function canAccessRouteByRole(user, routeName) {
 
 export function canAccessPathByRole(user, path) {
   if (!user || !path) return false
+  const role = getUserRole(user)
 
   if (path.startsWith('/users')) {
-    return user.role === 'admin'
+    return role === 'admin'
   }
 
-  if (user.role === 'admin' || user.role === 'sales') {
+  if (role === 'admin' || role === 'sales') {
     return true
   }
 
@@ -39,11 +51,11 @@ export function canAccessPathByRole(user, path) {
     return true
   }
 
-  if (user.role === 'production') {
+  if (role === 'production') {
     return path.startsWith('/production')
   }
 
-  if (user.role === 'shipping') {
+  if (role === 'shipping') {
     return path.startsWith('/shipment-orders') || path.startsWith('/shipments')
   }
 
@@ -55,9 +67,11 @@ export function getRoleHomePath(role) {
 }
 
 export function canManageItems(role) {
-  return role === 'admin'
+  const r = normalizeRole(role)
+  return r === 'admin'
 }
 
 export function canManageClients(role) {
-  return role === 'admin' || role === 'sales'
+  const r = normalizeRole(role)
+  return r === 'admin' || r === 'sales'
 }

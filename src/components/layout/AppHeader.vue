@@ -24,7 +24,7 @@ const roleDashboardTitles = { admin: '관리자 대시보드', sales: '영업 �
 
 const pageTitle = computed(() => {
   const currentPath = route.path
-  const role = authStore.currentUser?.role
+  const role = authStore.currentUser?.userRole ?? authStore.currentUser?.role
   const home = getRoleHomePath(role)
 
   if (currentPath === home) {
@@ -46,7 +46,7 @@ const roleDashboardDescriptions = {
 
 const pageTooltip = computed(() => {
   const currentPath = route.path
-  const role = authStore.currentUser?.role
+  const role = authStore.currentUser?.userRole ?? authStore.currentUser?.role
   const home = getRoleHomePath(role)
 
   if (currentPath === home || currentPath === '/') {
@@ -75,10 +75,11 @@ function createApprovalNotifications() {
   const approvalDocuments = [...piDocuments.value, ...poDocuments.value]
     .filter((row) => row.requestStatus && row.approvalStatus === '대기')
     .filter((row) => {
-      if (currentUser.role === 'admin') return true
-      if (currentUser.role !== 'sales') return false
+      const role = currentUser.userRole ?? currentUser.role
+      if (role === 'admin' || role === 'ADMIN') return true
+      if (role !== 'sales' && role !== 'SALES') return false
       if (currentUser.positionId === 1) return true
-      return row.approvalRequestedBy === currentUser.name
+      return row.approvalRequestedBy === (currentUser.userName ?? currentUser.name)
     })
 
   return approvalDocuments.map((row) => ({
@@ -97,7 +98,8 @@ function createApprovalNotifications() {
 
 function createShipmentNotifications() {
   const currentUser = authStore.currentUser
-  if (!currentUser || currentUser.role === 'production') return []
+  const role = currentUser.userRole ?? currentUser.role
+  if (!currentUser || role === 'production' || role === 'PRODUCTION') return []
 
   return shipmentStatusDocuments.value
     .filter((row) => row.status === '출하완료')
@@ -117,7 +119,8 @@ function createShipmentNotifications() {
 
 function createCollectionNotifications() {
   const currentUser = authStore.currentUser
-  if (!currentUser || !['sales', 'admin'].includes(currentUser.role)) return []
+  const role = currentUser.userRole ?? currentUser.role
+  if (!currentUser || !['sales', 'admin', 'SALES', 'ADMIN'].includes(role)) return []
 
   return salesCollectionDocuments.value
     .filter((row) => row.status === '수금완료')
@@ -175,14 +178,14 @@ function goToNotification(notification) {
 }
 
 const loggedInUser = computed(() => authStore.currentUser)
-const userInitial = computed(() => loggedInUser.value?.name?.charAt(0) || '?')
-const userName = computed(() => loggedInUser.value?.name || '사용자')
+const userInitial = computed(() => (loggedInUser.value?.userName ?? loggedInUser.value?.name)?.charAt(0) || '?')
+const userName = computed(() => loggedInUser.value?.userName ?? loggedInUser.value?.name ?? '사용자')
 const userRole = computed(() => {
-  const roles = { admin: '관리자', sales: '영업', production: '생산', shipping: '출하' }
-  return roles[loggedInUser.value?.role] || ''
+  const roles = { ADMIN: '관리자', SALES: '영업', PRODUCTION: '생산', SHIPPING: '출하', admin: '관리자', sales: '영업', production: '생산', shipping: '출하' }
+  return roles[loggedInUser.value?.userRole ?? loggedInUser.value?.role] || ''
 })
 const userEmployeeNo = computed(() => loggedInUser.value?.employeeNo || '-')
-const userEmail = computed(() => loggedInUser.value?.email || '-')
+const userEmail = computed(() => loggedInUser.value?.userEmail ?? loggedInUser.value?.email ?? '-')
 const userDepartment = computed(() => loggedInUser.value?.departmentName || userRole.value)
 
 const isProfileOpen = ref(false)

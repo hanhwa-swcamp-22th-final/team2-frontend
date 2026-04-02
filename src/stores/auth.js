@@ -2,17 +2,20 @@ import { computed, readonly, ref } from 'vue'
 import { defineStore } from 'pinia'
 import {
   decodeToken,
-  generateTokens,
   getRefreshTokenCookie,
   isTokenExpired,
   removeRefreshTokenCookie,
   setRefreshTokenCookie,
 } from '@/lib/token'
-import { login as apiLogin, fetchUserById } from '@/api/auth'
+import {
+  login as apiLogin,
+  refreshToken as apiRefresh,
+  logoutApi,
+} from '@/api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
-  // AccessToken은 메모리에만 보관 (새로고침 시 사라짐 → RT로 복구)
   const accessToken = ref(null)
+  const _refreshToken = ref(null)
   const user = ref(null)
 
   const isLoggedIn = computed(() => !!accessToken.value && !isTokenExpired(accessToken.value))
@@ -22,63 +25,55 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * 로그인
    */
-  async function login(email, pw) {
-    const userData = await apiLogin(email, pw)
-    if (!userData) throw new Error('INVALID_CREDENTIALS')
+  async function login(email, password) {
+    const data = await apiLogin(email, password)
 
-    const tokens = generateTokens(userData)
-    accessToken.value = tokens.accessToken
-    setRefreshTokenCookie(tokens.refreshToken)
+    accessToken.value = data.accessToken
+    _refreshToken.value = data.refreshToken
+    setRefreshTokenCookie(data.refreshToken)
+    user.value = data.user
 
-    // 비밀번호는 store에 저장하지 않음
-    const { pw: _, ...safeUser } = userData
-    user.value = safeUser
-
-    return safeUser
+    return data.user
   }
 
   /**
    * 로그아웃
    */
-  function logout() {
+  async function logout() {
+    try {
+      if (user.value?.userId) {
+        await logoutApi(user.value.userId)
+      }
+    } catch {
+      // 서버 오류 시에도 로컬 세션은 정리
+    }
     accessToken.value = null
+    _refreshToken.value = null
     user.value = null
     removeRefreshTokenCookie()
   }
 
   /**
    * RT로 세션 복구 (새로고침 시)
-   *
-   * TODO: 백엔드 연동 시 POST /auth/refresh 로 새 AT 발급받는 흐름으로 교체
-   * 현재는 RT 디코딩 → userId로 사용자 조회 → 새 토큰 쌍 생성
    */
   async function restoreSession() {
-    const rt = getRefreshTokenCookie()
+    const rt = _refreshToken.value || getRefreshTokenCookie()
     if (!rt) return false
 
-    const payload = decodeToken(rt)
-    if (!payload?.sub || Date.now() > payload.exp) {
-      removeRefreshTokenCookie()
-      return false
-    }
-
     try {
-      // json-server에서 사용자 조회
-      const userData = await fetchUserById(payload.sub)
-      if (!userData) {
-        removeRefreshTokenCookie()
-        return false
-      }
+      const data = await apiRefresh(rt)
 
-      const tokens = generateTokens(userData)
-      accessToken.value = tokens.accessToken
-      setRefreshTokenCookie(tokens.refreshToken)
+      accessToken.value = data.accessToken
+      _refreshToken.value = data.refreshToken
+      setRefreshTokenCookie(data.refreshToken)
+      user.value = data.user
 
-      const { pw: _, ...safeUser } = userData
-      user.value = safeUser
       return true
     } catch {
       removeRefreshTokenCookie()
+      accessToken.value = null
+      _refreshToken.value = null
+      user.value = null
       return false
     }
   }
@@ -91,7 +86,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * 비밀번호 변경 후 store 반영 (pw 제외)
+   * 사용자 정보 부분 업데이트
    */
   function updateUserInfo(partial) {
     if (user.value) {

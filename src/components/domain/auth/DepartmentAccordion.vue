@@ -2,6 +2,7 @@
 import BaseTable from '@/components/common/BaseTable.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
+import { label, USER_STATUS_LABEL } from '@/utils/enumLabels'
 
 const props = defineProps({
   department: { type: String, required: true },
@@ -19,8 +20,8 @@ const avatarColors = [
 
 const columns = [
   { key: 'employeeNo', label: '사번', width: '120px' },
-  { key: 'name', label: '이름', width: '200px' },
-  { key: 'email', label: '이메일' },
+  { key: 'userName', label: '이름', width: '200px' },
+  { key: 'userEmail', label: '이메일' },
   { key: 'department', label: '부서', width: '120px' },
   { key: 'status', label: '상태', width: '100px', align: 'center' },
   { key: 'actions', label: '관리', width: '140px', align: 'center' },
@@ -31,7 +32,7 @@ function getAvatarColor(index) {
 }
 
 function getActiveCount() {
-  return props.users.filter((u) => u.status === '재직').length
+  return props.users.filter((u) => u.userStatus === 'active').length
 }
 </script>
 
@@ -67,28 +68,28 @@ function getActiveCount() {
 
     <!-- 본문 테이블 -->
     <div v-show="expanded" :id="`dept-panel-${department}`" :aria-hidden="!expanded" class="border-t border-slate-100">
-      <BaseTable :columns="columns" :rows="users" empty-text="사용자가 없습니다.">
-        <template #cell-name="{ row, value }">
+      <BaseTable :columns="columns" :rows="users" row-key="userId" empty-text="사용자가 없습니다.">
+        <template #cell-userName="{ row, value }">
           <div class="flex items-center gap-2.5">
             <span
               role="img"
               :aria-label="`${value} 프로필`"
               class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-              :class="getAvatarColor(row.id)"
+              :class="getAvatarColor(row.userId)"
             >
               {{ value?.charAt(0) }}
             </span>
             <div>
               <p class="font-medium text-ink">{{ value }}</p>
-              <p class="text-xs text-slate-400">{{ positionMap[row.positionId] || '' }}</p>
+              <p class="text-xs text-slate-400">{{ row.positionName || positionMap[row.positionId] || '' }}</p>
             </div>
           </div>
         </template>
 
         <template #cell-status="{ row }">
           <StatusBadge
-            :value="row.status"
-            :variant="row.status === '재직' ? 'active' : 'inactive'"
+            :value="label(USER_STATUS_LABEL, row.userStatus)"
+            :variant="row.userStatus === 'active' ? 'active' : 'inactive'"
           />
         </template>
 

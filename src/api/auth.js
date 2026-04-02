@@ -1,12 +1,17 @@
 import { api } from '@/lib/api'
 
-export async function login(email, pw) {
-  // TODO: [SECURITY] 백엔드 연동 시 POST /auth/login { email, password } 방식으로 교체
-  // json-server v1 beta는 복수 쿼리 파라미터 필터링을 지원하지 않아 email로만 조회 후 pw 비교
-  const { data } = await api.get('/users', { params: { email } })
-  const user = data[0]
-  if (!user || user.pw !== pw) return null
-  return user
+export async function login(email, password) {
+  const { data } = await api.post('/auth/login', { email, password })
+  return data
+}
+
+export async function refreshToken(refreshToken) {
+  const { data } = await api.post('/auth/refresh', { refreshToken })
+  return data
+}
+
+export async function logoutApi(userId) {
+  await api.post('/auth/logout', { userId })
 }
 
 export async function fetchUsers() {
@@ -35,17 +40,17 @@ export async function fetchDepartments() {
 }
 
 export async function fetchCompany() {
-  const { data } = await api.get('/company/1')
+  const { data } = await api.get('/company')
   return data
 }
 
 export async function updateCompany(company) {
-  const { data } = await api.put('/company/1', company)
+  const { data } = await api.put('/company', company)
   return data
 }
 
-export async function changePassword(userId, pw) {
-  const { data } = await api.patch(`/users/${userId}`, { pw })
+export async function changePassword(userId, currentPw, newPw) {
+  const { data } = await api.put(`/users/${userId}/password`, { currentPw, newPw })
   return data
 }
 
@@ -54,6 +59,17 @@ export async function fetchUserById(id) {
   return data
 }
 
-export async function deleteUser(id) {
-  return api.delete(`/users/${id}`)
+export async function resetPassword(userId) {
+  const { data } = await api.post(`/users/${userId}/password/reset`)
+  return data
+}
+
+export async function forgotPassword(email) {
+  const { data } = await api.post('/auth/forgot-password', { email })
+  return data
+}
+
+export async function changeUserStatus(id, status) {
+  const { data } = await api.patch(`/users/${id}/status`, { status })
+  return data
 }

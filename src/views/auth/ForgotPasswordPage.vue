@@ -4,6 +4,7 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import FormField from '@/components/common/FormField.vue'
 import { useToast } from '@/composables/useToast'
+import { forgotPassword } from '@/api/auth'
 import { isValidEmail } from '@/utils/validators'
 
 const { success, error } = useToast()
@@ -31,9 +32,15 @@ async function handleSubmit() {
 
   loading.value = true
   try {
-    // TODO: 백엔드 연동 시 await sendPasswordResetEmail(email.value.trim())
+    await forgotPassword(email.value.trim())
     submitted.value = true
-    success('등록된 이메일이라면 재설정 링크가 발송됩니다.')
+    success('임시 비밀번호가 이메일로 발송되었습니다.')
+  } catch (e) {
+    if (e.response?.status === 400) {
+      error('등록되지 않은 이메일입니다.')
+    } else {
+      error('처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+    }
   } finally {
     loading.value = false
   }
@@ -66,7 +73,7 @@ function handleRetry() {
         </div>
         <h2 class="text-lg font-bold text-ink">비밀번호 찾기</h2>
         <p class="text-sm text-slate-500">
-          가입 시 등록한 이메일 주소를 입력하시면<br />비밀번호 재설정 링크를 보내드립니다.
+          가입 시 등록한 이메일 주소를 입력하시면<br />임시 비밀번호를 보내드립니다.
         </p>
       </div>
 
@@ -74,8 +81,8 @@ function handleRetry() {
       <div v-if="submitted" role="alert" aria-live="polite" class="rounded-xl bg-green-50 px-4 py-4 text-center text-sm text-green-700">
         <p class="font-semibold">이메일이 발송되었습니다.</p>
         <p class="mt-1 text-xs text-green-600">
-          <strong>{{ email }}</strong> 으로 비밀번호 재설정 링크를 발송했습니다.<br />
-          이메일을 확인해 주세요.
+          <strong>{{ email }}</strong> 으로 임시 비밀번호를 발송했습니다.<br />
+          로그인 후 반드시 비밀번호를 변경해주세요.
         </p>
         <button
           type="button"
@@ -106,7 +113,7 @@ function handleRetry() {
         </FormField>
 
         <BaseButton variant="primary" type="submit" block size="lg" :disabled="loading">
-          {{ loading ? '확인 중...' : '재설정 링크 발송' }}
+          {{ loading ? '확인 중...' : '임시 비밀번호 발송' }}
         </BaseButton>
       </form>
 
