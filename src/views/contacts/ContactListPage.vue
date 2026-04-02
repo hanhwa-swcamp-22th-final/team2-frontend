@@ -100,8 +100,8 @@ const formTel = ref('')
 const formErrors = ref({})
 
 watch(formClientId, (val) => { if (val) formErrors.value.clientId = undefined })
-watch(formName,     (val) => { if (val.trim()) formErrors.value.name = undefined })
-watch(formEmail,    (val) => { if (val.trim()) formErrors.value.email = undefined })
+watch(formName,     (val) => { if (val.trim()) formErrors.value.buyerName = undefined })
+watch(formEmail,    (val) => { if (val.trim()) formErrors.value.buyerEmail = undefined })
 
 const positionOptions = [
   { label: 'Team Leader', value: 'Team Leader' },
@@ -128,10 +128,10 @@ function openEdit(contact) {
   isEditMode.value = true
   editingId.value = contact.id
   formClientId.value = contact.clientId
-  formName.value = contact.name
-  formPosition.value = contact.position
-  formEmail.value = contact.email
-  formTel.value = contact.tel
+  formName.value = contact.buyerName
+  formPosition.value = contact.buyerPosition
+  formEmail.value = contact.buyerEmail
+  formTel.value = contact.buyerTel
   formErrors.value = {}
   isDetailOpen.value = false
   isFormOpen.value = true
@@ -139,9 +139,9 @@ function openEdit(contact) {
 
 function validate() {
   const e = {}
-  if (!formClientId.value)     e.clientId = '거래처 값이 누락되었습니다.'
-  if (!formName.value.trim())  e.name     = '이름 값이 누락되었습니다.'
-  if (!formEmail.value.trim()) e.email    = '이메일 값이 누락되었습니다.'
+  if (!formClientId.value)     e.clientId  = '거래처 값이 누락되었습니다.'
+  if (!formName.value.trim())  e.buyerName  = '이름 값이 누락되었습니다.'
+  if (!formEmail.value.trim()) e.buyerEmail = '이메일 값이 누락되었습니다.'
   formErrors.value = e
   return Object.keys(e).length === 0
 }
@@ -152,13 +152,13 @@ async function handleFormSubmit() {
     return
   }
   const payload = {
-    clientId:    formClientId.value,
-    name:        formName.value,
-    position:    formPosition.value,
-    email:       formEmail.value,
-    tel:         formTel.value,
+    clientId:     formClientId.value,
+    buyerName:    formName.value,
+    buyerPosition: formPosition.value,
+    buyerEmail:   formEmail.value,
+    buyerTel:     formTel.value,
     signImageUrl: null,
-    createdBy:   currentUser.value?.id,
+    createdBy:    currentUser.value?.id,
   }
   try {
     if (isEditMode.value) {
@@ -261,8 +261,8 @@ async function handleDelete() {
           <!-- 이름 + 연락처 정보 -->
           <div class="min-w-0 flex-1">
             <div class="mb-2">
-              <p class="text-sm font-semibold text-slate-800">{{ contact.name }}</p>
-              <p class="text-xs text-slate-500">{{ contact.position }}</p>
+              <p class="text-sm font-semibold text-slate-800">{{ contact.buyerName }}</p>
+              <p class="text-xs text-slate-500">{{ contact.buyerPosition }}</p>
             </div>
             <div class="space-y-1.5 text-xs">
               <div class="flex items-start gap-2 text-slate-600">
@@ -270,13 +270,13 @@ async function handleDelete() {
                   <path d="M3 4a2 2 0 0 0-2 2v1.161l8.441 4.221a1.25 1.25 0 0 0 1.118 0L19 7.162V6a2 2 0 0 0-2-2H3Z" />
                   <path d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" />
                 </svg>
-                <span class="break-all">{{ contact.email }}</span>
+                <span class="break-all">{{ contact.buyerEmail }}</span>
               </div>
               <div class="flex items-center gap-2 text-slate-600">
                 <svg class="h-3.5 w-3.5 shrink-0 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path fill-rule="evenodd" d="M2 3.5A1.5 1.5 0 0 1 3.5 2h1.148a1.5 1.5 0 0 1 1.465 1.175l.716 3.223a1.5 1.5 0 0 1-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 0 0 6.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 0 1 1.767-1.052l3.223.716A1.5 1.5 0 0 1 18 16.352V17.5a1.5 1.5 0 0 1-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 0 1 2.43 8.326 13.019 13.019 0 0 1 2 5V3.5Z" clip-rule="evenodd" />
                 </svg>
-                <span>{{ contact.tel }}</span>
+                <span>{{ contact.buyerTel }}</span>
               </div>
             </div>
           </div>
@@ -299,20 +299,20 @@ async function handleDelete() {
     <!-- 상세 모달 -->
     <BaseModal
       :open="isDetailOpen"
-      :title="selectedContact?.name ?? '연락처 상세'"
+      :title="selectedContact?.buyerName ?? '연락처 상세'"
       width="max-w-md"
       @close="closeDetail"
     >
       <div class="space-y-4">
         <div>
-          <p class="text-lg font-bold text-slate-900">{{ selectedContact?.name }}</p>
-          <p class="text-sm text-slate-500">{{ selectedContact?.position }}</p>
+          <p class="text-lg font-bold text-slate-900">{{ selectedContact?.buyerName }}</p>
+          <p class="text-sm text-slate-500">{{ selectedContact?.buyerPosition }}</p>
         </div>
         <div class="space-y-3">
           <InfoField label="거래처" :value="getClientName(selectedContact?.clientId)" />
-          <InfoField label="직위" :value="selectedContact?.position" />
-          <InfoField label="이메일" :value="selectedContact?.email" />
-          <InfoField label="전화" :value="selectedContact?.tel" />
+          <InfoField label="직위" :value="selectedContact?.buyerPosition" />
+          <InfoField label="이메일" :value="selectedContact?.buyerEmail" />
+          <InfoField label="전화" :value="selectedContact?.buyerTel" />
         </div>
       </div>
       <template #footer>
@@ -337,7 +337,7 @@ async function handleDelete() {
               placeholder="거래처 검색/선택..."
             />
           </FormField>
-          <FormField label="이름" :required="true" :error="formErrors.name">
+          <FormField label="이름" :required="true" :error="formErrors.buyerName">
             <BaseTextField v-model="formName" placeholder="연락처 이름" />
           </FormField>
         </div>
@@ -345,7 +345,7 @@ async function handleDelete() {
           <FormField label="직위">
             <BaseSelect v-model="formPosition" :options="positionOptions" placeholder="직위 선택" />
           </FormField>
-          <FormField label="이메일" :required="true" :error="formErrors.email">
+          <FormField label="이메일" :required="true" :error="formErrors.buyerEmail">
             <BaseTextField v-model="formEmail" placeholder="이메일" type="email" />
           </FormField>
         </div>
@@ -364,7 +364,7 @@ async function handleDelete() {
       :open="isDeleteOpen"
       title="연락처 삭제"
       message="아래 연락처를 삭제하시겠습니까?"
-      :detail="`${deleteTarget?.name} (${deleteTarget?.position})`"
+      :detail="`${deleteTarget?.buyerName} (${deleteTarget?.buyerPosition})`"
       confirm-label="삭제"
       confirm-variant="danger"
       @confirm="handleDelete"

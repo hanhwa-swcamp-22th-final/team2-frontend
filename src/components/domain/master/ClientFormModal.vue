@@ -50,12 +50,12 @@ const currencyOptions = computed(() => {
 })
 
 const statusOptions = [
-  { label: '활성', value: '활성' },
-  { label: '비활성', value: '비활성' },
+  { label: '활성', value: 'active' },
+  { label: '비활성', value: 'inactive' },
 ]
 
 function generateNextCode() {
-  const codes = props.allClients.map((c) => c.code)
+  const codes = props.allClients.map((c) => c.clientCode ?? c.code)
   let maxNum = 0
   for (const code of codes) {
     const match = code.match(/^CLI(\d+)$/)
@@ -78,7 +78,7 @@ function getInitialForm() {
     paymentTermsId: null,
     currencyId: null,
     manager: '',
-    status: '활성',
+    status: 'active',
     sealImage: null,
   }
 }
@@ -89,19 +89,19 @@ watch(
     errors.value = {}
     if (isOpen && props.mode === 'edit' && props.client) {
       form.value = {
-        code: props.client.code ?? '',
+        code: props.client.clientCode ?? props.client.code ?? '',
         name: props.client.name ?? '',
         nameKr: props.client.nameKr ?? '',
         countryId: props.client.countryId ?? null,
-        city: props.client.city ?? '',
+        city: props.client.clientCity ?? props.client.city ?? '',
         portId: props.client.portId ?? null,
-        address: props.client.address ?? '',
-        tel: props.client.tel ?? '',
-        email: props.client.email ?? '',
+        address: props.client.clientAddress ?? props.client.address ?? '',
+        tel: props.client.clientTel ?? props.client.tel ?? '',
+        email: props.client.clientEmail ?? props.client.email ?? '',
         paymentTermsId: props.client.paymentTermsId ?? null,
         currencyId: props.client.currencyId ?? null,
-        manager: props.client.manager ?? '',
-        status: props.client.status ?? '활성',
+        manager: props.client.clientManager ?? props.client.manager ?? '',
+        status: props.client.clientStatus ?? props.client.status ?? 'active',
         sealImage: null,
       }
     } else if (isOpen && props.mode === 'create') {
@@ -131,7 +131,7 @@ function validate() {
     e.code = '코드를 입력하세요.'
   } else if (
     props.allClients.some(
-      (c) => c.code.toLowerCase() === form.value.code.trim().toLowerCase() && c.id !== props.client?.id,
+      (c) => (c.clientCode ?? c.code).toLowerCase() === form.value.code.trim().toLowerCase() && c.id !== props.client?.id,
     )
   ) {
     e.code = '이미 사용 중인 코드입니다.'

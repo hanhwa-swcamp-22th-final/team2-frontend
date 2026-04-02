@@ -41,12 +41,12 @@ const categoryOptions = [
 ]
 
 const statusOptions = [
-  { label: '활성', value: '활성' },
-  { label: '비활성', value: '비활성' },
+  { label: '활성', value: 'active' },
+  { label: '비활성', value: 'inactive' },
 ]
 
 function generateNextCode() {
-  const codes = props.allItems.map((i) => i.code)
+  const codes = props.allItems.map((i) => i.itemCode ?? i.code)
   let maxNum = 0
   for (const code of codes) {
     const match = code.match(/^ITM(\d+)$/)
@@ -69,7 +69,7 @@ function getInitialForm() {
     unitPrice: '',
     weight: '',
     hsCode: '',
-    status: '활성',
+    status: 'active',
   }
 }
 
@@ -88,21 +88,21 @@ watch(
   (isOpen) => {
     errors.value = {}
     if (isOpen && props.mode === 'edit' && props.item) {
-      const spec = parseSpec(props.item.spec)
+      const spec = parseSpec(props.item.itemSpec ?? props.item.spec)
       form.value = {
-        code: props.item.code ?? '',
-        name: props.item.name ?? '',
-        nameKr: props.item.nameKr ?? '',
-        category: props.item.category ?? '',
+        code: props.item.itemCode ?? props.item.code ?? '',
+        name: props.item.itemName ?? props.item.name ?? '',
+        nameKr: props.item.itemNameKr ?? props.item.nameKr ?? '',
+        category: props.item.itemCategory ?? props.item.category ?? '',
         specWidth: spec.width,
         specDepth: spec.depth,
         specHeight: spec.height,
-        unit: props.item.unit ?? '',
-        packUnit: props.item.packUnit ?? '',
-        unitPrice: props.item.unitPrice ?? '',
-        weight: props.item.weight ?? '',
-        hsCode: props.item.hsCode ?? '',
-        status: props.item.status ?? '활성',
+        unit: props.item.itemUnit ?? props.item.unit ?? '',
+        packUnit: props.item.itemPackUnit ?? props.item.packUnit ?? '',
+        unitPrice: props.item.itemUnitPrice ?? props.item.unitPrice ?? '',
+        weight: props.item.itemWeight ?? props.item.weight ?? '',
+        hsCode: props.item.itemHsCode ?? props.item.hsCode ?? '',
+        status: props.item.itemStatus ?? props.item.status ?? 'active',
       }
     } else if (isOpen && props.mode === 'create') {
       form.value = getInitialForm()
@@ -118,7 +118,7 @@ function validate() {
     e.code = '코드를 입력하세요.'
   } else if (
     props.allItems.some(
-      (i) => i.code.toLowerCase() === form.value.code.trim().toLowerCase() && i.id !== props.item?.id,
+      (i) => (i.itemCode ?? i.code).toLowerCase() === form.value.code.trim().toLowerCase() && i.id !== props.item?.id,
     )
   ) {
     e.code = '이미 사용 중인 코드입니다.'

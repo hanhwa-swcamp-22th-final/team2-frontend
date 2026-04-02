@@ -11,6 +11,7 @@ import { changeItemStatus, fetchItem, fetchItems, updateItem } from '@/api/maste
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 import { canManageItems } from '@/utils/roleAccess'
+import { label, ITEM_STATUS_LABEL } from '@/utils/enumLabels'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,25 +33,25 @@ const infoGroups = computed(() => {
     {
       title: '기본 정보',
       fields: [
-        { label: '코드', value: item.value.code, highlight: true },
-        { label: '한글명', value: item.value.nameKr },
-        { label: '카테고리', value: item.value.category },
+        { label: '코드', value: item.value.itemCode, highlight: true },
+        { label: '한글명', value: item.value.itemNameKr },
+        { label: '카테고리', value: item.value.itemCategory },
       ],
     },
     {
       title: '규격 / 단위',
       fields: [
-        { label: '규격', value: item.value.spec, wide: true },
-        { label: '단위', value: item.value.unit },
-        { label: '포장단위', value: item.value.packUnit },
+        { label: '규격', value: item.value.itemSpec, wide: true },
+        { label: '단위', value: item.value.itemUnit },
+        { label: '포장단위', value: item.value.itemPackUnit },
       ],
     },
     {
       title: '가격 / 기타',
       fields: [
-        { label: '단가 (KRW)', value: item.value.unitPrice?.toLocaleString() ?? '-' },
-        { label: '중량 (kg)', value: item.value.weight?.toLocaleString() ?? '-' },
-        { label: 'HS Code', value: item.value.hsCode },
+        { label: '단가 (KRW)', value: item.value.itemUnitPrice?.toLocaleString() ?? '-' },
+        { label: '중량 (kg)', value: item.value.itemWeight?.toLocaleString() ?? '-' },
+        { label: 'HS Code', value: item.value.itemHsCode },
         { label: '등록일', value: item.value.regDate },
       ],
     },
@@ -110,9 +111,9 @@ const deleting = ref(false)
 async function handleDelete() {
   if (!item.value || deleting.value) return
   deleting.value = true
-  const name = item.value.name
+  const name = item.value.itemName
   try {
-    await changeItemStatus(item.value.id, 'INACTIVE')
+    await changeItemStatus(item.value.id, 'inactive')
     success(`${name} 품목이 비활성화되었습니다.`)
     router.push({ name: 'item-list' })
   } catch {
@@ -135,7 +136,7 @@ function goBack() {
   </div>
 
   <div v-else-if="item" class="space-y-6">
-    <DetailPageHeader :title="`${item.code} · ${item.name}`" :status="item.status" @back="goBack">
+    <DetailPageHeader :title="`${item.itemCode} · ${item.itemName}`" :status="label(ITEM_STATUS_LABEL, item.itemStatus)" @back="goBack">
       <template v-if="isItemAdmin" #actions>
         <BaseButton variant="secondary" size="sm" @click="openEditModal">수정</BaseButton>
         <BaseButton variant="ghost" size="sm" @click="showConfirmModal = true">삭제</BaseButton>
@@ -187,7 +188,7 @@ function goBack() {
       :open="showConfirmModal"
       title="품목 삭제"
       message="해당 품목을 삭제하시겠습니까?"
-      :detail="item?.name"
+      :detail="item?.itemName"
       confirm-label="삭제"
       confirm-variant="danger"
       @confirm="handleDelete"
