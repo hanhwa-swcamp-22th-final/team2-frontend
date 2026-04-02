@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useToast } from '@/composables/useToast'
 import { fetchBuyers, createBuyer, updateBuyer, deleteBuyer } from '@/api/contacts'
-import { fetchActivityClients } from '@/api/activity'
+import { fetchClients } from '@/api/master'
 import { useAuthStore } from '@/stores/auth'
 import BaseButton from '@/components/common/BaseButton.vue'
 import FormField from '@/components/common/FormField.vue'
@@ -19,7 +19,7 @@ const { warning, error } = useToast()
 
 const authStore = useAuthStore()
 const currentUser = computed(() => authStore.currentUser)
-const isAdmin = computed(() => currentUser.value?.role === 'admin')
+const isAdmin = computed(() => currentUser.value?.userRole === 'admin')
 
 // ── 데이터 ─────────────────────────────────────────────────
 const clients = ref([])
@@ -28,13 +28,13 @@ const contacts = ref([])
 // 관리자는 전체, 일반 사용자는 본인 등록 연락처만
 const myContacts = computed(() => {
   if (isAdmin.value) return contacts.value
-  return contacts.value.filter((c) => c.createdBy === currentUser.value?.id)
+  return contacts.value.filter((c) => c.createdBy === currentUser.value?.userId)
 })
 
 onMounted(async () => {
   try {
     const [clientData, buyerData] = await Promise.all([
-      fetchActivityClients(),
+      fetchClients(),
       fetchBuyers(),
     ])
     clients.value = clientData
@@ -50,7 +50,7 @@ const searchInput = ref('')
 const searchKeyword = ref('')
 
 const clientSearchOptions = computed(() =>
-  clients.value.map((c) => ({ label: `${c.name} (${c.nameKr})`, value: c.id })),
+  clients.value.map((c) => ({ label: `${c.clientName} (${c.clientNameKr})`, value: c.clientId })),
 )
 
 function applySearch() {
@@ -64,9 +64,9 @@ function getContactsByClient(clientId) {
 const filteredClients = computed(() => {
   let result = clients.value
   if (searchKeyword.value) {
-    result = result.filter((c) => String(c.id) === String(searchKeyword.value))
+    result = result.filter((c) => String(c.clientId) === String(searchKeyword.value))
   }
-  return result.filter((c) => getContactsByClient(c.id).length > 0)
+  return result.filter((c) => getContactsByClient(c.clientId).length > 0)
 })
 
 // ── 상세 모달 ──────────────────────────────────────────────
@@ -84,8 +84,8 @@ function closeDetail() {
 }
 
 function getClientName(clientId) {
-  const client = clients.value.find((c) => c.id === clientId)
-  return client ? `${client.name} (${client.nameKr})` : '-'
+  const client = clients.value.find((c) => c.clientId === clientId)
+  return client ? `${client.clientName} (${client.clientNameKr})` : '-'
 }
 
 // ── 등록/수정 모달 ─────────────────────────────────────────
@@ -109,7 +109,7 @@ const positionOptions = [
 ]
 
 const clientOptions = computed(() =>
-  clients.value.map((c) => ({ label: `${c.name} (${c.nameKr})`, value: c.id })),
+  clients.value.map((c) => ({ label: `${c.clientName} (${c.clientNameKr})`, value: c.clientId })),
 )
 
 function openCreate() {
@@ -158,7 +158,7 @@ async function handleFormSubmit() {
     buyerEmail:   formEmail.value,
     buyerTel:     formTel.value,
     signImageUrl: null,
-    createdBy:    currentUser.value?.id,
+    createdBy:    currentUser.value?.userId,
   }
   try {
     if (isEditMode.value) {
@@ -241,19 +241,19 @@ async function handleDelete() {
     <!-- 거래처별 카드 그룹 -->
     <div
       v-for="client in filteredClients"
-      :key="client.id"
+      :key="client.clientId"
       class="space-y-3"
     >
       <!-- 거래처 그룹 헤더 -->
       <div>
-        <h3 class="text-sm font-bold text-slate-800">{{ client.name }}</h3>
-        <p class="text-xs text-slate-400">{{ client.nameKr }} · {{ client.country }}</p>
+        <h3 class="text-sm font-bold text-slate-800">{{ client.clientName }}</h3>
+        <p class="text-xs text-slate-400">{{ client.clientNameKr }} · {{ client.countryName }}</p>
       </div>
 
       <!-- 컨택 카드 그리드 -->
       <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
         <div
-          v-for="contact in getContactsByClient(client.id)"
+          v-for="contact in getContactsByClient(client.clientId)"
           :key="contact.id"
           class="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-brand-200 hover:shadow-md"
           @click="openDetail(contact)"

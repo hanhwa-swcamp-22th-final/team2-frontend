@@ -272,24 +272,24 @@ async function loadReferenceData() {
     )
 
     clientCatalog.value = clientsData.map((client) => ({
-      id: String(client.id),
-      name: client.name,
-      country: countryMap.get(String(client.countryId)) ?? '-',
-      address: client.address ?? '',
+      id: String(client.clientId),
+      name: client.clientName,
+      country: client.countryName ?? countryMap.get(String(client.countryId)) ?? '-',
+      address: client.clientCity ?? '',
       tel: client.tel ?? '',
       email: client.email ?? '',
     }))
 
     currencyOptions.value = currenciesData.map((currency) => currency.code).filter(Boolean)
     productCatalog.value = itemsData
-      .filter((item) => item.status !== '비활성')
+      .filter((item) => item.itemStatus === 'active')
       .map((item) => ({
-        id: item.id,
-        code: item.code ?? '',
-        name: item.name ?? '',
-        spec: item.spec ?? '',
-        unit: item.unit ?? '',
-        unitPrice: Number(item.unitPrice ?? 0),
+        id: item.itemId,
+        code: item.itemCode ?? '',
+        name: item.itemName ?? '',
+        spec: item.itemSpec ?? '',
+        unit: item.itemUnit ?? '',
+        unitPrice: Number(item.itemUnitPrice ?? 0),
       }))
       .filter((item) => item.name)
 
@@ -298,22 +298,22 @@ async function loadReferenceData() {
     }
     incotermCatalog.value = incotermsData
       .map((item) => ({
-        id: String(item.id),
-        code: item.code,
-        name: item.name,
-        nameKr: item.nameKr,
-        description: item.description,
-        transportMode: item.transportMode,
-        sellerSegments: Number(item.sellerSegments ?? 6),
-        defaultNamedPlace: item.defaultNamedPlace ?? '',
+        id: String(item.incotermId),
+        code: item.incotermCode,
+        name: item.incotermName,
+        nameKr: item.incotermNameKr,
+        description: item.incotermDescription,
+        transportMode: item.incotermTransportMode,
+        sellerSegments: Number(item.incotermSellerSegments ?? 6),
+        defaultNamedPlace: item.incotermDefaultNamedPlace ?? '',
         namedPlacePlaceholder: item.namedPlacePlaceholder ?? '',
       }))
       .filter((item) => item.code)
 
     const activeUsers = usersData
-      .filter((user) => user.status === '재직')
-      .filter((user) => user.role === 'sales' && Number(user.positionId) === 1)
-      .map((user) => user.name)
+      .filter((user) => user.userStatus === 'active')
+      .filter((user) => user.userRole === 'sales' && user.positionName === '사원')
+      .map((user) => user.userName)
       .filter(Boolean)
 
     if (activeUsers.length) {

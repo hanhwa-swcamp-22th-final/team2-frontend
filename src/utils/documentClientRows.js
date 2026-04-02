@@ -1,9 +1,7 @@
-import masterData from '../../db.json'
-
 function createBuyersByClientId(buyersData = []) {
   return buyersData.reduce((map, buyer) => {
     const clientId = String(buyer.clientId)
-    const label = buyer.position ? `${buyer.name} (${buyer.position})` : buyer.name
+    const label = buyer.buyerPosition ? `${buyer.buyerName} (${buyer.buyerPosition})` : buyer.buyerName
     const buyers = map.get(clientId) ?? []
     buyers.push(label)
     map.set(clientId, buyers)
@@ -12,31 +10,31 @@ function createBuyersByClientId(buyersData = []) {
 }
 
 export function createDocumentClientRows({
-  clientsData = masterData.clients ?? [],
-  countriesData = masterData.countries ?? [],
-  currenciesData = masterData.currencies ?? [],
-  buyersData = masterData.buyers ?? [],
+  clientsData = [],
+  countriesData = [],
+  currenciesData = [],
+  buyersData = [],
 } = {}) {
   const countryMap = new Map(
-    countriesData.map((country) => [String(country.id), country.nameKr ?? country.name ?? '-']),
+    countriesData.map((country) => [String(country.countryId), country.countryNameKr ?? country.countryName ?? '-']),
   )
   const currencyMap = new Map(
-    currenciesData.map((currency) => [String(currency.id), currency.code ?? '-']),
+    currenciesData.map((currency) => [String(currency.currencyId), currency.currencyCode ?? '-']),
   )
   const buyersByClientId = createBuyersByClientId(buyersData)
 
   return clientsData.map((client) => ({
-    id: String(client.id),
-    code: client.code ?? '-',
-    name: client.name ?? '-',
-    country: countryMap.get(String(client.countryId)) ?? '-',
-    city: client.city ?? '-',
+    id: String(client.clientId),
+    code: client.clientCode ?? '-',
+    name: client.clientName ?? '-',
+    country: countryMap.get(String(client.countryId)) ?? client.countryName ?? '-',
+    city: client.clientCity ?? '-',
     currency: currencyMap.get(String(client.currencyId)) ?? '-',
-    manager: client.manager ?? '-',
-    tel: client.tel ?? '-',
-    email: client.email ?? '-',
-    address: client.address ?? '-',
-    status: client.status ?? '-',
-    buyers: buyersByClientId.get(String(client.id)) ?? [],
+    manager: client.clientManager ?? '-',
+    tel: client.clientTel ?? '-',
+    email: client.clientEmail ?? '-',
+    address: client.clientAddress ?? '-',
+    status: client.clientStatus ?? '-',
+    buyers: buyersByClientId.get(String(client.clientId)) ?? [],
   }))
 }

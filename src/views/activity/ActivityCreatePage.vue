@@ -1,7 +1,8 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { createActivity, fetchActivityClients, fetchPOsByClient } from '@/api/activity'
+import { createActivity, fetchPOsByClient } from '@/api/activity'
+import { fetchClients } from '@/api/master'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import BaseButton from '@/components/common/BaseButton.vue'
@@ -43,8 +44,8 @@ const clientOptions = ref([])
 
 onMounted(async () => {
   try {
-    const data = await fetchActivityClients()
-    clientOptions.value = data.map((c) => ({ label: `${c.name} (${c.nameKr})`, value: c.id }))
+    const data = await fetchClients()
+    clientOptions.value = data.map((c) => ({ label: `${c.clientName} (${c.clientNameKr})`, value: c.clientId }))
   } catch (e) {
     console.error('거래처 목록 로드 실패', e)
     error('거래처 목록을 불러오지 못했습니다. 페이지를 새로고침해주세요.')
@@ -208,7 +209,7 @@ async function openPoSearch() {
 function selectPO(po) {
   formPoDisplay.value = po.id
   formPoId.value = po.id
-  formAuthor.value = authStore.currentUser?.name ?? ''
+  formAuthor.value = authStore.currentUser?.userName ?? ''
   isPoSearchOpen.value = false
 }
 

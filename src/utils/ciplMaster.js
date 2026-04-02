@@ -1,30 +1,51 @@
-import masterData from '../../db.json'
 import { formatIncotermsLabel, getIncotermMeta } from '@/utils/incoterms'
+import { fetchCountries, fetchCurrencies, fetchPaymentTerms, fetchPorts } from '@/api/master'
 
-const countriesById = new Map(
-  (masterData.countries ?? []).map((country) => [String(country.id), country]),
-)
+const countriesById = new Map()
+const currenciesByCode = new Map()
+const paymentTermsById = new Map()
+const portsByCode = new Map()
+let cacheLoaded = false
+let cachePromise = null
 
-const currenciesByCode = new Map(
-  (masterData.currencies ?? []).map((currency) => [String(currency.code).toUpperCase(), currency]),
-)
+export async function loadCiplMasterCache() {
+  if (cacheLoaded) return
+  if (cachePromise) return cachePromise
 
-const paymentTermsById = new Map(
-  (masterData.paymentTerms ?? []).map((term) => [String(term.id), term]),
-)
+  cachePromise = (async () => {
+    try {
+      const [countries, currencies, paymentTerms, ports] = await Promise.all([
+        fetchCountries(),
+        fetchCurrencies(),
+        fetchPaymentTerms(),
+        fetchPorts(),
+      ])
+      countries.forEach((c) => countriesById.set(String(c.countryId), c))
+      currencies.forEach((c) => currenciesByCode.set(String(c.currencyCode).toUpperCase(), c))
+      paymentTerms.forEach((t) => paymentTermsById.set(String(t.paymentTermId), t))
+      ports.forEach((p) => portsByCode.set(String(p.portCode).toUpperCase(), p))
+      cacheLoaded = true
+    } catch {
+      // Cache load failed — functions will degrade gracefully.
+    } finally {
+      cachePromise = null
+    }
+  })()
 
-const portsByCode = new Map(
-  (masterData.ports ?? []).map((port) => [String(port.code).toUpperCase(), port]),
-)
+  return cachePromise
+}
+
+// Eagerly start cache loading when this module is first imported.
+loadCiplMasterCache()
 
 function resolveCountryLabel(countryId) {
   const country = countriesById.get(String(countryId))
-  return country?.nameKr ?? country?.name ?? ''
+  return country?.countryNameKr ?? country?.countryName ?? ''
 }
 
 export function resolveMasterCurrency(code, fallback = 'USD') {
   const currency = currenciesByCode.get(String(code ?? '').trim().toUpperCase())
-  return currency?.code ?? fallback
+  return currency?.currencyCode ?? fallback
 }
 
 export function resolvePaymentTermLabel(paymentTermsId, fallback = 'T/T REMITTANCE') {
@@ -34,11 +55,11 @@ export function resolvePaymentTermLabel(paymentTermsId, fallback = 'T/T REMITTAN
     return fallback
   }
 
-  if (term.code === 'T/T') {
+  if (term.paymentTermCode === 'T/T') {
     return 'T/T REMITTANCE'
   }
 
-  return term.code ?? fallback
+  return term.paymentTermCode ?? fallback
 }
 
 export function resolvePortLabel(portCode, fallback = '-') {
@@ -49,7 +70,7 @@ export function resolvePortLabel(portCode, fallback = '-') {
   }
 
   const countryLabel = resolveCountryLabel(port.countryId)
-  return [String(port.name ?? '').toUpperCase(), countryLabel ? String(countryLabel).toUpperCase() : '']
+  return [String(port.portName ?? '').toUpperCase(), countryLabel ? String(countryLabel).toUpperCase() : '']
     .filter(Boolean)
     .join(', ')
 }
