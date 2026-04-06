@@ -326,7 +326,7 @@ export async function recordDocumentEmailActivities({
 
   const sentAt = formatDateSlash(new Date())
 
-  await Promise.all(recipients.map((recipient) => api.post('/activityEmails', {
+  await Promise.all(recipients.map((recipient) => api.post('/email-logs', {
     client: clientName,
     title,
     recipient: recipient.name,

@@ -2,7 +2,7 @@ import { api } from '@/lib/api'
 
 // ── 거래처 ─────────────────────────────────────────────────
 export async function fetchActivityClients() {
-  const { data } = await api.get('/activityClients')
+  const { data } = await api.get('/clients/all')
   return data
 }
 
@@ -28,11 +28,11 @@ export async function deleteActivity(id) {
 
 // ── PO 검색 ────────────────────────────────────────────────
 export async function fetchPOsByClient(clientId) {
-  const { data } = await api.get('/activityPOs', { params: { clientId: Number(clientId) } })
-  return data
+  const { data } = await api.get('/purchase-orders', { params: { clientId: Number(clientId) } })
+  return data.content ?? data
 }
 
 export async function fetchAllActivityPOs() {
-  const { data } = await api.get('/activityPOs')
-  return data
+  const { data } = await api.get('/purchase-orders')
+  return data.content ?? data
 }

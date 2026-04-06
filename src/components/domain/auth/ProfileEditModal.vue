@@ -54,7 +54,7 @@ async function save() {
       name: form.value.name.trim(),
       email: form.value.email.trim(),
     }
-    await api.patch(`/users/${props.user.userId ?? props.user.id}`, payload)
+    await api.put(`/users/${props.user.userId ?? props.user.id}`, payload)
     success('내 정보가 수정되었습니다.')
     emit('save', payload)
   } catch {
