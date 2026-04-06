@@ -1,6 +1,5 @@
 import { ref } from 'vue'
-
-import masterData from '../../db.json'
+import { fetchCollections } from '@/api/documents'
 
 function normalizeDocumentCode(value = '') {
   return String(value ?? '').replace(/[^A-Za-z0-9]/g, '')
@@ -9,18 +8,27 @@ function normalizeDocumentCode(value = '') {
 function normalizeCollectionRow(row) {
   return {
     ...row,
-    poId: normalizeDocumentCode(row.poId),
+    poId: row.poId ? normalizeDocumentCode(row.poId) : (row.poNo ?? ''),
     collectionDate: row.status === '수금완료' ? row.collectionDate || null : null,
   }
 }
 
-function createInitialSalesCollectionDocuments() {
-  return (masterData.salesCollections ?? []).map(normalizeCollectionRow)
+const salesCollectionDocuments = ref([])
+let loading = null
+
+async function loadSalesCollectionDocuments() {
+  try {
+    const data = await fetchCollections()
+    salesCollectionDocuments.value = (Array.isArray(data) ? data : []).map(normalizeCollectionRow)
+  } catch (e) {
+    console.error('Failed to load sales collection documents:', e)
+  }
 }
 
-const salesCollectionDocuments = ref(createInitialSalesCollectionDocuments())
-
 export function useSalesCollectionDocuments() {
+  if (!loading) {
+    loading = loadSalesCollectionDocuments()
+  }
   return salesCollectionDocuments
 }
 
