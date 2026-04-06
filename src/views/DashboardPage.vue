@@ -37,18 +37,14 @@ const selectedPackage = ref(null)
 const deleteConfirmOpen = ref(false)
 
 onMounted(async () => {
-  try {
-    const [clients, activities, packages] = await Promise.all([
-      fetchClients(),
-      fetchActivities(),
-      fetchPackages(),
-    ])
-    clientsData.value = clients
-    activitiesData.value = activities
-    packagesData.value = packages
-  } catch {
-    // silent fail - dashboard still works with store data
-  }
+  const [clientsResult, activitiesResult, packagesResult] = await Promise.allSettled([
+    fetchClients(),
+    fetchActivities(),
+    fetchPackages(),
+  ])
+  if (clientsResult.status === 'fulfilled') clientsData.value = clientsResult.value ?? []
+  if (activitiesResult.status === 'fulfilled') activitiesData.value = activitiesResult.value ?? []
+  if (packagesResult.status === 'fulfilled') packagesData.value = packagesResult.value ?? []
 })
 
 const currentUser = computed(() => authStore.currentUser ?? null)
