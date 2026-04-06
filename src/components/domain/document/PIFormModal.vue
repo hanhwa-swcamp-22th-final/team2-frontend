@@ -27,8 +27,6 @@ import {
 } from '@/utils/incoterms'
 import {
   createExchangeRateHint,
-  exchangeRateRangeMap,
-  resolveExchangeRateValue,
 } from '@/utils/exchangeRate'
 
 const props = defineProps({
@@ -405,7 +403,7 @@ function formatUnitPriceValue(value) {
   return String(Math.max(0, Math.round(value)))
 }
 
-function convertKrwPriceToCurrency(basePrice, currency, issueDate) {
+function convertKrwPriceToCurrency(basePrice, currency) {
   const numericBasePrice = Number(basePrice)
 
   if (!Number.isFinite(numericBasePrice)) {
@@ -416,14 +414,7 @@ function convertKrwPriceToCurrency(basePrice, currency, issueDate) {
     return numericBasePrice
   }
 
-  const range = exchangeRateRangeMap[currency]
-  const exchangeRateValue = resolveExchangeRateValue(currency, issueDate)
-
-  if (!range || !exchangeRateValue) {
-    return numericBasePrice
-  }
-
-  return (numericBasePrice / exchangeRateValue) * range.quoteAmount
+  return numericBasePrice
 }
 
 function sanitizeNonNegativeInteger(value, fallback = '0') {
