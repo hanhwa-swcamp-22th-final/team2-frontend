@@ -1,18 +1,28 @@
 import { api } from '@/lib/api'
 
 export async function fetchDashboardKpis() {
-  const { data } = await api.get('/dashboardKpis')
-  return data
+  try {
+    const { data } = await api.get('/purchase-orders', { params: { page: 0, size: 1 } })
+    const totalOrders = data.totalElements ?? 0
+    return [
+      { title: '총 발주건수', value: totalOrders, unit: '건' },
+    ]
+  } catch {
+    return []
+  }
 }
 
 export async function fetchDashboardChartPoints() {
-  const { data } = await api.get('/dashboardChartPoints')
-  return data.map((item) => item.value)
+  return []
 }
 
 export async function fetchDashboardTableRows() {
-  const { data } = await api.get('/dashboardTableRows')
-  return data
+  try {
+    const { data } = await api.get('/purchase-orders', { params: { page: 0, size: 5 } })
+    return data.content ?? []
+  } catch {
+    return []
+  }
 }
 
 export async function fetchDashboardData() {

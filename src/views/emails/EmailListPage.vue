@@ -177,14 +177,14 @@ async function resendEmail() {
     return
   }
   try {
-    await api.delete(`/activityEmails/${email.id}`)
+    await api.delete(`/email-logs/${email.id}`)
     const { id: _removed, ...rest } = email
     const newRecord = {
       ...rest,
       status: '발송',
       sentAt: (() => { const d = new Date(); return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}` })(),
     }
-    await api.post('/activityEmails', newRecord)
+    await api.post('/email-logs', newRecord)
     closeDetail()
     success('메일을 발송했습니다.')
     emails.value = await fetchActivityEmails()
