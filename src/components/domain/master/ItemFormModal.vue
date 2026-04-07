@@ -180,17 +180,17 @@ function handleSave() {
   const specStr = spec ? `${spec} mm` : ''
 
   const payload = {
-    code: form.value.code,
-    name: form.value.name,
-    nameKr: form.value.nameKr,
-    category: form.value.category,
-    spec: specStr,
-    unit: form.value.unit,
-    packUnit: form.value.packUnit,
-    unitPrice: Number(form.value.unitPrice),
-    weight: form.value.weight !== '' ? Number(form.value.weight) : null,
-    hsCode: form.value.hsCode,
-    status: form.value.status,
+    itemCode: form.value.code,
+    itemName: form.value.name,
+    itemNameKr: form.value.nameKr,
+    itemCategory: form.value.category,
+    itemSpec: specStr,
+    itemUnit: form.value.unit,
+    itemPackUnit: form.value.packUnit,
+    itemUnitPrice: Number(form.value.unitPrice),
+    itemWeight: form.value.weight !== '' ? Number(form.value.weight) : null,
+    itemHsCode: form.value.hsCode,
+    itemStatus: form.value.status,
   }
 
   emit('save', payload)

@@ -180,29 +180,22 @@ async function handleSave(formData) {
   saving.value = true
   try {
     if (formMode.value === 'create') {
-      const employeeNo = generateEmployeeNo(users.value)
       const newUser = {
-        ...formData,
-        employeeNo,
-        pw: 'test1234',
-        userStatus: 'active',
+        name: formData.name,
+        email: formData.email,
+        password: 'test1234',
+        role: formData.role,
       }
       await createUser(newUser)
       success('사용자가 등록되었습니다.')
     } else {
       const original = selectedUser.value
-      const { pw: _pw, ...safeOriginal } = original
-      const updateData = { ...safeOriginal, ...formData }
-      // status는 PATCH /status로 별도 처리하므로 update에서 제거
-      delete updateData.userStatus
-      // 팀 이동 처리
-      if (formData.transferDepartmentId) {
-        updateData.departmentId = formData.transferDepartmentId
+      const updateData = {
+        name: formData.name,
+        email: formData.email,
+        departmentId: formData.transferDepartmentId ? Number(formData.transferDepartmentId) : (original.departmentId ? Number(original.departmentId) : undefined),
+        positionId: formData.positionId ? Number(formData.positionId) : undefined,
       }
-      delete updateData.transferDepartmentId
-      delete updateData.transferReason
-      delete updateData.department
-      delete updateData.status
       await updateUser(original.userId, updateData)
       success('사용자 정보가 수정되었습니다.')
     }

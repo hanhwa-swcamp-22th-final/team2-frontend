@@ -239,16 +239,10 @@ async function handleSubmit() {
   isSubmitting.value = true
   try {
     await createActivity({
-      clientId: formClient.value,
-      type:     formType.value,
-      poId:     formPoId.value,
-      date:     formDate.value.replaceAll('-', '/'),
-      title:    formTitle.value,
-      content:      isSchedule.value ? formTitle.value : formContent.value,
-      author:       formAuthor.value,
-      priority:     isIssue.value ? formPriority.value : undefined,
-      scheduleFrom: isSchedule.value ? formScheduleFrom.value.replaceAll('-', '/') : undefined,
-      scheduleTo:   isSchedule.value ? formScheduleTo.value.replaceAll('-', '/')   : undefined,
+      clientId:     formClient.value,
+      activityType: formType.value,
+      activityDate: formDate.value,
+      activityTitle: formTitle.value,
     })
     router.push('/activities')
   } catch (e) {
