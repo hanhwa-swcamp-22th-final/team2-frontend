@@ -1,7 +1,23 @@
 import { api } from '@/lib/api'
 
+/**
+ * master 백엔드는 목록 응답을 HATEOAS CollectionModel 형식
+ * (`{ _embedded: { <엔티티>List: [...] }, _links: {...} }`) 으로 반환한다.
+ * 빈 리스트인 경우 `_embedded` 키 자체가 없고 `_links` 만 내려오므로 빈 배열 fallback 처리.
+ *
+ * 단, ItemQueryController 는 PagedResponse 를 유지하므로
+ * `response.data.content` 경로를 fallback 으로 함께 지원한다.
+ */
+const unwrapCollection = (data, key) => {
+  if (Array.isArray(data)) return data
+  if (data?._embedded?.[key]) return data._embedded[key]
+  if (Array.isArray(data?.content)) return data.content
+  return []
+}
+
 // Clients
-export const fetchClients = () => api.get('/clients').then((r) => r.data.content ?? r.data)
+export const fetchClients = () =>
+  api.get('/clients').then((r) => unwrapCollection(r.data, 'clientResponseList'))
 export const fetchClient = (id) => api.get(`/clients/${id}`).then((r) => r.data)
 export const createClient = (client) => api.post('/clients', client).then((r) => r.data)
 export const updateClient = (id, client) => api.put(`/clients/${id}`, client).then((r) => r.data)
@@ -10,8 +26,9 @@ export async function changeClientStatus(id, status) {
   return data
 }
 
-// Items
-export const fetchItems = () => api.get('/items').then((r) => r.data.content ?? r.data)
+// Items (ItemQueryController 는 PagedResponse 형식 유지)
+export const fetchItems = () =>
+  api.get('/items').then((r) => unwrapCollection(r.data, 'itemResponseList'))
 export const fetchItem = (id) => api.get(`/items/${id}`).then((r) => r.data)
 export const createItem = (item) => api.post('/items', item).then((r) => r.data)
 export const updateItem = (id, item) => api.put(`/items/${id}`, item).then((r) => r.data)
@@ -21,13 +38,21 @@ export async function changeItemStatus(id, status) {
 }
 
 // Buyers
-export const fetchBuyers = () => api.get('/buyers').then((r) => r.data)
+export const fetchBuyers = () =>
+  api.get('/buyers').then((r) => unwrapCollection(r.data, 'buyerResponseList'))
 export const fetchBuyersByClient = (clientId) =>
-  api.get(`/clients/${clientId}/buyers`).then((r) => r.data)
+  api
+    .get(`/clients/${clientId}/buyers`)
+    .then((r) => unwrapCollection(r.data, 'buyerResponseList'))
 
 // Reference data
-export const fetchCountries = () => api.get('/countries').then((r) => r.data)
-export const fetchPorts = () => api.get('/ports').then((r) => r.data)
-export const fetchCurrencies = () => api.get('/currencies').then((r) => r.data)
-export const fetchIncoterms = () => api.get('/incoterms').then((r) => r.data)
-export const fetchPaymentTerms = () => api.get('/payment-terms').then((r) => r.data)
+export const fetchCountries = () =>
+  api.get('/countries').then((r) => unwrapCollection(r.data, 'countryList'))
+export const fetchPorts = () =>
+  api.get('/ports').then((r) => unwrapCollection(r.data, 'portResponseList'))
+export const fetchCurrencies = () =>
+  api.get('/currencies').then((r) => unwrapCollection(r.data, 'currencyList'))
+export const fetchIncoterms = () =>
+  api.get('/incoterms').then((r) => unwrapCollection(r.data, 'incotermList'))
+export const fetchPaymentTerms = () =>
+  api.get('/payment-terms').then((r) => unwrapCollection(r.data, 'paymentTermList'))
