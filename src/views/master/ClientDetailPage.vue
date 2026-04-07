@@ -46,7 +46,7 @@ const infoGroups = computed(() => {
       title: '기본 정보',
       fields: [
         { label: '코드', value: client.value.clientCode, highlight: true },
-        { label: '한글명', value: client.value.nameKr },
+        { label: '한글명', value: client.value.clientNameKr },
       ],
     },
     {
@@ -69,9 +69,9 @@ const infoGroups = computed(() => {
     {
       title: '거래 조건',
       fields: [
-        { label: '결제조건', value: getPaymentTermsLabel(client.value.paymentTermsId, { detailed: true }) },
+        { label: '결제조건', value: getPaymentTermsLabel(client.value.paymentTermId, { detailed: true }) },
         { label: '통화', value: getCurrencyLabel(client.value.currencyId, { detailed: true }) },
-        { label: '등록일', value: client.value.regDate },
+        { label: '등록일', value: client.value.clientRegDate },
       ],
     },
   ]
@@ -131,7 +131,7 @@ async function handleSave(formData) {
   if (saving.value) return
   saving.value = true
   try {
-    await updateClient(client.value.id, formData)
+    await updateClient(client.value.id ?? client.value.clientId, formData)
     success('거래처 정보가 수정되었습니다.')
     showFormModal.value = false
     await loadData()
@@ -147,9 +147,9 @@ const deleting = ref(false)
 async function handleDelete() {
   if (!client.value || deleting.value) return
   deleting.value = true
-  const name = client.value.name
+  const name = client.value.clientName
   try {
-    await changeClientStatus(client.value.id, 'inactive')
+    await changeClientStatus(client.value.id ?? client.value.clientId, 'inactive')
     success(`${name} 거래처가 비활성화되었습니다.`)
     router.push({ name: 'client-list' })
   } catch {
@@ -173,7 +173,7 @@ function goBack() {
   </div>
 
   <div v-else-if="client" class="space-y-6">
-    <DetailPageHeader :title="`${client.clientCode} · ${client.name}`" :status="label(CLIENT_STATUS_LABEL, client.clientStatus)" @back="goBack">
+    <DetailPageHeader :title="`${client.clientCode} · ${client.clientName}`" :status="label(CLIENT_STATUS_LABEL, client.clientStatus)" @back="goBack">
       <template #actions>
         <BaseButton variant="secondary" size="sm" @click="openEditModal">수정</BaseButton>
         <BaseButton variant="ghost" size="sm" @click="showConfirmModal = true">삭제</BaseButton>
@@ -241,7 +241,7 @@ function goBack() {
       :open="showConfirmModal"
       title="거래처 삭제"
       message="해당 거래처를 삭제하시겠습니까?"
-      :detail="client?.name"
+      :detail="client?.clientName"
       confirm-label="삭제"
       confirm-variant="danger"
       @confirm="handleDelete"

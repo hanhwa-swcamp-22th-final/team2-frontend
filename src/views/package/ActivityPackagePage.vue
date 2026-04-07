@@ -76,14 +76,14 @@ onMounted(async () => {
 async function loadPackageForEdit() {
   try {
     const pkg = await fetchPackageById(editId.value)
-    packageTitle.value = pkg.title || ''
-    packageDescription.value = pkg.description || ''
+    packageTitle.value = pkg.packageTitle || ''
+    packageDescription.value = pkg.packageDescription || ''
     selectedPoId.value = pkg.poId || ''
     poDisplay.value = pkg.poId || ''
     dateFrom.value = pkg.dateFrom || ''
     dateTo.value = pkg.dateTo || ''
     selectedActivityIds.value = [...(pkg.activityIds || [])]
-    selectedViewerIds.value = [...(pkg.viewers || [])]
+    selectedViewerIds.value = [...(pkg.viewerIds || [])]
   } catch {
     error('패키지 정보를 불러오지 못했습니다.')
   }
@@ -346,18 +346,13 @@ async function savePackage() {
   })
 
   const payload = {
-    title: packageTitle.value.trim(),
-    description: packageDescription.value.trim(),
+    packageTitle: packageTitle.value.trim(),
+    packageDescription: packageDescription.value.trim(),
     poId: selectedPoId.value,
-    creatorId: String(currentUser.value?.id),
-    creatorName: currentUser.value?.name || '-',
-    createdAt: isEditMode.value ? undefined : nowSlash(),
-    updatedAt: nowSlash(),
     dateFrom: dateFrom.value,
     dateTo: dateTo.value,
     activityIds: [...selectedActivityIds.value],
-    viewers: [...selectedViewerIds.value],
-    viewerNames,
+    viewerIds: [...selectedViewerIds.value],
   }
 
   try {

@@ -374,7 +374,7 @@ function buildRowPayload(formValue) {
     namedPlace: formValue.namedPlace || '',
     items: (formValue.items ?? []).map((item) => ({
       name: item.name ?? '',
-      qty: String(item.qty ?? ''),
+      quantity: Number(item.qty ?? item.quantity ?? 0),
       unit: item.unit ?? '',
       unitPrice: String(resolveUnitPriceValue(item)),
       amount: String(resolveAmountValue(item)),

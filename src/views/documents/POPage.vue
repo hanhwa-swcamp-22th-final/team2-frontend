@@ -275,7 +275,7 @@ function createComparableItem(item) {
 
   return {
     name: item.name ?? '',
-    qty: quantity,
+    quantity,
     unit: item.unit ?? '',
     unitPrice,
     amount,
@@ -532,7 +532,7 @@ const createApprovalItemRows = computed(() => {
   return (nextRow.items ?? []).map((item, index) => ({
     id: `${item.name || 'item'}-${index}`,
     name: item.name || '-',
-    qty: parseAmount(item.qty) > 0 ? parseAmount(item.qty).toLocaleString() : '-',
+    qty: parseAmount(item.quantity ?? item.qty) > 0 ? parseAmount(item.quantity ?? item.qty).toLocaleString() : '-',
     unit: item.unit || '-',
     unitPrice: formatAmount(nextRow.currency || 'USD', parseAmount(item.unitPrice)),
     amount: formatAmount(nextRow.currency || 'USD', parseAmount(item.amount)),
@@ -609,7 +609,7 @@ const editApprovalItemRows = computed(() => {
   return pendingEditRequest.value.revisedSnapshot.items.map((item, index) => ({
     id: `${item.name || 'item'}-${index}`,
     name: item.name || '-',
-    qty: item.qty > 0 ? item.qty.toLocaleString() : '-',
+    qty: (item.quantity ?? item.qty) > 0 ? (item.quantity ?? item.qty).toLocaleString() : '-',
     unit: item.unit || '-',
     unitPrice: formatAmount(pendingEditRequest.value.revisedSnapshot.currency, item.unitPrice),
     amount: formatAmount(pendingEditRequest.value.revisedSnapshot.currency, item.amount),
@@ -689,7 +689,7 @@ const deleteApprovalItemRows = computed(() => {
   return snapshot.items.map((item, index) => ({
     id: `${item.name || 'item'}-${index}`,
     name: item.name || '-',
-    qty: item.qty > 0 ? item.qty.toLocaleString() : '-',
+    qty: (item.quantity ?? item.qty) > 0 ? (item.quantity ?? item.qty).toLocaleString() : '-',
     unit: item.unit || '-',
     unitPrice: formatAmount(snapshot.currency, item.unitPrice),
     amount: formatAmount(snapshot.currency, item.amount),

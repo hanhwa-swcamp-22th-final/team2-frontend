@@ -26,7 +26,7 @@ const form = ref(getInitialForm())
 const errors = ref({})
 
 const countryOptions = computed(() =>
-  props.countries.map((c) => ({ label: `${c.nameKr} (${c.name})`, value: c.id })),
+  props.countries.map((c) => ({ label: `${c.countryNameKr} (${c.countryName})`, value: c.countryId })),
 )
 
 const portOptions = computed(() => {
@@ -34,20 +34,16 @@ const portOptions = computed(() => {
   const cid = String(form.value.countryId)
   return props.ports
     .filter((p) => String(p.countryId) === cid)
-    .map((p) => ({ label: p.name, value: p.id }))
+    .map((p) => ({ label: p.portName, value: p.id }))
 })
 
 const paymentTermsOptions = computed(() =>
-  props.paymentTerms.map((p) => ({ label: `${p.code} (${p.description})`, value: p.id })),
+  props.paymentTerms.map((p) => ({ label: `${p.paymentTermCode} (${p.paymentTermDescription})`, value: p.paymentTermId })),
 )
 
-const currencyOptions = computed(() => {
-  if (!form.value.countryId) return []
-  const cid = String(form.value.countryId)
-  return props.currencies
-    .filter((c) => c.countryIds?.map(String).includes(cid))
-    .map((c) => ({ label: `${c.code} (${c.symbol})`, value: c.id }))
-})
+const currencyOptions = computed(() =>
+  props.currencies.map((c) => ({ label: `${c.currencyCode} (${c.currencySymbol})`, value: c.currencyId })),
+)
 
 const statusOptions = [
   { label: '활성', value: 'active' },
@@ -89,19 +85,19 @@ watch(
     errors.value = {}
     if (isOpen && props.mode === 'edit' && props.client) {
       form.value = {
-        code: props.client.clientCode ?? props.client.code ?? '',
-        name: props.client.name ?? '',
-        nameKr: props.client.nameKr ?? '',
+        code: props.client.clientCode ?? '',
+        name: props.client.clientName ?? '',
+        nameKr: props.client.clientNameKr ?? '',
         countryId: props.client.countryId ?? null,
-        city: props.client.clientCity ?? props.client.city ?? '',
+        city: props.client.clientCity ?? '',
         portId: props.client.portId ?? null,
-        address: props.client.clientAddress ?? props.client.address ?? '',
-        tel: props.client.clientTel ?? props.client.tel ?? '',
-        email: props.client.clientEmail ?? props.client.email ?? '',
-        paymentTermsId: props.client.paymentTermsId ?? null,
+        address: props.client.clientAddress ?? '',
+        tel: props.client.clientTel ?? '',
+        email: props.client.clientEmail ?? '',
+        paymentTermsId: props.client.paymentTermId ?? props.client.paymentTermsId ?? null,
         currencyId: props.client.currencyId ?? null,
-        manager: props.client.clientManager ?? props.client.manager ?? '',
-        status: props.client.clientStatus ?? props.client.status ?? 'active',
+        manager: props.client.clientManager ?? '',
+        status: props.client.clientStatus ?? 'active',
         sealImage: null,
       }
     } else if (isOpen && props.mode === 'create') {
@@ -119,8 +115,6 @@ watch(
     const cid = String(newId)
     const portBelongs = props.ports.some((p) => String(p.countryId) === cid && String(p.id) === String(form.value.portId))
     if (!portBelongs) form.value.portId = null
-    const currBelongs = props.currencies.some((c) => c.countryIds?.map(String).includes(cid) && String(c.id) === String(form.value.currencyId))
-    if (!currBelongs) form.value.currencyId = null
   },
 )
 
@@ -131,7 +125,7 @@ function validate() {
     e.code = '코드를 입력하세요.'
   } else if (
     props.allClients.some(
-      (c) => (c.clientCode ?? c.code).toLowerCase() === form.value.code.trim().toLowerCase() && c.id !== props.client?.id,
+      (c) => c.clientCode.toLowerCase() === form.value.code.trim().toLowerCase() && (c.clientId ?? c.id) !== (props.client?.clientId ?? props.client?.id),
     )
   ) {
     e.code = '이미 사용 중인 코드입니다.'
@@ -162,9 +156,20 @@ function validate() {
 
 function handleSave() {
   if (!validate()) return
-  const payload = { ...form.value }
-  // TODO: 백엔드 파일 업로드 API 연동 시 sealImage 전송 활성화
-  delete payload.sealImage
+  const payload = {
+    clientCode: form.value.code,
+    clientName: form.value.name,
+    clientNameKr: form.value.nameKr,
+    countryId: form.value.countryId,
+    clientCity: form.value.city,
+    portId: form.value.portId,
+    clientAddress: form.value.address,
+    clientTel: form.value.tel,
+    clientEmail: form.value.email,
+    paymentTermId: form.value.paymentTermsId,
+    currencyId: form.value.currencyId,
+    clientManager: form.value.manager,
+  }
   emit('save', payload)
 }
 </script>

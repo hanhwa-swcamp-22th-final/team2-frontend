@@ -188,7 +188,7 @@ function generatePdf() {
   <div>
     <BaseModal
       :open="open"
-      :title="pkg?.title || '패키지 상세'"
+      :title="pkg?.packageTitle || '패키지 상세'"
       width="max-w-3xl"
       @close="emit('close')"
     >
@@ -206,10 +206,10 @@ function generatePdf() {
       </div>
 
       <!-- 설명 -->
-      <div v-if="pkg.description" class="space-y-1">
+      <div v-if="pkg.packageDescription" class="space-y-1">
         <h4 class="text-sm font-semibold text-slate-700">설명</h4>
         <p class="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-          {{ pkg.description }}
+          {{ pkg.packageDescription }}
         </p>
       </div>
 

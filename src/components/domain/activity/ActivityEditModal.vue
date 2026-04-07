@@ -157,12 +157,14 @@ function handleSave() {
     return
   }
   emit('save', {
-    ...props.activity,
-    date:         formDate.value.replaceAll('-', '/'),
-    title:        formTitle.value,
-    content:      isSchedule.value ? formTitle.value : formContent.value,
-    scheduleFrom: isSchedule.value ? formScheduleFrom.value.replaceAll('-', '/') : undefined,
-    scheduleTo:   isSchedule.value ? formScheduleTo.value.replaceAll('-', '/')   : undefined,
+    activityDate:         formDate.value,
+    activityType:         props.activity.type ?? props.activity.activityType,
+    activityTitle:        formTitle.value,
+    activityContent:      isSchedule.value ? formTitle.value : formContent.value,
+    poId:                 props.activity.poId,
+    activityPriority:     props.activity.priority ?? props.activity.activityPriority ?? undefined,
+    activityScheduleFrom: isSchedule.value ? formScheduleFrom.value : undefined,
+    activityScheduleTo:   isSchedule.value ? formScheduleTo.value   : undefined,
   })
 }
 </script>

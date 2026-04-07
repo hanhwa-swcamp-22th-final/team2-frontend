@@ -68,7 +68,7 @@ const clientToDelete = ref(null)
 
 const columns = [
   { key: 'clientCode', label: '코드', width: '100px', align: 'center' },
-  { key: 'name', label: '거래처명' },
+  { key: 'clientName', label: '거래처명' },
   { key: 'location', label: '국가·도시', width: '140px' },
   { key: 'port', label: '도착항', width: '120px' },
   { key: 'paymentTerms', label: '결제조건', width: '100px', align: 'center' },
@@ -116,8 +116,8 @@ const filteredClients = computed(() => {
     const kw = f.keyword.toLowerCase()
     result = result.filter(
       (c) =>
-        c.name.toLowerCase().includes(kw) ||
-        (c.nameKr && c.nameKr.includes(kw)) ||
+        c.clientName.toLowerCase().includes(kw) ||
+        (c.clientNameKr && c.clientNameKr.includes(kw)) ||
         c.clientCode.toLowerCase().includes(kw),
     )
   }
@@ -128,7 +128,7 @@ const filteredClients = computed(() => {
 
   if (f.name) {
     const kw = f.name.toLowerCase()
-    result = result.filter((c) => c.name.toLowerCase().includes(kw) || (c.nameKr && c.nameKr.includes(kw)))
+    result = result.filter((c) => c.clientName.toLowerCase().includes(kw) || (c.clientNameKr && c.clientNameKr.includes(kw)))
   }
 
   if (f.country) {
@@ -192,8 +192,8 @@ async function handleDelete() {
   if (!clientToDelete.value || deleting.value) return
   deleting.value = true
   try {
-    await changeClientStatus(clientToDelete.value.id, 'inactive')
-    success(`${clientToDelete.value.name} 거래처가 비활성화되었습니다.`)
+    await changeClientStatus(clientToDelete.value.clientId, 'inactive')
+    success(`${clientToDelete.value.clientName} 거래처가 비활성화되었습니다.`)
     await loadData()
   } catch {
     error('삭제 중 오류가 발생했습니다.')
@@ -210,10 +210,10 @@ async function handleSave(formData) {
   try {
     if (formMode.value === 'create') {
       const deptId = isAdmin.value ? undefined : Number(currentUser.value?.departmentId)
-      await createClient({ ...formData, regDate: new Date().toISOString().slice(0, 10), ...(deptId && { departmentId: deptId }) })
+      await createClient({ ...formData, clientRegDate: new Date().toISOString().slice(0, 10), ...(deptId && { departmentId: deptId }) })
       success('거래처가 등록되었습니다.')
     } else {
-      await updateClient(selectedClient.value.id, formData)
+      await updateClient(selectedClient.value.clientId, formData)
       success('거래처 정보가 수정되었습니다.')
     }
     showFormModal.value = false
@@ -226,7 +226,7 @@ async function handleSave(formData) {
 }
 
 function goToDetail(row) {
-  router.push({ name: 'client-detail', params: { id: row.id } })
+  router.push({ name: 'client-detail', params: { id: row.clientId } })
 }
 </script>
 
@@ -309,10 +309,10 @@ function goToDetail(row) {
         <span class="font-mono text-xs font-semibold text-brand-600">{{ row.clientCode }}</span>
       </template>
 
-      <template #cell-name="{ row }">
+      <template #cell-clientName="{ row }">
         <div>
-          <p class="font-medium text-ink">{{ row.name }}</p>
-          <p class="text-xs text-slate-500">{{ row.nameKr }}</p>
+          <p class="font-medium text-ink">{{ row.clientName }}</p>
+          <p class="text-xs text-slate-500">{{ row.clientNameKr }}</p>
         </div>
       </template>
 
@@ -364,7 +364,7 @@ function goToDetail(row) {
       :open="showConfirmModal"
       title="거래처 삭제"
       message="해당 거래처를 삭제하시겠습니까?"
-      :detail="clientToDelete?.name"
+      :detail="clientToDelete?.clientName"
       confirm-label="삭제"
       confirm-variant="danger"
       @confirm="handleDelete"

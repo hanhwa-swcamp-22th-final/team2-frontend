@@ -194,7 +194,7 @@ async function handleSave(formData) {
   saving.value = true
   try {
     if (formMode.value === 'create') {
-      await createItem({ ...formData, regDate: new Date().toISOString().slice(0, 10), status: formData.status ?? 'active' })
+      await createItem({ ...formData, itemRegDate: new Date().toISOString().slice(0, 10) })
       success('품목이 등록되었습니다.')
     } else {
       await updateItem(selectedItem.value.id, formData)
