@@ -29,7 +29,8 @@ export function isTokenExpired(token) {
 /** RT를 쿠키에 저장 */
 export function setRefreshTokenCookie(token) {
   const expires = new Date(Date.now() + RT_EXPIRY_DAYS * 24 * 60 * 60 * 1000).toUTCString()
-  document.cookie = `${RT_COOKIE_NAME}=${token}; expires=${expires}; path=/; SameSite=Strict; Secure`
+  const secure = location.protocol === 'https:' ? '; Secure' : ''
+  document.cookie = `${RT_COOKIE_NAME}=${token}; expires=${expires}; path=/; SameSite=Lax${secure}`
 }
 
 /** RT를 쿠키에서 읽기 */
@@ -40,5 +41,5 @@ export function getRefreshTokenCookie() {
 
 /** RT 쿠키 삭제 */
 export function removeRefreshTokenCookie() {
-  document.cookie = `${RT_COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Strict; Secure`
+  document.cookie = `${RT_COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`
 }
