@@ -20,8 +20,6 @@ export function setupApiInterceptors(authStore) {
  * 요청 인터셉터: AT를 Authorization 헤더에 첨부
  */
 api.interceptors.request.use((config) => {
-  config.headers['X-Screen-Only'] = 'true'
-
   if (_authStore?.accessToken) {
     config.headers.Authorization = `Bearer ${_authStore.accessToken}`
   }
