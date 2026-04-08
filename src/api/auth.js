@@ -5,8 +5,9 @@ export async function login(email, password) {
   return data
 }
 
-export async function refreshToken(refreshToken) {
-  const { data } = await api.post('/auth/refresh', { refreshToken })
+export async function refreshToken() {
+  // body 없음 — HttpOnly 쿠키(sb_refresh_token)가 withCredentials로 자동 전송됨
+  const { data } = await api.post('/auth/refresh')
   return data
 }
 

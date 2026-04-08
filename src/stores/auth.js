@@ -1,21 +1,10 @@
 import { computed, readonly, ref } from 'vue'
 import { defineStore } from 'pinia'
-import {
-  decodeToken,
-  getRefreshTokenCookie,
-  isTokenExpired,
-  removeRefreshTokenCookie,
-  setRefreshTokenCookie,
-} from '@/lib/token'
-import {
-  login as apiLogin,
-  refreshToken as apiRefresh,
-  logoutApi,
-} from '@/api/auth'
+import { decodeToken, isTokenExpired } from '@/lib/token'
+import { login as apiLogin, refreshToken as apiRefresh, logoutApi } from '@/api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref(null)
-  const _refreshToken = ref(null)
   const user = ref(null)
 
   const isLoggedIn = computed(() => !!accessToken.value && !isTokenExpired(accessToken.value))
@@ -24,13 +13,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * 로그인
+   * 응답 body: { accessToken, user }
+   * RefreshToken은 서버가 Set-Cookie(HttpOnly)로 직접 설정
    */
   async function login(email, password) {
     const data = await apiLogin(email, password)
 
     accessToken.value = data.accessToken
-    _refreshToken.value = data.refreshToken
-    setRefreshTokenCookie(data.refreshToken)
     user.value = data.user
 
     return data.user
@@ -38,6 +27,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * 로그아웃
+   * 서버가 Set-Cookie: sb_refresh_token=; Max-Age=0 으로 RT 쿠키 만료
    */
   async function logout() {
     try {
@@ -45,41 +35,33 @@ export const useAuthStore = defineStore('auth', () => {
         await logoutApi(user.value.userId)
       }
     } catch {
-      // 서버 오류 시에도 로컬 세션은 정리
+      // 서버 오류 시에도 로컬 세션 정리
     }
     accessToken.value = null
-    _refreshToken.value = null
     user.value = null
-    removeRefreshTokenCookie()
   }
 
   /**
    * RT로 세션 복구 (새로고침 시)
+   * withCredentials=true 설정으로 HttpOnly 쿠키가 자동 전송됨
    */
   async function restoreSession() {
-    const rt = _refreshToken.value || getRefreshTokenCookie()
-    if (!rt) return false
-
     try {
-      const data = await apiRefresh(rt)
+      const data = await apiRefresh()
 
       accessToken.value = data.accessToken
-      _refreshToken.value = data.refreshToken
-      setRefreshTokenCookie(data.refreshToken)
       user.value = data.user
 
       return true
     } catch {
-      removeRefreshTokenCookie()
       accessToken.value = null
-      _refreshToken.value = null
       user.value = null
       return false
     }
   }
 
   /**
-   * AT 갱신 (인터셉터에서 호출)
+   * AT 갱신 (401 인터셉터에서 호출)
    */
   async function refreshAccessToken() {
     return restoreSession()
