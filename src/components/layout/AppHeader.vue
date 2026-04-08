@@ -7,17 +7,9 @@ import PasswordChangeModal from '@/components/domain/auth/PasswordChangeModal.vu
 import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import { getRoleHomePath } from '@/utils/roleAccess'
-import { usePiDocuments } from '@/stores/piDocuments'
-import { usePoDocuments } from '@/stores/poDocuments'
-import { useSalesCollectionDocuments } from '@/stores/salesCollectionDocuments'
-import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 
 const uiStore = useUiStore()
 const authStore = useAuthStore()
-const piDocuments = usePiDocuments()
-const poDocuments = usePoDocuments()
-const salesCollectionDocuments = useSalesCollectionDocuments()
-const shipmentStatusDocuments = useShipmentStatusDocuments()
 const route = useRoute()
 const router = useRouter()
 const roleDashboardTitles = { admin: '관리자 대시보드', sales: '영업 대시보드', production: '생산 대시보드', shipping: '출하 대시보드' }
@@ -56,107 +48,9 @@ const pageTooltip = computed(() => {
   return route.meta.description || ''
 })
 
-const isNotificationOpen = ref(false)
+// TODO(#244): 헤더 알림 기능은 실제 알림 도메인/API/SSE가 준비될 때까지 임시 비활성화됨.
+// 아이콘 버튼 자체는 레이아웃 유지 및 추후 재활성화를 위해 템플릿에 남겨둠.
 const isPasswordModalOpen = ref(false)
-const notificationRef = ref(null)
-const readNotificationIds = ref([])
-
-function normalizeTimestamp(value) {
-  if (!value) return 0
-  const normalized = value.includes(' ') ? value.replace(' ', 'T') : `${value}T00:00`
-  const timestamp = Date.parse(normalized.replaceAll('/', '-'))
-  return Number.isFinite(timestamp) ? timestamp : 0
-}
-
-function createApprovalNotifications() {
-  const currentUser = authStore.currentUser
-  if (!currentUser) return []
-
-  const approvalDocuments = [...piDocuments.value, ...poDocuments.value]
-    .filter((row) => row.requestStatus && row.approvalStatus === '대기')
-    .filter((row) => {
-      const role = currentUser.userRole ?? currentUser.role
-      if (role === 'admin' || role === 'ADMIN') return true
-      if (role !== 'sales' && role !== 'SALES') return false
-      if (currentUser.positionId === 1) return true
-      return row.approvalRequestedBy === (currentUser.userName ?? currentUser.name)
-    })
-
-  return approvalDocuments.map((row) => ({
-    id: `approval-${row.id}-${row.requestStatus}`,
-    title: '결재 요청',
-    message: `${row.approvalRequestedBy || '요청자'}이(가) ${row.id} ${row.requestStatus}을 올렸습니다.`,
-    time: row.approvalRequestedAt || row.issueDate || '-',
-    sortTime: normalizeTimestamp(row.approvalRequestedAt || row.issueDate),
-    to: row.id.startsWith('PI') ? '/pi' : '/po',
-    query: {
-      code: row.id,
-      source: 'header-notification',
-    },
-  }))
-}
-
-function createShipmentNotifications() {
-  const currentUser = authStore.currentUser
-  const role = currentUser.userRole ?? currentUser.role
-  if (!currentUser || role === 'production' || role === 'PRODUCTION') return []
-
-  return shipmentStatusDocuments.value
-    .filter((row) => row.status === '출하완료')
-    .map((row) => ({
-      id: `shipment-${row.id}-${row.status}`,
-      title: '출하 상태 변경',
-      message: `${row.id} 건이 출하완료 처리되었습니다.`,
-      time: row.lastUpdated || row.requestDate || '-',
-      sortTime: normalizeTimestamp(row.lastUpdated || row.requestDate),
-      to: '/shipments',
-      query: {
-        code: row.id,
-        source: 'header-notification',
-      },
-    }))
-}
-
-function createCollectionNotifications() {
-  const currentUser = authStore.currentUser
-  const role = currentUser.userRole ?? currentUser.role
-  if (!currentUser || !['sales', 'admin', 'SALES', 'ADMIN'].includes(role)) return []
-
-  return salesCollectionDocuments.value
-    .filter((row) => row.status === '수금완료')
-    .map((row) => ({
-      id: `collection-${row.poId}-${row.collectionDate}`,
-      title: '수금 완료',
-      message: `${row.poId} 건의 수금이 완료되었습니다.`,
-      time: row.collectionDate || row.issueDate || '-',
-      sortTime: normalizeTimestamp(row.collectionDate || row.issueDate),
-      to: '/collections',
-      query: {
-        code: row.poId,
-        source: 'header-notification',
-      },
-    }))
-}
-
-const notifications = computed(() => (
-  [
-    ...createApprovalNotifications(),
-    ...createShipmentNotifications(),
-    ...createCollectionNotifications(),
-  ]
-    .sort((left, right) => right.sortTime - left.sortTime)
-    .slice(0, 8)
-    .map((notification) => ({
-      ...notification,
-      unread: !readNotificationIds.value.includes(notification.id),
-    }))
-))
-
-const unreadCount = computed(() => notifications.value.filter((item) => item.unread).length)
-
-function toggleNotifications() {
-  isNotificationOpen.value = !isNotificationOpen.value
-}
 
 function openPasswordModal() {
   isPasswordModalOpen.value = true
@@ -164,17 +58,6 @@ function openPasswordModal() {
 
 function closePasswordModal() {
   isPasswordModalOpen.value = false
-}
-
-function goToNotification(notification) {
-  isNotificationOpen.value = false
-  if (!readNotificationIds.value.includes(notification.id)) {
-    readNotificationIds.value = [...readNotificationIds.value, notification.id]
-  }
-  router.push({
-    path: notification.to,
-    query: notification.query,
-  })
 }
 
 const loggedInUser = computed(() => authStore.currentUser)
@@ -223,9 +106,6 @@ function confirmLogout() {
 }
 
 function handleClickOutside(event) {
-  if (notificationRef.value && !notificationRef.value.contains(event.target)) {
-    isNotificationOpen.value = false
-  }
   if (profileRef.value && !profileRef.value.contains(event.target)) {
     isProfileOpen.value = false
   }
@@ -283,43 +163,18 @@ onBeforeUnmount(() => {
         <i class="fas fa-search absolute left-2.5 top-2 text-[10px] text-slate-300" aria-hidden="true"></i>
       </div>
 
-      <div ref="notificationRef" class="relative">
+      <!-- TODO(#244): 알림 기능 임시 비활성화. 실제 알림 도메인/API/SSE 구현 후 재활성화 예정. -->
+      <div class="relative">
         <button
           type="button"
-          class="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50"
-          @click="toggleNotifications"
+          class="relative flex h-8 w-8 items-center justify-center rounded-lg text-slate-300"
+          title="알림 기능 준비 중"
+          disabled
+          aria-disabled="true"
         >
-          <span class="sr-only">알림</span>
+          <span class="sr-only">알림 (준비 중)</span>
           <i class="fas fa-bell text-sm" aria-hidden="true"></i>
-          <span
-            v-if="unreadCount"
-            class="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-slate-500 text-[9px] font-bold text-white"
-            style="box-shadow: 0 0 8px rgba(10,110,209,0.15);"
-          >
-            {{ unreadCount }}
-          </span>
         </button>
-
-        <div
-          v-if="isNotificationOpen"
-          class="absolute right-0 top-11 z-50 max-h-80 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl"
-        >
-          <div class="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-[#32363A]">알림</div>
-          <div
-            v-for="notification in notifications"
-            :key="notification.id"
-            class="cursor-pointer px-4 py-3 transition hover:bg-slate-50"
-            :class="notification.unread ? 'bg-[#EEF2FF]' : ''"
-            style="border-bottom: 1px solid #E5E7EB;"
-            @click="goToNotification(notification)"
-          >
-            <div class="text-sm font-medium" :class="notification.unread ? 'text-[#32363A]' : 'text-slate-500'">
-              {{ notification.title }}
-            </div>
-            <div class="mt-0.5 text-xs text-slate-500">{{ notification.message }}</div>
-            <div class="mt-1 text-[10px] text-slate-400">{{ notification.time }}</div>
-          </div>
-        </div>
       </div>
 
       <div ref="profileRef" class="relative hidden items-center gap-2.5 border-l border-slate-200 pl-3 text-sm sm:flex">
