@@ -48,8 +48,8 @@ const pageTooltip = computed(() => {
   return route.meta.description || ''
 })
 
-// TODO(#244): 헤더 알림 기능은 실제 알림 도메인/API/SSE가 준비될 때까지 임시 비활성화됨.
-// 아이콘 버튼 자체는 레이아웃 유지 및 추후 재활성화를 위해 템플릿에 남겨둠.
+// TODO(#244, #246): 헤더 알림 기능은 실제 알림 도메인/API/SSE가 준비될 때까지 화면에서 숨김.
+// 재활성화 시 템플릿의 v-if="false" 블록을 해제하면 됨.
 const isPasswordModalOpen = ref(false)
 
 function openPasswordModal() {
@@ -163,8 +163,12 @@ onBeforeUnmount(() => {
         <i class="fas fa-search absolute left-2.5 top-2 text-[10px] text-slate-300" aria-hidden="true"></i>
       </div>
 
-      <!-- TODO(#244): 알림 기능 임시 비활성화. 실제 알림 도메인/API/SSE 구현 후 재활성화 예정. -->
-      <div class="relative">
+      <!--
+        TODO(#244, #246): 알림 기능 임시 숨김.
+        실제 알림 도메인/API/SSE 구현 후 아래 블록의 v-if를 제거해 재활성화한다.
+        마크업은 재활성화 편의를 위해 보존.
+      -->
+      <div v-if="false" class="relative">
         <button
           type="button"
           class="relative flex h-8 w-8 items-center justify-center rounded-lg text-slate-300"
