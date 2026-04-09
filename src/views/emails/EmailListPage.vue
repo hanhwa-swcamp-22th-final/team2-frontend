@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { fetchActivityEmails } from '@/api/emails'
+import { fetchActivityEmails, resendEmailLog } from '@/api/emails'
 import { api } from '@/lib/api'
 import {
   buildPIOutputHtml,
@@ -164,33 +164,30 @@ async function openAttachment(filename) {
   }
 }
 
-// ── 재전송 ────────────────────────────────────────────────
+// ── 재전송 (Activity → Documents Feign 호출) ───────────────
+// status 비교는 백엔드 직렬화값('failed') 과 시드/한글값('실패') 양쪽을 모두 허용한다.
+function isFailedStatus(value) {
+  if (!value) return false
+  const normalized = String(value).toLowerCase()
+  return normalized === 'failed' || value === '실패'
+}
+
 async function resendEmail() {
   const email = selectedEmail.value
   if (!email) return
-  // 이미 발송 성공 이력이 존재하면 중복 방지
-  const alreadySent = emails.value.some(
-    (e) => e.id !== email.id && e.title === email.title && e.status === '발송',
-  )
-  if (alreadySent) {
-    error('이미 발송된 메일입니다.')
+  if (!isFailedStatus(email.status)) {
+    error('실패 상태인 메일만 재전송할 수 있습니다.')
     return
   }
   try {
-    await api.delete(`/email-logs/${email.id}`)
-    const { id: _removed, ...rest } = email
-    const newRecord = {
-      ...rest,
-      status: '발송',
-      sentAt: (() => { const d = new Date(); return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}` })(),
-    }
-    await api.post('/email-logs', newRecord)
+    await resendEmailLog(email.id)
     closeDetail()
-    success('메일을 발송했습니다.')
+    success('메일을 재전송했습니다.')
     emails.value = await fetchActivityEmails()
   } catch (e) {
     console.error('재전송 실패', e)
-    error('재전송에 실패했습니다.')
+    const message = e?.response?.data?.message ?? '재전송에 실패했습니다.'
+    error(message)
   }
 }
 
@@ -424,7 +421,7 @@ const columns = [
       </div>
       <template #footer>
         <BaseButton
-          v-if="selectedEmail?.status === '실패'"
+          v-if="isFailedStatus(selectedEmail?.status)"
           variant="primary"
           @click="resendEmail"
         >

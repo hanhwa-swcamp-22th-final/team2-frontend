@@ -7,6 +7,7 @@ import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import PLDocumentTemplate from '@/components/domain/document/PLDocumentTemplate.vue'
+import SendDocumentEmailModal from '@/components/domain/document/SendDocumentEmailModal.vue'
 import { usePlDocuments } from '@/stores/plDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
@@ -18,6 +19,7 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const previewOpen = ref(false)
+const sendEmailOpen = ref(false)
 
 const plDocuments = usePlDocuments()
 const poDocuments = usePoDocuments()
@@ -106,6 +108,15 @@ function openPreview() {
   previewOpen.value = true
 }
 
+function openSendEmail() {
+  if (!detail.value) return
+  sendEmailOpen.value = true
+}
+
+function handleEmailSent() {
+  toast.info('메일 발송 이력은 [메일 이력] 메뉴에서 확인할 수 있습니다.')
+}
+
 function handlePrint() {
   if (!detail.value) return
   openDocumentOutputByType('PL', detail.value, true)
@@ -146,6 +157,12 @@ function goToLinkedDocument(document) {
               <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
             </template>
             PDF 다운로드
+          </BaseButton>
+          <BaseButton size="sm" @click="openSendEmail">
+            <template #leading>
+              <i class="fas fa-paper-plane text-xs" aria-hidden="true"></i>
+            </template>
+            메일 발송
           </BaseButton>
         </template>
       </DetailPageHeader>
@@ -265,6 +282,18 @@ function goToLinkedDocument(document) {
     >
       <PLDocumentTemplate :document="detail" />
     </DocumentPreviewModal>
+
+    <SendDocumentEmailModal
+      :open="sendEmailOpen"
+      doc-type="PL"
+      :client-id="detail.clientId"
+      :po-id="linkedPo?.id ?? detail.poId ?? ''"
+      :document-label="detail.id"
+      :default-recipient-name="detail.buyer || detail.clientName"
+      :default-recipient-email="detail.clientEmail || ''"
+      @close="sendEmailOpen = false"
+      @sent="handleEmailSent"
+    />
   </div>
 
   <div v-else class="flex items-center justify-center py-20 text-slate-400">
