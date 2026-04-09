@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { fetchActivityEmails, resendEmailLog } from '@/api/emails'
+import { api } from '@/lib/api'
 import {
   buildPIOutputHtml,
   buildCIOutputHtml,
@@ -164,10 +165,17 @@ async function openAttachment(filename) {
 }
 
 // ── 재전송 (Activity → Documents Feign 호출) ───────────────
+// status 비교는 백엔드 직렬화값('failed') 과 시드/한글값('실패') 양쪽을 모두 허용한다.
+function isFailedStatus(value) {
+  if (!value) return false
+  const normalized = String(value).toLowerCase()
+  return normalized === 'failed' || value === '실패'
+}
+
 async function resendEmail() {
   const email = selectedEmail.value
   if (!email) return
-  if (email.status !== '실패') {
+  if (!isFailedStatus(email.status)) {
     error('실패 상태인 메일만 재전송할 수 있습니다.')
     return
   }
@@ -413,7 +421,7 @@ const columns = [
       </div>
       <template #footer>
         <BaseButton
-          v-if="selectedEmail?.status === '실패'"
+          v-if="isFailedStatus(selectedEmail?.status)"
           variant="primary"
           @click="resendEmail"
         >
