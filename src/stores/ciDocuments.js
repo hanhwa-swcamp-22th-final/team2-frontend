@@ -1,3 +1,4 @@
+import { useAuthStore } from './auth'
 import { ref } from 'vue'
 import { fetchCommercialInvoices } from '@/api/documents'
 
@@ -74,7 +75,7 @@ export async function loadCiDocuments() {
 }
 
 export function useCiDocuments() {
-  if (!loading) {
+  if (!loading && useAuthStore().isLoggedIn) {
     loading = loadCiDocuments()
   }
   return ciDocuments
