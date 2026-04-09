@@ -1,3 +1,4 @@
+import { useAuthStore } from './auth'
 import { ref } from 'vue'
 import { fetchShipments } from '@/api/documents'
 
@@ -36,7 +37,7 @@ export async function loadShipmentStatusDocuments() {
 }
 
 export function useShipmentStatusDocuments() {
-  if (!loading) {
+  if (!loading && useAuthStore().isLoggedIn) {
     loading = loadShipmentStatusDocuments()
   }
   return shipmentStatusDocuments

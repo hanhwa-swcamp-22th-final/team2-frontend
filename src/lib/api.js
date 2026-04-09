@@ -7,13 +7,19 @@ export const api = axios.create({
 })
 
 /**
- * auth store 주입 (순환 참조 방지)
- * main.js 또는 router guard에서 setupApiInterceptors(authStore) 호출
+ * auth store + router 주입 (순환 참조 방지)
+ * main.js에서 setupApiInterceptors(authStore) + setRouter(router) 호출
  */
 let _authStore = null
+let _router = null
+let _isRedirecting = false // 401 중복 redirect 방지 플래그
 
 export function setupApiInterceptors(authStore) {
   _authStore = authStore
+}
+
+export function setRouter(router) {
+  _router = router
 }
 
 /**
@@ -28,10 +34,28 @@ api.interceptors.request.use((config) => {
 })
 
 /**
+ * 안전한 로그인 페이지 이동 — Vue Router 우선, fallback window.location
+ * 중복 redirect 방지 (여러 401이 동시에 발생해도 1회만)
+ */
+function redirectToLogin() {
+  if (_isRedirecting) return
+  _isRedirecting = true
+
+  const redirect = _router?.currentRoute?.value?.fullPath
+  const query = redirect && redirect !== '/login' ? { redirect } : {}
+
+  if (_router) {
+    _router.push({ name: 'login', query }).finally(() => {
+      _isRedirecting = false
+    })
+  } else {
+    window.location.href = '/login'
+    // fallback 경로에서는 페이지가 reload되므로 플래그 리셋 불필요
+  }
+}
+
+/**
  * 응답 인터셉터: 401 시 RT로 AT 갱신 후 재시도
- *
- * TODO: 백엔드 연동 시 실제 401 응답에 대해 동작
- * 현재 json-server는 401을 주지 않으므로 방어 코드로만 존재
  */
 let isRefreshing = false
 let pendingRequests = []
@@ -62,14 +86,14 @@ api.interceptors.response.use(
           _authStore.logout()
           pendingRequests.forEach(({ reject }) => reject(error))
           pendingRequests = []
-          window.location.href = '/login'
+          redirectToLogin()
           return Promise.reject(error)
         }
       } catch (refreshError) {
         _authStore.logout()
         pendingRequests.forEach(({ reject }) => reject(refreshError))
         pendingRequests = []
-        window.location.href = '/login'
+        redirectToLogin()
         return Promise.reject(refreshError)
       } finally {
         isRefreshing = false

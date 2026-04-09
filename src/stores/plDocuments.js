@@ -1,3 +1,4 @@
+import { useAuthStore } from './auth'
 import { ref } from 'vue'
 import { fetchPackingLists } from '@/api/documents'
 
@@ -74,7 +75,7 @@ export async function loadPlDocuments() {
 }
 
 export function usePlDocuments() {
-  if (!loading) {
+  if (!loading && useAuthStore().isLoggedIn) {
     loading = loadPlDocuments()
   }
   return plDocuments

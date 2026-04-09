@@ -1,3 +1,4 @@
+import { useAuthStore } from './auth'
 import { ref } from 'vue'
 import { fetchProductionOrders } from '@/api/documents'
 
@@ -61,7 +62,7 @@ export async function loadProductionOrderDocuments() {
 }
 
 export function useProductionOrderDocuments() {
-  if (!loading) {
+  if (!loading && useAuthStore().isLoggedIn) {
     loading = loadProductionOrderDocuments()
   }
   return productionOrderDocuments

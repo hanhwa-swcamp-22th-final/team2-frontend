@@ -1,3 +1,4 @@
+import { useAuthStore } from './auth'
 import { ref } from 'vue'
 import { fetchProformaInvoices } from '@/api/documents'
 
@@ -65,7 +66,7 @@ export async function loadPiDocuments() {
 }
 
 export function usePiDocuments() {
-  if (!loading) {
+  if (!loading && useAuthStore().isLoggedIn) {
     loading = loadPiDocuments()
   }
   return piDocuments

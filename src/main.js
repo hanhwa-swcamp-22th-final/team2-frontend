@@ -3,7 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { useAuthStore } from './stores/auth'
-import { setupApiInterceptors } from './lib/api'
+import { setupApiInterceptors, setRouter } from './lib/api'
 import { canAccessRouteByRole, getRoleHomePath } from './utils/roleAccess'
 import './styles/tailwind.css'
 
@@ -15,6 +15,7 @@ app.use(pinia)
 // Pinia 등록 후 auth store 초기화 & API 인터셉터 연결
 const authStore = useAuthStore()
 setupApiInterceptors(authStore)
+setRouter(router)
 
 // 라우터 가드: 비로그인 시 /login으로 리다이렉트
 const PUBLIC_ROUTES = ['login', 'forgot-password']

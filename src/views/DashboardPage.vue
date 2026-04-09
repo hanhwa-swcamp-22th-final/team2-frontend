@@ -37,6 +37,9 @@ const selectedPackage = ref(null)
 const deleteConfirmOpen = ref(false)
 
 onMounted(async () => {
+  // 인증되지 않은 상태에서는 API 호출하지 않음 (k8s 전환 후 401 크래시 방지)
+  if (!authStore.isLoggedIn) return
+
   const [clientsResult, activitiesResult, packagesResult] = await Promise.allSettled([
     fetchClients(),
     fetchActivities(),

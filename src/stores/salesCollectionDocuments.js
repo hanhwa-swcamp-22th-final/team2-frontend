@@ -1,3 +1,4 @@
+import { useAuthStore } from './auth'
 import { ref } from 'vue'
 import { fetchCollections } from '@/api/documents'
 
@@ -26,7 +27,7 @@ async function loadSalesCollectionDocuments() {
 }
 
 export function useSalesCollectionDocuments() {
-  if (!loading) {
+  if (!loading && useAuthStore().isLoggedIn) {
     loading = loadSalesCollectionDocuments()
   }
   return salesCollectionDocuments
