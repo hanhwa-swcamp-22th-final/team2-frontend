@@ -21,5 +21,7 @@ export function deletePackage(id) {
 }
 
 export function fetchAllUsers() {
-  return api.get('/users').then((r) => r.data)
+  // /api/users 는 PagedResponse { content: [...], totalElements, ... } 반환.
+  // 전체 목록이 필요하므로 size=1000 으로 단일 페이지 조회.
+  return api.get('/users', { params: { size: 1000 } }).then((r) => r.data?.content ?? r.data ?? [])
 }
