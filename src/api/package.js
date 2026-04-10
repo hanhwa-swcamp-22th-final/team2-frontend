@@ -1,7 +1,8 @@
 import { api } from '@/lib/api'
 
 export function fetchPackages() {
-  return api.get('/activity-packages').then((r) => r.data)
+  // PagedResponse { content: [...] } 반환 → content unwrap
+  return api.get('/activity-packages').then((r) => r.data?.content ?? r.data ?? [])
 }
 
 export function fetchPackageById(id) {
