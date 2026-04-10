@@ -35,20 +35,28 @@ export async function loadCiplMasterCache() {
   return cachePromise
 }
 
-// Eagerly start cache loading when this module is first imported.
-loadCiplMasterCache()
+// 캐시 로딩은 실제 resolve 함수 호출 시점까지 지연 (lazy).
+// 로그인 전 모듈 import 만으로 401 API 호출이 발생하던 문제 수정.
+function ensureCacheStarted() {
+  if (!cacheLoaded && !cachePromise) {
+    loadCiplMasterCache()
+  }
+}
 
 function resolveCountryLabel(countryId) {
+  ensureCacheStarted()
   const country = countriesById.get(String(countryId))
   return country?.countryNameKr ?? country?.countryName ?? ''
 }
 
 export function resolveMasterCurrency(code, fallback = 'USD') {
+  ensureCacheStarted()
   const currency = currenciesByCode.get(String(code ?? '').trim().toUpperCase())
   return currency?.currencyCode ?? fallback
 }
 
 export function resolvePaymentTermLabel(paymentTermsId, fallback = 'T/T REMITTANCE') {
+  ensureCacheStarted()
   const term = paymentTermsById.get(String(paymentTermsId))
 
   if (!term) {
@@ -63,6 +71,7 @@ export function resolvePaymentTermLabel(paymentTermsId, fallback = 'T/T REMITTAN
 }
 
 export function resolvePortLabel(portCode, fallback = '-') {
+  ensureCacheStarted()
   const port = portsByCode.get(String(portCode ?? '').trim().toUpperCase())
 
   if (!port) {
@@ -76,6 +85,7 @@ export function resolvePortLabel(portCode, fallback = '-') {
 }
 
 export function resolveIncotermsLabel(code, namedPlace = '') {
+  ensureCacheStarted()
   const meta = getIncotermMeta(code)
   return formatIncotermsLabel(code || meta.code, namedPlace || meta.defaultNamedPlace)
 }
