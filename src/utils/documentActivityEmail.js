@@ -38,8 +38,8 @@ export async function loadActivityEmailCache() {
   return cachePromise
 }
 
-// Eagerly start cache loading when this module is first imported.
-loadActivityEmailCache()
+// 캐시 로딩은 실제 사용 시점까지 지연 (lazy).
+// 로그인 전 모듈 import 만으로 401 API 호출이 발생하던 문제 수정.
 
 function parseNumericValue(value) {
   const numeric = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))
