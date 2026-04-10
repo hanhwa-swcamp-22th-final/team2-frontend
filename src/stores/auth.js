@@ -12,6 +12,16 @@ export const useAuthStore = defineStore('auth', () => {
   const currentUser = computed(() => user.value)
 
   /**
+   * 백엔드 UserInfo 정규화.
+   * 백엔드 필드명: userRole ('ADMIN'), 프론트 14곳에서 .role (소문자)로 접근.
+   * → role = userRole.toLowerCase() 를 항상 세팅하여 양쪽 다 동작하도록.
+   */
+  function normalizeUser(raw) {
+    if (!raw) return null
+    return { ...raw, role: (raw.userRole ?? raw.role ?? '').toLowerCase() }
+  }
+
+  /**
    * 로그인
    * 응답 body: { accessToken, user }
    * RefreshToken은 서버가 Set-Cookie(HttpOnly)로 직접 설정
@@ -20,9 +30,10 @@ export const useAuthStore = defineStore('auth', () => {
     const data = await apiLogin(email, password)
 
     accessToken.value = data.accessToken
-    user.value = data.user
+    // 백엔드: userRole='ADMIN'. 프론트 14곳에서 .role (소문자)로 접근 → 양쪽 다 세팅.
+    user.value = normalizeUser(data.user)
 
-    return data.user
+    return user.value
   }
 
   /**
@@ -50,7 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
       const data = await apiRefresh()
 
       accessToken.value = data.accessToken
-      user.value = data.user
+      user.value = normalizeUser(data.user)
 
       return true
     } catch {
