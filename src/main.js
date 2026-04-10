@@ -29,7 +29,8 @@ router.beforeEach(async (to) => {
   }
 
   // 로그인 상태면 통과
-  const getRole = () => authStore.currentUser?.userRole ?? authStore.currentUser?.role
+  // JWT role claim 은 대문자("ADMIN"), meta.requiredRole 은 소문자("admin") → normalize 필수
+  const getRole = () => (authStore.currentUser?.userRole ?? authStore.currentUser?.role ?? '').toLowerCase()
   if (authStore.isLoggedIn) {
     if (to.meta.requiredRole && getRole() !== to.meta.requiredRole) {
       return getRoleHomePath(getRole())
