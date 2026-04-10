@@ -65,6 +65,13 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
+    // /auth/refresh 자체의 401 은 인터셉터에서 제외 — 데드락 방지.
+    // 이 guard 가 없으면: refresh 401 → interceptor refresh → 또 401 → 큐 대기 → 영원히 안 풀림.
+    // restoreSession() 의 try-catch 가 직접 처리한다.
+    if (originalRequest?.url?.includes('/auth/refresh')) {
+      return Promise.reject(error)
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry && _authStore) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
