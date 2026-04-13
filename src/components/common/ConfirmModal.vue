@@ -166,6 +166,8 @@ const emit = defineEmits(['confirm', 'cancel'])
           </div>
         </div>
       </div>
+      <slot />
+
       <div
         v-if="helperText"
         class="rounded-lg border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500"
