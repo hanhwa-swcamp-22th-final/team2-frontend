@@ -30,6 +30,7 @@ const shipmentStatusDocuments = useShipmentStatusDocuments()
 const selectedRequest = ref(null)
 const decisionConfirmOpen = ref(false)
 const pendingDecision = ref('')
+const rejectReason = ref('')
 const clientsData = ref([])
 const activitiesData = ref([])
 const packagesData = ref([])
@@ -207,6 +208,9 @@ function buildFallbackReview(docType, row) {
       { label: '문서 상태', value: row.status || '-' },
       { label: '요청 상태', value: row.requestStatus || '-' },
       { label: '요청 시각', value: row.approvalRequestedAt || '-' },
+      ...(row.approvalRejectReason
+        ? [{ label: '반려 사유', value: row.approvalRejectReason, fullWidth: true }]
+        : []),
     ],
     requestSectionTitle: '팀장 결재 정보',
     documentRows: [
@@ -251,6 +255,7 @@ function createRequestItem(docType, row) {
     status: row.approvalStatus || '-',
     requestStatus: row.requestStatus || '-',
     requestedAt: row.approvalRequestedAt || '-',
+    rejectReason: row.approvalRejectReason || '',
     urgent: false,
     routeName: docType === 'PI' ? 'pi-detail' : 'po-detail',
     review: row.approvalReview || buildFallbackReview(docType, row),
@@ -301,6 +306,7 @@ function closeRequestReview() {
 function closeDecisionConfirm() {
   decisionConfirmOpen.value = false
   pendingDecision.value = ''
+  rejectReason.value = ''
 }
 
 function updateRequestDocument(item, patch) {
@@ -374,6 +380,7 @@ function confirmDecision() {
       approvalStatus: '반려',
       approvalReviewedBy: currentUser.value?.name || '',
       approvalReviewedAt: getReviewedAt(),
+      approvalRejectReason: rejectReason.value.trim() || '',
     })
   }
 
@@ -703,7 +710,17 @@ async function confirmPackageDelete() {
       :z-index="90"
       @confirm="confirmDecision"
       @cancel="closeDecisionConfirm"
-    />
+    >
+      <div v-if="pendingDecision === 'reject'" class="space-y-1.5">
+        <label class="text-sm font-semibold text-slate-700">반려 사유</label>
+        <textarea
+          v-model="rejectReason"
+          rows="3"
+          placeholder="반려 사유를 입력해주세요."
+          class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+        />
+      </div>
+    </ConfirmModal>
 
     <PackageDetailModal
       :open="Boolean(selectedPackage)"
