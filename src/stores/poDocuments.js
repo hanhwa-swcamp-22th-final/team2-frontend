@@ -12,6 +12,11 @@ function formatCurrencyAmount(amount, currencyCode) {
   return `${symbol}${Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 }
 
+function parseJsonSafe(value, fallback = null) {
+  if (typeof value !== 'string') return value ?? fallback
+  try { return JSON.parse(value) } catch { return fallback }
+}
+
 function parseLinkedDocuments(value) {
   if (!value) return []
   if (typeof value === 'string') {
@@ -58,10 +63,10 @@ function mapPoResponse(row) {
     approvalAction: row.approvalAction ?? null,
     approvalRequestedBy: row.approvalRequestedBy ?? null,
     approvalRequestedAt: row.approvalRequestedAt ?? null,
-    approvalReview: row.approvalReview ?? null,
-    itemsSnapshot: row.itemsSnapshot ?? null,
+    approvalReview: row.approvalReview ? parseJsonSafe(row.approvalReview) : null,
+    itemsSnapshot: row.itemsSnapshot ? parseJsonSafe(row.itemsSnapshot) : null,
     linkedDocuments: parseLinkedDocuments(row.linkedDocuments),
-    revisionHistory: row.revisionHistory ? (typeof row.revisionHistory === 'string' ? JSON.parse(row.revisionHistory) : row.revisionHistory) : [],
+    revisionHistory: row.revisionHistory ? parseJsonSafe(row.revisionHistory, []) : [],
     items,
   }
 }

@@ -935,8 +935,13 @@ function cancelDeleteApprovalRequest() {
           <div class="mb-3 flex items-center justify-between">
             <h3 class="font-bold text-slate-800">변경 이력</h3>
           </div>
-          <div class="text-xs text-slate-400">
-            {{ detail.revisionHistory.length ? detail.revisionHistory.join(', ') : '변경 이력 없음' }}
+          <div class="space-y-1 text-xs text-slate-400">
+            <template v-if="Array.isArray(detail.revisionHistory) && detail.revisionHistory.length">
+              <div v-for="(rev, i) in detail.revisionHistory" :key="i" class="rounded border border-slate-100 bg-slate-50 px-2 py-1">
+                {{ typeof rev === 'string' ? rev : (rev.summary ?? rev.description ?? JSON.stringify(rev)) }}
+              </div>
+            </template>
+            <span v-else>변경 이력 없음</span>
           </div>
         </div>
       </div>
