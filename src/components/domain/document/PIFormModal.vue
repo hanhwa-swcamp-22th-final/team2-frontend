@@ -41,7 +41,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'save', 'open-client-search'])
 const { error } = useToast()
 
-const defaultCurrencyOptions = ['USD', 'EUR', 'JPY', 'GBP', 'AUD', 'CAD', 'SGD', 'AED', 'CNY', 'MYR', 'THB', 'VND', 'IDR', 'INR', 'SAR', 'BRL', 'SEK', 'CHF']
+const defaultCurrencyOptions = ['KRW', 'USD', 'EUR', 'JPY', 'GBP', 'AUD', 'CAD', 'SGD', 'AED', 'CNY', 'MYR', 'THB', 'VND', 'IDR', 'INR', 'SAR', 'BRL', 'SEK', 'CHF']
 const defaultBuyerOptions = [
   'Mr. Ahmad Razak (Purchasing Manager)',
   'Ms. Siti Nurhaliza (Director)',
@@ -304,7 +304,7 @@ async function loadReferenceData() {
         nameKr: item.incotermNameKr,
         description: item.incotermDescription,
         transportMode: item.incotermTransportMode,
-        sellerSegments: Number(item.incotermSellerSegments ?? 6),
+        sellerSegments: Number(item.incotermSellerSegments) || 6,
         defaultNamedPlace: item.incotermDefaultNamedPlace ?? '',
         namedPlacePlaceholder: item.namedPlacePlaceholder ?? '',
       }))
@@ -638,29 +638,8 @@ async function initializeForm() {
       approver: getDefaultApprover(),
       items: props.document.items?.map(normalizeEditItem) ?? [],
     }
-    form.value.items.forEach((itemRow) => {
-      const matchedProduct = findProductByName(itemRow.name)
-
-      if (!matchedProduct) {
-        updateItemAmount(itemRow)
-        return
-      }
-
-      if (!String(itemRow.unit ?? '').trim()) {
-        itemRow.unit = matchedProduct.unit || ''
-      }
-
-      if (parseNumericInput(itemRow.unitPrice) <= 0) {
-        applyCatalogItemToRow(itemRow, itemRow.name)
-        return
-      }
-
-      if (matchedProduct.source === 'catalog') {
-        itemRow.baseUnitPrice = Number(matchedProduct.unitPrice ?? 0)
-      }
-
-      updateItemAmount(itemRow)
-    })
+    // loadReferenceData 전: catalog 없이 기존 데이터 기반으로 금액만 계산
+    form.value.items.forEach((itemRow) => updateItemAmount(itemRow))
     await loadReferenceData()
     form.value.items.forEach((itemRow) => {
       const matchedProduct = findProductByName(itemRow.name)
