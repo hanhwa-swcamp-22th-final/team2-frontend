@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 /**
  * 문서 목록 페이지 공통 필터 composable
@@ -61,6 +61,15 @@ export function useDocumentFilter(rows, options = {}) {
   function applyFilters() {
     appliedFilters.value = { ...filters.value }
   }
+
+  // 키워드 입력 시 자동 필터링 (300ms 디바운스)
+  let keywordTimer = null
+  watch(() => filters.value.keyword, () => {
+    clearTimeout(keywordTimer)
+    keywordTimer = setTimeout(() => {
+      appliedFilters.value = { ...appliedFilters.value, keyword: filters.value.keyword }
+    }, 300)
+  })
 
   const filteredRows = computed(() => {
     const nextRows = rows.value.filter((row) => {

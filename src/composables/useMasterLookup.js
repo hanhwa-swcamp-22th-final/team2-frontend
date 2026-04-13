@@ -27,7 +27,7 @@ export function useMasterLookup() {
   }
 
   function getPortName(portId) {
-    const found = ports.value.find((p) => String(p.id) === String(portId))
+    const found = ports.value.find((p) => String(p.portId ?? p.id) === String(portId))
     return found ? found.portName : '-'
   }
 

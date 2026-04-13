@@ -13,8 +13,15 @@ function formatNumber(value, maximumFractionDigits = 0) {
   })
 }
 
+function parseJsonSafe(value, fallback = []) {
+  if (!value) return fallback
+  if (typeof value !== 'string') return Array.isArray(value) ? value : fallback
+  try { return JSON.parse(value) } catch { return fallback }
+}
+
 function mapPlResponse(row) {
-  const items = (row.items ?? []).map((item) => ({
+  const rawItems = row.items?.length ? row.items : parseJsonSafe(row.itemsSnapshot)
+  const items = rawItems.map((item) => ({
     name: item.itemName ?? item.name ?? '-',
     quantity: String(item.quantity ?? 1),
     netWeight: formatNumber(Number(item.netWeight ?? 0), 2),
@@ -58,6 +65,7 @@ function mapPlResponse(row) {
     totalGrossWeight: formatNumber(totalGrossWeight, 2),
     totalMeasurement: formatNumber(totalMeasurement, 2),
     manager: row.managerName ?? '-',
+    linkedDocuments: parseJsonSafe(row.linkedDocuments),
     items,
   }
 }
