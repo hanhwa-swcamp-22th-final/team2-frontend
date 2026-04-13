@@ -27,7 +27,9 @@ import {
 } from '@/utils/incoterms'
 import {
   createExchangeRateHint,
-} from '@/utils/exchangeRate'
+  convertFromKrw,
+  getKrwRate,
+} from '@/stores/exchangeRates'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -414,7 +416,7 @@ function convertKrwPriceToCurrency(basePrice, currency) {
     return numericBasePrice
   }
 
-  return numericBasePrice
+  return convertFromKrw(numericBasePrice, currency)
 }
 
 function sanitizeNonNegativeInteger(value, fallback = '0') {

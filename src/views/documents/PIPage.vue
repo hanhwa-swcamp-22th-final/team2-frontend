@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import ApprovalRequestModal from '@/components/common/ApprovalRequestModal.vue'
@@ -22,6 +22,7 @@ import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useAuthStore } from '@/stores/auth'
+import { loadExchangeRates, clearExchangeRates } from '@/stores/exchangeRates'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
@@ -197,7 +198,12 @@ async function loadClientRows() {
   }
 }
 
-onMounted(loadClientRows)
+onMounted(() => {
+  loadClientRows()
+  loadExchangeRates()
+})
+
+onUnmounted(clearExchangeRates)
 
 function openClientSearch(context = 'filter') {
   clientSearchContext.value = context
