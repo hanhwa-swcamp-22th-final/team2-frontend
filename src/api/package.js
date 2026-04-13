@@ -1,8 +1,8 @@
 import { api } from '@/lib/api'
+import { unwrapCollection } from '@/utils/apiResponse'
 
 export function fetchPackages() {
-  // PagedResponse { content: [...] } 반환 → content unwrap
-  return api.get('/activity-packages').then((r) => r.data?.content ?? r.data ?? [])
+  return api.get('/activity-packages').then((r) => unwrapCollection(r.data))
 }
 
 export function fetchPackageById(id) {
@@ -22,7 +22,5 @@ export function deletePackage(id) {
 }
 
 export function fetchAllUsers() {
-  // /api/users 는 PagedResponse { content: [...], totalElements, ... } 반환.
-  // 전체 목록이 필요하므로 size=1000 으로 단일 페이지 조회.
-  return api.get('/users', { params: { size: 1000 } }).then((r) => r.data?.content ?? r.data ?? [])
+  return api.get('/users', { params: { size: 1000 } }).then((r) => unwrapCollection(r.data))
 }

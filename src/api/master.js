@@ -1,19 +1,5 @@
 import { api } from '@/lib/api'
-
-/**
- * master 백엔드는 목록 응답을 HATEOAS CollectionModel 형식
- * (`{ _embedded: { <엔티티>List: [...] }, _links: {...} }`) 으로 반환한다.
- * 빈 리스트인 경우 `_embedded` 키 자체가 없고 `_links` 만 내려오므로 빈 배열 fallback 처리.
- *
- * 단, ItemQueryController 는 PagedResponse 를 유지하므로
- * `response.data.content` 경로를 fallback 으로 함께 지원한다.
- */
-const unwrapCollection = (data, key) => {
-  if (Array.isArray(data)) return data
-  if (data?._embedded?.[key]) return data._embedded[key]
-  if (Array.isArray(data?.content)) return data.content
-  return []
-}
+import { unwrapCollection } from '@/utils/apiResponse'
 
 // Clients
 export const fetchClients = () =>

@@ -50,8 +50,7 @@ async function loadData() {
       fetchPositions(),
       fetchDepartments(),
     ])
-    // fetchUsers()는 PagedResponse를 반환 → content 배열 추출
-    users.value = usersData.content ?? usersData
+    users.value = usersData
     positions.value = positionsData
     departments.value = departmentsData
     // 첫 번째 부서 펼치기

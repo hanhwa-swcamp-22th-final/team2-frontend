@@ -1,4 +1,5 @@
 import { api } from '@/lib/api'
+import { unwrapCollection } from '@/utils/apiResponse'
 
 export async function login(email, password) {
   const { data } = await api.post('/auth/login', { email, password })
@@ -17,7 +18,7 @@ export async function logoutApi(userId) {
 
 export async function fetchUsers() {
   const { data } = await api.get('/users')
-  return data
+  return unwrapCollection(data)
 }
 
 export async function createUser(user) {
@@ -32,12 +33,12 @@ export async function updateUser(id, user) {
 
 export async function fetchPositions() {
   const { data } = await api.get('/positions')
-  return data
+  return unwrapCollection(data)
 }
 
 export async function fetchDepartments() {
   const { data } = await api.get('/departments')
-  return data
+  return unwrapCollection(data)
 }
 
 export async function fetchCompany() {
@@ -76,6 +77,6 @@ export async function changeUserStatus(id, status) {
 }
 
 export async function fetchAllUsers() {
-  const { data } = await api.get('/users')
-  return data.content ?? data
+  const { data } = await api.get('/users', { params: { size: 1000 } })
+  return unwrapCollection(data)
 }
