@@ -19,8 +19,15 @@ function formatCurrencyAmount(amount, currencyCode) {
   return `${symbol}${formatNumber(amount, 0)}`
 }
 
+function parseJsonSafe(value, fallback = []) {
+  if (!value) return fallback
+  if (typeof value !== 'string') return Array.isArray(value) ? value : fallback
+  try { return JSON.parse(value) } catch { return fallback }
+}
+
 function mapCiResponse(row) {
-  const items = (row.items ?? []).map((item) => ({
+  const rawItems = row.items?.length ? row.items : parseJsonSafe(row.itemsSnapshot)
+  const items = rawItems.map((item) => ({
     name: item.itemName ?? item.name ?? '-',
     hsCode: item.hsCode ?? '-',
     quantity: String(item.quantity ?? 1),
@@ -58,6 +65,7 @@ function mapCiResponse(row) {
     shipmentOrderId: row.shipmentOrderId ?? '',
     remarks: row.remarks ?? '-',
     manager: row.managerName ?? '-',
+    linkedDocuments: parseJsonSafe(row.linkedDocuments),
     items,
   }
 }

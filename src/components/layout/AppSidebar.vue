@@ -43,7 +43,7 @@ function isActive(path) {
     return route.path === '/'
   }
 
-  return route.path.startsWith(path)
+  return route.path === path || route.path.startsWith(path + '/')
 }
 
 onMounted(async () => {
