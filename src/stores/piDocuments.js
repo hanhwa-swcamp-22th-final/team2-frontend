@@ -2,6 +2,11 @@ import { useAuthStore } from './auth'
 import { ref } from 'vue'
 import { fetchProformaInvoices } from '@/api/documents'
 
+function tryParseJson(value, fallback = null) {
+  if (typeof value !== 'string') return value ?? fallback
+  try { return JSON.parse(value) } catch { return fallback }
+}
+
 function formatDate(value) {
   return String(value ?? '').replace(/-/g, '/')
 }
@@ -45,10 +50,10 @@ function mapPiResponse(row) {
     approvalAction: row.approvalAction ?? null,
     approvalRequestedBy: row.approvalRequestedBy ?? null,
     approvalRequestedAt: row.approvalRequestedAt ?? null,
-    approvalReview: row.approvalReview ?? null,
-    itemsSnapshot: row.itemsSnapshot ?? null,
-    linkedDocuments: row.linkedDocuments ? (typeof row.linkedDocuments === 'string' ? JSON.parse(row.linkedDocuments) : row.linkedDocuments) : [],
-    revisionHistory: row.revisionHistory ?? null,
+    approvalReview: row.approvalReview ? (typeof row.approvalReview === 'string' ? tryParseJson(row.approvalReview) : row.approvalReview) : null,
+    itemsSnapshot: row.itemsSnapshot ? (typeof row.itemsSnapshot === 'string' ? tryParseJson(row.itemsSnapshot) : row.itemsSnapshot) : null,
+    linkedDocuments: row.linkedDocuments ? (typeof row.linkedDocuments === 'string' ? tryParseJson(row.linkedDocuments, []) : row.linkedDocuments) : [],
+    revisionHistory: row.revisionHistory ? (typeof row.revisionHistory === 'string' ? tryParseJson(row.revisionHistory, []) : row.revisionHistory) : [],
     items,
   }
 }
