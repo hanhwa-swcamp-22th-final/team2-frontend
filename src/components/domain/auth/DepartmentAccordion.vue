@@ -24,7 +24,7 @@ const columns = [
   { key: 'userEmail', label: '이메일' },
   { key: 'department', label: '부서', width: '120px' },
   { key: 'status', label: '상태', width: '100px', align: 'center' },
-  { key: 'actions', label: '관리', width: '140px', align: 'center' },
+  { key: 'actions', label: '', width: '140px', align: 'center', sortable: false },
 ]
 
 function getAvatarColor(index) {

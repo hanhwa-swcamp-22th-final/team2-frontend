@@ -203,7 +203,7 @@ const columns = [
   { key: 'poId', label: 'PO', width: '130px', align: 'center' },
   { key: 'date', label: '날짜', width: '110px', align: 'center' },
   { key: 'author', label: '작성자', width: '100px' },
-  { key: 'actions', label: '작업', width: '70px', align: 'center' },
+  { key: 'actions', label: '', width: '70px', align: 'center', sortable: false },
 ]
 </script>
 
