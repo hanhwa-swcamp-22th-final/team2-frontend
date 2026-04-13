@@ -141,7 +141,14 @@ function validate() {
   const e = {}
   if (!formClientId.value)     e.clientId  = '거래처 값이 누락되었습니다.'
   if (!formName.value.trim())  e.buyerName  = '이름 값이 누락되었습니다.'
-  if (!formEmail.value.trim()) e.buyerEmail = '이메일 값이 누락되었습니다.'
+  if (!formEmail.value.trim()) {
+    e.buyerEmail = '이메일 값이 누락되었습니다.'
+  } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formEmail.value.trim())) {
+    e.buyerEmail = '올바른 이메일 형식을 입력하세요.'
+  }
+  if (formTel.value.trim() && !/^\+?[\d\s()-]{7,20}$/.test(formTel.value.trim())) {
+    e.buyerTel = '올바른 전화번호 형식을 입력하세요.'
+  }
   formErrors.value = e
   return Object.keys(e).length === 0
 }

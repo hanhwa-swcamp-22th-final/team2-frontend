@@ -93,7 +93,7 @@ const columns = computed(() => {
     { key: 'itemStatus', label: '상태', width: '80px', align: 'center' },
   ]
   if (isItemAdmin.value) {
-    base.push({ key: 'actions', label: '액션', width: '120px', align: 'center' })
+    base.push({ key: 'actions', label: '', width: '120px', align: 'center', sortable: false })
   }
   return base
 })

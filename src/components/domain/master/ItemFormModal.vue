@@ -5,6 +5,7 @@ import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import FormField from '@/components/common/FormField.vue'
+import { MAX_LEN, NUM_RANGE } from '@/utils/validators'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -126,6 +127,8 @@ function validate() {
 
   if (!form.value.name?.trim()) {
     e.name = '품목명을 입력하세요.'
+  } else if (form.value.name.length > MAX_LEN.NAME) {
+    e.name = `품목명은 ${MAX_LEN.NAME}자 이내로 입력하세요.`
   }
 
   if (!form.value.unit) {
@@ -138,6 +141,8 @@ function validate() {
     const price = Number(form.value.unitPrice)
     if (Number.isNaN(price) || price <= 0) {
       e.unitPrice = '단가는 유효한 양수를 입력하세요.'
+    } else if (price > NUM_RANGE.UNIT_PRICE_MAX) {
+      e.unitPrice = `단가는 ${NUM_RANGE.UNIT_PRICE_MAX.toLocaleString()} 이하로 입력하세요.`
     }
   }
 
@@ -145,6 +150,8 @@ function validate() {
     const w = Number(form.value.weight)
     if (Number.isNaN(w) || w < 0) {
       e.weight = '중량은 0 이상의 유효한 숫자를 입력하세요.'
+    } else if (w > NUM_RANGE.WEIGHT_MAX) {
+      e.weight = `중량은 ${NUM_RANGE.WEIGHT_MAX.toLocaleString()}kg 이하로 입력하세요.`
     }
   }
 
@@ -163,6 +170,8 @@ function validate() {
       const num = Number(val)
       if (Number.isNaN(num) || num <= 0) {
         e[key] = `${label}는 양수를 입력하세요.`
+      } else if (num > NUM_RANGE.DIMENSION_MAX) {
+        e[key] = `${label}는 ${NUM_RANGE.DIMENSION_MAX.toLocaleString()}mm 이하로 입력하세요.`
       }
     }
   }

@@ -75,12 +75,13 @@ const columns = [
   { key: 'currency', label: '통화', width: '80px', align: 'center' },
   { key: 'clientManager', label: '담당자', width: '120px' },
   { key: 'clientStatus', label: '상태', width: '80px', align: 'center' },
-  { key: 'actions', label: '액션', width: '120px', align: 'center' },
+  { key: 'actions', label: '', width: '120px', align: 'center', sortable: false },
 ]
 
 const enrichedClients = computed(() =>
   clients.value.map((c) => ({
     ...c,
+    portName: getPortName(c.portId),
     paymentTermsCode: getPaymentTermsLabel(c.paymentTermsId),
     currencyCode: getCurrencyLabel(c.currencyId),
   })),

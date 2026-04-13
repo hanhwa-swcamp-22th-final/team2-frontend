@@ -182,7 +182,7 @@ async function handleSave(formData) {
       const newUser = {
         name: formData.name,
         email: formData.email,
-        password: 'test1234',
+        password: 'password123',
         role: formData.role,
       }
       await createUser(newUser)
