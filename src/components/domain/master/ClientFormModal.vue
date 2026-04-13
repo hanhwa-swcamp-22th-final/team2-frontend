@@ -7,6 +7,8 @@ import BaseTextField from '@/components/common/BaseTextField.vue'
 import FileUploadField from '@/components/common/FileUploadField.vue'
 import FormField from '@/components/common/FormField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
+import { isValidEmail, isValidTel, MAX_LEN } from '@/utils/validators'
+import { getPhoneInfoByCountry, formatPhoneInput } from '@/utils/phoneFormat'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -49,6 +51,21 @@ const statusOptions = [
   { label: '활성', value: 'active' },
   { label: '비활성', value: 'inactive' },
 ]
+
+const selectedCountryName = computed(() => {
+  if (!form.value.countryId) return ''
+  const c = props.countries.find((c) => c.countryId === form.value.countryId)
+  return c?.countryName ?? ''
+})
+
+const phoneInfo = computed(() => getPhoneInfoByCountry(selectedCountryName.value))
+
+function handleTelInput(event) {
+  const raw = event.target.value
+  if (phoneInfo.value.code) {
+    form.value.tel = formatPhoneInput(raw, phoneInfo.value.code, phoneInfo.value.format)
+  }
+}
 
 function generateNextCode() {
   const codes = props.allClients.map((c) => c.clientCode ?? c.code)
@@ -115,6 +132,12 @@ watch(
     const cid = String(newId)
     const portBelongs = props.ports.some((p) => String(p.countryId) === cid && String(p.id) === String(form.value.portId))
     if (!portBelongs) form.value.portId = null
+
+    // 국가 변경 시 전화번호 prefix 자동 세팅
+    const info = phoneInfo.value
+    if (info.code && !form.value.tel) {
+      form.value.tel = `${info.code} `
+    }
   },
 )
 
@@ -133,6 +156,12 @@ function validate() {
 
   if (!form.value.name?.trim()) {
     e.name = '영문 거래처명을 입력하세요.'
+  } else if (form.value.name.length > MAX_LEN.NAME) {
+    e.name = `거래처명은 ${MAX_LEN.NAME}자 이내로 입력하세요.`
+  }
+
+  if (form.value.nameKr && form.value.nameKr.length > MAX_LEN.NAME_KR) {
+    e.nameKr = `한글 거래처명은 ${MAX_LEN.NAME_KR}자 이내로 입력하세요.`
   }
 
   if (!form.value.countryId) {
@@ -141,13 +170,22 @@ function validate() {
 
   if (!form.value.tel?.trim()) {
     e.tel = '전화번호를 입력하세요.'
+  } else if (!isValidTel(form.value.tel)) {
+    e.tel = '올바른 전화번호 형식을 입력하세요. (예: +82 02-1234-5678)'
   }
 
   if (form.value.email?.trim()) {
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-    if (!emailRegex.test(form.value.email.trim())) {
+    if (!isValidEmail(form.value.email)) {
       e.email = '올바른 이메일 형식을 입력하세요.'
     }
+  }
+
+  if (form.value.address && form.value.address.length > MAX_LEN.ADDRESS) {
+    e.address = `주소는 ${MAX_LEN.ADDRESS}자 이내로 입력하세요.`
+  }
+
+  if (form.value.manager && form.value.manager.length > MAX_LEN.MANAGER) {
+    e.manager = `담당자명은 ${MAX_LEN.MANAGER}자 이내로 입력하세요.`
   }
 
   errors.value = e
@@ -228,7 +266,12 @@ function handleSave() {
             <BaseTextField v-model="form.manager" placeholder="담당자명을 입력하세요" />
           </FormField>
           <FormField label="TEL" required>
-            <BaseTextField v-model="form.tel" placeholder="전화번호를 입력하세요" />
+            <BaseTextField
+              v-model="form.tel"
+              :placeholder="phoneInfo.placeholder"
+              :maxlength="MAX_LEN.TEL"
+              @input="handleTelInput"
+            />
             <p v-if="errors.tel" class="mt-1 text-xs text-red-500">{{ errors.tel }}</p>
           </FormField>
           <FormField label="Email">
