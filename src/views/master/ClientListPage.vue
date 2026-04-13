@@ -81,7 +81,7 @@ const columns = [
 const enrichedClients = computed(() =>
   clients.value.map((c) => ({
     ...c,
-    portName: getPortName(c.portId),
+    portName: c.portName ?? getPortName(c.portId),
     paymentTermsCode: getPaymentTermsLabel(c.paymentTermsId),
     currencyCode: getCurrencyLabel(c.currencyId),
   })),
