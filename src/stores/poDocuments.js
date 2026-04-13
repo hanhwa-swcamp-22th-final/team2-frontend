@@ -12,6 +12,16 @@ function formatCurrencyAmount(amount, currencyCode) {
   return `${symbol}${Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 }
 
+function formatTimestamp(value) {
+  if (!value) return null
+  const str = String(value)
+  if (str.includes('T')) {
+    const [date, time] = str.split('T')
+    return `${date.replace(/-/g, '/')} ${time.substring(0, 5)}`
+  }
+  return str
+}
+
 function parseJsonSafe(value, fallback = null) {
   if (typeof value !== 'string') return value ?? fallback
   try { return JSON.parse(value) } catch { return fallback }
@@ -62,7 +72,7 @@ function mapPoResponse(row) {
     requestStatus: row.requestStatus ?? null,
     approvalAction: row.approvalAction ?? null,
     approvalRequestedBy: row.approvalRequestedBy ?? null,
-    approvalRequestedAt: row.approvalRequestedAt ?? null,
+    approvalRequestedAt: formatTimestamp(row.approvalRequestedAt),
     approvalReview: row.approvalReview ? parseJsonSafe(row.approvalReview) : null,
     itemsSnapshot: row.itemsSnapshot ? parseJsonSafe(row.itemsSnapshot) : null,
     linkedDocuments: parseLinkedDocuments(row.linkedDocuments),
