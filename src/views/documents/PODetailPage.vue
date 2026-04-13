@@ -8,6 +8,7 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import { formatRevisionEntry } from '@/utils/revisionFormat'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import PODocumentTemplate from '@/components/domain/document/PODocumentTemplate.vue'
 import POFormModal from '@/components/domain/document/POFormModal.vue'
@@ -1120,7 +1121,7 @@ function cancelDeleteApprovalRequest() {
           <div class="space-y-1 text-xs text-slate-400">
             <template v-if="Array.isArray(detail.revisionHistory) && detail.revisionHistory.length">
               <div v-for="(rev, i) in detail.revisionHistory" :key="i" class="rounded border border-slate-100 bg-slate-50 px-2 py-1">
-                {{ typeof rev === 'string' ? rev : (rev.summary ?? rev.description ?? JSON.stringify(rev)) }}
+                {{ formatRevisionEntry(rev) }}
               </div>
             </template>
             <span v-else>변경 이력 없음</span>

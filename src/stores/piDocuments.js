@@ -7,6 +7,16 @@ function tryParseJson(value, fallback = null) {
   try { return JSON.parse(value) } catch { return fallback }
 }
 
+function formatTimestamp(value) {
+  if (!value) return null
+  const str = String(value)
+  if (str.includes('T')) {
+    const [date, time] = str.split('T')
+    return `${date.replace(/-/g, '/')} ${time.substring(0, 5)}`
+  }
+  return str
+}
+
 function formatDate(value) {
   return String(value ?? '').replace(/-/g, '/')
 }
@@ -49,7 +59,7 @@ function mapPiResponse(row) {
     requestStatus: row.requestStatus ?? null,
     approvalAction: row.approvalAction ?? null,
     approvalRequestedBy: row.approvalRequestedBy ?? null,
-    approvalRequestedAt: row.approvalRequestedAt ?? null,
+    approvalRequestedAt: formatTimestamp(row.approvalRequestedAt),
     approvalReview: row.approvalReview ? (typeof row.approvalReview === 'string' ? tryParseJson(row.approvalReview) : row.approvalReview) : null,
     itemsSnapshot: row.itemsSnapshot ? (typeof row.itemsSnapshot === 'string' ? tryParseJson(row.itemsSnapshot) : row.itemsSnapshot) : null,
     linkedDocuments: row.linkedDocuments ? (typeof row.linkedDocuments === 'string' ? tryParseJson(row.linkedDocuments, []) : row.linkedDocuments) : [],

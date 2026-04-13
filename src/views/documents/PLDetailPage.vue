@@ -55,7 +55,7 @@ const summaryRows = computed(() => {
 
   return [
     { label: '거래처', value: detail.value.clientName },
-    { label: '총수량', value: detail.value.totalQuantity ? `${detail.value.totalQuantity} EA` : '-' },
+    { label: '총수량', value: detail.value.totalQuantity || '-' },
     { label: '총중량', value: detail.value.totalGrossWeight ? `${detail.value.totalGrossWeight} kg` : '-' },
     { label: '발행일', value: detail.value.issueDate || '-' },
   ]
@@ -69,7 +69,7 @@ const previewFields = computed(() => {
     { label: '거래처', value: detail.value.clientName },
     { label: '국가', value: detail.value.country },
     { label: '인코텀즈', value: detail.value.incoterms || '-' },
-    { label: '총수량', value: detail.value.totalQuantity ? `${detail.value.totalQuantity} EA` : '-' },
+    { label: '총수량', value: detail.value.totalQuantity || '-' },
     { label: '총중량', value: detail.value.totalGrossWeight ? `${detail.value.totalGrossWeight} kg` : '-' },
   ]
 })
@@ -202,7 +202,7 @@ function goToLinkedDocument(document) {
             <div><span class="text-slate-500">결제조건</span><div class="mt-0.5">{{ detail.paymentTerms || '-' }}</div></div>
             <div><span class="text-slate-500">Port of Discharge</span><div class="mt-0.5">{{ detail.portOfDischarge || '-' }}</div></div>
             <div><span class="text-slate-500">Sailing on or about</span><div class="mt-0.5">{{ detail.deliveryDate || '-' }}</div></div>
-            <div><span class="text-slate-500">총수량</span><div class="mt-0.5 font-semibold text-slate-900">{{ detail.totalQuantity ? `${detail.totalQuantity} EA` : '-' }}</div></div>
+            <div><span class="text-slate-500">총수량</span><div class="mt-0.5 font-semibold text-slate-900">{{ detail.totalQuantity || '-' }}</div></div>
             <div><span class="text-slate-500">총중량</span><div class="mt-0.5 font-semibold text-slate-900">{{ detail.totalGrossWeight ? `${detail.totalGrossWeight} kg` : '-' }}</div></div>
           </div>
         </div>
