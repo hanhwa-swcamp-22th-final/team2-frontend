@@ -100,10 +100,46 @@ const statusMap = {
   실패: 'border-rose-200 bg-rose-50 text-rose-700',
 }
 
+const labelMap = {
+  active: '활성', inactive: '비활성',
+  leave: '휴직', resigned: '퇴직',
+  draft: '초안', DRAFT: '초안',
+  sent: '발송', SENT: '발송',
+  confirmed: '확정', CONFIRMED: '확정',
+  cancelled: '취소', CANCELLED: '취소',
+  received: '접수', RECEIVED: '접수',
+  in_production: '생산중', IN_PRODUCTION: '생산중',
+  shipped: '출하완료', SHIPPED: '출하완료',
+  preparing: '준비중', PREPARING: '준비중',
+  ready: '준비완료', READY: '준비완료',
+  pending: '대기', PENDING: '대기',
+  approval_pending: '결재대기', APPROVAL_PENDING: '결재대기',
+  registration_requested: '등록요청', REGISTRATION_REQUESTED: '등록요청',
+  update_requested: '수정요청', UPDATE_REQUESTED: '수정요청',
+  deletion_requested: '삭제요청', DELETION_REQUESTED: '삭제요청',
+  in_progress: '진행중', IN_PROGRESS: '진행중',
+  completed: '완료', COMPLETED: '완료',
+  approved: '승인', APPROVED: '승인',
+  rejected: '반려', REJECTED: '반려',
+  paid: '완납', PAID: '완납',
+  unpaid: '미수금', UNPAID: '미수금',
+  normal: '정상', NORMAL: '정상',
+  delay_risk: '지연위험', DELAY_RISK: '지연위험',
+  delayed: '지연', DELAYED: '지연',
+  sent_complete: '발송완료',
+  temp_saved: '임시저장',
+  failed: '실패', FAILED: '실패',
+}
+
 const badgeClasses = computed(() => {
   const rawValue = String(props.value).trim()
   const key = props.variant || rawValue
   return statusMap[key] || 'border-slate-200 bg-slate-100 text-slate-700'
+})
+
+const displayLabel = computed(() => {
+  const raw = String(props.value).trim()
+  return labelMap[raw] ?? raw
 })
 </script>
 
@@ -112,6 +148,6 @@ const badgeClasses = computed(() => {
     class="inline-flex min-h-6 items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-[0.02em]"
     :class="badgeClasses"
   >
-    <slot>{{ value }}</slot>
+    <slot>{{ displayLabel }}</slot>
   </span>
 </template>
