@@ -1,8 +1,9 @@
 import { api } from '@/lib/api'
+import { unwrapCollection } from '@/utils/apiResponse'
 
 export async function fetchActivityEmails() {
   const { data } = await api.get('/email-logs')
-  return data.content ?? data
+  return unwrapCollection(data)
 }
 
 /**

@@ -1,4 +1,5 @@
 import { api } from '@/lib/api'
+import { unwrapCollection } from '@/utils/apiResponse'
 
 // ── 거래처 ─────────────────────────────────────────────────
 export async function fetchActivityClients() {
@@ -9,7 +10,7 @@ export async function fetchActivityClients() {
 // ── 활동기록 ───────────────────────────────────────────────
 export async function fetchActivities() {
   const { data } = await api.get('/activities')
-  return data
+  return unwrapCollection(data)
 }
 
 export async function createActivity(activity) {
@@ -29,10 +30,10 @@ export async function deleteActivity(id) {
 // ── PO 검색 ────────────────────────────────────────────────
 export async function fetchPOsByClient(clientId) {
   const { data } = await api.get('/purchase-orders', { params: { clientId: Number(clientId) } })
-  return data.content ?? data
+  return unwrapCollection(data)
 }
 
 export async function fetchAllActivityPOs() {
   const { data } = await api.get('/purchase-orders')
-  return data.content ?? data
+  return unwrapCollection(data)
 }

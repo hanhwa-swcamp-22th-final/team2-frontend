@@ -1,9 +1,10 @@
 import { api } from '@/lib/api'
+import { unwrapCollection } from '@/utils/apiResponse'
 
 export async function fetchDashboardKpis() {
   try {
     const { data } = await api.get('/purchase-orders', { params: { page: 0, size: 1 } })
-    const totalOrders = data.totalElements ?? 0
+    const totalOrders = data?.page?.totalElements ?? data?.totalElements ?? 0
     return [
       { title: '총 발주건수', value: totalOrders, unit: '건' },
     ]
@@ -19,7 +20,7 @@ export async function fetchDashboardChartPoints() {
 export async function fetchDashboardTableRows() {
   try {
     const { data } = await api.get('/purchase-orders', { params: { page: 0, size: 5 } })
-    return data.content ?? []
+    return unwrapCollection(data)
   } catch {
     return []
   }
