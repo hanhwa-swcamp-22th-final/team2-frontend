@@ -1,4 +1,6 @@
 <script setup>
+import { onMounted, onUnmounted, watch } from 'vue'
+
 const props = defineProps({
   open: {
     type: Boolean,
@@ -37,6 +39,24 @@ function handleBackdropClick() {
     closeModal()
   }
 }
+
+function handleKeydown(e) {
+  if (e.key === 'Escape' && props.open) {
+    closeModal()
+  }
+}
+
+watch(() => props.open, (isOpen) => {
+  if (isOpen) {
+    document.addEventListener('keydown', handleKeydown)
+  } else {
+    document.removeEventListener('keydown', handleKeydown)
+  }
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+})
 </script>
 
 <template>
