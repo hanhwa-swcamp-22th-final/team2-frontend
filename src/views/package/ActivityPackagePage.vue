@@ -90,9 +90,9 @@ async function loadPackageForEdit() {
 }
 
 const poColumns = [
-  { key: 'id',           label: 'PO번호'  },
+  { key: 'poId',         label: 'PO번호'  },
   { key: 'issueDate',    label: '등록일'  },
-  { key: 'manager',      label: '담당자명' },
+  { key: 'managerName',  label: '담당자명' },
   { key: 'country',      label: '국가'    },
   { key: 'deliveryDate', label: '납기일'  },
 ]
@@ -112,13 +112,13 @@ const filteredPoList = computed(() => {
   const q = poSearchKeyword.value.trim().toLowerCase()
   if (!q) return list
   return list.filter(
-    (p) => p.id.toLowerCase().includes(q) || (p.title ?? '').toLowerCase().includes(q),
+    (p) => String(p.poId ?? '').toLowerCase().includes(q) || (p.title ?? '').toLowerCase().includes(q),
   )
 })
 
 function selectPo(po) {
-  selectedPoId.value = po.id
-  poDisplay.value = po.id
+  selectedPoId.value = po.poId
+  poDisplay.value = po.poId
   isPoModalOpen.value = false
   poSearchKeyword.value = ''
 }
