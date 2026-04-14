@@ -77,6 +77,7 @@ const columns = [
   { key: 'paymentTerms', label: '결제조건', width: '100px', align: 'center' },
   { key: 'currency', label: '통화', width: '80px', align: 'center' },
   { key: 'clientManager', label: '거래처 담당자', width: '140px' },
+  { key: 'teamLabel', label: '담당 팀', width: '130px' },
   { key: 'clientStatus', label: '상태', width: '80px', align: 'center' },
   { key: 'actions', label: '', width: '120px', align: 'center', sortable: false },
 ]
@@ -88,6 +89,9 @@ const enrichedClients = computed(() =>
     portName: c.portName ?? getPortName(c.portId),
     paymentTermsCode: getPaymentTermsLabel(c.paymentTermsId),
     currencyCode: getCurrencyLabel(c.currencyId),
+    teamLabel: c.teamName
+      ? (c.departmentName ? `${c.departmentName} / ${c.teamName}` : c.teamName)
+      : '-',
   })),
 )
 

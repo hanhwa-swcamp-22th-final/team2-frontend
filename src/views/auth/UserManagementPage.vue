@@ -4,6 +4,7 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTabs from '@/components/common/BaseTabs.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import CompanyInfoTab from '@/components/domain/auth/CompanyInfoTab.vue'
+import OrgStructureTab from '@/components/domain/auth/OrgStructureTab.vue'
 import UserListTab from '@/components/domain/auth/UserListTab.vue'
 
 const activeTab = ref('users')
@@ -11,6 +12,7 @@ const userListRef = ref(null)
 
 const tabs = [
   { key: 'users', label: '사용자 목록' },
+  { key: 'org', label: '조직 관리' },
   { key: 'company', label: '자사 정보' },
 ]
 
@@ -40,6 +42,7 @@ function handleCreateUser() {
 
     <!-- 탭 내용 -->
     <UserListTab v-if="activeTab === 'users'" ref="userListRef" />
+    <OrgStructureTab v-else-if="activeTab === 'org'" />
     <CompanyInfoTab v-else />
   </div>
 </template>

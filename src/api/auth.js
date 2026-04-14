@@ -41,6 +41,20 @@ export async function fetchDepartments() {
   return unwrapCollection(data)
 }
 
+export async function createDepartment(department) {
+  const { data } = await api.post('/departments', department)
+  return data
+}
+
+export async function updateDepartment(id, department) {
+  const { data } = await api.put(`/departments/${id}`, department)
+  return data
+}
+
+export async function deleteDepartment(id) {
+  await api.delete(`/departments/${id}`)
+}
+
 export async function fetchTeams(departmentId = null) {
   const params = departmentId != null ? { departmentId } : {}
   const { data } = await api.get('/teams', { params })

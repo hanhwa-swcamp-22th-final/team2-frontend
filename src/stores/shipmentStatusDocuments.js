@@ -37,7 +37,11 @@ export async function loadShipmentStatusDocuments() {
 }
 
 export function useShipmentStatusDocuments() {
-  if (!loading && useAuthStore().isLoggedIn) {
+  const auth = useAuthStore()
+  const role = auth.currentUser?.role
+  // 출하현황은 admin/sales/shipping 만 조회 권한. production 에서 401/403 유발 방지.
+  const allowed = ['admin', 'sales', 'shipping'].includes(role)
+  if (!loading && auth.isLoggedIn && allowed) {
     loading = loadShipmentStatusDocuments()
   }
   return shipmentStatusDocuments
