@@ -89,15 +89,15 @@ watch(
   (isOpen) => {
     errors.value = {}
     if (isOpen && props.mode === 'edit' && props.item) {
-      const spec = parseSpec(props.item.itemSpec ?? props.item.spec)
+      const specFallback = parseSpec(props.item.itemSpec ?? props.item.spec)
       form.value = {
         code: props.item.itemCode ?? props.item.code ?? '',
         name: props.item.itemName ?? props.item.name ?? '',
         nameKr: props.item.itemNameKr ?? props.item.nameKr ?? '',
         category: props.item.itemCategory ?? props.item.category ?? '',
-        specWidth: spec.width,
-        specDepth: spec.depth,
-        specHeight: spec.height,
+        specWidth: props.item.itemWidth ?? specFallback.width,
+        specDepth: props.item.itemDepth ?? specFallback.depth,
+        specHeight: props.item.itemHeight ?? specFallback.height,
         unit: props.item.itemUnit ?? props.item.unit ?? '',
         packUnit: props.item.itemPackUnit ?? props.item.packUnit ?? '',
         unitPrice: props.item.itemUnitPrice ?? props.item.unitPrice ?? '',
@@ -166,13 +166,15 @@ function validate() {
   ]
   for (const { key, label } of dimFields) {
     const val = form.value[key]
-    if (val !== '' && val !== null && val !== undefined) {
-      const num = Number(val)
-      if (Number.isNaN(num) || num <= 0) {
-        e[key] = `${label}는 양수를 입력하세요.`
-      } else if (num > NUM_RANGE.DIMENSION_MAX) {
-        e[key] = `${label}는 ${NUM_RANGE.DIMENSION_MAX.toLocaleString()}mm 이하로 입력하세요.`
-      }
+    if (val === '' || val === null || val === undefined) {
+      e[key] = `${label}를 입력하세요.`
+      continue
+    }
+    const num = Number(val)
+    if (Number.isNaN(num) || num <= 0 || !Number.isInteger(num)) {
+      e[key] = `${label}는 양의 정수를 입력하세요.`
+    } else if (num > NUM_RANGE.DIMENSION_MAX) {
+      e[key] = `${label}는 ${NUM_RANGE.DIMENSION_MAX.toLocaleString()}mm 이하로 입력하세요.`
     }
   }
 
@@ -194,6 +196,9 @@ function handleSave() {
     itemNameKr: form.value.nameKr,
     itemCategory: form.value.category,
     itemSpec: specStr,
+    itemWidth: Number(form.value.specWidth),
+    itemDepth: Number(form.value.specDepth),
+    itemHeight: Number(form.value.specHeight),
     itemUnit: form.value.unit,
     itemPackUnit: form.value.packUnit,
     itemUnitPrice: Number(form.value.unitPrice),
@@ -239,13 +244,13 @@ function handleSave() {
       <div>
         <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">규격 / 단위</h4>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormField label="규격 (W × D × H)" class="md:col-span-2">
+          <FormField label="규격 (W × D × H)" required class="md:col-span-2">
             <div class="flex items-center gap-2">
-              <BaseTextField v-model="form.specWidth" placeholder="W" />
+              <BaseTextField v-model="form.specWidth" type="number" placeholder="W" min="1" :max="NUM_RANGE.DIMENSION_MAX" inputmode="numeric" />
               <span class="text-xs text-slate-400">×</span>
-              <BaseTextField v-model="form.specDepth" placeholder="D" />
+              <BaseTextField v-model="form.specDepth" type="number" placeholder="D" min="1" :max="NUM_RANGE.DIMENSION_MAX" inputmode="numeric" />
               <span class="text-xs text-slate-400">×</span>
-              <BaseTextField v-model="form.specHeight" placeholder="H" />
+              <BaseTextField v-model="form.specHeight" type="number" placeholder="H" min="1" :max="NUM_RANGE.DIMENSION_MAX" inputmode="numeric" />
               <span class="text-xs text-slate-500">mm</span>
             </div>
             <p v-if="errors.specWidth" class="mt-1 text-xs text-red-500">{{ errors.specWidth }}</p>
