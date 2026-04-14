@@ -19,6 +19,7 @@ import {
   updateClient,
 } from '@/api/master'
 import { createBuyer, updateBuyer, deleteBuyer } from '@/api/contacts'
+import { fetchDepartments, fetchTeams } from '@/api/auth'
 import { useMasterLookup } from '@/composables/useMasterLookup'
 import { useToast } from '@/composables/useToast'
 import { isValidEmail, isValidTel } from '@/utils/validators'
@@ -35,6 +36,8 @@ const { countries, ports, currencies, paymentTerms, loadReferenceData, getCountr
 
 const client = ref(null)
 const allClients = ref([])
+const departments = ref([])
+const teams = ref([])
 const loading = ref(false)
 const saving = ref(false)
 
@@ -96,6 +99,13 @@ const infoGroups = computed(() => {
         { label: '등록일', value: client.value.clientRegDate },
       ],
     },
+    {
+      title: '담당 조직',
+      fields: [
+        { label: '부서', value: client.value.departmentName ?? '-' },
+        { label: '팀', value: client.value.teamName ?? '-' },
+      ],
+    },
   ]
 })
 
@@ -107,13 +117,17 @@ async function loadData() {
   }
   loading.value = true
   try {
-    const [clientData, buyersData, clientsData] =
+    const [clientData, buyersData, clientsData, , deptsData, teamsData] =
       await Promise.all([
         fetchClient(route.params.id),
         fetchBuyersByClient(route.params.id),
         fetchClients(),
         loadReferenceData(),
+        fetchDepartments(),
+        fetchTeams(),
       ])
+    departments.value = deptsData ?? []
+    teams.value = teamsData ?? []
     if (!clientData) {
       error('거래처를 찾을 수 없습니다.')
       router.push({ name: 'client-list' })
@@ -347,6 +361,9 @@ function goBack() {
       :ports="ports"
       :currencies="currencies"
       :payment-terms="paymentTerms"
+      :departments="departments"
+      :teams="teams"
+      :lock-team="!isAdmin"
       :all-clients="allClients"
       :saving="saving"
       @close="showFormModal = false"
