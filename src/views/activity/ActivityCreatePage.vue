@@ -467,6 +467,7 @@ async function handleSubmit() {
     <SearchModal
       :open="isPoSearchOpen"
       title="PO 검색"
+      row-key="poId"
       :columns="poColumns"
       :rows="filteredPoList"
       :search-keyword="poKeyword"
