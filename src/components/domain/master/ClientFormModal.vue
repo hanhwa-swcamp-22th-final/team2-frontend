@@ -167,24 +167,40 @@ function validate() {
     e.countryId = '국가를 선택하세요.'
   }
 
+  if (!form.value.portId) {
+    e.portId = '도착항을 선택하세요.'
+  }
+
+  if (!form.value.address?.trim()) {
+    e.address = '주소를 입력하세요.'
+  } else if (form.value.address.length > MAX_LEN.ADDRESS) {
+    e.address = `주소는 ${MAX_LEN.ADDRESS}자 이내로 입력하세요.`
+  }
+
+  if (!form.value.manager?.trim()) {
+    e.manager = '거래처 담당자(바이어)를 입력하세요.'
+  } else if (form.value.manager.length > MAX_LEN.MANAGER) {
+    e.manager = `담당자명은 ${MAX_LEN.MANAGER}자 이내로 입력하세요.`
+  }
+
   if (!form.value.tel?.trim()) {
-    e.tel = '전화번호를 입력하세요.'
+    e.tel = '거래처 연락처를 입력하세요.'
   } else if (!isValidTel(form.value.tel)) {
     e.tel = '올바른 전화번호 형식을 입력하세요. (예: +82 02-1234-5678)'
   }
 
-  if (form.value.email?.trim()) {
-    if (!isValidEmail(form.value.email)) {
-      e.email = '올바른 이메일 형식을 입력하세요.'
-    }
+  if (!form.value.email?.trim()) {
+    e.email = '거래처 이메일을 입력하세요.'
+  } else if (!isValidEmail(form.value.email)) {
+    e.email = '올바른 이메일 형식을 입력하세요.'
   }
 
-  if (form.value.address && form.value.address.length > MAX_LEN.ADDRESS) {
-    e.address = `주소는 ${MAX_LEN.ADDRESS}자 이내로 입력하세요.`
+  if (!form.value.paymentTermsId) {
+    e.paymentTermsId = '결제조건을 선택하세요.'
   }
 
-  if (form.value.manager && form.value.manager.length > MAX_LEN.MANAGER) {
-    e.manager = `담당자명은 ${MAX_LEN.MANAGER}자 이내로 입력하세요.`
+  if (!form.value.currencyId) {
+    e.currencyId = '통화를 선택하세요.'
   }
 
   errors.value = e
@@ -248,24 +264,27 @@ function handleSave() {
           <FormField label="도시">
             <BaseTextField v-model="form.city" placeholder="도시를 입력하세요" />
           </FormField>
-          <FormField label="도착항">
+          <FormField label="도착항" required>
             <SearchableCombobox v-model="form.portId" :options="portOptions" :disabled="!form.countryId" :placeholder="form.countryId ? '도착항을 검색하세요' : '국가를 먼저 선택하세요'" />
+            <p v-if="errors.portId" class="mt-1 text-xs text-red-500">{{ errors.portId }}</p>
           </FormField>
-          <FormField label="주소">
+          <FormField label="주소" required>
             <BaseTextField v-model="form.address" placeholder="영문 주소를 입력하세요" />
+            <p v-if="errors.address" class="mt-1 text-xs text-red-500">{{ errors.address }}</p>
           </FormField>
         </div>
       </div>
 
-      <!-- 연락처 -->
+      <!-- 거래처 연락처 -->
       <div>
-        <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">연락처</h4>
+        <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">거래처 연락처</h4>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormField label="거래처 담당자 (바이어)">
+          <FormField label="거래처 담당자 (바이어)" required>
             <BaseTextField v-model="form.manager" placeholder="거래처 측 바이어 이름 (예: Mr. Ahmad Razak)" />
-            <p class="mt-1 text-xs text-slate-400">거래처 내 주 연락 담당자(바이어). 추가 바이어는 바이어 관리에서 등록합니다.</p>
+            <p v-if="errors.manager" class="mt-1 text-xs text-red-500">{{ errors.manager }}</p>
+            <p v-else class="mt-1 text-xs text-slate-400">거래처 내 주 연락 담당자(바이어). 추가 바이어는 상세 페이지에서 등록합니다.</p>
           </FormField>
-          <FormField label="TEL" required>
+          <FormField label="거래처 TEL (대표 연락처)" required>
             <BaseTextField
               v-model="form.tel"
               :placeholder="phoneInfo.placeholder"
@@ -274,8 +293,8 @@ function handleSave() {
             />
             <p v-if="errors.tel" class="mt-1 text-xs text-red-500">{{ errors.tel }}</p>
           </FormField>
-          <FormField label="Email">
-            <BaseTextField v-model="form.email" type="email" placeholder="이메일을 입력하세요" />
+          <FormField label="거래처 Email (대표 이메일)" required>
+            <BaseTextField v-model="form.email" type="email" placeholder="contact@company.com" />
             <p v-if="errors.email" class="mt-1 text-xs text-red-500">{{ errors.email }}</p>
           </FormField>
         </div>
@@ -285,11 +304,13 @@ function handleSave() {
       <div>
         <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">거래 조건</h4>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormField label="결제조건">
+          <FormField label="결제조건" required>
             <BaseSelect v-model="form.paymentTermsId" :options="paymentTermsOptions" placeholder="결제조건을 선택하세요" />
+            <p v-if="errors.paymentTermsId" class="mt-1 text-xs text-red-500">{{ errors.paymentTermsId }}</p>
           </FormField>
-          <FormField label="통화">
+          <FormField label="통화" required>
             <BaseSelect v-model="form.currencyId" :options="currencyOptions" :disabled="!form.countryId" :placeholder="form.countryId ? '통화를 선택하세요' : '국가를 먼저 선택하세요'" />
+            <p v-if="errors.currencyId" class="mt-1 text-xs text-red-500">{{ errors.currencyId }}</p>
           </FormField>
           <FormField label="상태">
             <BaseSelect v-model="form.status" :options="statusOptions" placeholder="상태를 선택하세요" />
