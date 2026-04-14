@@ -122,7 +122,7 @@ async function loadData() {
     client.value = clientData
 
     if (!isAdmin.value && currentUser.value?.role === 'sales' &&
-        clientData.departmentId !== Number(currentUser.value?.departmentId)) {
+        clientData.teamId !== Number(currentUser.value?.teamId)) {
       error('접근 권한이 없는 거래처입니다.')
       router.push({ name: 'client-list' })
       return

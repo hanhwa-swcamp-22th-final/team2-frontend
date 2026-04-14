@@ -41,6 +41,26 @@ export async function fetchDepartments() {
   return unwrapCollection(data)
 }
 
+export async function fetchTeams(departmentId = null) {
+  const params = departmentId != null ? { departmentId } : {}
+  const { data } = await api.get('/teams', { params })
+  return Array.isArray(data) ? data : unwrapCollection(data)
+}
+
+export async function createTeam(team) {
+  const { data } = await api.post('/teams', team)
+  return data
+}
+
+export async function updateTeam(id, team) {
+  const { data } = await api.put(`/teams/${id}`, team)
+  return data
+}
+
+export async function deleteTeam(id) {
+  await api.delete(`/teams/${id}`)
+}
+
 export async function fetchCompany() {
   const { data } = await api.get('/company')
   return data

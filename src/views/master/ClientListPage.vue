@@ -110,9 +110,9 @@ function searchRows() {
 const filteredClients = computed(() => {
   let result = enrichedClients.value
 
-  // RBAC: 영업 사용자는 자기 부서 거래처만 표시
+  // RBAC: 영업 사용자는 자기 팀 거래처만 표시 (팀→부서는 역참조)
   if (!isAdmin.value && currentUser.value?.role === 'sales') {
-    result = result.filter((c) => c.departmentId === Number(currentUser.value.departmentId))
+    result = result.filter((c) => c.teamId === Number(currentUser.value.teamId))
   }
 
   const f = appliedFilters.value
@@ -220,8 +220,8 @@ async function handleSave(formData) {
   saving.value = true
   try {
     if (formMode.value === 'create') {
-      const deptId = isAdmin.value ? undefined : Number(currentUser.value?.departmentId)
-      await createClient({ ...formData, clientRegDate: new Date().toISOString().slice(0, 10), ...(deptId && { departmentId: deptId }) })
+      const teamId = isAdmin.value ? formData.teamId : Number(currentUser.value?.teamId)
+      await createClient({ ...formData, clientRegDate: new Date().toISOString().slice(0, 10), ...(teamId && { teamId }) })
       success('거래처가 등록되었습니다.')
     } else {
       await updateClient(selectedClient.value.clientId, formData)

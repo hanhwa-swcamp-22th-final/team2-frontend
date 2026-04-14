@@ -17,6 +17,7 @@ const props = defineProps({
   user: { type: Object, default: null },
   positions: { type: Array, default: () => [] },
   departments: { type: Array, default: () => [] },
+  teams: { type: Array, default: () => [] },
   allUsers: { type: Array, default: () => [] },
   saving: { type: Boolean, default: false },
 })
@@ -46,9 +47,9 @@ function getInitialForm() {
     email: '',
     positionId: '',
     role: '',
-    departmentId: '',
+    departmentId: '',   // 팀 드롭다운 필터용 (폼 제출 시 사용 안 함)
+    teamId: '',
     status: '재직',
-    transferDepartmentId: '',
     transferReason: '',
     sealImage: null,
   }
@@ -59,14 +60,16 @@ watch(
   (isOpen) => {
     errors.value = {}
     if (isOpen && props.mode === 'edit' && props.user) {
-      // positionName/departmentName 기반 ID 역매핑 fallback
       const resolvedPositionId = props.user.positionId
         ?? props.positions.find((p) => (p.positionName ?? p.name) === props.user.positionName)?.positionId
         ?? props.positions.find((p) => (p.positionName ?? p.name) === props.user.positionName)?.id
         ?? ''
-      const resolvedDepartmentId = props.user.departmentId
-        ?? props.departments.find((d) => (d.departmentName ?? d.name) === props.user.departmentName)?.departmentId
-        ?? props.departments.find((d) => (d.departmentName ?? d.name) === props.user.departmentName)?.id
+      const resolvedTeamId = props.user.teamId
+        ?? props.teams.find((t) => t.teamName === props.user.teamName)?.teamId
+        ?? ''
+      const team = props.teams.find((t) => String(t.teamId) === String(resolvedTeamId))
+      const resolvedDepartmentId = team?.departmentId
+        ?? props.user.departmentId
         ?? ''
       form.value = {
         name: props.user.userName ?? props.user.name ?? '',
@@ -74,8 +77,8 @@ watch(
         positionId: String(resolvedPositionId),
         role: props.user.userRole ?? props.user.role ?? '',
         departmentId: String(resolvedDepartmentId),
+        teamId: String(resolvedTeamId),
         status: props.user.userStatus ?? props.user.status ?? 'active',
-        transferDepartmentId: '',
         transferReason: '',
         sealImage: null,
       }
@@ -85,44 +88,43 @@ watch(
   },
 )
 
+// 부서 변경 시 팀 초기화 (매칭 안 되는 팀이면)
+watch(() => form.value.departmentId, (deptId) => {
+  const team = props.teams.find((t) => String(t.teamId) === String(form.value.teamId))
+  if (team && String(team.departmentId) !== String(deptId)) {
+    form.value.teamId = ''
+  }
+})
+
+const teamOptions = computed(() => {
+  const filtered = form.value.departmentId
+    ? props.teams.filter((t) => String(t.departmentId) === String(form.value.departmentId))
+    : props.teams
+  return filtered.map((t) => ({ label: t.teamName, value: String(t.teamId) }))
+})
+
 function validate() {
   const e = {}
 
-  if (!form.value.name.trim()) {
-    e.name = '이름을 입력해주세요.'
-  }
+  if (!form.value.name.trim()) e.name = '이름을 입력해주세요.'
 
   if (!form.value.email.trim()) {
     e.email = '이메일을 입력해주세요.'
   } else if (!isValidEmail(form.value.email)) {
     e.email = '올바른 이메일 형식을 입력해주세요.'
   } else {
-    // 중복 이메일 체크
     const duplicate = props.allUsers.find(
       (u) =>
         (u.userEmail ?? u.email) === form.value.email.trim() &&
         (props.mode === 'create' || (u.userId ?? u.id) !== (props.user?.userId ?? props.user?.id)),
     )
-    if (duplicate) {
-      e.email = '이미 사용 중인 이메일 주소입니다.'
-    }
+    if (duplicate) e.email = '이미 사용 중인 이메일 주소입니다.'
   }
 
-  if (!form.value.positionId) {
-    e.positionId = '직급을 선택해주세요.'
-  }
-
-  if (!form.value.role) {
-    e.role = '부서를 선택해주세요.'
-  }
-
-  if (!form.value.departmentId && props.mode === 'create') {
-    e.departmentId = '팀을 선택해주세요.'
-  }
-
-  if (form.value.transferDepartmentId && !form.value.transferReason.trim()) {
-    e.transferReason = '이동 사유를 입력해주세요.'
-  }
+  if (!form.value.positionId) e.positionId = '직급을 선택해주세요.'
+  if (!form.value.role) e.role = '역할을 선택해주세요.'
+  if (!form.value.departmentId) e.departmentId = '부서를 선택해주세요.'
+  if (!form.value.teamId) e.teamId = '팀을 선택해주세요.'
 
   errors.value = e
   return Object.keys(e).length === 0
@@ -136,9 +138,7 @@ function handleSave() {
   emit('save', { ...form.value })
 }
 
-function confirmResetPassword() {
-  showResetConfirm.value = true
-}
+function confirmResetPassword() { showResetConfirm.value = true }
 
 async function handleResetPassword() {
   if (!props.user?.userId && !props.user?.id) return
@@ -152,11 +152,10 @@ async function handleResetPassword() {
   }
 }
 
-const currentDepartmentName = computed(() => {
-  // 백엔드 리스트 응답은 departmentName을 직접 포함
-  if (props.user?.departmentName) return props.user.departmentName
-  const dept = props.departments.find(d => String(d.departmentId ?? d.id) === String(props.user?.departmentId))
-  return dept?.departmentName ?? dept?.name ?? '-'
+const currentTeamName = computed(() => {
+  if (props.user?.teamName) return props.user.teamName
+  const team = props.teams.find((t) => String(t.teamId) === String(props.user?.teamId))
+  return team?.teamName ?? '-'
 })
 </script>
 
@@ -168,7 +167,6 @@ const currentDepartmentName = computed(() => {
     @close="emit('close')"
   >
     <form class="space-y-6" @submit.prevent="handleSave">
-      <!-- 기본 정보: 2열 그리드 -->
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <FormField label="이름" required :error="errors.name">
           <BaseTextField v-model="form.name" placeholder="이름을 입력하세요" />
@@ -186,19 +184,28 @@ const currentDepartmentName = computed(() => {
           />
         </FormField>
 
-        <FormField label="부서" required :error="errors.role">
-          <BaseSelect v-model="form.role" :options="roleOptions" placeholder="부서를 선택하세요" />
+        <FormField label="역할" required :error="errors.role">
+          <BaseSelect v-model="form.role" :options="roleOptions" placeholder="역할을 선택하세요" />
+        </FormField>
+
+        <FormField label="부서" required :error="errors.departmentId">
+          <BaseSelect
+            v-model="form.departmentId"
+            :options="departments.map((d) => ({ label: d.departmentName ?? d.name, value: String(d.departmentId ?? d.id) }))"
+            placeholder="부서를 선택하세요"
+          />
+        </FormField>
+
+        <FormField label="팀" required :error="errors.teamId">
+          <BaseSelect
+            v-model="form.teamId"
+            :options="teamOptions"
+            :placeholder="form.departmentId ? '팀을 선택하세요' : '먼저 부서를 선택하세요'"
+            :disabled="!form.departmentId"
+          />
         </FormField>
 
         <template v-if="mode === 'create'">
-          <FormField label="팀" required :error="errors.departmentId">
-            <BaseSelect
-              v-model="form.departmentId"
-              :options="departments.map((d) => ({ label: d.departmentName ?? d.name, value: String(d.departmentId ?? d.id) }))"
-              placeholder="팀을 선택하세요"
-            />
-          </FormField>
-
           <FormField label="초기 비밀번호">
             <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
               <i class="fas fa-lock text-xs text-slate-400" />
@@ -209,39 +216,21 @@ const currentDepartmentName = computed(() => {
         </template>
       </div>
 
-      <!-- 수정 모드 전용 -->
       <template v-if="mode === 'edit'">
-        <!-- 상태 -->
         <FormField label="상태">
           <BaseSelect v-model="form.status" :options="statusOptions" />
         </FormField>
 
-        <!-- 팀 이동 -->
-        <div class="space-y-3 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-          <div class="flex items-center gap-2">
-            <svg class="h-4 w-4 text-slate-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 0 1-9.201 2.466l-.312-.311h2.433a.75.75 0 0 0 0-1.5H4.28a.75.75 0 0 0-.75.75v3.952a.75.75 0 0 0 1.5 0v-2.146l.312.311a7 7 0 0 0 11.712-3.138.75.75 0 0 0-1.449-.384Zm.39-3.44a.75.75 0 0 0 .326-1.275 7 7 0 0 0-11.712 3.138.75.75 0 0 0 1.449.384 5.5 5.5 0 0 1 9.201-2.466l.312.311H13.28a.75.75 0 0 0 0 1.5h3.952a.75.75 0 0 0 .75-.75V5.384a.75.75 0 0 0-1.5 0v2.146l-.312-.311a.747.747 0 0 0-.468-.235Z" clip-rule="evenodd" />
-            </svg>
-            <h3 class="text-sm font-bold text-ink">팀 이동</h3>
-          </div>
+        <div class="space-y-2 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
           <p class="text-xs text-slate-500">
-            현재 팀: <span class="font-medium text-ink">{{ currentDepartmentName }}</span> → 이동할 팀
+            현재 팀: <span class="font-medium text-ink">{{ currentTeamName }}</span>
           </p>
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <FormField label="이동할 팀">
-              <BaseSelect
-                v-model="form.transferDepartmentId"
-                :options="[{ label: '변경안함', value: '' }, ...departments.map((d) => ({ label: d.departmentName ?? d.name, value: String(d.departmentId ?? d.id) }))]"
-              />
-            </FormField>
-            <FormField label="이동 사유" :required="!!form.transferDepartmentId" :error="errors.transferReason">
-              <BaseTextField v-model="form.transferReason" placeholder="이동 사유를 입력하세요" />
-            </FormField>
-          </div>
+          <FormField label="이동 사유 (팀 변경 시)">
+            <BaseTextField v-model="form.transferReason" placeholder="팀 이동 사유를 입력하세요" />
+          </FormField>
         </div>
       </template>
 
-      <!-- 서명 이미지 -->
       <FileUploadField
         v-model="form.sealImage"
         label="서명 이미지"
@@ -249,7 +238,6 @@ const currentDepartmentName = computed(() => {
         helper-text="서명 이미지를 업로드하세요. (PNG, JPG 권장)"
       />
 
-      <!-- 비밀번호 초기화 (수정 모드) -->
       <div v-if="mode === 'edit'" class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-4">
         <div>
           <p class="text-sm font-medium text-ink">비밀번호 초기화</p>
@@ -261,7 +249,6 @@ const currentDepartmentName = computed(() => {
       </div>
     </form>
 
-    <!-- 비밀번호 초기화 확인 모달 -->
     <ConfirmModal
       :open="showResetConfirm"
       title="비밀번호 초기화"
