@@ -176,9 +176,9 @@ const poList = ref([])
 const poKeyword = ref('')
 
 const poColumns = [
-  { key: 'id',           label: 'PO번호'  },
+  { key: 'poId',         label: 'PO번호'  },
   { key: 'issueDate',    label: '등록일'  },
-  { key: 'manager',      label: '담당자명' },
+  { key: 'managerName',  label: '담당자명' },
   { key: 'country',      label: '국가'    },
   { key: 'deliveryDate', label: '납기일'  },
 ]
@@ -187,7 +187,7 @@ const filteredPoList = computed(() => {
   if (!poKeyword.value) return poList.value
   const kw = poKeyword.value.toLowerCase()
   return poList.value.filter(
-    (p) => p.id.toLowerCase().includes(kw) || (p.title ?? '').toLowerCase().includes(kw),
+    (p) => String(p.poId ?? '').toLowerCase().includes(kw) || (p.title ?? '').toLowerCase().includes(kw),
   )
 })
 
@@ -207,8 +207,8 @@ async function openPoSearch() {
 }
 
 function selectPO(po) {
-  formPoDisplay.value = po.id
-  formPoId.value = po.id
+  formPoDisplay.value = po.poId
+  formPoId.value = po.poId
   formAuthor.value = authStore.currentUser?.userName ?? ''
   isPoSearchOpen.value = false
 }
