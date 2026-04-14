@@ -105,16 +105,19 @@ const poSearchKeyword = ref('')
 const selectedPoId = ref('')
 
 const filteredPoList = computed(() => {
-  if (!dateFrom.value) return []
   let list = poList.value
-  const from = dateFrom.value.replaceAll('-', '/')
-  const to   = dateTo.value.replaceAll('-', '/')
-  if (from) list = list.filter((p) => p.date >= from)
-  if (to)   list = list.filter((p) => p.date <= to)
+  // PO 응답 필드는 issueDate(LocalDate ISO: YYYY-MM-DD). YYYY-MM-DD 형식으로 정규화해 비교.
+  const norm = (s) => (s ? String(s).slice(0, 10).replaceAll('/', '-') : '')
+  const from = norm(dateFrom.value)
+  const to = norm(dateTo.value)
+  if (from) list = list.filter((p) => norm(p.issueDate ?? p.date) >= from)
+  if (to) list = list.filter((p) => norm(p.issueDate ?? p.date) <= to)
   const q = poSearchKeyword.value.trim().toLowerCase()
   if (!q) return list
   return list.filter(
-    (p) => String(p.poId ?? '').toLowerCase().includes(q) || (p.title ?? '').toLowerCase().includes(q),
+    (p) =>
+      String(p.poId ?? '').toLowerCase().includes(q) ||
+      (p.clientName ?? '').toLowerCase().includes(q),
   )
 })
 
@@ -144,32 +147,42 @@ const selectedViewerIds = ref([])
 const viewerSearchQuery = ref('')
 const viewerDeptFilter = ref('')
 
-const departmentNameById = computed(() => new Map(departments.value.map(d => [String(d.id), d.name])))
-const positionNameById = computed(() => new Map(positions.value.map(p => [String(p.id), p.name])))
+// 백엔드 Department 응답은 departmentId / departmentName 필드. Position 도 동일.
+// 이전엔 d.id / d.name 으로 접근해 전부 undefined 로 표시됐었다.
+const departmentNameById = computed(() => new Map(
+  departments.value.map(d => [String(d.departmentId ?? d.id), d.departmentName ?? d.name])
+))
+const positionNameById = computed(() => new Map(
+  positions.value.map(p => [String(p.positionId ?? p.id), p.positionName ?? p.name])
+))
 
 const deptOptions = computed(() => [
   { label: '전체 부서', value: '' },
-  ...departments.value.map((d) => ({ label: d.name, value: String(d.id) })),
+  ...departments.value.map((d) => ({
+    label: d.departmentName ?? d.name,
+    value: String(d.departmentId ?? d.id),
+  })),
 ])
 
 const filteredUsers = computed(() => {
   const q = viewerSearchQuery.value.trim().toLowerCase()
-  let userList = allUsers.value.filter((u) => String(u.id) !== String(currentUser.value?.id))
+  const meId = String(currentUser.value?.userId ?? currentUser.value?.id ?? '')
+  let userList = allUsers.value.filter((u) => String(u.userId ?? u.id) !== meId)
   if (viewerDeptFilter.value) {
     userList = userList.filter((u) => String(u.departmentId) === viewerDeptFilter.value)
   }
   if (!q) return userList
   return userList.filter((u) =>
-    u.name.toLowerCase().includes(q) ||
+    (u.userName ?? u.name ?? '').toLowerCase().includes(q) ||
     (u.employeeNo ?? '').includes(q) ||
-    (u.email ?? '').toLowerCase().includes(q),
+    (u.userEmail ?? u.email ?? '').toLowerCase().includes(q),
   )
 })
 
 const groupedUsers = computed(() => {
   const groups = new Map()
   for (const user of filteredUsers.value) {
-    const deptId = String(user.departmentId)
+    const deptId = String(user.departmentId ?? '')
     const deptName = departmentNameById.value.get(deptId) || '기타'
     if (!groups.has(deptId)) groups.set(deptId, { deptId, deptName, users: [] })
     groups.get(deptId).users.push(user)
@@ -179,11 +192,11 @@ const groupedUsers = computed(() => {
 
 const isAllViewersSelected = computed(() =>
   filteredUsers.value.length > 0 &&
-  filteredUsers.value.every((u) => selectedViewerIds.value.includes(String(u.id))),
+  filteredUsers.value.every((u) => selectedViewerIds.value.includes(String(u.userId ?? u.id))),
 )
 
 function isDeptAllSelected(users) {
-  return users.length > 0 && users.every((u) => selectedViewerIds.value.includes(String(u.id)))
+  return users.length > 0 && users.every((u) => selectedViewerIds.value.includes(String(u.userId ?? u.id)))
 }
 
 function toggleViewer(userId) {
@@ -196,7 +209,7 @@ function toggleViewer(userId) {
 }
 
 function toggleAllViewers(checked) {
-  const ids = filteredUsers.value.map((u) => String(u.id))
+  const ids = filteredUsers.value.map((u) => String(u.userId ?? u.id))
   if (checked) {
     selectedViewerIds.value = [...new Set([...selectedViewerIds.value, ...ids])]
   } else {
@@ -205,7 +218,7 @@ function toggleAllViewers(checked) {
 }
 
 function toggleDeptViewers(users, checked) {
-  const ids = users.map((u) => String(u.id))
+  const ids = users.map((u) => String(u.userId ?? u.id))
   if (checked) {
     selectedViewerIds.value = [...new Set([...selectedViewerIds.value, ...ids])]
   } else {
@@ -423,12 +436,15 @@ async function savePackage() {
               />
             </div>
 
-            <!-- 키워드 검색 -->
+            <!-- 활동기록 키워드 필터 -->
             <div class="space-y-1.5">
-              <p class="text-sm font-semibold text-slate-700">키워드 검색</p>
+              <p class="text-sm font-semibold text-slate-700">
+                활동기록 키워드 필터
+                <span class="ml-1 text-xs font-normal text-slate-400">(오른쪽 목록을 제목/내용으로 좁혀서 보기)</span>
+              </p>
               <BaseTextField
                 v-model="keyword"
-                placeholder="제목, 내용 등 키워드 검색"
+                placeholder="활동 제목 또는 내용 일부"
               />
             </div>
 
@@ -533,21 +549,21 @@ async function savePackage() {
                     <!-- 사용자 행 -->
                     <label
                       v-for="user in group.users"
-                      :key="user.id"
+                      :key="user.userId ?? user.id"
                       class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 pl-6 transition hover:bg-slate-100"
                     >
                       <input
                         type="checkbox"
                         class="rounded border-slate-300 text-brand-500"
-                        :checked="selectedViewerIds.includes(String(user.id))"
-                        @change="toggleViewer(user.id)"
+                        :checked="selectedViewerIds.includes(String(user.userId ?? user.id))"
+                        @change="toggleViewer(user.userId ?? user.id)"
                       />
                       <div class="min-w-0 flex-1">
                         <p class="text-sm text-slate-700">
                           <span class="mr-1.5 text-xs text-slate-400">{{ user.employeeNo }}</span>
-                          {{ user.name }}
+                          {{ user.userName ?? user.name }}
                         </p>
-                        <p class="truncate text-xs text-slate-400">{{ user.email || '' }}</p>
+                        <p class="truncate text-xs text-slate-400">{{ user.userEmail ?? user.email ?? '' }}</p>
                       </div>
                       <span class="ml-auto shrink-0 text-xs text-slate-400">{{ positionNameById.get(String(user.positionId)) || '' }}</span>
                     </label>
