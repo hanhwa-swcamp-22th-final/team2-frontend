@@ -18,6 +18,11 @@ const props = defineProps({
   ports: { type: Array, default: () => [] },
   currencies: { type: Array, default: () => [] },
   paymentTerms: { type: Array, default: () => [] },
+  departments: { type: Array, default: () => [] },
+  teams: { type: Array, default: () => [] },
+  defaultDepartmentId: { type: [Number, String], default: null },
+  defaultTeamId: { type: [Number, String], default: null },
+  lockTeam: { type: Boolean, default: false },
   allClients: { type: Array, default: () => [] },
   saving: { type: Boolean, default: false },
 })
@@ -91,10 +96,30 @@ function getInitialForm() {
     paymentTermsId: null,
     currencyId: null,
     manager: '',
+    departmentId: null,
+    teamId: null,
     status: 'active',
     sealImage: null,
   }
 }
+
+const teamOptions = computed(() => {
+  const filtered = form.value.departmentId
+    ? props.teams.filter((t) => String(t.departmentId) === String(form.value.departmentId))
+    : props.teams
+  return filtered.map((t) => ({ label: t.teamName, value: t.teamId }))
+})
+
+const departmentOptions = computed(() =>
+  props.departments.map((d) => ({ label: d.departmentName ?? d.name, value: d.departmentId ?? d.id })),
+)
+
+watch(() => form.value.departmentId, (deptId) => {
+  const team = props.teams.find((t) => String(t.teamId) === String(form.value.teamId))
+  if (team && String(team.departmentId) !== String(deptId)) {
+    form.value.teamId = null
+  }
+})
 
 watch(
   () => props.open,
@@ -108,6 +133,9 @@ watch(
       const resolvedPortId = props.client.portId
         ?? props.ports.find((p) => p.portName === props.client.portName)?.id
         ?? null
+      const resolvedTeamId = props.client.teamId ?? null
+      const teamMatch = props.teams.find((t) => String(t.teamId) === String(resolvedTeamId))
+      const resolvedDeptId = teamMatch?.departmentId ?? props.client.departmentId ?? null
       form.value = {
         code: props.client.clientCode ?? '',
         name: props.client.clientName ?? '',
@@ -121,12 +149,17 @@ watch(
         paymentTermsId: props.client.paymentTermId ?? props.client.paymentTermsId ?? null,
         currencyId: props.client.currencyId ?? null,
         manager: props.client.clientManager ?? '',
+        departmentId: resolvedDeptId,
+        teamId: resolvedTeamId,
         status: props.client.clientStatus ?? 'active',
         sealImage: null,
       }
     } else if (isOpen && props.mode === 'create') {
       form.value = getInitialForm()
       form.value.code = generateNextCode()
+      // 작성자(현재 로그인 사용자) 팀으로 기본값 채움
+      if (props.defaultTeamId) form.value.teamId = props.defaultTeamId
+      if (props.defaultDepartmentId) form.value.departmentId = props.defaultDepartmentId
     }
   },
 )
@@ -203,6 +236,14 @@ function validate() {
     e.currencyId = '통화를 선택하세요.'
   }
 
+  if (!form.value.departmentId) {
+    e.departmentId = '담당 부서를 선택하세요.'
+  }
+
+  if (!form.value.teamId) {
+    e.teamId = '담당 팀을 선택하세요.'
+  }
+
   errors.value = e
   return Object.keys(e).length === 0
 }
@@ -223,6 +264,7 @@ function handleSave() {
     paymentTermId: form.value.paymentTermsId,
     currencyId: form.value.currencyId,
     clientManager: form.value.manager,
+    teamId: form.value.teamId,
   }
   emit('save', payload)
 }
@@ -314,6 +356,36 @@ function handleSave() {
           </FormField>
           <FormField label="상태">
             <BaseSelect v-model="form.status" :options="statusOptions" placeholder="상태를 선택하세요" />
+          </FormField>
+        </div>
+      </div>
+
+      <!-- 담당 조직 (작성자 팀 기본 — admin 만 변경 가능) -->
+      <div>
+        <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          담당 조직
+          <span v-if="lockTeam" class="ml-2 text-[11px] font-normal normal-case text-slate-400">
+            본인 소속 팀으로 자동 지정 (관리자만 변경 가능)
+          </span>
+        </h4>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <FormField label="담당 부서" required>
+            <BaseSelect
+              v-model="form.departmentId"
+              :options="departmentOptions"
+              :disabled="lockTeam"
+              placeholder="부서를 선택하세요"
+            />
+            <p v-if="errors.departmentId" class="mt-1 text-xs text-red-500">{{ errors.departmentId }}</p>
+          </FormField>
+          <FormField label="담당 팀" required>
+            <BaseSelect
+              v-model="form.teamId"
+              :options="teamOptions"
+              :disabled="lockTeam || !form.departmentId"
+              :placeholder="form.departmentId ? '팀을 선택하세요' : '부서를 먼저 선택하세요'"
+            />
+            <p v-if="errors.teamId" class="mt-1 text-xs text-red-500">{{ errors.teamId }}</p>
           </FormField>
         </div>
       </div>

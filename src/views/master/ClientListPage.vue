@@ -21,6 +21,7 @@ import {
   fetchClients,
   updateClient,
 } from '@/api/master'
+import { fetchDepartments, fetchTeams } from '@/api/auth'
 import { useMasterLookup } from '@/composables/useMasterLookup'
 import { useToast } from '@/composables/useToast'
 import { label, CLIENT_STATUS_LABEL } from '@/utils/enumLabels'
@@ -33,6 +34,8 @@ const { success, error } = useToast()
 
 const { countries, ports, currencies, paymentTerms, loadReferenceData, getCountryName, getPortName, getPaymentTermsLabel, getCurrencyLabel } = useMasterLookup()
 
+const departments = ref([])
+const teams = ref([])
 const clients = ref([])
 const loading = ref(false)
 const saving = ref(false)
@@ -162,11 +165,15 @@ const paginatedClients = computed(() => {
 async function loadData() {
   loading.value = true
   try {
-    const [clientsData] = await Promise.all([
+    const [clientsData, , deptsData, teamsData] = await Promise.all([
       fetchClients(),
       loadReferenceData(),
+      fetchDepartments(),
+      fetchTeams(),
     ])
     clients.value = clientsData
+    departments.value = deptsData ?? []
+    teams.value = teamsData ?? []
   } catch {
     error('데이터를 불러오는 중 오류가 발생했습니다.')
   } finally {
@@ -365,6 +372,11 @@ function goToDetail(row) {
       :ports="ports"
       :currencies="currencies"
       :payment-terms="paymentTerms"
+      :departments="departments"
+      :teams="teams"
+      :default-department-id="currentUser?.departmentId ?? null"
+      :default-team-id="currentUser?.teamId ?? null"
+      :lock-team="!isAdmin"
       :all-clients="clients"
       :saving="saving"
       @close="showFormModal = false"
