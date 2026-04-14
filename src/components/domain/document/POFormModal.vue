@@ -31,6 +31,7 @@ function createInitialForm() {
 }
 
 const form = ref(createInitialForm())
+const errors = ref({})
 const approverOptions = ref([...defaultApproverOptions])
 const isLinkedToPi = computed(() => Boolean(form.value.linkedPiId))
 const isDeliveryDateLocked = computed(() => isLinkedToPi.value && !form.value.deliveryDateOverride)
@@ -98,7 +99,18 @@ function clearLinkedPi() {
   form.value.deliveryDateOverride = false
 }
 
+function validate() {
+  const e = {}
+  if (!form.value.clientName?.trim()) e.clientName = '거래처를 선택해주세요.'
+  if (!form.value.deliveryDate) e.deliveryDate = '납기일을 입력해주세요.'
+  if (!form.value.currency?.trim()) e.currency = '통화가 지정되지 않았습니다.'
+  if (!form.value.approver?.trim()) e.approver = '결재자를 선택해주세요.'
+  errors.value = e
+  return Object.keys(e).length === 0
+}
+
 function handleSave() {
+  if (!validate()) return
   emit('save', { ...form.value })
 }
 
@@ -213,7 +225,8 @@ watch(
               <i class="fas fa-search text-xs" aria-hidden="true"></i>
             </button>
           </div>
-          <p v-if="isLinkedToPi" class="mt-1 text-xs text-slate-500">
+          <p v-if="errors.clientName" class="mt-1 text-xs text-red-500">{{ errors.clientName }}</p>
+          <p v-else-if="isLinkedToPi" class="mt-1 text-xs text-slate-500">
             연결된 PI의 거래처를 기준값으로 사용합니다.
           </p>
         </div>
@@ -226,6 +239,7 @@ watch(
             readonly
             class="w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-slate-500"
           >
+          <p v-if="errors.currency" class="mt-1 text-xs text-red-500">{{ errors.currency }}</p>
         </div>
       </div>
 
@@ -254,7 +268,8 @@ watch(
               isDeliveryDateLocked ? 'cursor-not-allowed bg-slate-100 text-slate-500' : '',
             ]"
           >
-          <p v-if="isLinkedToPi && form.sourceDeliveryDate" class="mt-1 text-xs text-slate-500">
+          <p v-if="errors.deliveryDate" class="mt-1 text-xs text-red-500">{{ errors.deliveryDate }}</p>
+          <p v-else-if="isLinkedToPi && form.sourceDeliveryDate" class="mt-1 text-xs text-slate-500">
             PI 기준 납기일: {{ form.sourceDeliveryDate }}
           </p>
         </div>
@@ -274,6 +289,7 @@ watch(
           :options="approverOptions"
           placeholder="결재자 선택"
         />
+        <p v-if="errors.approver" class="mt-1 text-xs text-red-500">{{ errors.approver }}</p>
       </div>
 
       <p class="text-xs text-gray-400">

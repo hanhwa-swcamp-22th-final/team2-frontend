@@ -101,13 +101,20 @@ watch(
   (isOpen) => {
     errors.value = {}
     if (isOpen && props.mode === 'edit' && props.client) {
+      // countryName/portName 기반 ID 역매핑 fallback
+      const resolvedCountryId = props.client.countryId
+        ?? props.countries.find((c) => c.countryName === props.client.countryName)?.countryId
+        ?? null
+      const resolvedPortId = props.client.portId
+        ?? props.ports.find((p) => p.portName === props.client.portName)?.id
+        ?? null
       form.value = {
         code: props.client.clientCode ?? '',
         name: props.client.clientName ?? '',
         nameKr: props.client.clientNameKr ?? '',
-        countryId: props.client.countryId ?? null,
+        countryId: resolvedCountryId,
         city: props.client.clientCity ?? '',
-        portId: props.client.portId ?? null,
+        portId: resolvedPortId,
         address: props.client.clientAddress ?? '',
         tel: props.client.clientTel ?? '',
         email: props.client.clientEmail ?? '',
@@ -144,15 +151,7 @@ watch(
 function validate() {
   const e = {}
 
-  if (!form.value.code?.trim()) {
-    e.code = '코드를 입력하세요.'
-  } else if (
-    props.allClients.some(
-      (c) => c.clientCode.toLowerCase() === form.value.code.trim().toLowerCase() && (c.clientId ?? c.id) !== (props.client?.clientId ?? props.client?.id),
-    )
-  ) {
-    e.code = '이미 사용 중인 코드입니다.'
-  }
+  // 코드는 백엔드 auto-generate (create 모드), 수정 모드는 disabled
 
   if (!form.value.name?.trim()) {
     e.name = '영문 거래처명을 입력하세요.'
@@ -195,7 +194,8 @@ function validate() {
 function handleSave() {
   if (!validate()) return
   const payload = {
-    clientCode: form.value.code,
+    // 생성 시 code는 백엔드 auto-generate, 수정 시만 기존 code 유지
+    ...(props.mode === 'edit' ? { clientCode: form.value.code } : {}),
     clientName: form.value.name,
     clientNameKr: form.value.nameKr,
     countryId: form.value.countryId,
@@ -215,7 +215,7 @@ function handleSave() {
 <template>
   <BaseModal
     :open="open"
-    :title="mode === 'create' ? '거래처 등록' : `거래처 수정 – ${client?.name ?? ''}`"
+    :title="mode === 'create' ? '거래처 등록' : `거래처 수정 – ${client?.clientName ?? client?.name ?? ''}`"
     width="max-w-3xl"
     @close="emit('close')"
   >
@@ -224,9 +224,8 @@ function handleSave() {
       <div>
         <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</h4>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormField label="코드" required>
-            <BaseTextField v-model="form.code" placeholder="예) CLI011" :disabled="mode === 'edit'" />
-            <p v-if="errors.code" class="mt-1 text-xs text-red-500">{{ errors.code }}</p>
+          <FormField v-if="mode === 'edit'" label="코드">
+            <BaseTextField v-model="form.code" disabled />
           </FormField>
           <FormField label="영문 거래처명" required>
             <BaseTextField v-model="form.name" placeholder="영문 거래처명을 입력하세요" />
