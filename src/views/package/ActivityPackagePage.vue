@@ -667,6 +667,7 @@ async function savePackage() {
     <SearchModal
       :open="isPoModalOpen"
       title="수주건 (PO) 검색"
+      row-key="poId"
       :columns="poColumns"
       :rows="filteredPoList"
       :search-keyword="poSearchKeyword"

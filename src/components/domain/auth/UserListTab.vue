@@ -52,10 +52,17 @@ async function loadData() {
     ])
     users.value = usersData
     positions.value = positionsData
-    departments.value = departmentsData
+    // 부서 중복 제거 (JPA 연관관계 조인 시 동일 부서 중복 방지)
+    const seenDeptIds = new Set()
+    departments.value = (departmentsData ?? []).filter((d) => {
+      const id = String(d.departmentId ?? d.id ?? '')
+      if (!id || seenDeptIds.has(id)) return false
+      seenDeptIds.add(id)
+      return true
+    })
     // 첫 번째 부서 펼치기
-    if (departmentsData.length > 0) {
-      expandedDepts.value = new Set([departmentsData[0].departmentId])
+    if (departments.value.length > 0) {
+      expandedDepts.value = new Set([departments.value[0].departmentId ?? departments.value[0].id])
     }
   } catch (e) {
     error('데이터를 불러오는 중 오류가 발생했습니다.')

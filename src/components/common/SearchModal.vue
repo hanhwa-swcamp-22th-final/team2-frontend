@@ -32,7 +32,15 @@ const props = defineProps({
     type: String,
     default: 'max-w-6xl',
   },
+  rowKey: {
+    type: String,
+    default: 'id',
+  },
 })
+
+function getRowKey(row) {
+  return row[props.rowKey] ?? row.id ?? JSON.stringify(row)
+}
 
 const emit = defineEmits(['close', 'update:searchKeyword', 'select'])
 
@@ -113,7 +121,7 @@ function getCellValue(row, column) {
             <tr
               v-for="row in rows"
               v-else
-              :key="row.id ?? JSON.stringify(row)"
+              :key="getRowKey(row)"
               class="cursor-pointer transition hover:bg-slate-50"
               @click="$emit('select', row)"
             >
