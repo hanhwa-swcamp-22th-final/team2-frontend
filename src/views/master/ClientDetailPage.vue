@@ -53,8 +53,8 @@ const showBuyerDeleteModal = ref(false)
 const buyerToDelete = ref(null)
 
 const positionOptions = [
-  { label: 'Team Leader', value: 'Team Leader' },
-  { label: 'Team Member', value: 'Team Member' },
+  { label: '팀장', value: '팀장' },
+  { label: '팀원', value: '팀원' },
 ]
 
 function getEmptyBuyerForm() {
