@@ -343,7 +343,7 @@ function goToDetail(row) {
       </template>
 
       <template #cell-port="{ row }">
-        {{ row.portName }}
+        {{ row.portName || '미등록' }}
       </template>
 
       <template #cell-paymentTerms="{ row }">

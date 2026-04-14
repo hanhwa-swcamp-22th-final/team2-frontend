@@ -58,8 +58,8 @@ export function buildApprovalRequestRows({
 }) {
   return [
     { label: '요청 유형', value: requestTypeLabel },
-    { label: '결재자', value: approver || '-' },
-    { label: '요청자', value: requesterName || '-' },
+    { label: '결재자', value: approver || '미지정' },
+    { label: '요청자', value: requesterName || '미지정' },
     { label: '문서 상태', value: documentStatus || '-' },
     { label: '요청 상태', value: requestStatus || '-' },
     { label: '처리 방식', value: applyPolicy || '-', fullWidth: true },
@@ -76,8 +76,8 @@ export function buildApprovalInfoRows(document) {
     { label: '문서 상태', value: document.status || '-' },
     { label: '결재 상태', value: document.approvalStatus || '-' },
     { label: '요청 상태', value: document.requestStatus || '-' },
-    { label: '결재자', value: document.approver || '-' },
-    { label: '요청자', value: document.approvalRequestedBy || '-' },
+    { label: '결재자', value: document.approver || '미지정' },
+    { label: '요청자', value: document.approvalRequestedBy || '미지정' },
     { label: '요청 시각', value: document.approvalRequestedAt || '-' },
   ]
 }

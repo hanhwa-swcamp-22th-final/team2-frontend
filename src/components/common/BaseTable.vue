@@ -242,7 +242,7 @@ onBeforeUnmount(() => {
             v-for="column in normalizedColumns"
             :key="column.key"
             scope="col"
-            class="relative select-none border-b border-r border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 last:border-r-0"
+            class="relative select-none whitespace-nowrap border-b border-r border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 last:border-r-0"
             :class="[getHeaderAlignmentClass(column.align), column.sortable !== false ? 'cursor-pointer hover:bg-slate-100 transition-colors' : '']"
             :style="getColumnStyle(column)"
             @click="toggleSort(column)"
