@@ -280,7 +280,7 @@ async function loadReferenceData() {
       email: client.email ?? '',
     }))
 
-    currencyOptions.value = currenciesData.map((currency) => currency.code).filter(Boolean)
+    currencyOptions.value = currenciesData.map((currency) => currency.currencyCode ?? currency.code).filter(Boolean)
     productCatalog.value = itemsData
       .filter((item) => item.itemStatus === 'active')
       .map((item) => ({
