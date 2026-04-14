@@ -2,9 +2,11 @@
 import { computed, onMounted, ref } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
+import BaseTable from '@/components/common/BaseTable.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import SearchInput from '@/components/common/SearchInput.vue'
-import DepartmentAccordion from '@/components/domain/auth/DepartmentAccordion.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
+import TableActions from '@/components/common/TableActions.vue'
 import UserFormModal from '@/components/domain/auth/UserFormModal.vue'
 import { useToast } from '@/composables/useToast'
 import {
@@ -12,6 +14,7 @@ import {
   createUser,
   fetchDepartments,
   fetchPositions,
+  fetchTeams,
   fetchUsers,
   updateUser,
 } from '@/api/auth'
@@ -19,40 +22,23 @@ import { label, USER_STATUS_LABEL } from '@/utils/enumLabels'
 
 const { success, error } = useToast()
 
-// 데이터
 const users = ref([])
 const positions = ref([])
 const departments = ref([])
+const teams = ref([])
 const loading = ref(false)
-
-// 사번 자동 생성 (YYMMDD + 2자리 순번)
-function generateEmployeeNo(existingUsers) {
-  const now = new Date()
-  const yy = String(now.getFullYear()).slice(2)
-  const mm = String(now.getMonth() + 1).padStart(2, '0')
-  const dd = String(now.getDate()).padStart(2, '0')
-  const prefix = `${yy}${mm}${dd}`
-  const todayNos = existingUsers
-    .map((u) => u.employeeNo)
-    .filter((no) => no && no.startsWith(prefix))
-  const maxSeq = todayNos.reduce((max, no) => {
-    const seq = parseInt(no.slice(6), 10)
-    return isNaN(seq) ? max : Math.max(max, seq)
-  }, 0)
-  return `${prefix}${String(maxSeq + 1).padStart(2, '0')}`
-}
 
 async function loadData() {
   loading.value = true
   try {
-    const [usersData, positionsData, departmentsData] = await Promise.all([
+    const [usersData, positionsData, departmentsData, teamsData] = await Promise.all([
       fetchUsers(),
       fetchPositions(),
       fetchDepartments(),
+      fetchTeams(),
     ])
     users.value = usersData
     positions.value = positionsData
-    // 부서 중복 제거 (JPA 연관관계 조인 시 동일 부서 중복 방지)
     const seenDeptIds = new Set()
     departments.value = (departmentsData ?? []).filter((d) => {
       const id = String(d.departmentId ?? d.id ?? '')
@@ -60,7 +46,7 @@ async function loadData() {
       seenDeptIds.add(id)
       return true
     })
-    // 첫 번째 부서 펼치기
+    teams.value = teamsData ?? []
     if (departments.value.length > 0) {
       expandedDepts.value = new Set([departments.value[0].departmentId ?? departments.value[0].id])
     }
@@ -77,28 +63,24 @@ const positionMap = computed(() =>
   Object.fromEntries(positions.value.map((p) => [String(p.positionId ?? p.id), p.positionName ?? p.name])),
 )
 
-// 검색 / 필터
 const searchKeyword = ref('')
 const departmentFilter = ref('')
 
-// 아코디언 상태
 const expandedDepts = ref(new Set())
+const expandedTeams = ref(new Set())
 
-// 모달 상태
 const showFormModal = ref(false)
 const formMode = ref('create')
 const selectedUser = ref(null)
 const saving = ref(false)
 
-// 삭제 확인 모달 상태
 const showDeleteModal = ref(false)
 const userToDelete = ref(null)
 const deleting = ref(false)
 
-// 부서별 그룹핑 + 필터
-const groupedByDepartment = computed(() => {
+// department → team → users 트리 구성
+const tree = computed(() => {
   let filtered = users.value
-
   if (searchKeyword.value) {
     const kw = searchKeyword.value.toLowerCase()
     filtered = filtered.filter(
@@ -108,75 +90,104 @@ const groupedByDepartment = computed(() => {
         (u.userEmail && u.userEmail.toLowerCase().includes(kw)),
     )
   }
-
   if (departmentFilter.value) {
-    filtered = filtered.filter((u) => String(u.departmentName) === String(departmentFilter.value))
+    filtered = filtered.filter((u) => String(u.departmentId) === String(departmentFilter.value))
   }
 
   return departments.value
     .map((dept) => {
-      const deptName = dept.departmentName ?? dept.name
       const deptId = dept.departmentId ?? dept.id
-      return {
-        department: { id: deptId, name: deptName },
-        users: filtered
-          .filter((u) => String(u.departmentName) === String(deptName))
-          .map((u) => ({ ...u, department: deptName })),
+      const deptName = dept.departmentName ?? dept.name
+      const deptTeams = teams.value.filter((t) => String(t.departmentId) === String(deptId))
+      const teamGroups = deptTeams.map((t) => ({
+        teamId: t.teamId,
+        teamName: t.teamName,
+        users: filtered.filter((u) => String(u.teamId) === String(t.teamId)),
+      }))
+      // 팀 없이 소속된 사용자 ('미배정')
+      const unassigned = filtered.filter(
+        (u) => String(u.departmentId) === String(deptId) && !u.teamId,
+      )
+      if (unassigned.length > 0) {
+        teamGroups.push({ teamId: `__unassigned_${deptId}`, teamName: '(팀 미배정)', users: unassigned })
       }
+      const total = teamGroups.reduce((s, g) => s + g.users.length, 0)
+      return { deptId, deptName, teamGroups, total }
     })
-    .filter((g) => g.users.length > 0)
+    .filter((g) => g.total > 0)
 })
 
-const totalTeams = computed(() => groupedByDepartment.value.length)
-const totalUsers = computed(() =>
-  groupedByDepartment.value.reduce((sum, g) => sum + g.users.length, 0),
+const totalTeams = computed(() =>
+  tree.value.reduce((s, d) => s + d.teamGroups.filter((t) => t.users.length > 0).length, 0),
 )
+const totalUsers = computed(() => tree.value.reduce((s, d) => s + d.total, 0))
 const activeUsers = computed(() =>
-  groupedByDepartment.value.reduce(
-    (sum, g) => sum + g.users.filter((u) => u.userStatus === 'active').length,
-    0,
-  ),
+  tree.value.reduce(
+    (s, d) => s + d.teamGroups.reduce(
+      (s2, t) => s2 + t.users.filter((u) => u.userStatus === 'active').length, 0), 0),
 )
 
 const departmentFilterOptions = computed(() => [
   { label: '전체 부서', value: '' },
-  ...departments.value.map((d) => ({ label: d.departmentName ?? d.name, value: d.departmentName ?? d.name })),
+  ...departments.value.map((d) => ({
+    label: d.departmentName ?? d.name,
+    value: String(d.departmentId ?? d.id),
+  })),
 ])
 
-function toggleDepartment(deptId) {
+function toggleDept(deptId) {
   const next = new Set(expandedDepts.value)
   if (next.has(deptId)) next.delete(deptId)
   else next.add(deptId)
   expandedDepts.value = next
 }
 
+function toggleTeam(teamId) {
+  const next = new Set(expandedTeams.value)
+  if (next.has(teamId)) next.delete(teamId)
+  else next.add(teamId)
+  expandedTeams.value = next
+}
+
 const allVisibleExpanded = computed(() => {
-  const visibleDeptIds = groupedByDepartment.value.map(g => g.department.id)
-  return visibleDeptIds.length > 0 && visibleDeptIds.every(id => expandedDepts.value.has(id))
+  const visibleDeptIds = tree.value.map((g) => g.deptId)
+  return visibleDeptIds.length > 0 && visibleDeptIds.every((id) => expandedDepts.value.has(id))
 })
 
 function toggleAll() {
-  const visibleDeptIds = groupedByDepartment.value.map(g => g.department.id)
-  const allExpanded = visibleDeptIds.length > 0 && visibleDeptIds.every(id => expandedDepts.value.has(id))
+  const visibleDeptIds = tree.value.map((g) => g.deptId)
+  const visibleTeamIds = tree.value.flatMap((g) => g.teamGroups.map((t) => t.teamId))
+  const allExpanded = allVisibleExpanded.value
   if (allExpanded) {
     expandedDepts.value = new Set()
+    expandedTeams.value = new Set()
   } else {
     expandedDepts.value = new Set([...expandedDepts.value, ...visibleDeptIds])
+    expandedTeams.value = new Set([...expandedTeams.value, ...visibleTeamIds])
   }
 }
+
+const userColumns = [
+  { key: 'employeeNo', label: '사번', width: '120px' },
+  { key: 'userName', label: '이름', width: '200px' },
+  { key: 'userEmail', label: '이메일' },
+  { key: 'status', label: '상태', width: '100px', align: 'center' },
+  { key: 'actions', label: '', width: '140px', align: 'center', sortable: false },
+]
+
+const avatarColors = ['bg-blue-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500', 'bg-rose-500', 'bg-teal-500']
+function getAvatarColor(index) { return avatarColors[index % avatarColors.length] }
 
 function openEditModal(user) {
   selectedUser.value = user
   formMode.value = 'edit'
   showFormModal.value = true
 }
-
 function openCreateModal() {
   selectedUser.value = null
   formMode.value = 'create'
   showFormModal.value = true
 }
-
 function openDeleteModal(user) {
   userToDelete.value = user
   showDeleteModal.value = true
@@ -199,7 +210,7 @@ async function handleSave(formData) {
       const updateData = {
         name: formData.name,
         email: formData.email,
-        departmentId: formData.transferDepartmentId ? Number(formData.transferDepartmentId) : (original.departmentId ? Number(original.departmentId) : undefined),
+        teamId: formData.teamId ? Number(formData.teamId) : (original.teamId ? Number(original.teamId) : undefined),
         positionId: formData.positionId ? Number(formData.positionId) : undefined,
       }
       await updateUser(original.userId, updateData)
@@ -248,49 +259,112 @@ defineExpose({ openCreateModal })
       </BaseButton>
     </div>
 
-    <!-- 로딩 -->
     <div v-if="loading" class="py-12 text-center text-sm text-slate-400">
       불러오는 중...
     </div>
 
-    <!-- 부서별 아코디언 -->
+    <!-- 부서 → 팀 → 사용자 트리 -->
     <div v-else class="space-y-3">
-      <DepartmentAccordion
-        v-for="group in groupedByDepartment"
-        :key="group.department.id"
-        :department="group.department.name"
-        :users="group.users"
-        :expanded="expandedDepts.has(group.department.id)"
-        :position-map="positionMap"
-        @toggle="toggleDepartment(group.department.id)"
-        @edit-user="openEditModal"
-        @delete-user="openDeleteModal"
-      />
-      <div v-if="groupedByDepartment.length === 0" class="py-12 text-center text-sm text-slate-400">
+      <div
+        v-for="dept in tree"
+        :key="dept.deptId"
+        class="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+      >
+        <button
+          type="button"
+          class="flex w-full items-center gap-3 px-5 py-4 text-left transition hover:bg-slate-50"
+          @click="toggleDept(dept.deptId)"
+        >
+          <svg
+            class="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200"
+            :class="{ 'rotate-90': expandedDepts.has(dept.deptId) }"
+            viewBox="0 0 20 20" fill="currentColor"
+          >
+            <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 .02-1.06L11.168 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z" clip-rule="evenodd"/>
+          </svg>
+          <svg class="h-5 w-5 shrink-0 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M7 3.5A1.5 1.5 0 0 1 8.5 2h3A1.5 1.5 0 0 1 13 3.5H7ZM3 6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1H3V6ZM2 9.5h16l-.663 7.283A2 2 0 0 1 15.345 18.5H4.655a2 2 0 0 1-1.992-1.717L2 9.5Z"/>
+          </svg>
+          <span class="font-bold text-ink">{{ dept.deptName }}</span>
+          <span class="ml-auto text-sm text-slate-500">{{ dept.total }}명</span>
+        </button>
+
+        <div v-show="expandedDepts.has(dept.deptId)" class="border-t border-slate-100">
+          <div
+            v-for="team in dept.teamGroups"
+            :key="team.teamId"
+            class="border-b border-slate-100 last:border-b-0"
+          >
+            <button
+              type="button"
+              class="flex w-full items-center gap-3 bg-slate-50 px-8 py-3 text-left text-sm transition hover:bg-slate-100"
+              @click="toggleTeam(team.teamId)"
+            >
+              <svg
+                class="h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform duration-200"
+                :class="{ 'rotate-90': expandedTeams.has(team.teamId) }"
+                viewBox="0 0 20 20" fill="currentColor"
+              >
+                <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 .02-1.06L11.168 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z" clip-rule="evenodd"/>
+              </svg>
+              <span class="font-semibold text-slate-700">{{ team.teamName }}</span>
+              <span class="ml-auto text-xs text-slate-500">{{ team.users.length }}명</span>
+            </button>
+            <div v-show="expandedTeams.has(team.teamId)" class="bg-white px-2">
+              <BaseTable :columns="userColumns" :rows="team.users" row-key="userId" empty-text="사용자가 없습니다.">
+                <template #cell-userName="{ row, value }">
+                  <div class="flex items-center gap-2.5">
+                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" :class="getAvatarColor(row.userId)">
+                      {{ value?.charAt(0) }}
+                    </span>
+                    <div>
+                      <p class="font-medium text-ink">{{ value }}</p>
+                      <p class="text-xs text-slate-400">{{ row.positionName || positionMap[row.positionId] || '' }}</p>
+                    </div>
+                  </div>
+                </template>
+                <template #cell-status="{ row }">
+                  <StatusBadge
+                    :value="label(USER_STATUS_LABEL, row.userStatus)"
+                    :variant="row.userStatus === 'active' ? 'active' : 'inactive'"
+                  />
+                </template>
+                <template #cell-actions="{ row }">
+                  <TableActions
+                    edit-label="수정"
+                    delete-label="퇴직"
+                    @edit="openEditModal(row)"
+                    @delete="openDeleteModal(row)"
+                  />
+                </template>
+              </BaseTable>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-if="tree.length === 0" class="py-12 text-center text-sm text-slate-400">
         검색 결과가 없습니다.
       </div>
     </div>
 
-    <!-- 하단 요약 -->
     <div class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
       <span>총 {{ totalTeams }}개 팀 {{ totalUsers }}명</span>
       <span>{{ activeUsers }}명 재직</span>
     </div>
 
-    <!-- 사용자 등록/수정 모달 -->
     <UserFormModal
       :open="showFormModal"
       :mode="formMode"
       :user="selectedUser"
       :positions="positions"
       :departments="departments"
+      :teams="teams"
       :all-users="users"
       :saving="saving"
       @close="showFormModal = false"
       @save="handleSave"
     />
 
-    <!-- 삭제 확인 모달 -->
     <ConfirmModal
       :open="showDeleteModal"
       title="사용자 퇴직 처리"
