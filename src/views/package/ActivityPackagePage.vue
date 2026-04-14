@@ -436,18 +436,6 @@ async function savePackage() {
               />
             </div>
 
-            <!-- 활동기록 키워드 필터 -->
-            <div class="space-y-1.5">
-              <p class="text-sm font-semibold text-slate-700">
-                활동기록 키워드 필터
-                <span class="ml-1 text-xs font-normal text-slate-400">(오른쪽 목록을 제목/내용으로 좁혀서 보기)</span>
-              </p>
-              <BaseTextField
-                v-model="keyword"
-                placeholder="활동 제목 또는 내용 일부"
-              />
-            </div>
-
             <!-- 수주건 (PO) -->
             <div class="space-y-1.5">
               <p class="text-sm font-semibold text-slate-700">
@@ -597,6 +585,15 @@ async function savePackage() {
       <!-- ── 우측: 활동기록 목록 ─────────────────────────────── -->
       <div>
         <BaseCard title="활동기록 목록">
+          <!-- 키워드 필터 -->
+          <div class="mb-3 space-y-1.5">
+            <p class="text-xs font-semibold text-slate-600">키워드 필터</p>
+            <BaseTextField
+              v-model="keyword"
+              placeholder="활동 제목 또는 내용 일부"
+            />
+          </div>
+
           <!-- 활동기록 기간 필터 -->
           <div class="mb-3 space-y-1.5">
             <p class="text-xs font-semibold text-slate-600">기간 필터</p>
