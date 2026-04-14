@@ -34,6 +34,6 @@ export async function fetchPOsByClient(clientId) {
 }
 
 export async function fetchAllActivityPOs() {
-  const { data } = await api.get('/purchase-orders')
+  const { data } = await api.get('/purchase-orders', { params: { size: 1000 } })
   return unwrapCollection(data)
 }

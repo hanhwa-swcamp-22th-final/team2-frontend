@@ -605,7 +605,7 @@ async function confirmPackageDelete() {
     </BaseCard>
 
     <!-- 공유 활동기록 패키지 (생산/출하: 요약카드 바로 뒤에 표시됨, 영업: 결재 뒤에 표시) -->
-    <BaseCard v-if="visiblePackages.length > 0 && !isProductionUser && !isShippingUser">
+    <BaseCard v-if="!isProductionUser && !isShippingUser">
       <template #title>
         <h3 class="flex items-center gap-2 font-bold text-slate-800">
           <i class="fas fa-cube text-brand-500" />
@@ -617,7 +617,10 @@ async function confirmPackageDelete() {
           전체보기 <i class="fas fa-chevron-right ml-0.5 text-[9px]" />
         </RouterLink>
       </template>
-      <div class="space-y-2">
+      <div v-if="visiblePackages.length === 0" class="py-6 text-center text-sm text-slate-400">
+        공유된 활동기록 패키지가 없습니다.
+      </div>
+      <div v-else class="space-y-2">
         <div
           v-for="pkg in visiblePackages"
           :key="pkg.id"
@@ -628,8 +631,12 @@ async function confirmPackageDelete() {
             <i class="fas fa-cube" />
           </div>
           <div class="min-w-0 flex-1">
-            <div class="truncate font-medium text-slate-800 transition group-hover:text-brand-600">{{ pkg.title }}</div>
-            <div class="truncate text-xs text-slate-400 sm:whitespace-normal">{{ pkg.creatorName }} · {{ pkg.createdAt }}</div>
+            <div class="truncate font-medium text-slate-800 transition group-hover:text-brand-600">
+              {{ pkg.packageTitle ?? pkg.title ?? '-' }}
+            </div>
+            <div class="truncate text-xs text-slate-400 sm:whitespace-normal">
+              {{ pkg.creatorName ?? '-' }} · {{ pkg.createdAt ?? '-' }}
+            </div>
           </div>
           <i class="fas fa-chevron-right text-xs text-slate-300 self-center" />
         </div>
