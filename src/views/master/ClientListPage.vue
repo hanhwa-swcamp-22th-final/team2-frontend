@@ -81,14 +81,18 @@ const columns = [
 const enrichedClients = computed(() =>
   clients.value.map((c) => ({
     ...c,
+    countryName: c.countryName ?? getCountryName(c.countryId),
     portName: c.portName ?? getPortName(c.portId),
     paymentTermsCode: getPaymentTermsLabel(c.paymentTermsId),
     currencyCode: getCurrencyLabel(c.currencyId),
   })),
 )
 
+// 전체 countries 마스터에서 국가 옵션 (거래처에 없는 국가도 선택 가능)
 const countryOptions = computed(() => {
-  const countrySet = [...new Set(enrichedClients.value.map((c) => c.countryName).filter(Boolean))]
+  const fromMaster = countries.value.map((c) => c.countryName).filter(Boolean)
+  const fromClients = enrichedClients.value.map((c) => c.countryName).filter(Boolean)
+  const countrySet = [...new Set([...fromMaster, ...fromClients])]
   return [{ label: '전체', value: '' }, ...countrySet.map((name) => ({ label: name, value: name }))]
 })
 
@@ -193,10 +197,16 @@ async function handleDelete() {
   if (!clientToDelete.value || deleting.value) return
   deleting.value = true
   try {
-    await changeClientStatus(clientToDelete.value.clientId, 'inactive')
+    const id = clientToDelete.value.clientId ?? clientToDelete.value.id
+    if (!id) {
+      error('거래처 ID가 없습니다.')
+      return
+    }
+    await changeClientStatus(id, 'inactive')
     success(`${clientToDelete.value.clientName} 거래처가 비활성화되었습니다.`)
     await loadData()
-  } catch {
+  } catch (e) {
+    console.error('거래처 삭제 실패', e)
     error('삭제 중 오류가 발생했습니다.')
   } finally {
     showConfirmModal.value = false

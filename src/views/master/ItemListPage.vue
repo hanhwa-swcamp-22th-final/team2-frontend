@@ -49,8 +49,10 @@ const statusOptions = [
   { label: '비활성', value: 'inactive' },
 ]
 
+const DEFAULT_UNITS = ['EA', 'KG', 'MT', 'SET']
 const unitOptions = computed(() => {
-  const units = [...new Set(items.value.map((i) => i.itemUnit).filter(Boolean))]
+  const fromItems = items.value.map((i) => i.itemUnit).filter(Boolean)
+  const units = [...new Set([...DEFAULT_UNITS, ...fromItems])]
   return [{ label: '전체', value: '' }, ...units.map((u) => ({ label: u, value: u }))]
 })
 
@@ -75,8 +77,10 @@ const selectedItem = ref(null)
 const showConfirmModal = ref(false)
 const itemToDelete = ref(null)
 
+const DEFAULT_CATEGORIES = ['Steel', 'Pipe', 'Oil', 'Machinery']
 const categoryOptions = computed(() => {
-  const cats = [...new Set(items.value.map((i) => i.itemCategory).filter(Boolean))]
+  const fromItems = items.value.map((i) => i.itemCategory).filter(Boolean)
+  const cats = [...new Set([...DEFAULT_CATEGORIES, ...fromItems])]
   return [{ label: '전체', value: '' }, ...cats.map((c) => ({ label: c, value: c }))]
 })
 
