@@ -261,8 +261,9 @@ function handleSave() {
       <div>
         <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">연락처</h4>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormField label="담당자">
-            <BaseTextField v-model="form.manager" placeholder="담당자명을 입력하세요" />
+          <FormField label="거래처 담당자 (바이어)">
+            <BaseTextField v-model="form.manager" placeholder="거래처 측 바이어 이름 (예: Mr. Ahmad Razak)" />
+            <p class="mt-1 text-xs text-slate-400">거래처 내 주 연락 담당자(바이어). 추가 바이어는 바이어 관리에서 등록합니다.</p>
           </FormField>
           <FormField label="TEL" required>
             <BaseTextField

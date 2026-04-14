@@ -73,7 +73,7 @@ const columns = [
   { key: 'port', label: '도착항', width: '120px' },
   { key: 'paymentTerms', label: '결제조건', width: '100px', align: 'center' },
   { key: 'currency', label: '통화', width: '80px', align: 'center' },
-  { key: 'clientManager', label: '담당자', width: '120px' },
+  { key: 'clientManager', label: '거래처 담당자', width: '140px' },
   { key: 'clientStatus', label: '상태', width: '80px', align: 'center' },
   { key: 'actions', label: '', width: '120px', align: 'center', sortable: false },
 ]
