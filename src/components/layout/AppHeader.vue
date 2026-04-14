@@ -70,6 +70,12 @@ const userRole = computed(() => {
 const userEmployeeNo = computed(() => loggedInUser.value?.employeeNo || '-')
 const userEmail = computed(() => loggedInUser.value?.userEmail ?? loggedInUser.value?.email ?? '-')
 const userDepartment = computed(() => loggedInUser.value?.departmentName || userRole.value)
+const userTeam = computed(() => loggedInUser.value?.teamName || '')
+const userAffiliation = computed(() => {
+  const team = userTeam.value
+  const role = userRole.value
+  return team ? `${team} · ${role}` : role
+})
 
 const isProfileOpen = ref(false)
 const isProfileEditOpen = ref(false)
@@ -189,7 +195,7 @@ onBeforeUnmount(() => {
           <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand text-[11px] font-semibold text-white">{{ userInitial }}</div>
           <div>
             <div class="text-[12px] font-semibold text-[#32363A]">{{ userName }}</div>
-            <div class="text-[10px] text-slate-400">{{ userRole }}</div>
+            <div class="text-[10px] text-slate-400">{{ userAffiliation }}</div>
           </div>
           <i class="fas fa-chevron-down text-[9px] text-slate-300" />
         </div>
@@ -204,7 +210,7 @@ onBeforeUnmount(() => {
               <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand text-sm font-semibold text-white">{{ userInitial }}</div>
               <div class="min-w-0 flex-1">
                 <div class="truncate text-sm font-semibold text-slate-800">{{ userName }}</div>
-                <div class="truncate text-xs text-slate-400">{{ userRole }}</div>
+                <div class="truncate text-xs text-slate-400">{{ userAffiliation }}</div>
               </div>
             </div>
           </div>

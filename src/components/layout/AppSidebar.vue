@@ -103,12 +103,6 @@ onMounted(async () => {
       </section>
     </nav>
 
-    <div class="border-t border-slate-100 px-4 py-3">
-      <div class="flex items-center gap-2 text-xs font-medium text-slate-400">
-        <span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-        운영 준비 완료
-      </div>
-    </div>
   </aside>
 
   <!-- 데스크톱: 토글 핸들 (aside 바깥, overflow-hidden에 잘리지 않도록) -->
@@ -190,12 +184,5 @@ onMounted(async () => {
       </section>
     </nav>
 
-    <!-- 하단 상태 -->
-    <div class="border-t border-slate-100 py-3" :class="uiStore.sidebarOpen ? 'px-4' : 'px-0'">
-      <div class="flex items-center gap-2 text-xs font-medium text-slate-400" :class="{ 'justify-center': !uiStore.sidebarOpen }">
-        <span class="inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-400"></span>
-        <span v-if="uiStore.sidebarOpen">운영 준비 완료</span>
-      </div>
-    </div>
   </aside>
 </template>
