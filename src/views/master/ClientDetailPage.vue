@@ -3,11 +3,13 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
+import BaseModal from '@/components/common/BaseModal.vue'
+import BaseSelect from '@/components/common/BaseSelect.vue'
+import BaseTextField from '@/components/common/BaseTextField.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
-import ClientBuyerCard from '@/components/domain/master/ClientBuyerCard.vue'
+import FormField from '@/components/common/FormField.vue'
 import ClientFormModal from '@/components/domain/master/ClientFormModal.vue'
-import DocumentLinkButton from '@/components/domain/master/DocumentLinkButton.vue'
 import { useAuthStore } from '@/stores/auth'
 import {
   changeClientStatus,
@@ -16,8 +18,10 @@ import {
   fetchClients,
   updateClient,
 } from '@/api/master'
+import { createBuyer, updateBuyer, deleteBuyer } from '@/api/contacts'
 import { useMasterLookup } from '@/composables/useMasterLookup'
 import { useToast } from '@/composables/useToast'
+import { isValidEmail, isValidTel } from '@/utils/validators'
 import { label, CLIENT_STATUS_LABEL } from '@/utils/enumLabels'
 
 const route = useRoute()
@@ -37,7 +41,25 @@ const saving = ref(false)
 const showFormModal = ref(false)
 const showConfirmModal = ref(false)
 
+// 바이어
 const buyers = ref([])
+const showBuyerModal = ref(false)
+const buyerMode = ref('create')
+const editingBuyerId = ref(null)
+const buyerForm = ref(getEmptyBuyerForm())
+const buyerErrors = ref({})
+const buyerSaving = ref(false)
+const showBuyerDeleteModal = ref(false)
+const buyerToDelete = ref(null)
+
+const positionOptions = [
+  { label: '팀장', value: '팀장' },
+  { label: '팀원', value: '팀원' },
+]
+
+function getEmptyBuyerForm() {
+  return { name: '', position: '', email: '', tel: '' }
+}
 
 const infoGroups = computed(() => {
   if (!client.value) return []
@@ -61,7 +83,7 @@ const infoGroups = computed(() => {
     {
       title: '연락처',
       fields: [
-        { label: '담당자', value: client.value.clientManager },
+        { label: '거래처 담당자(바이어)', value: client.value.clientManager },
         { label: 'TEL', value: client.value.clientTel },
         { label: 'Email', value: client.value.clientEmail },
       ],
@@ -99,7 +121,6 @@ async function loadData() {
     }
     client.value = clientData
 
-    // 영업 사용자가 타부서 거래처에 접근 시 리다이렉트
     if (!isAdmin.value && currentUser.value?.role === 'sales' &&
         clientData.departmentId !== Number(currentUser.value?.departmentId)) {
       error('접근 권한이 없는 거래처입니다.')
@@ -108,16 +129,19 @@ async function loadData() {
     }
 
     allClients.value = clientsData
-    buyers.value = buyersData.map((b) => ({
-      name: b.buyerName,
-      position: b.buyerPosition,
-      email: b.buyerEmail,
-      phone: b.buyerTel,
-    }))
+    buyers.value = buyersData
   } catch {
     error('데이터를 불러오는 중 오류가 발생했습니다.')
   } finally {
     loading.value = false
+  }
+}
+
+async function reloadBuyers() {
+  try {
+    buyers.value = await fetchBuyersByClient(route.params.id)
+  } catch {
+    error('바이어 목록을 다시 불러오지 못했습니다.')
   }
 }
 
@@ -160,11 +184,92 @@ async function handleDelete() {
   }
 }
 
+// ── 바이어 CRUD ─────────────────────────────────────────────
+function openBuyerCreate() {
+  buyerMode.value = 'create'
+  editingBuyerId.value = null
+  buyerForm.value = getEmptyBuyerForm()
+  buyerErrors.value = {}
+  showBuyerModal.value = true
+}
+
+function openBuyerEdit(buyer) {
+  buyerMode.value = 'edit'
+  editingBuyerId.value = buyer.id ?? buyer.buyerId
+  buyerForm.value = {
+    name: buyer.buyerName ?? '',
+    position: buyer.buyerPosition ?? '',
+    email: buyer.buyerEmail ?? '',
+    tel: buyer.buyerTel ?? '',
+  }
+  buyerErrors.value = {}
+  showBuyerModal.value = true
+}
+
+function validateBuyerForm() {
+  const e = {}
+  if (!buyerForm.value.name.trim()) e.name = '이름을 입력하세요.'
+  if (!buyerForm.value.email.trim()) {
+    e.email = '이메일을 입력하세요.'
+  } else if (!isValidEmail(buyerForm.value.email)) {
+    e.email = '올바른 이메일 형식을 입력하세요.'
+  }
+  if (buyerForm.value.tel.trim() && !isValidTel(buyerForm.value.tel)) {
+    e.tel = '올바른 전화번호 형식을 입력하세요.'
+  }
+  buyerErrors.value = e
+  return Object.keys(e).length === 0
+}
+
+async function handleBuyerSave() {
+  if (!validateBuyerForm() || buyerSaving.value) return
+  buyerSaving.value = true
+  const payload = {
+    clientId: client.value.id ?? client.value.clientId,
+    buyerName: buyerForm.value.name,
+    buyerPosition: buyerForm.value.position,
+    buyerEmail: buyerForm.value.email,
+    buyerTel: buyerForm.value.tel,
+  }
+  try {
+    if (buyerMode.value === 'create') {
+      await createBuyer(payload)
+      success('바이어가 등록되었습니다.')
+    } else {
+      await updateBuyer(editingBuyerId.value, payload)
+      success('바이어 정보가 수정되었습니다.')
+    }
+    showBuyerModal.value = false
+    await reloadBuyers()
+  } catch {
+    error('바이어 저장 중 오류가 발생했습니다.')
+  } finally {
+    buyerSaving.value = false
+  }
+}
+
+function openBuyerDelete(buyer) {
+  buyerToDelete.value = buyer
+  showBuyerDeleteModal.value = true
+}
+
+async function handleBuyerDelete() {
+  if (!buyerToDelete.value) return
+  try {
+    await deleteBuyer(buyerToDelete.value.id ?? buyerToDelete.value.buyerId)
+    success('바이어가 삭제되었습니다.')
+    showBuyerDeleteModal.value = false
+    buyerToDelete.value = null
+    await reloadBuyers()
+  } catch {
+    error('삭제 중 오류가 발생했습니다.')
+  }
+}
+
 function goBack() {
   if (router.options.history.state?.back) router.back()
   else router.push({ name: 'client-list' })
 }
-
 </script>
 
 <template>
@@ -195,30 +300,41 @@ function goBack() {
         </div>
       </BaseCard>
 
-      <BaseCard title="바이어 / 담당자" subtitle="거래처 담당자 정보입니다.">
-        <div v-if="buyers.length" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <ClientBuyerCard v-for="buyer in buyers" :key="buyer.name" :buyer="buyer" />
+      <!-- 바이어 CRUD 인라인 -->
+      <BaseCard title="바이어" subtitle="거래처 측 연락 담당자(바이어) 목록입니다.">
+        <template #header-actions>
+          <BaseButton variant="primary" size="sm" @click="openBuyerCreate">
+            <template #leading><i class="fas fa-plus text-xs" aria-hidden="true"></i></template>
+            바이어 추가
+          </BaseButton>
+        </template>
+        <div v-if="buyers.length" class="overflow-hidden rounded-xl border border-slate-200">
+          <table class="min-w-full divide-y divide-slate-100 text-sm">
+            <thead class="bg-slate-50 text-xs font-semibold text-slate-500">
+              <tr>
+                <th class="px-3 py-2 text-left">이름</th>
+                <th class="px-3 py-2 text-left">직책</th>
+                <th class="px-3 py-2 text-left">이메일</th>
+                <th class="px-3 py-2 text-left">전화</th>
+                <th class="px-3 py-2 text-right"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white">
+              <tr v-for="buyer in buyers" :key="buyer.id ?? buyer.buyerId">
+                <td class="px-3 py-2 font-medium text-slate-800">{{ buyer.buyerName || '-' }}</td>
+                <td class="px-3 py-2 text-slate-600">{{ buyer.buyerPosition || '-' }}</td>
+                <td class="px-3 py-2 text-slate-600">{{ buyer.buyerEmail || '-' }}</td>
+                <td class="px-3 py-2 text-slate-600">{{ buyer.buyerTel || '-' }}</td>
+                <td class="px-3 py-2 text-right">
+                  <button type="button" class="mr-2 text-xs text-slate-500 hover:text-brand-600" @click="openBuyerEdit(buyer)">수정</button>
+                  <button type="button" class="text-xs text-slate-500 hover:text-red-600" @click="openBuyerDelete(buyer)">삭제</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
         <div v-else class="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-400">
-          등록된 바이어가 없습니다.
-        </div>
-      </BaseCard>
-
-      <!-- 연결 문서 링크 -->
-      <BaseCard title="관련 문서 바로가기" subtitle="이 거래처의 관련 문서를 조회합니다.">
-        <div class="flex flex-wrap gap-2">
-          <DocumentLinkButton :to="{ path: '/pi', query: { clientId: client.id } }">
-            PI 조회
-          </DocumentLinkButton>
-          <DocumentLinkButton :to="{ path: '/po', query: { clientId: client.id } }">
-            PO 조회
-          </DocumentLinkButton>
-          <DocumentLinkButton :to="{ path: '/ci', query: { clientId: client.id } }">
-            CI 조회
-          </DocumentLinkButton>
-          <DocumentLinkButton :to="{ path: '/pl', query: { clientId: client.id } }">
-            PL 조회
-          </DocumentLinkButton>
+          등록된 바이어가 없습니다. 상단 "바이어 추가"로 등록하세요.
         </div>
       </BaseCard>
     </div>
@@ -246,6 +362,48 @@ function goBack() {
       confirm-variant="danger"
       @confirm="handleDelete"
       @cancel="showConfirmModal = false"
+    />
+
+    <!-- 바이어 등록/수정 모달 -->
+    <BaseModal
+      :open="showBuyerModal"
+      :title="buyerMode === 'create' ? '바이어 추가' : '바이어 수정'"
+      width="max-w-md"
+      :z-index="60"
+      @close="showBuyerModal = false"
+    >
+      <div class="space-y-4">
+        <FormField label="이름" required :error="buyerErrors.name">
+          <BaseTextField v-model="buyerForm.name" placeholder="바이어 이름" />
+        </FormField>
+        <FormField label="직책">
+          <BaseSelect v-model="buyerForm.position" :options="positionOptions" placeholder="직책 선택" />
+        </FormField>
+        <FormField label="이메일" required :error="buyerErrors.email">
+          <BaseTextField v-model="buyerForm.email" type="email" placeholder="buyer@example.com" />
+        </FormField>
+        <FormField label="전화" :error="buyerErrors.tel">
+          <BaseTextField v-model="buyerForm.tel" placeholder="+1 555-123-4567" />
+        </FormField>
+      </div>
+      <template #footer>
+        <BaseButton variant="secondary" @click="showBuyerModal = false">취소</BaseButton>
+        <BaseButton :disabled="buyerSaving" @click="handleBuyerSave">
+          {{ buyerSaving ? '저장 중...' : (buyerMode === 'create' ? '추가' : '저장') }}
+        </BaseButton>
+      </template>
+    </BaseModal>
+
+    <ConfirmModal
+      :open="showBuyerDeleteModal"
+      title="바이어 삭제"
+      message="해당 바이어를 삭제하시겠습니까?"
+      :detail="buyerToDelete?.buyerName"
+      confirm-label="삭제"
+      confirm-variant="danger"
+      :z-index="70"
+      @confirm="handleBuyerDelete"
+      @cancel="showBuyerDeleteModal = false"
     />
   </div>
 
