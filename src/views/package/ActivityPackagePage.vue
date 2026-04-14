@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchActivities, fetchAllActivityPOs } from '@/api/activity'
-import { api } from '@/lib/api'
+import { fetchDepartments, fetchPositions } from '@/api/auth'
 import { createPackage, fetchAllUsers, fetchPackageById, updatePackage } from '@/api/package'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
@@ -55,14 +55,16 @@ onMounted(async () => {
       fetchActivities(),
       fetchAllActivityPOs(),
       fetchAllUsers(),
-      api.get('/departments').then(r => r.data),
-      api.get('/positions').then(r => r.data),
+      fetchDepartments(),
+      fetchPositions(),
     ])
-    activities.value = actData
-    poList.value = poData
-    allUsers.value = userData.filter((u) => u.status === '재직')
-    departments.value = deptData
-    positions.value = posData
+    activities.value = Array.isArray(actData) ? actData : []
+    poList.value = Array.isArray(poData) ? poData : []
+    allUsers.value = (Array.isArray(userData) ? userData : []).filter(
+      (u) => u.userStatus === 'active' || u.status === 'active' || u.status === '재직',
+    )
+    departments.value = Array.isArray(deptData) ? deptData : []
+    positions.value = Array.isArray(posData) ? posData : []
 
     if (isEditMode.value) {
       await loadPackageForEdit()

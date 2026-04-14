@@ -59,12 +59,21 @@ watch(
   (isOpen) => {
     errors.value = {}
     if (isOpen && props.mode === 'edit' && props.user) {
+      // positionName/departmentName 기반 ID 역매핑 fallback
+      const resolvedPositionId = props.user.positionId
+        ?? props.positions.find((p) => (p.positionName ?? p.name) === props.user.positionName)?.positionId
+        ?? props.positions.find((p) => (p.positionName ?? p.name) === props.user.positionName)?.id
+        ?? ''
+      const resolvedDepartmentId = props.user.departmentId
+        ?? props.departments.find((d) => (d.departmentName ?? d.name) === props.user.departmentName)?.departmentId
+        ?? props.departments.find((d) => (d.departmentName ?? d.name) === props.user.departmentName)?.id
+        ?? ''
       form.value = {
         name: props.user.userName ?? props.user.name ?? '',
         email: props.user.userEmail ?? props.user.email ?? '',
-        positionId: String(props.user.positionId ?? ''),
+        positionId: String(resolvedPositionId),
         role: props.user.userRole ?? props.user.role ?? '',
-        departmentId: String(props.user.departmentId ?? ''),
+        departmentId: String(resolvedDepartmentId),
         status: props.user.userStatus ?? props.user.status ?? 'active',
         transferDepartmentId: '',
         transferReason: '',

@@ -107,7 +107,7 @@ watch(
       }
     } else if (isOpen && props.mode === 'create') {
       form.value = getInitialForm()
-      form.value.code = generateNextCode()
+      // 코드는 백엔드 auto-generate
     }
   },
 )
@@ -115,15 +115,7 @@ watch(
 function validate() {
   const e = {}
 
-  if (!form.value.code?.trim()) {
-    e.code = '코드를 입력하세요.'
-  } else if (
-    props.allItems.some(
-      (i) => (i.itemCode ?? i.code).toLowerCase() === form.value.code.trim().toLowerCase() && i.id !== props.item?.id,
-    )
-  ) {
-    e.code = '이미 사용 중인 코드입니다.'
-  }
+  // 코드는 백엔드 auto-generate (create 모드), 수정 모드는 disabled
 
   if (!form.value.name?.trim()) {
     e.name = '품목명을 입력하세요.'
@@ -191,7 +183,8 @@ function handleSave() {
   const specStr = spec ? `${spec} mm` : ''
 
   const payload = {
-    itemCode: form.value.code,
+    // 생성 시 code는 백엔드 auto-generate, 수정 시만 기존 code 유지
+    ...(props.mode === 'edit' ? { itemCode: form.value.code } : {}),
     itemName: form.value.name,
     itemNameKr: form.value.nameKr,
     itemCategory: form.value.category,
@@ -214,7 +207,7 @@ function handleSave() {
 <template>
   <BaseModal
     :open="open"
-    :title="mode === 'create' ? '품목 등록' : `품목 수정 – ${item?.name ?? ''}`"
+    :title="mode === 'create' ? '품목 등록' : `품목 수정 – ${item?.itemName ?? item?.name ?? ''}`"
     width="max-w-2xl"
     @close="emit('close')"
   >
@@ -223,9 +216,8 @@ function handleSave() {
       <div>
         <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</h4>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormField label="코드" required>
-            <BaseTextField v-model="form.code" placeholder="예) ITM011" :disabled="mode === 'edit'" />
-            <p v-if="errors.code" class="mt-1 text-xs text-red-500">{{ errors.code }}</p>
+          <FormField v-if="mode === 'edit'" label="코드">
+            <BaseTextField v-model="form.code" disabled />
           </FormField>
           <FormField label="품목명 (영문)" required>
             <BaseTextField v-model="form.name" placeholder="영문 품목명을 입력하세요" />
