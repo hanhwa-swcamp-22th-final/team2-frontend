@@ -52,13 +52,18 @@ onMounted(async () => {
 })
 
 const currentUser = computed(() => authStore.currentUser ?? null)
+const isAdminUser = computed(() => currentUser.value?.role === 'admin')
 const isProductionUser = computed(() => currentUser.value?.role === 'production')
 const isShippingUser = computed(() => currentUser.value?.role === 'shipping')
 const isSalesManager = computed(() => currentUser.value?.role === 'sales' && Number(currentUser.value?.positionId) === 1)
 const isSalesMember = computed(() => currentUser.value?.role === 'sales' && Number(currentUser.value?.positionId) === 2)
-const canApproveRequests = computed(() => isSalesManager.value)
+// admin 은 모든 팀 결재 현황을 볼 수 있도록 승인자 분기에 포함 (read/review 전반)
+const canApproveRequests = computed(() => isSalesManager.value || isAdminUser.value)
 const showApprovalSection = computed(() => canApproveRequests.value || isSalesMember.value)
-const requestSectionTitle = computed(() => (canApproveRequests.value ? '결재 요청함' : '내 요청 현황'))
+const requestSectionTitle = computed(() => {
+  if (isAdminUser.value) return '전체 결재 현황'
+  return canApproveRequests.value ? '결재 요청함' : '내 요청 현황'
+})
 
 function parseSlashDate(value) {
   if (!value) return 0
@@ -263,7 +268,7 @@ function createRequestItem(docType, row) {
 }
 
 function canReviewRequest(item) {
-  if (isSalesManager.value) {
+  if (isSalesManager.value || isAdminUser.value) {
     return item.docType === 'PI' || item.docType === 'PO'
   }
   return false
@@ -282,14 +287,17 @@ const allRequestItems = computed(() => {
 })
 
 const requestItems = computed(() => {
-  if (canApproveRequests.value) {
+  // admin 은 전체 팀의 모든 상태(대기·승인·반려) 결재 현황을 본다
+  if (isAdminUser.value) {
+    return allRequestItems.value
+  }
+  // 영업 팀장은 자기 팀 대기 건을 본다 (canReviewRequest 가 PI/PO 한정)
+  if (isSalesManager.value) {
     return allRequestItems.value.filter((item) => item.status === '대기' && canReviewRequest(item))
   }
-
   if (isSalesMember.value) {
     return allRequestItems.value.filter((item) => item.requester === currentUser.value?.name)
   }
-
   return []
 })
 
@@ -420,18 +428,30 @@ function goToShipmentItem(item) {
 }
 
 // ── 패키지 섹션 ────────────────────────────────────────────
+const currentUserId = computed(() => {
+  const u = currentUser.value
+  if (!u) return null
+  return String(u.userId ?? u.id ?? '')
+})
+
 const visiblePackages = computed(() => {
   if (!currentUser.value) return []
-  const uid = String(currentUser.value.id)
+  // admin 은 전체 패키지 열람 가능
+  if (isAdminUser.value) {
+    return [...packagesData.value]
+      .sort((a, b) => parseSlashDate(b.createdAt) - parseSlashDate(a.createdAt))
+      .slice(0, 5)
+  }
+  const uid = currentUserId.value
   return [...packagesData.value]
-    .filter((pkg) => String(pkg.creatorId) === uid || (pkg.viewers ?? []).includes(uid))
+    .filter((pkg) => String(pkg.creatorId) === uid || (pkg.viewers ?? []).map(String).includes(uid))
     .sort((a, b) => parseSlashDate(b.createdAt) - parseSlashDate(a.createdAt))
     .slice(0, 5)
 })
 
 const isPackageOwner = computed(() => {
   if (!selectedPackage.value || !currentUser.value) return false
-  return String(selectedPackage.value.creatorId) === String(currentUser.value.id)
+  return String(selectedPackage.value.creatorId) === currentUserId.value
 })
 
 function openPackageDetail(pkg) {
