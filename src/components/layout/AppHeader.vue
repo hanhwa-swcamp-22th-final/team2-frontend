@@ -99,10 +99,10 @@ function handleLogout() {
   isLogoutConfirmOpen.value = true
 }
 
-function confirmLogout() {
+async function confirmLogout() {
   isLogoutConfirmOpen.value = false
-  authStore.logout()
-  router.push({ name: 'login' })
+  await authStore.logout()
+  await router.push({ name: 'login' })
 }
 
 function handleClickOutside(event) {
