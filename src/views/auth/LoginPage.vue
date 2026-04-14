@@ -10,7 +10,6 @@ import { isValidEmail } from '@/utils/validators'
 
 const router = useRouter()
 const route = useRoute()
-const isDev = import.meta.env.DEV
 const authStore = useAuthStore()
 const { error } = useToast()
 
@@ -20,20 +19,44 @@ const emailError = ref('')
 const passwordError = ref('')
 const loading = ref(false)
 
-const demoAccounts = [
-  { label: '관리자', email: 'admin@salesboost.com', pw: 'test1234' },
-  { label: '영업1팀 팀장', email: 'kim@salesboost.com', pw: 'test1234' },
-  { label: '영업1팀 팀원', email: 'jo@salesboost.com', pw: 'test1234' },
-  { label: '영업2팀', email: 'jung@salesboost.com', pw: 'test1234' },
-  { label: '생산', email: 'lee@salesboost.com', pw: 'test1234' },
-  { label: '출하', email: 'park@salesboost.com', pw: 'test1234' },
+// 빠른 로그인 (시연/QA 용) — data.sql seed 계정 기준, 비밀번호 password123
+const QUICK_PW = 'password123'
+const quickGroups = [
+  {
+    department: '경영지원부',
+    accounts: [
+      { team: '경영지원1팀', role: 'admin', name: '최관리', email: 'admin@hanwha.com' },
+    ],
+  },
+  {
+    department: '영업부',
+    accounts: [
+      { team: '영업1팀', role: '팀장', name: '이영업', email: 'lee.sales@hanwha.com' },
+      { team: '영업1팀', role: '팀원', name: '김영업', email: 'kim.sales@hanwha.com' },
+    ],
+  },
+  {
+    department: '생산부',
+    accounts: [
+      { team: '생산1팀', role: '팀장', name: '최생산', email: 'choi.prod@hanwha.com' },
+      { team: '생산1팀', role: '팀원', name: '박생산', email: 'park.prod@hanwha.com' },
+    ],
+  },
+  {
+    department: '출하부',
+    accounts: [
+      { team: '출하1팀', role: '팀원', name: '정출하', email: 'jung.ship@hanwha.com' },
+    ],
+  },
 ]
 
-function fillDemoAccount(account) {
+async function quickLogin(account) {
+  if (loading.value) return
   email.value = account.email
-  password.value = account.pw
+  password.value = QUICK_PW
   emailError.value = ''
   passwordError.value = ''
+  await handleLogin()
 }
 
 function validate() {
@@ -141,20 +164,31 @@ async function handleLogin() {
       </div>
     </div>
 
-    <!-- Demo 계정 안내 -->
-    <div v-if="isDev" class="w-full rounded-2xl bg-white p-4 shadow-panel">
-      <p class="mb-2 text-xs font-semibold text-slate-600">Demo 계정 (클릭하면 자동 입력)</p>
-      <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        <button
-          v-for="account in demoAccounts"
-          :key="account.email"
-          type="button"
-          class="rounded-lg border border-slate-200 px-3 py-2 text-left text-xs text-slate-600 transition hover:border-brand hover:bg-blue-50 hover:text-brand"
-          @click="fillDemoAccount(account)"
-        >
-          <span class="font-semibold">{{ account.label }}</span>
-          <span class="mt-0.5 block truncate text-slate-400">{{ account.email }}</span>
-        </button>
+    <!-- 빠른 로그인 (QA / 시연) -->
+    <div class="w-full rounded-2xl bg-white p-4 shadow-panel">
+      <div class="mb-3 flex items-baseline justify-between">
+        <p class="text-xs font-semibold text-slate-600">빠른 로그인</p>
+        <p class="text-[11px] text-slate-400">클릭 시 즉시 로그인됩니다</p>
+      </div>
+      <div class="space-y-3">
+        <div v-for="group in quickGroups" :key="group.department">
+          <p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            {{ group.department }}
+          </p>
+          <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <button
+              v-for="account in group.accounts"
+              :key="account.email"
+              type="button"
+              :disabled="loading"
+              class="rounded-lg border border-slate-200 px-3 py-2 text-left text-xs text-slate-600 transition hover:border-brand hover:bg-blue-50 hover:text-brand disabled:cursor-not-allowed disabled:opacity-60"
+              @click="quickLogin(account)"
+            >
+              <span class="font-semibold">{{ account.team }} · {{ account.role }}</span>
+              <span class="mt-0.5 block truncate text-slate-400">{{ account.name }}</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
