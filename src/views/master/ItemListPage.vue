@@ -56,15 +56,11 @@ const unitOptions = computed(() => {
   return [{ label: '전체', value: '' }, ...units.map((u) => ({ label: u, value: u }))]
 })
 
-/** WDH 컬럼이 있으면 "1722×1134×40 mm" 형식, W/H 만 있으면 "1722×1134 mm",
- *  치수 정보가 없으면 자유 텍스트 itemSpec, 그것도 없으면 "-". */
+/** W/D/H 가 모두 있으면 "1722 × 1134 × 35 mm". 정책상 셋 다 필수 (ItemFormModal 검증).
+ *  레거시 누락 데이터는 자유 텍스트 itemSpec fallback, 그것도 없으면 "-". */
 function formatItemDimensions(row) {
-  const w = row.itemWidth
-  const d = row.itemDepth
-  const h = row.itemHeight
-  if (w && h) {
-    return d ? `${w} × ${d} × ${h} mm` : `${w} × ${h} mm`
-  }
+  const w = row.itemWidth, d = row.itemDepth, h = row.itemHeight
+  if (w && d && h) return `${w} × ${d} × ${h} mm`
   return row.itemSpec || '-'
 }
 

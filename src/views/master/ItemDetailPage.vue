@@ -59,12 +59,12 @@ const infoGroups = computed(() => {
   ]
 })
 
-/** 구조화된 W/D/H 가 있으면 "1722 × 1134 × 40 mm", W/H 만 있으면 "1722 × 1134 mm",
- *  치수 정보가 없으면 "-". 자유 텍스트 사양은 별도 행 (itemSpec) 으로 표시. */
+/** W/D/H 가 모두 있으면 "1722 × 1134 × 35 mm". 정책상 셋 다 필수 (ItemFormModal 검증).
+ *  레거시 누락 데이터는 "-". 자유 텍스트 사양은 별도 행 (itemSpec) 으로 표시. */
 function formatDimensions(it) {
   if (!it) return '-'
   const w = it.itemWidth, d = it.itemDepth, h = it.itemHeight
-  if (w && h) return d ? `${w} × ${d} × ${h} mm` : `${w} × ${h} mm`
+  if (w && d && h) return `${w} × ${d} × ${h} mm`
   return '-'
 }
 
