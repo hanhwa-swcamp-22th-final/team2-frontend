@@ -33,7 +33,15 @@ const formContent = ref('')
 const formAuthor = ref('')
 const errors = ref({})
 
-watch(formClient, (val) => { if (val) errors.value.client = undefined })
+watch(formClient, (val, oldVal) => {
+  if (val) errors.value.client = undefined
+  // 거래처 변경/해제 시 — PO 의존이므로 선택값/표시값 초기화
+  if (oldVal !== undefined && val !== oldVal) {
+    formPoDisplay.value = ''
+    formPoId.value = ''
+    formAuthor.value = ''
+  }
+})
 watch(formType,   (val) => { if (val) errors.value.type   = undefined })
 watch(formDate,   (val) => { if (val) errors.value.date   = undefined })
 watch(formTitle,  (val) => { if (val.trim()) errors.value.title  = undefined })
@@ -292,16 +300,17 @@ async function handleSubmit() {
           </FormField>
         </div>
 
-        <!-- 2행: 수주건(PO) -->
+        <!-- 2행: 수주건(PO) — 거래처 선택 후 활성화 -->
         <FormField label="수주건">
           <div class="flex items-center gap-2">
             <BaseTextField
               v-model="formPoDisplay"
-              placeholder="수주건을 선택하세요 (PO 검색 클릭)"
+              :placeholder="formClient ? '수주건을 선택하세요 (PO 검색 클릭)' : '거래처를 먼저 선택하세요'"
               :readonly="true"
+              :disabled="!formClient"
               class="flex-1"
             />
-            <BaseButton variant="ghost" @click="openPoSearch">
+            <BaseButton variant="ghost" :disabled="!formClient" @click="openPoSearch">
               <template #leading>
                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 3.473 9.766l3.63 3.63a.75.75 0 1 0 1.06-1.06l-3.63-3.63A5.5 5.5 0 0 0 9 3.5ZM5 9a4 4 0 1 1 8 0 4 4 0 0 1-8 0Z" clip-rule="evenodd" />
@@ -309,7 +318,7 @@ async function handleSubmit() {
               </template>
               PO 검색
             </BaseButton>
-            <BaseButton variant="secondary" @click="clearPo">
+            <BaseButton variant="secondary" :disabled="!formPoDisplay" @click="clearPo">
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
               </svg>
