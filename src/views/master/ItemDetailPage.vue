@@ -39,10 +39,11 @@ const infoGroups = computed(() => {
       ],
     },
     {
-      title: '규격 / 단위',
+      title: '치수 / 단위',
       fields: [
-        { label: '치수 (W × D × H)', value: formatDimensions(item.value), wide: true },
-        { label: '사양', value: item.value.itemSpec || '-', wide: true },
+        // itemSpec 은 백엔드 ItemCommandService.assembleSpec 가 W×D×H 로부터 "1722 × 1134 × 35 mm"
+        // 형식으로 자동 조립하므로 그대로 표시.
+        { label: '치수 (W × D × H)', value: item.value.itemSpec || '-', wide: true },
         { label: '단위', value: item.value.itemUnit },
         { label: '포장단위', value: item.value.itemPackUnit },
       ],
@@ -59,14 +60,6 @@ const infoGroups = computed(() => {
   ]
 })
 
-/** W/D/H 가 모두 있으면 "1722 × 1134 × 35 mm". 정책상 셋 다 필수 (ItemFormModal 검증).
- *  레거시 누락 데이터는 "-". 자유 텍스트 사양은 별도 행 (itemSpec) 으로 표시. */
-function formatDimensions(it) {
-  if (!it) return '-'
-  const w = it.itemWidth, d = it.itemDepth, h = it.itemHeight
-  if (w && d && h) return `${w} × ${d} × ${h} mm`
-  return '-'
-}
 
 async function loadData() {
   const rawId = route.params.id
