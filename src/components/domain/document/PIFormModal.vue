@@ -260,7 +260,7 @@ function mapBuyerLabel(buyer) {
 
 async function loadReferenceData() {
   try {
-    const teamId = authStore.user?.teamId ?? null
+    const teamId = authStore.currentUser?.teamId ?? null
     const [clientsData, countriesData, currenciesData, itemsData, approversData, incotermsData] = await Promise.all([
       fetchClients(),
       fetchCountries(),

@@ -41,7 +41,7 @@ const isDeliveryDateLocked = computed(() => isLinkedToPi.value && !form.value.de
 async function loadApproverOptions() {
   try {
     // 결재자 후보: 우리팀 팀장 + ADMIN (셀프 결재 가능)
-    const teamId = authStore.user?.teamId ?? null
+    const teamId = authStore.currentUser?.teamId ?? null
     const approvers = await fetchApprovers(teamId)
     const names = (approvers ?? []).map((u) => u.userName).filter(Boolean)
     approverOptions.value = names
