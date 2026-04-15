@@ -1,6 +1,6 @@
 import { useAuthStore } from './auth'
 import { ref } from 'vue'
-import { fetchPackingLists } from '@/api/documents'
+import { fetchPackingListsPaged } from '@/api/documents'
 
 function formatDate(value) {
   return String(value ?? '').replace(/-/g, '/')
@@ -71,12 +71,14 @@ function mapPlResponse(row) {
 }
 
 const plDocuments = ref([])
+const plPageInfo = ref({ size: 1000, number: 0, totalElements: 0, totalPages: 0 })
 let loading = null
 
-export async function loadPlDocuments() {
+export async function loadPlDocuments({ page = 0, size = 1000 } = {}) {
   try {
-    const data = await fetchPackingLists()
-    plDocuments.value = (Array.isArray(data) ? data : []).map(mapPlResponse)
+    const { content, page: pageInfo } = await fetchPackingListsPaged({ page, size })
+    plDocuments.value = (Array.isArray(content) ? content : []).map(mapPlResponse)
+    plPageInfo.value = pageInfo
   } catch (e) {
     console.error('Failed to load PL documents:', e)
   }
@@ -87,4 +89,8 @@ export function usePlDocuments() {
     loading = loadPlDocuments()
   }
   return plDocuments
+}
+
+export function usePlPageInfo() {
+  return plPageInfo
 }

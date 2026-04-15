@@ -1,6 +1,6 @@
 import { useAuthStore } from './auth'
 import { ref } from 'vue'
-import { fetchProformaInvoices } from '@/api/documents'
+import { fetchProformaInvoicesPaged } from '@/api/documents'
 
 function tryParseJson(value, fallback = null) {
   if (typeof value !== 'string') return value ?? fallback
@@ -69,12 +69,19 @@ function mapPiResponse(row) {
 }
 
 const piDocuments = ref([])
+const piPageInfo = ref({ size: 1000, number: 0, totalElements: 0, totalPages: 0 })
 let loading = null
 
-export async function loadPiDocuments() {
+/**
+ * PI 목록 로드. 현재 목록 화면은 클라이언트 사이드 키워드 검색/필터를 사용하므로
+ * 기본 size=1000 으로 한 번에 로드한다. 서버사이드 페이지네이션이 필요한 호출자는
+ * `{ page, size }` 를 명시적으로 넘기면 된다.
+ */
+export async function loadPiDocuments({ page = 0, size = 1000 } = {}) {
   try {
-    const data = await fetchProformaInvoices()
-    piDocuments.value = (Array.isArray(data) ? data : []).map(mapPiResponse)
+    const { content, page: pageInfo } = await fetchProformaInvoicesPaged({ page, size })
+    piDocuments.value = (Array.isArray(content) ? content : []).map(mapPiResponse)
+    piPageInfo.value = pageInfo
   } catch (e) {
     console.error('Failed to load PI documents:', e)
   }
@@ -85,4 +92,8 @@ export function usePiDocuments() {
     loading = loadPiDocuments()
   }
   return piDocuments
+}
+
+export function usePiPageInfo() {
+  return piPageInfo
 }

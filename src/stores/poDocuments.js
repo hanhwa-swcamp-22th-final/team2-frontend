@@ -1,6 +1,6 @@
 import { useAuthStore } from './auth'
 import { ref } from 'vue'
-import { fetchPurchaseOrders } from '@/api/documents'
+import { fetchPurchaseOrdersPaged } from '@/api/documents'
 
 function formatDate(value) {
   return String(value ?? '').replace(/-/g, '/')
@@ -85,12 +85,14 @@ function mapPoResponse(row) {
 }
 
 const poDocuments = ref([])
+const poPageInfo = ref({ size: 1000, number: 0, totalElements: 0, totalPages: 0 })
 let loading = null
 
-export async function loadPoDocuments() {
+export async function loadPoDocuments({ page = 0, size = 1000 } = {}) {
   try {
-    const data = await fetchPurchaseOrders()
-    poDocuments.value = (Array.isArray(data) ? data : []).map(mapPoResponse)
+    const { content, page: pageInfo } = await fetchPurchaseOrdersPaged({ page, size })
+    poDocuments.value = (Array.isArray(content) ? content : []).map(mapPoResponse)
+    poPageInfo.value = pageInfo
   } catch (e) {
     console.error('Failed to load PO documents:', e)
   }
@@ -101,4 +103,8 @@ export function usePoDocuments() {
     loading = loadPoDocuments()
   }
   return poDocuments
+}
+
+export function usePoPageInfo() {
+  return poPageInfo
 }

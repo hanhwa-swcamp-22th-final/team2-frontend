@@ -1,6 +1,6 @@
 import { useAuthStore } from './auth'
 import { ref } from 'vue'
-import { fetchCommercialInvoices } from '@/api/documents'
+import { fetchCommercialInvoicesPaged } from '@/api/documents'
 
 function formatDate(value) {
   return String(value ?? '').replace(/-/g, '/')
@@ -71,12 +71,14 @@ function mapCiResponse(row) {
 }
 
 const ciDocuments = ref([])
+const ciPageInfo = ref({ size: 1000, number: 0, totalElements: 0, totalPages: 0 })
 let loading = null
 
-export async function loadCiDocuments() {
+export async function loadCiDocuments({ page = 0, size = 1000 } = {}) {
   try {
-    const data = await fetchCommercialInvoices()
-    ciDocuments.value = (Array.isArray(data) ? data : []).map(mapCiResponse)
+    const { content, page: pageInfo } = await fetchCommercialInvoicesPaged({ page, size })
+    ciDocuments.value = (Array.isArray(content) ? content : []).map(mapCiResponse)
+    ciPageInfo.value = pageInfo
   } catch (e) {
     console.error('Failed to load CI documents:', e)
   }
@@ -87,4 +89,8 @@ export function useCiDocuments() {
     loading = loadCiDocuments()
   }
   return ciDocuments
+}
+
+export function useCiPageInfo() {
+  return ciPageInfo
 }
