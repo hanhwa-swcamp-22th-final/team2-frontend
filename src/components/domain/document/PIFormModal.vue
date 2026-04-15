@@ -43,10 +43,6 @@ const emit = defineEmits(['close', 'save', 'open-client-search'])
 const { error } = useToast()
 
 const defaultCurrencyOptions = ['KRW', 'USD', 'EUR', 'JPY', 'GBP', 'AUD', 'CAD', 'SGD', 'AED', 'CNY', 'MYR', 'THB', 'VND', 'IDR', 'INR', 'SAR', 'BRL', 'SEK', 'CHF']
-const defaultBuyerOptions = [
-  'Mr. Ahmad Razak (Purchasing Manager)',
-  'Ms. Siti Nurhaliza (Director)',
-]
 const defaultApproverOptions = []
 const authStore = useAuthStore()
 const fallbackProductCatalog = [
@@ -139,7 +135,7 @@ function createEmptyItemRow(id = Date.now()) {
 const form = ref(createInitialForm())
 const validationErrors = ref({})
 const clientCatalog = ref([])
-const buyerRows = ref([...defaultBuyerOptions])
+const buyerRows = ref([])
 const currencyOptions = ref([...defaultCurrencyOptions])
 const approverOptions = ref([...defaultApproverOptions])
 const productCatalog = ref([...fallbackProductCatalog])
@@ -180,13 +176,19 @@ const itemTableColumns = computed(() => [
   { key: 'remark', label: '비고', width: '20%' },
 ])
 
+const isClientSelected = computed(() => Boolean(form.value.clientName?.trim()))
+
 const buyerOptions = computed(() => {
+  // 거래처 미선택 시 — 바이어 dropdown 을 비활성화하므로 옵션도 비워둠
+  if (!isClientSelected.value) return []
+
   const buyers = new Set(buyerRows.value)
 
   for (const buyer of props.selectedClient?.buyers ?? []) {
     buyers.add(buyer)
   }
 
+  // 수정 모드 등에서 현재 선택된 값이 목록에 없다면 포함시켜 표시 누락 방지
   if (form.value.buyerName) {
     buyers.add(form.value.buyerName)
   }
@@ -344,21 +346,18 @@ function resolveSelectedClientId() {
 async function loadBuyerOptions() {
   const clientId = resolveSelectedClientId()
 
+  // 거래처 미선택 시 바이어 목록은 무조건 비움 (독립 선택 방지)
   if (!clientId) {
-    buyerRows.value = props.selectedClient?.buyers?.length ? props.selectedClient.buyers : [...defaultBuyerOptions]
+    buyerRows.value = []
     return
   }
 
   try {
     const buyersData = await fetchBuyersByClient(clientId)
-    const nextBuyers = buyersData.map(mapBuyerLabel).filter(Boolean)
-    buyerRows.value = nextBuyers.length ? nextBuyers : [...defaultBuyerOptions]
+    buyerRows.value = buyersData.map(mapBuyerLabel).filter(Boolean)
   } catch {
-    buyerRows.value = props.selectedClient?.buyers?.length ? props.selectedClient.buyers : [...defaultBuyerOptions]
-  }
-
-  if (!form.value.buyerName && buyerRows.value.length) {
-    form.value.buyerName = buyerRows.value[0]
+    // 실패 시 selectedClient 에 딸려온 문자열 배열을 fallback 으로 사용
+    buyerRows.value = Array.isArray(props.selectedClient?.buyers) ? [...props.selectedClient.buyers] : []
   }
 }
 
@@ -630,7 +629,7 @@ async function initializeForm() {
       clientAddress: props.document.clientAddress ?? '',
       clientTel: props.document.clientTel ?? '',
       clientEmail: props.document.clientEmail ?? '',
-      buyerName: props.document.buyerName ?? 'Mr. Ahmad Razak (Purchasing Manager)',
+      buyerName: props.document.buyerName ?? '',
       currency: props.document.currency ?? 'USD',
       issueDate: props.document.issueDate?.replaceAll('/', '-') ?? getTodayDateInput(),
       deliveryDate: props.document.deliveryDate?.replaceAll('/', '-') ?? '',
@@ -715,17 +714,26 @@ function handleSave() {
 watch(
   () => props.selectedClient,
   async (client) => {
-    if (!client) return
+    if (!client) {
+      // 거래처 선택이 해제되면 연동 필드와 바이어 목록도 초기화
+      form.value.buyerName = ''
+      buyerRows.value = []
+      return
+    }
     form.value.clientName = client.name
     form.value.clientAddress = client.address ?? ''
     form.value.clientTel = client.tel ?? ''
     form.value.clientEmail = client.email ?? ''
-    form.value.buyerName = client.buyers?.[0] ?? ''
+    // 거래처 변경 시 이전 바이어 선택값 초기화 — 새 거래처 바이어 로드 후 단일 옵션이면 auto-pick
+    form.value.buyerName = ''
     form.value.currency = client.currency ?? form.value.currency
     clearError('clientName')
     clearError('buyerName')
     clearError('currency')
     await loadBuyerOptions()
+    if (buyerRows.value.length === 1) {
+      form.value.buyerName = buyerRows.value[0]
+    }
   },
 )
 
@@ -780,7 +788,8 @@ watch(
           <BaseSelect
             v-model="form.buyerName"
             :options="buyerOptions"
-            placeholder="바이어 선택"
+            :disabled="!isClientSelected"
+            :placeholder="isClientSelected ? (buyerOptions.length ? '바이어 선택' : '등록된 바이어가 없습니다') : '거래처를 먼저 선택하세요'"
             @update:modelValue="clearError('buyerName')"
           />
           <p v-if="getFieldError('buyerName')" class="mt-1 text-xs text-red-500">{{ getFieldError('buyerName') }}</p>
