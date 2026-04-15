@@ -16,8 +16,9 @@ import {
   fetchIncoterms,
   fetchItems,
 } from '@/api/master'
-import { fetchAllUsers } from '@/api/auth'
+import { fetchApprovers } from '@/api/documents'
 import { useToast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
 import {
   fallbackIncotermsCatalog,
   formatIncotermsLabel,
@@ -46,7 +47,8 @@ const defaultBuyerOptions = [
   'Mr. Ahmad Razak (Purchasing Manager)',
   'Ms. Siti Nurhaliza (Director)',
 ]
-const defaultApproverOptions = ['김영업']
+const defaultApproverOptions = []
+const authStore = useAuthStore()
 const fallbackProductCatalog = [
   { id: '1', code: 'ITM001', name: 'Wireless Presenter', spec: '2.4GHz / 100m / USB Receiver / Laser Pointer', unit: 'EA', unitPrice: 55000 },
   { id: '2', code: 'ITM002', name: 'Tablet PC 10"', spec: '10.1" FHD / Octa-core / 4GB / 64GB / WiFi', unit: 'EA', unitPrice: 650000 },
@@ -258,12 +260,13 @@ function mapBuyerLabel(buyer) {
 
 async function loadReferenceData() {
   try {
-    const [clientsData, countriesData, currenciesData, itemsData, usersData, incotermsData] = await Promise.all([
+    const teamId = authStore.user?.teamId ?? null
+    const [clientsData, countriesData, currenciesData, itemsData, approversData, incotermsData] = await Promise.all([
       fetchClients(),
       fetchCountries(),
       fetchCurrencies(),
       fetchItems(),
-      fetchAllUsers(),
+      fetchApprovers(teamId).catch(() => []),
       fetchIncoterms(),
     ])
 
@@ -310,14 +313,13 @@ async function loadReferenceData() {
       }))
       .filter((item) => item.code)
 
-    const activeUsers = usersData
-      .filter((user) => user.userStatus === 'active')
-      .filter((user) => user.userRole === 'sales' && user.positionName === '사원')
+    // 결재자 후보: 우리팀 팀장 + ADMIN (팀장/ADMIN 본인이 포함되면 셀프 결재 테스트 가능)
+    const approverNames = (approversData ?? [])
       .map((user) => user.userName)
       .filter(Boolean)
 
-    if (activeUsers.length) {
-      approverOptions.value = activeUsers
+    if (approverNames.length) {
+      approverOptions.value = approverNames
     }
 
     if (!approverOptions.value.includes(form.value.approver)) {

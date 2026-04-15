@@ -4,7 +4,8 @@ import { computed, ref, watch } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
-import { fetchAllUsers } from '@/api/auth'
+import { fetchApprovers } from '@/api/documents'
+import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -15,7 +16,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'save', 'open-pi-search', 'open-client-search'])
-const defaultApproverOptions = ['김영업']
+const defaultApproverOptions = []
+const authStore = useAuthStore()
 
 function createInitialForm() {
   return {
@@ -26,7 +28,7 @@ function createInitialForm() {
     deliveryDate: '',
     sourceDeliveryDate: '',
     deliveryDateOverride: false,
-    approver: defaultApproverOptions[0],
+    approver: '',
   }
 }
 
@@ -38,22 +40,17 @@ const isDeliveryDateLocked = computed(() => isLinkedToPi.value && !form.value.de
 
 async function loadApproverOptions() {
   try {
-    const users = await fetchAllUsers()
-    const activeUsers = users
-      .filter((user) => user.userStatus === 'active')
-      .filter((user) => user.userRole === 'sales' && user.positionName === '사원')
-      .map((user) => user.userName)
-      .filter(Boolean)
-
-    if (activeUsers.length) {
-      approverOptions.value = activeUsers
-    }
+    // 결재자 후보: 우리팀 팀장 + ADMIN (셀프 결재 가능)
+    const teamId = authStore.user?.teamId ?? null
+    const approvers = await fetchApprovers(teamId)
+    const names = (approvers ?? []).map((u) => u.userName).filter(Boolean)
+    approverOptions.value = names
   } catch {
-    approverOptions.value = [...defaultApproverOptions]
+    approverOptions.value = []
   }
 
   if (!approverOptions.value.includes(form.value.approver)) {
-    form.value.approver = approverOptions.value[0] ?? defaultApproverOptions[0]
+    form.value.approver = approverOptions.value[0] ?? ''
   }
 }
 
@@ -73,7 +70,7 @@ watch(
         deliveryDate: props.document.deliveryDate?.replaceAll('/', '-') ?? '',
         sourceDeliveryDate: props.document.sourceDeliveryDate?.replaceAll('/', '-') ?? props.document.deliveryDate?.replaceAll('/', '-') ?? '',
         deliveryDateOverride: Boolean(props.document.deliveryDateOverride),
-        approver: props.document.approver ?? approverOptions.value[0] ?? defaultApproverOptions[0],
+        approver: props.document.approver ?? approverOptions.value[0] ?? '',
       }
       return
     }
