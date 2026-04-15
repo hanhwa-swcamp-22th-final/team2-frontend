@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useToast } from '@/composables/useToast'
-import { fetchBuyers, createBuyer, updateBuyer, deleteBuyer } from '@/api/contacts'
+import { fetchContacts, createBuyer, updateBuyer, deleteBuyer } from '@/api/contacts'
 import { fetchClients } from '@/api/master'
 import { useAuthStore } from '@/stores/auth'
 import BaseButton from '@/components/common/BaseButton.vue'
@@ -25,20 +25,39 @@ const isAdmin = computed(() => currentUser.value?.userRole === 'admin')
 const clients = ref([])
 const contacts = ref([])
 
-// 관리자는 전체, 일반 사용자는 본인 등록 연락처만
-const myContacts = computed(() => {
-  if (isAdmin.value) return contacts.value
-  return contacts.value.filter((c) => c.createdBy === currentUser.value?.userId)
-})
+// /api/contacts 가 이미 서버 단에서 ADMIN 전체 / 그 외 본인 writerId 로 필터해서 반환.
+// 같은 팀의 buyer 등록은 sync 단계에서 본인 writerId 의 Contact row 로 들어오므로
+// 자동으로 보임. 클라이언트 단 추가 필터 불필요.
+const myContacts = computed(() => contacts.value)
+
+/**
+ * Activity Contact 응답 → 페이지가 사용하는 buyer 형태로 normalize.
+ * (CRUD 는 여전히 master /buyers 호출 — buyer 등록 시 sync 가 contacts 로 자동 반영)
+ */
+function normalizeContact(c) {
+  return {
+    ...c,
+    buyerId: c.contactId ?? c.buyerId,
+    buyerName: c.contactName ?? c.buyerName,
+    buyerPosition: c.contactPosition ?? c.buyerPosition,
+    buyerEmail: c.contactEmail ?? c.buyerEmail,
+    buyerTel: c.contactTel ?? c.buyerTel,
+    createdBy: c.writerId ?? c.createdBy,
+  }
+}
+
+async function loadContacts() {
+  const data = await fetchContacts()
+  contacts.value = (Array.isArray(data) ? data : []).map(normalizeContact)
+}
 
 onMounted(async () => {
   try {
-    const [clientData, buyerData] = await Promise.all([
+    const [clientData] = await Promise.all([
       fetchClients(),
-      fetchBuyers(),
+      loadContacts(),
     ])
     clients.value = clientData
-    contacts.value = buyerData
   } catch (e) {
     console.error('데이터 로드 실패', e)
     error('데이터를 불러오지 못했습니다. 페이지를 새로고침해주세요.')
@@ -169,13 +188,12 @@ async function handleFormSubmit() {
   }
   try {
     if (isEditMode.value) {
-      const updated = await updateBuyer(editingId.value, { id: editingId.value, ...payload })
-      const idx = contacts.value.findIndex((c) => c.id === editingId.value)
-      if (idx !== -1) contacts.value[idx] = updated
+      await updateBuyer(editingId.value, { id: editingId.value, ...payload })
     } else {
-      const created = await createBuyer(payload)
-      contacts.value.push(created)
+      await createBuyer(payload)
     }
+    // CRUD 후 /api/contacts 재조회 — sync 단계에서 contacts row 가 갱신/추가됨
+    await loadContacts()
     closeForm()
   } catch (e) {
     console.error('연락처 저장 실패', e)
@@ -205,7 +223,7 @@ function closeDelete() {
 async function handleDelete() {
   try {
     await deleteBuyer(deleteTarget.value.id)
-    contacts.value = contacts.value.filter((c) => c.id !== deleteTarget.value.id)
+    await loadContacts()
     closeDelete()
   } catch (e) {
     console.error('연락처 삭제 실패', e)
