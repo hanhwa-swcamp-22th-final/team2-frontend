@@ -1,91 +1,46 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useToast } from '@/composables/useToast'
-import { fetchContacts, createBuyer, updateBuyer, deleteBuyer } from '@/api/contacts'
-import { fetchClients } from '@/api/master'
-import { useAuthStore } from '@/stores/auth'
+import { fetchContacts, createContact, updateContact, deleteContact } from '@/api/contacts'
 import BaseButton from '@/components/common/BaseButton.vue'
 import FormField from '@/components/common/FormField.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
-import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import InfoField from '@/components/common/InfoField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
-import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import TableActions from '@/components/common/TableActions.vue'
 
 const { warning, error } = useToast()
 
-const authStore = useAuthStore()
-const currentUser = computed(() => authStore.currentUser)
-const isAdmin = computed(() => currentUser.value?.userRole === 'admin')
-
 // ── 데이터 ─────────────────────────────────────────────────
-const clients = ref([])
 const contacts = ref([])
-
-// /api/contacts 가 이미 서버 단에서 ADMIN 전체 / 그 외 본인 writerId 로 필터해서 반환.
-// 같은 팀의 buyer 등록은 sync 단계에서 본인 writerId 의 Contact row 로 들어오므로
-// 자동으로 보임. 클라이언트 단 추가 필터 불필요.
-const myContacts = computed(() => contacts.value)
-
-/**
- * Activity Contact 응답 → 페이지가 사용하는 buyer 형태로 normalize.
- * (CRUD 는 여전히 master /buyers 호출 — buyer 등록 시 sync 가 contacts 로 자동 반영)
- */
-function normalizeContact(c) {
-  return {
-    ...c,
-    buyerId: c.contactId ?? c.buyerId,
-    buyerName: c.contactName ?? c.buyerName,
-    buyerPosition: c.contactPosition ?? c.buyerPosition,
-    buyerEmail: c.contactEmail ?? c.buyerEmail,
-    buyerTel: c.contactTel ?? c.buyerTel,
-    createdBy: c.writerId ?? c.createdBy,
-  }
-}
 
 async function loadContacts() {
   const data = await fetchContacts()
-  contacts.value = (Array.isArray(data) ? data : []).map(normalizeContact)
+  contacts.value = Array.isArray(data) ? data : []
 }
 
 onMounted(async () => {
   try {
-    const [clientData] = await Promise.all([
-      fetchClients(),
-      loadContacts(),
-    ])
-    clients.value = clientData
+    await loadContacts()
   } catch (e) {
     console.error('데이터 로드 실패', e)
     error('데이터를 불러오지 못했습니다. 페이지를 새로고침해주세요.')
   }
 })
 
-// ── 검색 ───────────────────────────────────────────────────
-const searchInput = ref('')
+// ── 검색 (이름/이메일 부분일치) ───────────────────────────
 const searchKeyword = ref('')
-
-const clientSearchOptions = computed(() =>
-  clients.value.map((c) => ({ label: `${c.clientName} (${c.clientNameKr})`, value: c.clientId })),
-)
-
-function applySearch() {
-  searchKeyword.value = searchInput.value
-}
-
-function getContactsByClient(clientId) {
-  return myContacts.value.filter((c) => String(c.clientId) === String(clientId))
-}
-
-const filteredClients = computed(() => {
-  let result = clients.value
-  if (searchKeyword.value) {
-    result = result.filter((c) => String(c.clientId) === String(searchKeyword.value))
-  }
-  return result.filter((c) => getContactsByClient(c.clientId).length > 0)
+const filteredContacts = computed(() => {
+  const q = searchKeyword.value.trim().toLowerCase()
+  if (!q) return contacts.value
+  return contacts.value.filter((c) =>
+    (c.contactName ?? '').toLowerCase().includes(q) ||
+    (c.contactEmail ?? '').toLowerCase().includes(q) ||
+    (c.contactPosition ?? '').toLowerCase().includes(q) ||
+    (c.contactTel ?? '').toLowerCase().includes(q),
+  )
 })
 
 // ── 상세 모달 ──────────────────────────────────────────────
@@ -102,39 +57,19 @@ function closeDetail() {
   selectedContact.value = null
 }
 
-function getClientName(clientId) {
-  const client = clients.value.find((c) => c.clientId === clientId)
-  return client ? `${client.clientName} (${client.clientNameKr})` : '-'
-}
-
 // ── 등록/수정 모달 ─────────────────────────────────────────
 const isFormOpen = ref(false)
 const isEditMode = ref(false)
 const editingId = ref(null)
-const formClientId = ref('')
 const formName = ref('')
 const formPosition = ref('')
 const formEmail = ref('')
 const formTel = ref('')
 const formErrors = ref({})
 
-watch(formClientId, (val) => { if (val) formErrors.value.clientId = undefined })
-watch(formName,     (val) => { if (val.trim()) formErrors.value.buyerName = undefined })
-watch(formEmail,    (val) => { if (val.trim()) formErrors.value.buyerEmail = undefined })
-
-const positionOptions = [
-  { label: '팀장', value: '팀장' },
-  { label: '팀원', value: '팀원' },
-]
-
-const clientOptions = computed(() =>
-  clients.value.map((c) => ({ label: `${c.clientName} (${c.clientNameKr})`, value: c.clientId })),
-)
-
 function openCreate() {
   isEditMode.value = false
   editingId.value = null
-  formClientId.value = ''
   formName.value = ''
   formPosition.value = ''
   formEmail.value = ''
@@ -145,28 +80,28 @@ function openCreate() {
 
 function openEdit(contact) {
   isEditMode.value = true
-  editingId.value = contact.id
-  formClientId.value = contact.clientId
-  formName.value = contact.buyerName
-  formPosition.value = contact.buyerPosition
-  formEmail.value = contact.buyerEmail
-  formTel.value = contact.buyerTel
+  editingId.value = contact.contactId
+  formName.value = contact.contactName ?? ''
+  formPosition.value = contact.contactPosition ?? ''
+  formEmail.value = contact.contactEmail ?? ''
+  formTel.value = contact.contactTel ?? ''
   formErrors.value = {}
   isDetailOpen.value = false
   isFormOpen.value = true
 }
 
+function closeForm() {
+  isFormOpen.value = false
+}
+
 function validate() {
   const e = {}
-  if (!formClientId.value)     e.clientId  = '거래처 값이 누락되었습니다.'
-  if (!formName.value.trim())  e.buyerName  = '이름 값이 누락되었습니다.'
-  if (!formEmail.value.trim()) {
-    e.buyerEmail = '이메일 값이 누락되었습니다.'
-  } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formEmail.value.trim())) {
-    e.buyerEmail = '올바른 이메일 형식을 입력하세요.'
+  if (!formName.value.trim()) e.contactName = '이름을 입력하세요.'
+  if (formEmail.value.trim() && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formEmail.value.trim())) {
+    e.contactEmail = '올바른 이메일 형식을 입력하세요.'
   }
   if (formTel.value.trim() && !/^\+?[\d\s()-]{7,20}$/.test(formTel.value.trim())) {
-    e.buyerTel = '올바른 전화번호 형식을 입력하세요.'
+    e.contactTel = '올바른 전화번호 형식을 입력하세요.'
   }
   formErrors.value = e
   return Object.keys(e).length === 0
@@ -178,31 +113,23 @@ async function handleFormSubmit() {
     return
   }
   const payload = {
-    clientId:     formClientId.value,
-    buyerName:    formName.value,
-    buyerPosition: formPosition.value,
-    buyerEmail:   formEmail.value,
-    buyerTel:     formTel.value,
-    signImageUrl: null,
-    createdBy:    currentUser.value?.userId,
+    contactName: formName.value.trim(),
+    contactPosition: formPosition.value.trim(),
+    contactEmail: formEmail.value.trim(),
+    contactTel: formTel.value.trim(),
   }
   try {
     if (isEditMode.value) {
-      await updateBuyer(editingId.value, { id: editingId.value, ...payload })
+      await updateContact(editingId.value, payload)
     } else {
-      await createBuyer(payload)
+      await createContact(payload)
     }
-    // CRUD 후 /api/contacts 재조회 — sync 단계에서 contacts row 가 갱신/추가됨
     await loadContacts()
     closeForm()
   } catch (e) {
     console.error('연락처 저장 실패', e)
     error('저장에 실패했습니다. 다시 시도해주세요.')
   }
-}
-
-function closeForm() {
-  isFormOpen.value = false
 }
 
 // ── 삭제 확인 모달 ─────────────────────────────────────────
@@ -222,7 +149,7 @@ function closeDelete() {
 
 async function handleDelete() {
   try {
-    await deleteBuyer(deleteTarget.value.id)
+    await deleteContact(deleteTarget.value.contactId)
     await loadContacts()
     closeDelete()
   } catch (e) {
@@ -234,24 +161,14 @@ async function handleDelete() {
 
 <template>
   <div class="space-y-6">
-    <!-- 페이지 타이틀 -->
     <DocumentPageHeader title="컨택 리스트" icon-class="fas fa-address-book">
       <template #actions>
         <div class="w-64">
-          <SearchableCombobox
-            v-model="searchInput"
-            :options="clientSearchOptions"
-            placeholder="거래처 검색..."
+          <BaseTextField
+            v-model="searchKeyword"
+            placeholder="이름 · 이메일 · 직책 · 전화 검색"
           />
         </div>
-        <BaseButton variant="ghost" @click="applySearch">
-          <template #leading>
-            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 3.473 9.766l3.63 3.63a.75.75 0 1 0 1.06-1.06l-3.63-3.63A5.5 5.5 0 0 0 9 3.5ZM5 9a4 4 0 1 1 8 0 4 4 0 0 1-8 0Z" clip-rule="evenodd" />
-            </svg>
-          </template>
-          검색
-        </BaseButton>
         <BaseButton @click="openCreate">
           <template #leading>
             <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -263,81 +180,67 @@ async function handleDelete() {
       </template>
     </DocumentPageHeader>
 
-    <!-- 거래처별 카드 그룹 -->
-    <div
-      v-for="client in filteredClients"
-      :key="client.clientId"
-      class="space-y-3"
-    >
-      <!-- 거래처 그룹 헤더 -->
-      <div>
-        <h3 class="text-sm font-bold text-slate-800">{{ client.clientName }}</h3>
-        <p class="text-xs text-slate-400">{{ client.clientNameKr }} · {{ client.countryName }}</p>
-      </div>
+    <p class="text-xs text-slate-400">
+      개인 인맥 자산 — 거래처 무관. 같은 팀의 거래처 바이어 등록 시 본인 컨택에 자동 추가됨.
+    </p>
 
-      <!-- 컨택 카드 그리드 -->
-      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-        <div
-          v-for="contact in getContactsByClient(client.clientId)"
-          :key="contact.id"
-          class="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-brand-200 hover:shadow-md"
-          @click="openDetail(contact)"
-        >
-          <!-- 이름 + 연락처 정보 -->
-          <div class="min-w-0 flex-1">
-            <div class="mb-2">
-              <p class="text-sm font-semibold text-slate-800">{{ contact.buyerName }}</p>
-              <p class="text-xs text-slate-500">{{ contact.buyerPosition }}</p>
+    <!-- 컨택 카드 그리드 -->
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+      <div
+        v-for="contact in filteredContacts"
+        :key="contact.contactId"
+        class="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-brand-200 hover:shadow-md"
+        @click="openDetail(contact)"
+      >
+        <div class="min-w-0 flex-1">
+          <div class="mb-2">
+            <p class="text-sm font-semibold text-slate-800">{{ contact.contactName }}</p>
+            <p class="text-xs text-slate-500">{{ contact.contactPosition || '직책 미입력' }}</p>
+          </div>
+          <div class="space-y-1.5 text-xs">
+            <div class="flex items-start gap-2 text-slate-600">
+              <svg class="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M3 4a2 2 0 0 0-2 2v1.161l8.441 4.221a1.25 1.25 0 0 0 1.118 0L19 7.162V6a2 2 0 0 0-2-2H3Z" />
+                <path d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" />
+              </svg>
+              <span class="break-all">{{ contact.contactEmail || '-' }}</span>
             </div>
-            <div class="space-y-1.5 text-xs">
-              <div class="flex items-start gap-2 text-slate-600">
-                <svg class="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path d="M3 4a2 2 0 0 0-2 2v1.161l8.441 4.221a1.25 1.25 0 0 0 1.118 0L19 7.162V6a2 2 0 0 0-2-2H3Z" />
-                  <path d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" />
-                </svg>
-                <span class="break-all">{{ contact.buyerEmail }}</span>
-              </div>
-              <div class="flex items-center gap-2 text-slate-600">
-                <svg class="h-3.5 w-3.5 shrink-0 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fill-rule="evenodd" d="M2 3.5A1.5 1.5 0 0 1 3.5 2h1.148a1.5 1.5 0 0 1 1.465 1.175l.716 3.223a1.5 1.5 0 0 1-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 0 0 6.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 0 1 1.767-1.052l3.223.716A1.5 1.5 0 0 1 18 16.352V17.5a1.5 1.5 0 0 1-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 0 1 2.43 8.326 13.019 13.019 0 0 1 2 5V3.5Z" clip-rule="evenodd" />
-                </svg>
-                <span>{{ contact.buyerTel }}</span>
-              </div>
+            <div class="flex items-center gap-2 text-slate-600">
+              <svg class="h-3.5 w-3.5 shrink-0 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M2 3.5A1.5 1.5 0 0 1 3.5 2h1.148a1.5 1.5 0 0 1 1.465 1.175l.716 3.223a1.5 1.5 0 0 1-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 0 0 6.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 0 1 1.767-1.052l3.223.716A1.5 1.5 0 0 1 18 16.352V17.5a1.5 1.5 0 0 1-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 0 1 2.43 8.326 13.019 13.019 0 0 1 2 5V3.5Z" clip-rule="evenodd" />
+              </svg>
+              <span>{{ contact.contactTel || '-' }}</span>
             </div>
           </div>
-          <!-- 수정/삭제 -->
-          <div class="ml-3 shrink-0" @click.stop>
-            <TableActions @edit="openEdit(contact)" @delete="openDelete(contact)" />
-          </div>
+        </div>
+        <div class="ml-3 shrink-0" @click.stop>
+          <TableActions @edit="openEdit(contact)" @delete="openDelete(contact)" />
         </div>
       </div>
     </div>
 
-    <!-- 검색 결과 없음 -->
     <div
-      v-if="filteredClients.length === 0"
+      v-if="filteredContacts.length === 0"
       class="py-16 text-center text-sm text-slate-400"
     >
-      검색 결과가 없습니다.
+      {{ searchKeyword ? '검색 결과가 없습니다.' : '등록된 연락처가 없습니다. 우측 상단 "연락처 등록" 버튼으로 추가하세요.' }}
     </div>
 
     <!-- 상세 모달 -->
     <BaseModal
       :open="isDetailOpen"
-      :title="selectedContact?.buyerName ?? '연락처 상세'"
+      :title="selectedContact?.contactName ?? '연락처 상세'"
       width="max-w-md"
       @close="closeDetail"
     >
       <div class="space-y-4">
         <div>
-          <p class="text-lg font-bold text-slate-900">{{ selectedContact?.buyerName }}</p>
-          <p class="text-sm text-slate-500">{{ selectedContact?.buyerPosition }}</p>
+          <p class="text-lg font-bold text-slate-900">{{ selectedContact?.contactName }}</p>
+          <p class="text-sm text-slate-500">{{ selectedContact?.contactPosition || '직책 미입력' }}</p>
         </div>
         <div class="space-y-3">
-          <InfoField label="거래처" :value="getClientName(selectedContact?.clientId)" />
-          <InfoField label="직위" :value="selectedContact?.buyerPosition" />
-          <InfoField label="이메일" :value="selectedContact?.buyerEmail" />
-          <InfoField label="전화" :value="selectedContact?.buyerTel" />
+          <InfoField label="이메일" :value="selectedContact?.contactEmail || '-'" />
+          <InfoField label="전화" :value="selectedContact?.contactTel || '-'" />
         </div>
       </div>
       <template #footer>
@@ -350,50 +253,38 @@ async function handleDelete() {
     <BaseModal
       :open="isFormOpen"
       :title="isEditMode ? '연락처 수정' : '연락처 등록'"
-      width="max-w-lg"
+      width="max-w-md"
       @close="closeForm"
     >
-      <div class="space-y-4">
-        <div class="grid grid-cols-2 gap-4">
-          <FormField label="거래처" :required="true" :error="formErrors.clientId">
-            <SearchableCombobox
-              v-model="formClientId"
-              :options="clientOptions"
-              placeholder="거래처 검색/선택..."
-            />
-          </FormField>
-          <FormField label="이름" :required="true" :error="formErrors.buyerName">
-            <BaseTextField v-model="formName" placeholder="연락처 이름" />
-          </FormField>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-          <FormField label="직위">
-            <BaseSelect v-model="formPosition" :options="positionOptions" placeholder="직위 선택" />
-          </FormField>
-          <FormField label="이메일" :required="true" :error="formErrors.buyerEmail">
-            <BaseTextField v-model="formEmail" placeholder="이메일" type="email" />
-          </FormField>
-        </div>
-        <FormField label="전화">
-          <BaseTextField v-model="formTel" placeholder="전화번호" />
+      <form class="space-y-4" @submit.prevent="handleFormSubmit">
+        <FormField label="이름" required :error="formErrors.contactName">
+          <BaseTextField v-model="formName" placeholder="홍길동" />
         </FormField>
-      </div>
+        <FormField label="직책">
+          <BaseTextField v-model="formPosition" placeholder="과장" />
+        </FormField>
+        <FormField label="이메일" :error="formErrors.contactEmail">
+          <BaseTextField v-model="formEmail" type="email" placeholder="hong@example.com" />
+        </FormField>
+        <FormField label="전화" :error="formErrors.contactTel">
+          <BaseTextField v-model="formTel" placeholder="010-1234-5678" />
+        </FormField>
+      </form>
       <template #footer>
         <BaseButton variant="secondary" @click="closeForm">취소</BaseButton>
         <BaseButton @click="handleFormSubmit">{{ isEditMode ? '수정' : '등록' }}</BaseButton>
       </template>
     </BaseModal>
 
-    <!-- 삭제 확인 모달 -->
     <ConfirmModal
       :open="isDeleteOpen"
       title="연락처 삭제"
-      message="아래 연락처를 삭제하시겠습니까?"
-      :detail="`${deleteTarget?.buyerName} (${deleteTarget?.buyerPosition})`"
+      message="이 연락처를 삭제하시겠습니까?"
+      :detail="`${deleteTarget?.contactName} (${deleteTarget?.contactPosition || '직책 미입력'})`"
       confirm-label="삭제"
-      confirm-variant="danger"
-      @confirm="handleDelete"
+      variant="danger"
       @cancel="closeDelete"
+      @confirm="handleDelete"
     />
   </div>
 </template>
