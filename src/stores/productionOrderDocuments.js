@@ -64,8 +64,8 @@ export async function loadProductionOrderDocuments() {
 export function useProductionOrderDocuments() {
   const auth = useAuthStore()
   const role = auth.currentUser?.role
-  // 생산지시서는 admin/sales/production 만 조회 권한. shipping 에서 401/403 유발 방지.
-  const allowed = ['admin', 'sales', 'production'].includes(role)
+  // 생산지시서는 gateway 정책상 admin/production 만 허용. sales/shipping 에서 403 유발 방지.
+  const allowed = ['admin', 'production'].includes(role)
   if (!loading && auth.isLoggedIn && allowed) {
     loading = loadProductionOrderDocuments()
   }
