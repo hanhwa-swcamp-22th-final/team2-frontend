@@ -1,11 +1,25 @@
 import { api } from '@/lib/api'
 import { unwrapCollection } from '@/utils/apiResponse'
+import { unwrapPaged } from '@/utils/pagedResponse'
 
-// Clients
-// 서버가 PagedModel(default size 10) 를 반환하므로, 목록 화면은 클라이언트 페이지네이션을 쓰는
-// 상황에선 충분히 큰 size 로 한 번에 로드해서 전체를 확보한다.
-export const fetchClients = (params = { size: 1000 }) =>
-  api.get('/clients', { params }).then((r) => unwrapCollection(r.data, 'clientResponseList'))
+/**
+ * 기준정보 API.
+ *
+ * 거래처(clients) / 바이어(buyers) 서브리소스는 PagedModel HATEOAS 형식이다.
+ * 각 리소스는 두 가지 형태를 제공:
+ *   - `fetchXxxPaged({ page, size })` → `{ content, page }` (서버사이드 페이지네이션용)
+ *   - `fetchXxx()` → 배열 (클라이언트사이드 필터/검색 레거시 호환. size=1000).
+ */
+
+// ── Clients ─────────────────────────────────────────────────
+export async function fetchClientsPaged({ page = 0, size = 20, ...rest } = {}) {
+  const { data } = await api.get('/clients', { params: { page, size, ...rest } })
+  return unwrapPaged(data, { page, size, hintKey: 'clientResponseList' })
+}
+export const fetchClients = async (params = { size: 1000 }) => {
+  const { data } = await api.get('/clients', { params })
+  return unwrapCollection(data, 'clientResponseList')
+}
 export const fetchClient = (id) => api.get(`/clients/${id}`).then((r) => r.data)
 export const createClient = (client) => api.post('/clients', client).then((r) => r.data)
 export const updateClient = (id, client) => api.put(`/clients/${id}`, client).then((r) => r.data)
@@ -14,7 +28,16 @@ export async function changeClientStatus(id, status) {
   return data
 }
 
-// Items (ItemQueryController 는 PagedResponse 형식 유지)
+export async function fetchClientsByTeamPaged(teamId, { page = 0, size = 20 } = {}) {
+  const { data } = await api.get(`/clients/team/${teamId}`, { params: { page, size } })
+  return unwrapPaged(data, { page, size, hintKey: 'clientResponseList' })
+}
+export async function fetchClientsByDepartmentPaged(departmentId, { page = 0, size = 20 } = {}) {
+  const { data } = await api.get(`/clients/department/${departmentId}`, { params: { page, size } })
+  return unwrapPaged(data, { page, size, hintKey: 'clientResponseList' })
+}
+
+// ── Items (ItemQueryController 는 레거시 PagedResponse 유지) ──
 export const fetchItems = (params = { size: 1000 }) =>
   api.get('/items', { params }).then((r) => unwrapCollection(r.data, 'itemResponseList'))
 export const fetchItem = (id) => api.get(`/items/${id}`).then((r) => r.data)
@@ -25,15 +48,25 @@ export async function changeItemStatus(id, status) {
   return data
 }
 
-// Buyers
-export const fetchBuyers = () =>
-  api.get('/buyers').then((r) => unwrapCollection(r.data, 'buyerResponseList'))
-export const fetchBuyersByClient = (clientId) =>
-  api
-    .get(`/clients/${clientId}/buyers`)
-    .then((r) => unwrapCollection(r.data, 'buyerResponseList'))
+// ── Buyers ──────────────────────────────────────────────────
+export async function fetchBuyersPaged({ page = 0, size = 20 } = {}) {
+  const { data } = await api.get('/buyers', { params: { page, size } })
+  return unwrapPaged(data, { page, size, hintKey: 'buyerResponseList' })
+}
+export const fetchBuyers = async () => {
+  const { data } = await api.get('/buyers', { params: { size: 1000 } })
+  return unwrapCollection(data, 'buyerResponseList')
+}
+export async function fetchBuyersByClientPaged(clientId, { page = 0, size = 20 } = {}) {
+  const { data } = await api.get(`/clients/${clientId}/buyers`, { params: { page, size } })
+  return unwrapPaged(data, { page, size, hintKey: 'buyerResponseList' })
+}
+export const fetchBuyersByClient = async (clientId) => {
+  const { data } = await api.get(`/clients/${clientId}/buyers`, { params: { size: 1000 } })
+  return unwrapCollection(data, 'buyerResponseList')
+}
 
-// Reference data
+// ── Reference data (pagination 없음) ─────────────────────────
 export const fetchCountries = () =>
   api.get('/countries').then((r) => unwrapCollection(r.data, 'countryList'))
 export const fetchPorts = () =>

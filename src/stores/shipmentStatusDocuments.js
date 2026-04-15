@@ -1,6 +1,6 @@
 import { useAuthStore } from './auth'
 import { ref } from 'vue'
-import { fetchShipments } from '@/api/documents'
+import { fetchShipmentsPaged } from '@/api/documents'
 
 function formatDate(value) {
   return String(value ?? '').replace(/-/g, '/')
@@ -25,15 +25,21 @@ function mapShipmentResponse(row) {
 }
 
 const shipmentStatusDocuments = ref([])
+const shipmentStatusPageInfo = ref({ size: 1000, number: 0, totalElements: 0, totalPages: 0 })
 let loading = null
 
-export async function loadShipmentStatusDocuments() {
+export async function loadShipmentStatusDocuments({ page = 0, size = 1000 } = {}) {
   try {
-    const data = await fetchShipments()
-    shipmentStatusDocuments.value = (Array.isArray(data) ? data : []).map(mapShipmentResponse)
+    const { content, page: pageInfo } = await fetchShipmentsPaged({ page, size })
+    shipmentStatusDocuments.value = (Array.isArray(content) ? content : []).map(mapShipmentResponse)
+    shipmentStatusPageInfo.value = pageInfo
   } catch (e) {
     console.error('Failed to load shipment status documents:', e)
   }
+}
+
+export function useShipmentStatusPageInfo() {
+  return shipmentStatusPageInfo
 }
 
 export function useShipmentStatusDocuments() {

@@ -1,6 +1,6 @@
 import { useAuthStore } from './auth'
 import { ref } from 'vue'
-import { fetchProductionOrders } from '@/api/documents'
+import { fetchProductionOrdersPaged } from '@/api/documents'
 
 function formatDate(value) {
   return String(value ?? '').replace(/-/g, '/')
@@ -50,15 +50,21 @@ function mapProductionOrderResponse(row) {
 }
 
 const productionOrderDocuments = ref([])
+const productionOrderPageInfo = ref({ size: 1000, number: 0, totalElements: 0, totalPages: 0 })
 let loading = null
 
-export async function loadProductionOrderDocuments() {
+export async function loadProductionOrderDocuments({ page = 0, size = 1000 } = {}) {
   try {
-    const data = await fetchProductionOrders()
-    productionOrderDocuments.value = (Array.isArray(data) ? data : []).map(mapProductionOrderResponse)
+    const { content, page: pageInfo } = await fetchProductionOrdersPaged({ page, size })
+    productionOrderDocuments.value = (Array.isArray(content) ? content : []).map(mapProductionOrderResponse)
+    productionOrderPageInfo.value = pageInfo
   } catch (e) {
     console.error('Failed to load production order documents:', e)
   }
+}
+
+export function useProductionOrderPageInfo() {
+  return productionOrderPageInfo
 }
 
 export function useProductionOrderDocuments() {
