@@ -41,7 +41,8 @@ const infoGroups = computed(() => {
     {
       title: '규격 / 단위',
       fields: [
-        { label: '규격', value: item.value.itemSpec, wide: true },
+        { label: '치수 (W × D × H)', value: formatDimensions(item.value), wide: true },
+        { label: '사양', value: item.value.itemSpec || '-', wide: true },
         { label: '단위', value: item.value.itemUnit },
         { label: '포장단위', value: item.value.itemPackUnit },
       ],
@@ -57,6 +58,15 @@ const infoGroups = computed(() => {
     },
   ]
 })
+
+/** 구조화된 W/D/H 가 있으면 "1722 × 1134 × 40 mm", W/H 만 있으면 "1722 × 1134 mm",
+ *  치수 정보가 없으면 "-". 자유 텍스트 사양은 별도 행 (itemSpec) 으로 표시. */
+function formatDimensions(it) {
+  if (!it) return '-'
+  const w = it.itemWidth, d = it.itemDepth, h = it.itemHeight
+  if (w && h) return d ? `${w} × ${d} × ${h} mm` : `${w} × ${h} mm`
+  return '-'
+}
 
 async function loadData() {
   const rawId = route.params.id
