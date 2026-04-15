@@ -64,3 +64,12 @@ export const updateCollection = (id, payload) =>
 // Approval Requests
 export const fetchApprovalRequests = () =>
   api.get('/approval-requests').then((r) => unwrapCollection(r.data))
+
+/**
+ * 결재자 후보 조회 (팀장 + ADMIN).
+ * @param {number|null} teamId — 현재 사용자의 팀 ID. null 이면 전 팀의 팀장 반환.
+ */
+export const fetchApprovers = (teamId = null) =>
+  api
+    .get('/approval-requests/approvers', { params: teamId != null ? { teamId } : {} })
+    .then((r) => (Array.isArray(r.data) ? r.data : unwrapCollection(r.data)))

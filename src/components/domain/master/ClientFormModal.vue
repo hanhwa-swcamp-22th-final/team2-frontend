@@ -96,6 +96,9 @@ function getInitialForm() {
     paymentTermsId: null,
     currencyId: null,
     manager: '',
+    buyerPosition: '',
+    buyerEmail: '',
+    buyerTel: '',
     departmentId: null,
     teamId: null,
     status: 'active',
@@ -216,6 +219,18 @@ function validate() {
     e.manager = `담당자명은 ${MAX_LEN.MANAGER}자 이내로 입력하세요.`
   }
 
+  // 바이어 정보 — 신규 등록 시만 필수 (수정 시 Client 만 수정, Buyer 는 상세 페이지에서)
+  if (props.mode === 'create') {
+    if (!form.value.buyerEmail?.trim()) {
+      e.buyerEmail = '바이어 이메일을 입력하세요.'
+    } else if (!isValidEmail(form.value.buyerEmail)) {
+      e.buyerEmail = '올바른 이메일 형식을 입력하세요.'
+    }
+    if (form.value.buyerTel && !isValidTel(form.value.buyerTel)) {
+      e.buyerTel = '올바른 전화번호 형식을 입력하세요.'
+    }
+  }
+
   if (!form.value.tel?.trim()) {
     e.tel = '거래처 연락처를 입력하세요.'
   } else if (!isValidTel(form.value.tel)) {
@@ -264,6 +279,11 @@ function handleSave() {
     paymentTermId: form.value.paymentTermsId,
     currencyId: form.value.currencyId,
     clientManager: form.value.manager,
+    ...(props.mode === 'create' && {
+      buyerPosition: form.value.buyerPosition || null,
+      buyerEmail: form.value.buyerEmail,
+      buyerTel: form.value.buyerTel || null,
+    }),
     teamId: form.value.teamId,
   }
   emit('save', payload)
@@ -317,16 +337,11 @@ function handleSave() {
         </div>
       </div>
 
-      <!-- 거래처 연락처 -->
+      <!-- 거래처 대표 연락처 -->
       <div>
-        <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">거래처 연락처</h4>
+        <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">거래처 대표 연락처</h4>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormField label="거래처 담당자 (바이어)" required>
-            <BaseTextField v-model="form.manager" placeholder="거래처 측 바이어 이름 (예: Mr. Ahmad Razak)" />
-            <p v-if="errors.manager" class="mt-1 text-xs text-red-500">{{ errors.manager }}</p>
-            <p v-else class="mt-1 text-xs text-slate-400">거래처 내 주 연락 담당자(바이어). 추가 바이어는 상세 페이지에서 등록합니다.</p>
-          </FormField>
-          <FormField label="거래처 TEL (대표 연락처)" required>
+          <FormField label="거래처 TEL (대표)" required>
             <BaseTextField
               v-model="form.tel"
               :placeholder="phoneInfo.placeholder"
@@ -335,9 +350,48 @@ function handleSave() {
             />
             <p v-if="errors.tel" class="mt-1 text-xs text-red-500">{{ errors.tel }}</p>
           </FormField>
-          <FormField label="거래처 Email (대표 이메일)" required>
+          <FormField label="거래처 Email (대표)" required>
             <BaseTextField v-model="form.email" type="email" placeholder="contact@company.com" />
             <p v-if="errors.email" class="mt-1 text-xs text-red-500">{{ errors.email }}</p>
+          </FormField>
+        </div>
+      </div>
+
+      <!-- 최초 바이어 정보 (신규 등록 시만) -->
+      <div v-if="mode === 'create'">
+        <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          최초 바이어 정보
+          <span class="ml-2 text-[11px] font-normal normal-case text-slate-400">
+            거래처 등록 시 대표 바이어 1명 자동 등록 — 추가 바이어는 상세 페이지에서.
+          </span>
+        </h4>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <FormField label="바이어 이름" required>
+            <BaseTextField v-model="form.manager" placeholder="예: Mr. Ahmad Razak" />
+            <p v-if="errors.manager" class="mt-1 text-xs text-red-500">{{ errors.manager }}</p>
+          </FormField>
+          <FormField label="바이어 직책">
+            <BaseTextField v-model="form.buyerPosition" placeholder="예: Purchasing Manager" />
+          </FormField>
+          <FormField label="바이어 Email" required>
+            <BaseTextField v-model="form.buyerEmail" type="email" placeholder="buyer@company.com" />
+            <p v-if="errors.buyerEmail" class="mt-1 text-xs text-red-500">{{ errors.buyerEmail }}</p>
+          </FormField>
+          <FormField label="바이어 TEL">
+            <BaseTextField v-model="form.buyerTel" :placeholder="phoneInfo.placeholder" />
+            <p v-if="errors.buyerTel" class="mt-1 text-xs text-red-500">{{ errors.buyerTel }}</p>
+          </FormField>
+        </div>
+      </div>
+
+      <!-- 수정 모드: 거래처 담당자명만 -->
+      <div v-else>
+        <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">거래처 담당자</h4>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <FormField label="거래처 담당자 (대표 바이어)" required>
+            <BaseTextField v-model="form.manager" placeholder="예: Mr. Ahmad Razak" />
+            <p v-if="errors.manager" class="mt-1 text-xs text-red-500">{{ errors.manager }}</p>
+            <p v-else class="mt-1 text-xs text-slate-400">바이어 세부 정보는 거래처 상세 페이지에서 수정합니다.</p>
           </FormField>
         </div>
       </div>
