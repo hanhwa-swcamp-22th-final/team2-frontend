@@ -911,7 +911,12 @@ function cancelDeleteApprovalRequest() {
 }
 
 function goToDetail(id) {
+  if (!id) return
   router.push({ name: 'pi-detail', params: { id } })
+}
+
+function handleRowClick(row) {
+  goToDetail(row?.id)
 }
 
 function handleClientSelect(client) {
@@ -1051,7 +1056,7 @@ function handleProductSelect(product) {
       clickable-rows
       empty-text="데이터가 없습니다."
       :footer-text="`총 ${filteredRows.length}건`"
-      @row-click="goToDetail($event.id)"
+      @row-click="handleRowClick"
     >
       <template #cell-id="{ value }">
         <button type="button" class="font-mono text-xs font-semibold text-brand-600 hover:underline" @click.stop="goToDetail(value)">

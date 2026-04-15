@@ -33,7 +33,9 @@ router.beforeEach(async (to) => {
   // JWT role claim 은 대문자("ADMIN"), meta.requiredRole 은 소문자("admin") → normalize 필수
   const getRole = () => (authStore.currentUser?.userRole ?? authStore.currentUser?.role ?? '').toLowerCase()
   const denyAccess = () => {
-    useToast().warning('해당 페이지에 접근할 권한이 없습니다.', '접근 제한')
+    // sessionStorage flash: 현재 route 언마운트 후 다음 route 마운트 시점에 toast 노출.
+    // useToast() 를 가드 내에서 즉시 호출하면 redirect 로 DOM 이 바뀌며 transition 이 유실됨.
+    try { sessionStorage.setItem('flash.denyAccess', '1') } catch {}
     return getRoleHomePath(getRole())
   }
   if (authStore.isLoggedIn) {
@@ -60,6 +62,17 @@ router.beforeEach(async (to) => {
 
   // 복구 실패 → 로그인 페이지
   return { name: 'login', query: { redirect: to.fullPath } }
+})
+
+router.afterEach(() => {
+  if (typeof sessionStorage === 'undefined') return
+  if (sessionStorage.getItem('flash.denyAccess') === '1') {
+    sessionStorage.removeItem('flash.denyAccess')
+    // 다음 tick 에서 toast 띄워 ToastContainer 마운트 완료 보장
+    setTimeout(() => {
+      useToast().warning('해당 페이지에 접근할 권한이 없습니다.', '접근 제한')
+    }, 0)
+  }
 })
 
 app.use(router)
