@@ -590,6 +590,10 @@ function downloadCurrentTablePdf() {
       >
         데이터가 없습니다.
       </div>
+
+      <div class="border-t border-slate-200 bg-slate-50 px-4 py-2 text-right text-xs text-slate-500">
+        총 {{ sortedRows.length }}건
+      </div>
     </section>
 
     <BasePagination

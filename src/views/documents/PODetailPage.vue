@@ -501,7 +501,6 @@ const previewFields = computed(() => {
 
   return [
     { label: '거래처', value: detail.value.clientName },
-    { label: '바이어', value: detail.value.buyer },
     { label: '통화', value: detail.value.currency },
     { label: '인코텀즈', value: detail.value.incoterms },
     { label: '납기일', value: detail.value.deliveryDate },
@@ -970,10 +969,6 @@ function cancelDeleteApprovalRequest() {
             <div>
               <span class="text-slate-500">거래처</span>
               <div class="mt-0.5 break-words font-medium">{{ detail.clientName }}</div>
-            </div>
-            <div>
-              <span class="text-slate-500">바이어</span>
-              <div class="mt-0.5 break-words font-medium">{{ detail.buyer }}</div>
             </div>
             <div>
               <span class="text-slate-500">영문주소</span>

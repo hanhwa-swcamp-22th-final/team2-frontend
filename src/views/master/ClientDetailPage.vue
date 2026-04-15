@@ -79,7 +79,7 @@ const infoGroups = computed(() => {
       fields: [
         { label: '국가', value: client.value.countryName || getCountryName(client.value.countryId, { detailed: true }) },
         { label: '도시', value: client.value.clientCity },
-        { label: '도착항', value: client.value.portName || getPortName(client.value.portId) },
+        { label: '도착항', value: client.value.portName || getPortName(client.value.portId) || '미등록' },
         { label: '주소', value: client.value.clientAddress, wide: true },
       ],
     },

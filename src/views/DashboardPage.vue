@@ -208,8 +208,8 @@ function buildFallbackReview(docType, row) {
     message: '요청 시점의 검토 데이터가 없어 현재 문서 스냅샷 기준으로 표시합니다.',
     requestRows: [
       { label: '요청 유형', value: `${row.approvalAction || '-'} 요청` },
-      { label: '결재자', value: row.approver || '-' },
-      { label: '요청자', value: row.approvalRequestedBy || '-' },
+      { label: '결재자', value: row.approver || '미지정' },
+      { label: '요청자', value: row.approvalRequestedBy || '미지정' },
       { label: '문서 상태', value: row.status || '-' },
       { label: '요청 상태', value: row.requestStatus || '-' },
       { label: '요청 시각', value: row.approvalRequestedAt || '-' },
@@ -255,8 +255,8 @@ function createRequestItem(docType, row) {
     docId: row.id,
     actionLabel: row.approvalAction || row.requestStatus?.replace('요청', '') || '결재',
     company: row.clientName || '-',
-    requester: row.approvalRequestedBy || '-',
-    approver: row.approver || '-',
+    requester: row.approvalRequestedBy || '미지정',
+    approver: row.approver || '미지정',
     status: row.approvalStatus || '-',
     requestStatus: row.requestStatus || '-',
     requestedAt: row.approvalRequestedAt || '-',
@@ -355,8 +355,8 @@ const decisionConfirmDetailRows = computed(() => {
     { label: '문서 종류', value: selectedRequest.value.docType },
     { label: '문서 번호', value: selectedRequest.value.docId },
     { label: '요청 유형', value: `${selectedRequest.value.actionLabel} 요청` },
-    { label: '요청자', value: selectedRequest.value.requester || '-' },
-    { label: '결재자', value: selectedRequest.value.approver || '-' },
+    { label: '요청자', value: selectedRequest.value.requester || '미지정' },
+    { label: '결재자', value: selectedRequest.value.approver || '미지정' },
     { label: '요청 시각', value: selectedRequest.value.requestedAt || '-' },
   ]
 })
