@@ -1,4 +1,4 @@
-import { computed, readonly, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { decodeToken, isTokenExpired } from '@/lib/token'
 import { login as apiLogin, refreshToken as apiRefresh, logoutApi } from '@/api/auth'
@@ -88,7 +88,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    accessToken: readonly(accessToken),
+    accessToken,
     isLoggedIn,
     currentUser,
     login,
