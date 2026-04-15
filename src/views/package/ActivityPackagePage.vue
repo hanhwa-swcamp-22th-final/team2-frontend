@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchActivities, fetchAllActivityPOs } from '@/api/activity'
-import { fetchDepartments, fetchPositions } from '@/api/auth'
+import { fetchPositions, fetchTeams } from '@/api/auth'
 import { createPackage, fetchAllUsers, fetchPackageById, updatePackage } from '@/api/package'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
@@ -45,17 +45,17 @@ const editId = computed(() => route.query.edit || '')
 const activities = ref([])
 const poList = ref([])
 const allUsers = ref([])
-const departments = ref([])
+const teams = ref([])
 const positions = ref([])
 const isSaving = ref(false)
 
 onMounted(async () => {
   try {
-    const [actData, poData, userData, deptData, posData] = await Promise.all([
+    const [actData, poData, userData, teamData, posData] = await Promise.all([
       fetchActivities(),
       fetchAllActivityPOs(),
       fetchAllUsers(),
-      fetchDepartments(),
+      fetchTeams(),
       fetchPositions(),
     ])
     activities.value = Array.isArray(actData) ? actData : []
@@ -63,7 +63,7 @@ onMounted(async () => {
     allUsers.value = (Array.isArray(userData) ? userData : []).filter(
       (u) => u.userStatus === 'active' || u.status === 'active' || u.status === '재직',
     )
-    departments.value = Array.isArray(deptData) ? deptData : []
+    teams.value = Array.isArray(teamData) ? teamData : []
     positions.value = Array.isArray(posData) ? posData : []
 
     if (isEditMode.value) {
@@ -145,22 +145,21 @@ const dateTo      = ref(todayKr())
 // ── 열람 권한 ──────────────────────────────────────────────
 const selectedViewerIds = ref([])
 const viewerSearchQuery = ref('')
-const viewerDeptFilter = ref('')
+const viewerTeamFilter = ref('')
 
-// 백엔드 Department 응답은 departmentId / departmentName 필드. Position 도 동일.
-// 이전엔 d.id / d.name 으로 접근해 전부 undefined 로 표시됐었다.
-const departmentNameById = computed(() => new Map(
-  departments.value.map(d => [String(d.departmentId ?? d.id), d.departmentName ?? d.name])
+// 백엔드 Team 응답은 teamId / teamName 필드. Position 도 동일.
+const teamNameById = computed(() => new Map(
+  teams.value.map(t => [String(t.teamId ?? t.id), t.teamName ?? t.name])
 ))
 const positionNameById = computed(() => new Map(
   positions.value.map(p => [String(p.positionId ?? p.id), p.positionName ?? p.name])
 ))
 
-const deptOptions = computed(() => [
-  { label: '전체 부서', value: '' },
-  ...departments.value.map((d) => ({
-    label: d.departmentName ?? d.name,
-    value: String(d.departmentId ?? d.id),
+const teamOptions = computed(() => [
+  { label: '전체 팀', value: '' },
+  ...teams.value.map((t) => ({
+    label: t.teamName ?? t.name,
+    value: String(t.teamId ?? t.id),
   })),
 ])
 
@@ -168,8 +167,8 @@ const filteredUsers = computed(() => {
   const q = viewerSearchQuery.value.trim().toLowerCase()
   const meId = String(currentUser.value?.userId ?? currentUser.value?.id ?? '')
   let userList = allUsers.value.filter((u) => String(u.userId ?? u.id) !== meId)
-  if (viewerDeptFilter.value) {
-    userList = userList.filter((u) => String(u.departmentId) === viewerDeptFilter.value)
+  if (viewerTeamFilter.value) {
+    userList = userList.filter((u) => String(u.teamId) === viewerTeamFilter.value)
   }
   if (!q) return userList
   return userList.filter((u) =>
@@ -182,10 +181,10 @@ const filteredUsers = computed(() => {
 const groupedUsers = computed(() => {
   const groups = new Map()
   for (const user of filteredUsers.value) {
-    const deptId = String(user.departmentId ?? '')
-    const deptName = departmentNameById.value.get(deptId) || '기타'
-    if (!groups.has(deptId)) groups.set(deptId, { deptId, deptName, users: [] })
-    groups.get(deptId).users.push(user)
+    const teamId = String(user.teamId ?? '')
+    const teamName = teamNameById.value.get(teamId) || '기타'
+    if (!groups.has(teamId)) groups.set(teamId, { teamId, teamName, users: [] })
+    groups.get(teamId).users.push(user)
   }
   return [...groups.values()]
 })
@@ -195,7 +194,7 @@ const isAllViewersSelected = computed(() =>
   filteredUsers.value.every((u) => selectedViewerIds.value.includes(String(u.userId ?? u.id))),
 )
 
-function isDeptAllSelected(users) {
+function isTeamAllSelected(users) {
   return users.length > 0 && users.every((u) => selectedViewerIds.value.includes(String(u.userId ?? u.id)))
 }
 
@@ -217,7 +216,7 @@ function toggleAllViewers(checked) {
   }
 }
 
-function toggleDeptViewers(users, checked) {
+function toggleTeamViewers(users, checked) {
   const ids = users.map((u) => String(u.userId ?? u.id))
   if (checked) {
     selectedViewerIds.value = [...new Set([...selectedViewerIds.value, ...ids])]
@@ -488,7 +487,7 @@ async function savePackage() {
                   {{ selectedViewerIds.length }}명 선택됨
                 </span>
               </p>
-              <!-- 검색 + 부서 필터 -->
+              <!-- 검색 + 팀 필터 -->
               <div class="flex gap-2">
                 <BaseTextField
                   v-model="viewerSearchQuery"
@@ -497,9 +496,9 @@ async function savePackage() {
                 />
                 <div class="w-36 shrink-0">
                   <BaseSelect
-                    v-model="viewerDeptFilter"
-                    :options="deptOptions"
-                    placeholder="전체 부서"
+                    v-model="viewerTeamFilter"
+                    :options="teamOptions"
+                    placeholder="전체 팀"
                   />
                 </div>
               </div>
@@ -521,17 +520,17 @@ async function savePackage() {
                     />
                     <span class="text-xs font-semibold text-slate-600">전체선택</span>
                   </label>
-                  <!-- 부서별 트리 -->
-                  <div v-for="group in groupedUsers" :key="group.deptId" class="mb-1.5">
-                    <!-- 부서 헤더 -->
+                  <!-- 팀별 트리 -->
+                  <div v-for="group in groupedUsers" :key="group.teamId" class="mb-1.5">
+                    <!-- 팀 헤더 -->
                     <label class="flex cursor-pointer items-center gap-2 rounded-md bg-slate-100 px-2 py-1.5 transition hover:bg-slate-200">
                       <input
                         type="checkbox"
                         class="rounded border-slate-300 text-brand-500"
-                        :checked="isDeptAllSelected(group.users)"
-                        @change="toggleDeptViewers(group.users, $event.target.checked)"
+                        :checked="isTeamAllSelected(group.users)"
+                        @change="toggleTeamViewers(group.users, $event.target.checked)"
                       />
-                      <span class="text-xs font-bold text-slate-700">{{ group.deptName }}</span>
+                      <span class="text-xs font-bold text-slate-700">{{ group.teamName }}</span>
                       <span class="ml-auto text-xs text-slate-400">{{ group.users.length }}명</span>
                     </label>
                     <!-- 사용자 행 -->
