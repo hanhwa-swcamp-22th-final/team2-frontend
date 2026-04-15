@@ -56,12 +56,12 @@ const unitOptions = computed(() => {
   return [{ label: '전체', value: '' }, ...units.map((u) => ({ label: u, value: u }))]
 })
 
-/** W/D/H 가 모두 있으면 "1722 × 1134 × 35 mm". 정책상 셋 다 필수 (ItemFormModal 검증).
- *  레거시 누락 데이터는 자유 텍스트 itemSpec fallback, 그것도 없으면 "-". */
+/** W/D/H 가 모두 있으면 "1722 × 1134 × 35 mm" 표시. ItemFormModal 검증상 셋 다 필수.
+ *  레거시 누락 데이터는 "-". 폼에 사양 입력이 없으므로 자유 텍스트 itemSpec 은 표시 안 함. */
 function formatItemDimensions(row) {
   const w = row.itemWidth, d = row.itemDepth, h = row.itemHeight
   if (w && d && h) return `${w} × ${d} × ${h} mm`
-  return row.itemSpec || '-'
+  return '-'
 }
 
 function resetFilters() {
@@ -96,7 +96,7 @@ const columns = computed(() => {
   const base = [
     { key: 'itemCode', label: '코드', width: '100px', align: 'center' },
     { key: 'itemName', label: '품목명' },
-    { key: 'itemSpec', label: '규격', width: '200px' },
+    { key: 'itemSpec', label: '치수 (W × D × H)', width: '200px' },
     { key: 'itemPackUnit', label: '포장단위', width: '100px', align: 'center' },
     { key: 'itemUnit', label: '단위', width: '80px', align: 'center' },
     { key: 'itemUnitPrice', label: '단가 (KRW)', width: '140px', align: 'right' },
