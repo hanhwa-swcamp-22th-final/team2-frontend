@@ -41,14 +41,19 @@ onMounted(async () => {
   // 인증되지 않은 상태에서는 API 호출하지 않음 (k8s 전환 후 401 크래시 방지)
   if (!authStore.isLoggedIn) return
 
+  // /api/activity-packages 는 ActivityPackageQueryController @PreAuthorize 로 ADMIN/SALES 만
+  // 허용. production/shipping 에서 호출 시 403 + 콘솔 에러 → 권한 가드 후 호출.
+  const role = (authStore.currentUser?.role ?? '').toLowerCase()
+  const canFetchPackages = role === 'admin' || role === 'sales'
+
   const [clientsResult, activitiesResult, packagesResult] = await Promise.allSettled([
     fetchClients(),
     fetchActivities(),
-    fetchPackages(),
+    canFetchPackages ? fetchPackages() : Promise.resolve(null),
   ])
   if (clientsResult.status === 'fulfilled') clientsData.value = clientsResult.value ?? []
   if (activitiesResult.status === 'fulfilled') activitiesData.value = activitiesResult.value ?? []
-  if (packagesResult.status === 'fulfilled') packagesData.value = packagesResult.value ?? []
+  if (packagesResult.status === 'fulfilled' && packagesResult.value) packagesData.value = packagesResult.value
 })
 
 const currentUser = computed(() => authStore.currentUser ?? null)

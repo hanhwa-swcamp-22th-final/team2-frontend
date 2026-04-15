@@ -46,7 +46,9 @@ const detail = computed(() => {
 })
 const displayItems = computed(() => enrichDocumentItems(detail.value?.items ?? []))
 const isProductionUser = computed(() => authStore.currentUser?.role === 'production')
-const canCompleteProduction = computed(() => isProductionUser.value && detail.value?.status === '진행중')
+const isAdminUser = computed(() => authStore.currentUser?.role === 'admin')
+const canShowCompleteButton = computed(() => isProductionUser.value || isAdminUser.value)
+const canCompleteProduction = computed(() => canShowCompleteButton.value && detail.value?.status === '진행중')
 const totalQuantity = computed(() => (
   displayItems.value.reduce((sum, item) => sum + Number.parseInt(item.quantity, 10), 0)
 ))
@@ -174,7 +176,7 @@ onMounted(() => {
       <DetailPageHeader :title="detail.id" :status="detail.status" @back="goBack">
         <template #actions>
           <BaseButton
-            v-if="isProductionUser"
+            v-if="canShowCompleteButton"
             size="sm"
             :disabled="!canCompleteProduction"
             @click="openCompleteConfirm"
