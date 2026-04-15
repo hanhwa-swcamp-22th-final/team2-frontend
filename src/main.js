@@ -5,6 +5,7 @@ import router from './router'
 import { useAuthStore } from './stores/auth'
 import { setupApiInterceptors, setRouter } from './lib/api'
 import { canAccessRouteByRole, getRoleHomePath } from './utils/roleAccess'
+import { useToast } from './composables/useToast'
 import './styles/tailwind.css'
 
 const app = createApp(App)
@@ -31,12 +32,16 @@ router.beforeEach(async (to) => {
   // 로그인 상태면 통과
   // JWT role claim 은 대문자("ADMIN"), meta.requiredRole 은 소문자("admin") → normalize 필수
   const getRole = () => (authStore.currentUser?.userRole ?? authStore.currentUser?.role ?? '').toLowerCase()
+  const denyAccess = () => {
+    useToast().warning('해당 페이지에 접근할 권한이 없습니다.', '접근 제한')
+    return getRoleHomePath(getRole())
+  }
   if (authStore.isLoggedIn) {
     if (to.meta.requiredRole && getRole() !== to.meta.requiredRole) {
-      return getRoleHomePath(getRole())
+      return denyAccess()
     }
     if (!canAccessRouteByRole(authStore.currentUser, to.name)) {
-      return getRoleHomePath(getRole())
+      return denyAccess()
     }
     return true
   }
@@ -45,10 +50,10 @@ router.beforeEach(async (to) => {
   const restored = await authStore.restoreSession()
   if (restored) {
     if (to.meta.requiredRole && getRole() !== to.meta.requiredRole) {
-      return getRoleHomePath(getRole())
+      return denyAccess()
     }
     if (!canAccessRouteByRole(authStore.currentUser, to.name)) {
-      return getRoleHomePath(getRole())
+      return denyAccess()
     }
     return true
   }

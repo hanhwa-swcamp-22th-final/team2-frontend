@@ -1188,6 +1188,7 @@ function handleProductSelect(product) {
     <BaseTable
       :columns="columns"
       :rows="paginatedRows"
+      row-key="id"
       clickable-rows
       empty-text="데이터가 없습니다."
       :footer-text="`총 ${filteredRows.length}건`"
