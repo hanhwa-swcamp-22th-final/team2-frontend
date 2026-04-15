@@ -50,28 +50,43 @@ const positions = ref([])
 const isSaving = ref(false)
 
 onMounted(async () => {
-  try {
-    const [actData, poData, userData, teamData, posData] = await Promise.all([
-      fetchActivities(),
-      fetchAllActivityPOs(),
-      fetchAllUsers(),
-      fetchTeams(),
-      fetchPositions(),
-    ])
-    activities.value = Array.isArray(actData) ? actData : []
-    poList.value = Array.isArray(poData) ? poData : []
-    allUsers.value = (Array.isArray(userData) ? userData : []).filter(
+  // Promise.allSettled 로 한 fetch 실패가 다른 데이터 로드를 막지 않게 격리.
+  // (이전 Promise.all 은 하나라도 reject 시 teams/users 등 모든 ref 가 빈 채로 남음)
+  const settled = await Promise.allSettled([
+    fetchActivities(),
+    fetchAllActivityPOs(),
+    fetchAllUsers(),
+    fetchTeams(),
+    fetchPositions(),
+  ])
+  const [actRes, poRes, userRes, teamRes, posRes] = settled
+  const failed = []
+
+  if (actRes.status === 'fulfilled') activities.value = Array.isArray(actRes.value) ? actRes.value : []
+  else failed.push('activities')
+
+  if (poRes.status === 'fulfilled') poList.value = Array.isArray(poRes.value) ? poRes.value : []
+  else failed.push('po')
+
+  if (userRes.status === 'fulfilled') {
+    allUsers.value = (Array.isArray(userRes.value) ? userRes.value : []).filter(
       (u) => u.userStatus === 'active' || u.status === 'active' || u.status === '재직',
     )
-    teams.value = Array.isArray(teamData) ? teamData : []
-    positions.value = Array.isArray(posData) ? posData : []
+  } else failed.push('users')
 
-    if (isEditMode.value) {
-      await loadPackageForEdit()
-    }
-  } catch (e) {
-    console.error('데이터 로드 실패', e)
-    error('데이터를 불러오지 못했습니다. 페이지를 새로고침해주세요.')
+  if (teamRes.status === 'fulfilled') teams.value = Array.isArray(teamRes.value) ? teamRes.value : []
+  else failed.push('teams')
+
+  if (posRes.status === 'fulfilled') positions.value = Array.isArray(posRes.value) ? posRes.value : []
+  else failed.push('positions')
+
+  if (failed.length > 0) {
+    console.error('데이터 로드 부분 실패:', failed, settled.filter(r => r.status === 'rejected').map(r => r.reason))
+    error(`일부 데이터를 불러오지 못했습니다 (${failed.join(', ')}). 새로고침해주세요.`)
+  }
+
+  if (isEditMode.value) {
+    try { await loadPackageForEdit() } catch (e) { console.error('패키지 편집 로드 실패', e) }
   }
 })
 
@@ -155,13 +170,12 @@ const positionNameById = computed(() => new Map(
   positions.value.map(p => [String(p.positionId ?? p.id), p.positionName ?? p.name])
 ))
 
-const teamOptions = computed(() => [
-  { label: '전체 팀', value: '' },
-  ...teams.value.map((t) => ({
-    label: t.teamName ?? t.name,
-    value: String(t.teamId ?? t.id),
-  })),
-])
+// BaseSelect 가 placeholder 옵션을 자체적으로 렌더하므로 첫 행에 별도 "전체 팀" 추가하지 않음.
+// (중복 "전체 팀" 옵션 표시 방지)
+const teamOptions = computed(() => teams.value.map((t) => ({
+  label: t.teamName ?? t.name,
+  value: String(t.teamId ?? t.id),
+})))
 
 const filteredUsers = computed(() => {
   const q = viewerSearchQuery.value.trim().toLowerCase()
