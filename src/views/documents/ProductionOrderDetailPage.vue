@@ -9,6 +9,7 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import ProductionOrderTemplate from '@/components/domain/document/ProductionOrderTemplate.vue'
 import { useDocumentItemCatalog } from '@/composables/useDocumentItemCatalog'
+import { completeProductionOrder } from '@/api/documents'
 import { useAuthStore } from '@/stores/auth'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useToast } from '@/composables/useToast'
@@ -120,9 +121,23 @@ function closeCompleteConfirm() {
   completeConfirmOpen.value = false
 }
 
-function confirmCompleteProduction() {
+async function confirmCompleteProduction() {
   if (!detail.value || !canCompleteProduction.value) return
 
+  try {
+    // 백엔드 PUT /api/production-orders/{id}/complete (controller @PreAuthorize ADMIN/PRODUCTION)
+    await completeProductionOrder(detail.value.id)
+  } catch (e) {
+    if (e.response?.status === 403) {
+      toast.error('생산완료 처리 권한이 없습니다.')
+    } else {
+      toast.error('생산완료 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+    }
+    completeConfirmOpen.value = false
+    return
+  }
+
+  // 성공 시 로컬 store 동기화
   productionOrderDocuments.value = productionOrderDocuments.value.map((row) => (
     row.id === detail.value.id
       ? { ...row, status: '생산완료' }

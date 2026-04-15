@@ -6,6 +6,7 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useDocumentItemCatalog } from '@/composables/useDocumentItemCatalog'
+import { updateShipment } from '@/api/documents'
 import { useAuthStore } from '@/stores/auth'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
@@ -87,11 +88,23 @@ function goToShipmentOrder() {
   router.push({ name: 'shipment-order-detail', params: { id: detail.value?.shipmentOrderId } })
 }
 
-function completeShipment() {
+async function completeShipment() {
   if (!detail.value || detail.value.status === '출하완료') return
+  try {
+    // 백엔드 PUT /api/shipments/{id} (controller @PreAuthorize ADMIN/SHIPPING)
+    await updateShipment(detail.value.id, { status: 'completed' })
+  } catch (e) {
+    if (e.response?.status === 403) {
+      toast.error('출하완료 처리 권한이 없습니다.')
+    } else {
+      toast.error('출하완료 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+    }
+    return
+  }
+  // 성공 시 로컬 store 동기화 (대시보드/목록 즉시 반영)
   shipmentStatusDocuments.value = shipmentStatusDocuments.value.map((row) => (
     row.id === detail.value.id
-      ? { ...row, status: '출하완료', updatedAt: '2026/03/31 10:00' }
+      ? { ...row, status: '출하완료' }
       : row
   ))
   shipmentOrderDocuments.value = shipmentOrderDocuments.value.map((row) => (

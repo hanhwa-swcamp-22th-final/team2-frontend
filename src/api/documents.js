@@ -36,6 +36,8 @@ export const fetchProductionOrders = () =>
   api.get('/production-orders').then((r) => unwrapCollection(r.data))
 export const fetchProductionOrder = (id) =>
   api.get(`/production-orders/${id}`).then((r) => r.data)
+export const completeProductionOrder = (productionOrderId) =>
+  api.put(`/production-orders/${productionOrderId}/complete`).then((r) => r.data)
 
 // Shipment Orders
 export const fetchShipmentOrders = () =>

@@ -318,6 +318,15 @@ const sourceRow = computed(() => (
 
 const detail = computed(() => normalizeDetail(sourceRow.value))
 
+// 백엔드 PO 응답의 shipmentStatus 필드 (LEFT JOIN shipments aggregate)
+// null=출하전 / preparing=출하준비 / completed=출하완료
+const shipmentStatusLabel = computed(() => {
+  const raw = sourceRow.value?.shipmentStatus
+  if (raw === 'completed') return '출하완료'
+  if (raw === 'preparing') return '출하준비'
+  return '출하 전'
+})
+
 const approvalInfoRows = computed(() => buildApprovalInfoRows(detail.value))
 const shipmentLockInfo = computed(() => (
   getPoShipmentLockInfo(
@@ -985,6 +994,10 @@ function cancelDeleteApprovalRequest() {
             <div>
               <span class="text-slate-500">PO 번호</span>
               <div class="mt-0.5 font-medium">{{ detail.id }}</div>
+            </div>
+            <div>
+              <span class="text-slate-500">출하 진행</span>
+              <div class="mt-0.5 font-medium">{{ shipmentStatusLabel }}</div>
             </div>
           </div>
         </div>

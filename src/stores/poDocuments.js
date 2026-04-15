@@ -77,6 +77,9 @@ function mapPoResponse(row) {
     itemsSnapshot: row.itemsSnapshot ? parseJsonSafe(row.itemsSnapshot) : null,
     linkedDocuments: parseLinkedDocuments(row.linkedDocuments),
     revisionHistory: row.revisionHistory ? parseJsonSafe(row.revisionHistory, []) : [],
+    // 백엔드 PO 응답 enrich (LEFT JOIN shipments aggregate). null=출하전 / preparing / completed.
+    // sales 가 출하 모듈 직접 권한 없이도 본인 PO 의 출하 진행을 PO 화면에서 확인 가능.
+    shipmentStatus: row.shipmentStatus ?? null,
     items,
   }
 }
