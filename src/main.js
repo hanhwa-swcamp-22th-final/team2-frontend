@@ -64,6 +64,24 @@ router.beforeEach(async (to) => {
   return { name: 'login', query: { redirect: to.fullPath } }
 })
 
+// 배포 직후 브라우저에 캐시된 구 index.js 가 서버에 없는 옛 청크 파일명을 참조하면
+// dynamic import 실패 → 페이지가 렌더링되지 않음. 에러 감지 시 1회 강제 reload 하여
+// 최신 index.html + 청크 해시로 회복.
+const CHUNK_LOAD_ERROR_PATTERN = /Failed to fetch dynamically imported module|Importing a module script failed/i
+const RELOAD_FLAG = 'claude.chunkReloaded'
+router.onError((err) => {
+  if (CHUNK_LOAD_ERROR_PATTERN.test(err?.message ?? '')) {
+    if (sessionStorage.getItem(RELOAD_FLAG) !== '1') {
+      sessionStorage.setItem(RELOAD_FLAG, '1')
+      window.location.reload()
+    }
+  }
+})
+router.afterEach(() => {
+  // 정상 페이지 이동 완료 시 reload 플래그 해제 — 다음 배포 발생 시 다시 감지 가능하게.
+  try { sessionStorage.removeItem(RELOAD_FLAG) } catch {}
+})
+
 router.afterEach(() => {
   if (typeof sessionStorage === 'undefined') return
   if (sessionStorage.getItem('flash.denyAccess') === '1') {
