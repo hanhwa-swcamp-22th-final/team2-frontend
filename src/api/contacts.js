@@ -35,3 +35,21 @@ export async function updateBuyer(id, buyer) {
 export async function deleteBuyer(id) {
   await api.delete(`/buyers/${id}`)
 }
+
+/**
+ * 자유 컨택 등록 (activity). payload 의 clientId 는 optional.
+ * { clientId?, contactName, contactPosition?, contactEmail?, contactTel? }
+ */
+export async function createContact(payload) {
+  const { data } = await api.post('/contacts', payload)
+  return data
+}
+
+export async function updateContact(id, payload) {
+  const { data } = await api.put(`/contacts/${id}`, payload)
+  return data
+}
+
+export async function deleteContact(id) {
+  await api.delete(`/contacts/${id}`)
+}
