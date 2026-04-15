@@ -2,7 +2,7 @@ import { readonly, ref } from 'vue'
 
 const toasts = ref([])
 
-function showToast({ type = 'info', title = '', message = '', duration = 2500 }) {
+function showToast({ type = 'info', title = '', message = '', duration = 4000 }) {
   const id = Date.now() + Math.random()
   const toast = { id, type, title, message }
 
@@ -30,13 +30,13 @@ export function useToast() {
       return showToast({ type: 'success', title, message })
     },
     error(message, title = '오류') {
-      return showToast({ type: 'error', title, message, duration: 3500 })
+      return showToast({ type: 'error', title, message, duration: 5000 })
     },
     info(message, title = '알림') {
       return showToast({ type: 'info', title, message })
     },
     warning(message, title = '안내') {
-      return showToast({ type: 'warning', title, message, duration: 3000 })
+      return showToast({ type: 'warning', title, message, duration: 4500 })
     },
   }
 }

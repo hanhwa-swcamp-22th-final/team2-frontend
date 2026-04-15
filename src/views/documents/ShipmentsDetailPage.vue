@@ -44,6 +44,8 @@ const linkedShipmentOrder = computed(() => shipmentOrderDocuments.value.find((ro
 const displayItems = computed(() => enrichDocumentItems(detail.value?.items ?? []))
 
 const currentStep = computed(() => (detail.value?.status === '출하완료' ? 2 : 1))
+const currentRole = computed(() => (authStore.currentUser?.role ?? '').toLowerCase())
+const canCompleteShipment = computed(() => currentRole.value === 'admin' || currentRole.value === 'shipping')
 function parseNumericValue(value) {
   const numeric = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))
   return Number.isFinite(numeric) ? numeric : 0
@@ -132,6 +134,7 @@ onMounted(() => {
       <DetailPageHeader :title="detail.id" :status="detail.status" @back="goBack">
         <template #actions>
           <BaseButton
+            v-if="canCompleteShipment"
             size="sm"
             :disabled="detail.status === '출하완료'"
             @click="completeShipment"
