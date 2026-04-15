@@ -56,6 +56,14 @@ const unitOptions = computed(() => {
   return [{ label: '전체', value: '' }, ...units.map((u) => ({ label: u, value: u }))]
 })
 
+/** W/D/H 가 모두 있으면 "1722 × 1134 × 35 mm". 정책상 셋 다 필수 (ItemFormModal 검증).
+ *  레거시 누락 데이터는 자유 텍스트 itemSpec fallback, 그것도 없으면 "-". */
+function formatItemDimensions(row) {
+  const w = row.itemWidth, d = row.itemDepth, h = row.itemHeight
+  if (w && d && h) return `${w} × ${d} × ${h} mm`
+  return row.itemSpec || '-'
+}
+
 function resetFilters() {
   filters.value = { keyword: '', code: '', name: '', category: '', unit: '', status: '' }
   appliedFilters.value = { keyword: '', code: '', name: '', category: '', unit: '', status: '' }
@@ -306,6 +314,11 @@ function goToDetail(row) {
           <p class="font-medium text-ink">{{ row.itemName }}</p>
           <p class="text-xs text-slate-500">{{ [row.itemNameKr, row.itemCategory].filter(Boolean).join(' · ') }}</p>
         </div>
+      </template>
+
+      <!-- 규격: 구조화된 W×D×H 우선 표시, 누락 시 자유 텍스트 itemSpec fallback -->
+      <template #cell-itemSpec="{ row }">
+        <span>{{ formatItemDimensions(row) }}</span>
       </template>
 
       <template #cell-itemUnitPrice="{ row }">
