@@ -6,12 +6,12 @@ import BaseCard from '@/components/common/BaseCard.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import { useAuthStore } from '@/stores/auth'
-import { useCiDocuments } from '@/stores/ciDocuments'
-import { usePiDocuments } from '@/stores/piDocuments'
-import { usePlDocuments } from '@/stores/plDocuments'
-import { usePoDocuments } from '@/stores/poDocuments'
-import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
-import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
+import { useCiDocuments, loadCiDocuments } from '@/stores/ciDocuments'
+import { usePiDocuments, loadPiDocuments } from '@/stores/piDocuments'
+import { usePlDocuments, loadPlDocuments } from '@/stores/plDocuments'
+import { usePoDocuments, loadPoDocuments } from '@/stores/poDocuments'
+import { useProductionOrderDocuments, loadProductionOrderDocuments } from '@/stores/productionOrderDocuments'
+import { useShipmentStatusDocuments, loadShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import { fetchActivities } from '@/api/activity'
 import { fetchClients } from '@/api/master'
 import { fetchPackages, deletePackage as deletePackageApi } from '@/api/package'
@@ -46,14 +46,22 @@ onMounted(async () => {
   const role = (authStore.currentUser?.role ?? '').toLowerCase()
   const canFetchPackages = role === 'admin' || role === 'sales'
 
-  const [clientsResult, activitiesResult, packagesResult] = await Promise.allSettled([
-    fetchClients(),
-    fetchActivities(),
-    canFetchPackages ? fetchPackages() : Promise.resolve(null),
+  // 대시보드는 진입할 때마다 문서 store 를 강제 재조회한다. 모듈 싱글톤 store 는
+  // 최초 1회만 자동 로드되므로, PI 등록/결재 후 대시보드 복귀 시 stale snapshot 이
+  // 그대로 노출되어 카운트·결재현황이 반영되지 않았음 (QA 8차 #4 / #6).
+  await Promise.allSettled([
+    fetchClients().then((v) => { clientsData.value = v ?? [] }),
+    fetchActivities().then((v) => { activitiesData.value = v ?? [] }),
+    canFetchPackages
+      ? fetchPackages().then((v) => { if (v) packagesData.value = v })
+      : Promise.resolve(null),
+    loadPiDocuments(),
+    loadPoDocuments(),
+    loadCiDocuments(),
+    loadPlDocuments(),
+    loadProductionOrderDocuments(),
+    loadShipmentStatusDocuments(),
   ])
-  if (clientsResult.status === 'fulfilled') clientsData.value = clientsResult.value ?? []
-  if (activitiesResult.status === 'fulfilled') activitiesData.value = activitiesResult.value ?? []
-  if (packagesResult.status === 'fulfilled' && packagesResult.value) packagesData.value = packagesResult.value
 })
 
 const currentUser = computed(() => authStore.currentUser ?? null)
