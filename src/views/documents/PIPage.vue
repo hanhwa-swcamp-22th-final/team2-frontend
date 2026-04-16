@@ -862,6 +862,14 @@ async function handleSave(formValue) {
   }
 
   if (formMode.value === 'create') {
+    // 외화 선택 시 환율 데이터가 준비되지 않았다면 제출 차단
+    // (환율 CDN 응답 전에 저장하면 exchangeRate=null 로 전송되어 백엔드 400)
+    const currencyCode = formValue.currency || 'USD'
+    if (currencyCode !== 'KRW' && !getKrwRate(currencyCode)) {
+      warning(`${currencyCode} 환율 정보가 준비되지 않았습니다. 잠시 후 다시 시도해주세요.`)
+      return
+    }
+
     if (isTeamLeader.value) {
       // 팀장 셀프 등록: 백엔드가 MANAGER 권한 기준으로 즉시 확정 처리
       try {
