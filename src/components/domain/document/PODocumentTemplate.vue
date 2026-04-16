@@ -10,6 +10,7 @@
  */
 import DocumentPrintLayout from './DocumentPrintLayout.vue'
 import { resolveConsigneeAddress } from '@/utils/ciplTemplate'
+import { normalizeIncoterms } from '@/utils/incoterms'
 
 defineProps({
   document: {
@@ -18,14 +19,12 @@ defineProps({
   },
 })
 
-function extractIncotermCode(value) {
-  const [code = ''] = String(value ?? '').trim().split(/\s+/)
-  return code || '-'
+function extractIncotermCode(value, namedPlace) {
+  return normalizeIncoterms(value, namedPlace).code || '-'
 }
 
-function extractIncotermPlace(value) {
-  const parts = String(value ?? '').trim().split(/\s+/)
-  return parts.slice(1).join(' ') || '-'
+function extractIncotermPlace(value, namedPlace) {
+  return normalizeIncoterms(value, namedPlace).namedPlace || '-'
 }
 
 function resolvePiReference(linkedDocuments) {
@@ -95,9 +94,9 @@ function resolvePiReference(linkedDocuments) {
         </tr>
         <tr>
           <td class="info-label">Trade Terms</td>
-          <td class="info-value">{{ extractIncotermCode(document.incoterms) }}</td>
+          <td class="info-value">{{ extractIncotermCode(document.incoterms, document.namedPlace) }}</td>
           <td class="info-label">Named Place</td>
-          <td class="info-value">{{ extractIncotermPlace(document.incoterms) }}</td>
+          <td class="info-value">{{ extractIncotermPlace(document.incoterms, document.namedPlace) }}</td>
         </tr>
         <tr>
           <td class="info-label">Port of Loading</td>
