@@ -7,7 +7,7 @@ import BaseTextField from '@/components/common/BaseTextField.vue'
 import FileUploadField from '@/components/common/FileUploadField.vue'
 import FormField from '@/components/common/FormField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
-import { isValidEmail, isValidTel, MAX_LEN } from '@/utils/validators'
+import { isValidAsciiText, isValidEmail, isValidTel, MAX_LEN } from '@/utils/validators'
 import { getPhoneInfoByCountry, formatPhoneInput } from '@/utils/phoneFormat'
 
 const props = defineProps({
@@ -51,11 +51,6 @@ const paymentTermsOptions = computed(() =>
 const currencyOptions = computed(() =>
   props.currencies.map((c) => ({ label: `${c.currencyCode} (${c.currencySymbol})`, value: c.currencyId })),
 )
-
-const statusOptions = [
-  { label: '활성', value: 'active' },
-  { label: '비활성', value: 'inactive' },
-]
 
 const selectedCountryName = computed(() => {
   if (!form.value.countryId) return ''
@@ -102,6 +97,7 @@ function getInitialForm() {
     departmentId: null,
     teamId: null,
     status: 'active',
+    sealImageUrl: '',
     sealImage: null,
   }
 }
@@ -155,6 +151,7 @@ watch(
         departmentId: resolvedDeptId,
         teamId: resolvedTeamId,
         status: props.client.clientStatus ?? 'active',
+        sealImageUrl: props.client.sealImageUrl ?? '',
         sealImage: null,
       }
     } else if (isOpen && props.mode === 'create') {
@@ -193,6 +190,8 @@ function validate() {
     e.name = '영문 거래처명을 입력하세요.'
   } else if (form.value.name.length > MAX_LEN.NAME) {
     e.name = `거래처명은 ${MAX_LEN.NAME}자 이내로 입력하세요.`
+  } else if (!isValidAsciiText(form.value.name)) {
+    e.name = '영문, 숫자, 공백, 기호(.,&-()/\'#:+)만 입력 가능합니다.'
   }
 
   if (form.value.nameKr && form.value.nameKr.length > MAX_LEN.NAME_KR) {
@@ -211,6 +210,8 @@ function validate() {
     e.address = '주소를 입력하세요.'
   } else if (form.value.address.length > MAX_LEN.ADDRESS) {
     e.address = `주소는 ${MAX_LEN.ADDRESS}자 이내로 입력하세요.`
+  } else if (!isValidAsciiText(form.value.address)) {
+    e.address = '영문 주소만 입력 가능합니다. (영문, 숫자, 공백, 기호)'
   }
 
   if (!form.value.manager?.trim()) {
@@ -408,9 +409,6 @@ function handleSave() {
             <BaseSelect v-model="form.currencyId" :options="currencyOptions" placeholder="통화를 선택하세요" />
             <p v-if="errors.currencyId" class="mt-1 text-xs text-red-500">{{ errors.currencyId }}</p>
           </FormField>
-          <FormField label="상태">
-            <BaseSelect v-model="form.status" :options="statusOptions" placeholder="상태를 선택하세요" />
-          </FormField>
         </div>
       </div>
 
@@ -444,12 +442,20 @@ function handleSave() {
         </div>
       </div>
 
-      <FileUploadField
-        v-model="form.sealImage"
-        label="거래처 도장 이미지"
-        accept="image/*"
-        helper-text="거래처 도장 이미지를 업로드하세요. (PNG, JPG 권장)"
-      />
+      <div class="space-y-3">
+        <img
+          v-if="form.sealImageUrl && !form.sealImage"
+          :src="form.sealImageUrl"
+          alt="현재 등록된 거래처 도장 이미지"
+          class="h-20 w-20 rounded-lg border border-slate-200 object-contain"
+        />
+        <FileUploadField
+          v-model="form.sealImage"
+          label="거래처 도장 이미지"
+          accept="image/*"
+          helper-text="거래처 도장 이미지를 업로드하세요. (PNG, JPG 권장)"
+        />
+      </div>
     </form>
 
     <template #footer>

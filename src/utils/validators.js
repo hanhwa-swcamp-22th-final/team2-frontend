@@ -23,6 +23,14 @@ export function isValidHsCode(code) {
   return HS_CODE_REGEX.test(String(code ?? '').trim())
 }
 
+// ── 영문(ASCII) 전용: 거래처 영문명 / 영문주소 등 ──────────
+// 영문 대소문자, 숫자, 공백, 주소/상호에 자주 쓰이는 구두점만 허용.
+export const ASCII_TEXT_REGEX = /^[A-Za-z0-9 .,&\-()/'#:+]+$/
+
+export function isValidAsciiText(value) {
+  return ASCII_TEXT_REGEX.test(String(value ?? '').trim())
+}
+
 // ── 숫자 범위 검증 ───────────────────────────────────────
 export function isInRange(value, min, max) {
   const num = Number(value)
