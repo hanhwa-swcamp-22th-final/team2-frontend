@@ -330,7 +330,19 @@ const routes = [
   },
   {
     path: '/:pathMatch(.*)*',
-    redirect: '/',
+    component: AppLayout,
+    children: [
+      {
+        path: '',
+        name: 'not-found',
+        component: () => import('@/views/NotFound.vue'),
+        meta: {
+          title: '404 Not Found',
+          serviceName: '페이지를 찾을 수 없습니다',
+          description: '존재하지 않는 경로입니다.',
+        },
+      },
+    ],
   },
 ]
 

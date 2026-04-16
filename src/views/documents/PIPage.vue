@@ -465,11 +465,13 @@ function buildChangeRows(originalSnapshot, revisedSnapshot) {
 }
 
 function getCurrentRequesterName() {
-  return authStore.currentUser?.name || '김영업'
+  // 백엔드 user 객체는 userName 필드를 사용한다 — 과거 'name' 만 보던 구현 때문에
+  // 항상 fallback ('김영업') 으로 떨어지던 버그를 수정.
+  return authStore.currentUser?.userName || authStore.currentUser?.name || '미지정'
 }
 
 function getDefaultDeleteApprover(row) {
-  return row?.approver || '김영업'
+  return row?.approver || ''
 }
 
 function getRequestedAt() {

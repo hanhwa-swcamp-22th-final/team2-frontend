@@ -386,11 +386,12 @@ function buildRowPayload(formValue) {
 }
 
 function getCurrentRequesterName() {
-  return authStore.currentUser?.name || '김영업'
+  // 백엔드 user 객체는 userName 필드를 사용한다.
+  return authStore.currentUser?.userName || authStore.currentUser?.name || '미지정'
 }
 
 function getDefaultDeleteApprover(row) {
-  return row?.approver || '김영업'
+  return row?.approver || ''
 }
 
 function getRequestedAt() {

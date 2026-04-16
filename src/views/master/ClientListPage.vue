@@ -34,6 +34,12 @@ const { success, error } = useToast()
 
 const { countries, ports, currencies, paymentTerms, loadReferenceData, getCountryName, getPortName, getPaymentTermsLabel, getCurrencyLabel } = useMasterLookup()
 
+// 국가 ID → 한글명 매핑 (영문/한글 양쪽 키워드 검색을 위해 사용)
+function getCountryNameKr(countryId) {
+  const found = countries.value.find((c) => String(c.countryId) === String(countryId))
+  return found?.countryNameKr ?? ''
+}
+
 const departments = ref([])
 const teams = ref([])
 const clients = ref([])
@@ -86,6 +92,7 @@ const enrichedClients = computed(() =>
   clients.value.map((c) => ({
     ...c,
     countryName: c.countryName ?? getCountryName(c.countryId),
+    countryNameKr: c.countryNameKr ?? getCountryNameKr(c.countryId),
     portName: c.portName ?? getPortName(c.portId),
     paymentTermsCode: getPaymentTermsLabel(c.paymentTermsId),
     currencyCode: getCurrencyLabel(c.currencyId),
@@ -130,7 +137,10 @@ const filteredClients = computed(() => {
       (c) =>
         c.clientName.toLowerCase().includes(kw) ||
         (c.clientNameKr && c.clientNameKr.includes(kw)) ||
-        c.clientCode.toLowerCase().includes(kw),
+        c.clientCode.toLowerCase().includes(kw) ||
+        // 국가명 영문/한글 매칭 — "Japan", "일본" 모두 검색되도록
+        (c.countryName && c.countryName.toLowerCase().includes(kw)) ||
+        (c.countryNameKr && c.countryNameKr.includes(kw)),
     )
   }
 
