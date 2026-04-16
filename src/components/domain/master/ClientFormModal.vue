@@ -405,7 +405,7 @@ function handleSave() {
             <p v-if="errors.paymentTermsId" class="mt-1 text-xs text-red-500">{{ errors.paymentTermsId }}</p>
           </FormField>
           <FormField label="통화" required>
-            <BaseSelect v-model="form.currencyId" :options="currencyOptions" :disabled="!form.countryId" :placeholder="form.countryId ? '통화를 선택하세요' : '국가를 먼저 선택하세요'" />
+            <BaseSelect v-model="form.currencyId" :options="currencyOptions" placeholder="통화를 선택하세요" />
             <p v-if="errors.currencyId" class="mt-1 text-xs text-red-500">{{ errors.currencyId }}</p>
           </FormField>
           <FormField label="상태">

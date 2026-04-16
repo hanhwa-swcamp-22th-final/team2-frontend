@@ -10,6 +10,7 @@ import BaseTextarea from '@/components/common/BaseTextarea.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import {
   fetchBuyersByClient,
+  fetchClient,
   fetchClients,
   fetchCountries,
   fetchCurrencies,
@@ -280,9 +281,10 @@ async function loadReferenceData() {
       id: String(client.clientId),
       name: client.clientName,
       country: client.countryName ?? countryMap.get(String(client.countryId)) ?? '-',
-      address: client.clientCity ?? '',
-      tel: client.tel ?? '',
-      email: client.email ?? '',
+      // ClientListResponse 에는 주소/연락처/이메일이 없어 기본값만 채움 — 실제 값은 거래처 선택 시 fetchClient 로 보강
+      address: client.clientAddress ?? '',
+      tel: client.clientTel ?? '',
+      email: client.clientEmail ?? '',
     }))
 
     currencyOptions.value = currenciesData.map((currency) => currency.currencyCode ?? currency.code).filter(Boolean)
@@ -721,15 +723,32 @@ watch(
       return
     }
     form.value.clientName = client.name
-    form.value.clientAddress = client.address ?? ''
-    form.value.clientTel = client.tel ?? ''
-    form.value.clientEmail = client.email ?? ''
+    // 검색 모달이 넘겨주는 row 는 ClientListResponse 기반이라 주소/연락처/이메일이 비어 있다.
+    // 1차로 가능한 값을 채우고, 상세(/clients/{id})를 호출해 ClientResponse 로 보강한다.
+    form.value.clientAddress = client.address ?? client.clientAddress ?? ''
+    form.value.clientTel = client.tel ?? client.clientTel ?? ''
+    form.value.clientEmail = client.email ?? client.clientEmail ?? ''
     // 거래처 변경 시 이전 바이어 선택값 초기화 — 새 거래처 바이어 로드 후 단일 옵션이면 auto-pick
     form.value.buyerName = ''
     form.value.currency = client.currency ?? form.value.currency
     clearError('clientName')
     clearError('buyerName')
     clearError('currency')
+
+    if (client.id) {
+      try {
+        const detail = await fetchClient(client.id)
+        if (detail) {
+          // 상세 응답은 clientAddress/clientTel/clientEmail 키를 사용
+          form.value.clientAddress = detail.clientAddress ?? form.value.clientAddress
+          form.value.clientTel = detail.clientTel ?? form.value.clientTel
+          form.value.clientEmail = detail.clientEmail ?? form.value.clientEmail
+        }
+      } catch {
+        // 상세 조회 실패 시 1차 값 유지 (대부분 빈 문자열)
+      }
+    }
+
     await loadBuyerOptions()
     if (buyerRows.value.length === 1) {
       form.value.buyerName = buyerRows.value[0]
