@@ -145,8 +145,10 @@ export function getPiPoSelectionInfo(
       .map((row) => ({ type: 'PL', id: row.id, poId: row.poId, status: row.status })),
   ]
 
+  // PI→PO 1:N 허용 — 이미 연결된 PO가 있어도 선택 가능 (분할 주문/수정 발주).
+  // 취소·결재대기·출하완료 락만 차단. 서버(PurchaseOrderCreationService)가 CONFIRMED PI 기준 최종 검증.
   return {
-    selectable: !canceled && !approvalPending && !shipmentLockInfo.locked && activeLinkedPoRows.length === 0,
+    selectable: !canceled && !approvalPending && !shipmentLockInfo.locked,
     canceled,
     approvalPending,
     shipmentLockInfo,

@@ -49,7 +49,7 @@ const columns = [
   { key: 'manager', label: '영업담당자', align: 'left', width: '120px' },
   { key: 'status', label: '상태', align: 'center', width: '120px' },
   { key: 'dueDate', label: '납기일', align: 'center', width: '130px' },
-  { key: 'actions', label: '', align: 'center', width: '120px' },
+  { key: 'actions', label: '', align: 'center', width: '120px', sortable: false },
 ]
 
 const rowsData = useShipmentOrderDocuments()

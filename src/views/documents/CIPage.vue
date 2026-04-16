@@ -58,7 +58,7 @@ const columns = [
   { key: 'country', label: '국가', align: 'center', width: '120px' },
   { key: 'itemName', label: '품목명', align: 'left', width: '220px' },
   { key: 'amount', label: '총액', align: 'right', width: '140px' },
-  { key: 'actions', label: '', align: 'center', width: '120px' },
+  { key: 'actions', label: '', align: 'center', width: '120px', sortable: false },
 ]
 
 const rowsData = useCiDocuments()
