@@ -12,13 +12,14 @@ import { formatRevisionEntry } from '@/utils/revisionFormat'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import PODocumentTemplate from '@/components/domain/document/PODocumentTemplate.vue'
 import POFormModal from '@/components/domain/document/POFormModal.vue'
+import { validatePoDeletable, requestPoDeletion } from '@/api/documents'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 import { useCiDocuments } from '@/stores/ciDocuments'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { usePlDocuments } from '@/stores/plDocuments'
-import { usePoDocuments } from '@/stores/poDocuments'
+import { loadPoDocuments, usePoDocuments } from '@/stores/poDocuments'
 import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
@@ -47,7 +48,7 @@ import { clientSearchColumns } from '@/utils/searchModalColumns'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
-const { info, success, warning } = useToast()
+const { info, success, warning, error } = useToast()
 
 const previewOpen = ref(false)
 const formOpen = ref(false)
@@ -71,6 +72,8 @@ const shipmentOrderDocuments = useShipmentOrderDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
 
 const { createClientRows } = useSearchModalLookups()
+
+const isTeamLeader = computed(() => Number(authStore.currentUser?.positionId) === 1)
 
 const approvalItemColumns = [
   { key: 'name', label: '품목명', align: 'left' },
@@ -550,9 +553,28 @@ function handleEdit() {
   formOpen.value = true
 }
 
-function handleDelete() {
+async function handleDelete() {
   if (shipmentLockInfo.value.locked) {
     warning(shipmentLockMessage.value)
+    return
+  }
+
+  try {
+    await validatePoDeletable(sourceRow.value?.id)
+  } catch (e) {
+    error(e.response?.data?.message || e.response?.data || '후속 문서가 존재하여 삭제할 수 없습니다.')
+    return
+  }
+
+  if (isTeamLeader.value) {
+    try {
+      const userId = authStore.currentUser?.userId
+      await requestPoDeletion({ poId: sourceRow.value.id, userId })
+      await loadPoDocuments()
+      success(`${sourceRow.value.id} PO가 삭제되었습니다.`)
+    } catch (e) {
+      error(e.response?.data?.message || '삭제 처리 중 오류가 발생했습니다.')
+    }
     return
   }
 
@@ -852,7 +874,7 @@ function cancelEditApprovalRequest() {
   editApprovalRequestOpen.value = false
 }
 
-function confirmDeleteApprovalRequest() {
+async function confirmDeleteApprovalRequest() {
   if (!sourceRow.value) return
   if (shipmentLockInfo.value.locked) {
     warning(shipmentLockMessage.value)
@@ -860,38 +882,16 @@ function confirmDeleteApprovalRequest() {
     return
   }
 
-  const requesterName = getCurrentRequesterName()
-  const requestedAt = getRequestedAt()
-  const approvalReview = createApprovalReviewSnapshot({
-    title: 'PO 삭제 결재 검토',
-    message: '선택한 PO 삭제 요청 건입니다. 문서와 품목 정보를 확인한 뒤 승인 또는 반려를 결정합니다.',
-    requestRows: deleteApprovalRequestRows.value,
-    documentRows: deleteApprovalDocumentRows.value,
-    itemRows: deleteApprovalItemRows.value,
-    itemSummaryRows: deleteApprovalItemSummaryRows.value,
-    referenceRows: deleteApprovalReferenceRows.value,
-    documentSectionTitle: '삭제 대상 PO 정보',
-    itemSectionTitle: '삭제 대상 PO 품목 정보',
-    referenceSectionTitle: '연결 PI 정보',
-    helperText: '삭제 요청은 승인 전까지 실제 삭제되지 않으며, 승인 시 문서 상태가 취소로 전환됩니다.',
-  })
-
-  poDocuments.value = poDocuments.value.map((row) => (
-    row.id === sourceRow.value.id
-      ? {
-        ...row,
-        approvalReview,
-        ...createDeleteApprovalMeta({
-          approver: getDefaultDeleteApprover(sourceRow.value),
-          requesterName,
-          requestedAt,
-        }),
-      }
-      : row
-  ))
+  try {
+    const userId = authStore.currentUser?.userId
+    await requestPoDeletion({ poId: sourceRow.value.id, userId })
+    await loadPoDocuments()
+    success(`${sourceRow.value.id} 삭제 결재 요청이 전송되었습니다.`)
+  } catch (e) {
+    error(e.response?.data?.message || '삭제 결재 요청 중 오류가 발생했습니다.')
+  }
 
   deleteApprovalRequestOpen.value = false
-  success(`${sourceRow.value.id} 삭제 결재 요청이 전송되었습니다.`)
 }
 
 function cancelDeleteApprovalRequest() {
