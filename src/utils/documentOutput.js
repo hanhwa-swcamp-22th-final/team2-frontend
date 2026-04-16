@@ -344,7 +344,7 @@ export function buildPIOutputHtml(doc) {
       </colgroup>
       <tr><td class="info-label">From</td><td class="info-value company-cell"><div class="company-name">SalesBoost Inc.</div><div class="company-address">123 Teheran-ro, Gangnam-gu</div><div class="company-address">Seoul, Republic of Korea</div></td><td class="info-label">PI No.</td><td class="info-value">${esc(doc.id)}</td></tr>
       <tr><td class="info-label">To</td><td class="info-value party-cell"><div class="party-name">${esc(doc.clientName)}</div><div class="party-address">${esc(resolveConsigneeAddress(doc))}</div></td><td class="info-label">Issue Date</td><td class="info-value">${esc(doc.issueDate)}</td></tr>
-      <tr><td class="info-label">Attn.</td><td class="info-value">${esc(resolveBuyerName(doc))}</td><td class="info-label">Requested Delivery</td><td class="info-value">${esc(doc.deliveryDate)}</td></tr>
+      <tr><td class="info-label">Attn.</td><td class="info-value">${esc(resolveBuyerName(doc))}</td><td class="info-label">Delivery Date</td><td class="info-value">${esc(doc.deliveryDate)}</td></tr>
     </table>
     <table class="info-table shipping-info-table" style="margin-top:-1px">
       <colgroup>
@@ -353,7 +353,7 @@ export function buildPIOutputHtml(doc) {
         <col style="width:140px">
         <col>
       </colgroup>
-      <tr><td class="info-label">Trade Terms</td><td class="info-value">${esc(incotermCode)}</td><td class="info-label">Named Place</td><td class="info-value">${esc(incotermPlace)}</td></tr>
+      <tr><td class="info-label">Incoterms</td><td class="info-value">${esc(incotermCode)}</td><td class="info-label">Named Place</td><td class="info-value">${esc(incotermPlace)}</td></tr>
       <tr><td class="info-label">Terms of Payment</td><td class="info-value">T/T in Advance</td><td class="info-label">Invoice Currency</td><td class="info-value">${esc(doc.currency)}</td></tr>
     </table>
     <table class="items-table">
@@ -472,8 +472,8 @@ export function buildCIOutputHtml(doc) {
     .signature-line-row { display: flex; align-items: flex-end; gap: 10px; }
     .signed-label { font-size: 12px; }
     .signed-line { display: inline-block; width: 230px; border-bottom: 1px dotted #000; }
-    .accent-red { color: #d72626; font-style: italic; }
-    .accent-blue { color: #2d74b7; font-style: italic; font-weight: 700; }
+    .accent-red, .accent-blue { color: #000; font-style: normal; }
+    .accent-blue { font-weight: 700; }
     .italic { font-style: italic; }
     .text-right { text-align: right; }
     @media print { body { margin: 24px 28px; } }
@@ -574,7 +574,6 @@ export function buildCIOutputHtml(doc) {
   </div>
 
   <div class="signature-area">
-    <div class="signature-kor accent-red">서명파일삽입</div>
     <div class="signature-line-row">
       <span class="signed-label">Signed by</span>
       <span class="signed-line"></span>
@@ -734,11 +733,11 @@ export function buildPLOutputHtml(doc) {
   </table>
 
   <div class="total-row">
-    <span class="accent-blue">TOTAL ${items.length} Packages</span>
-    <span class="total-qty accent-blue">${esc(doc.totalQuantity || '')}</span>
-    <span class="total-nw accent-blue">${esc(doc.totalNetWeight || '')}</span>
-    <span class="total-gw accent-blue">${esc(doc.totalGrossWeight || '')}</span>
-    <span class="total-vol accent-blue">${esc(doc.totalMeasurement || '')}</span>
+    <span class="total-left accent-blue">TOTAL ${items.length} Packages</span>
+    <span class="total-qty accent-blue">${doc.totalQuantity ? `${esc(doc.totalQuantity)} EA` : ''}</span>
+    <span class="total-nw accent-blue">${doc.totalNetWeight ? `${esc(doc.totalNetWeight)} KG` : ''}</span>
+    <span class="total-gw accent-blue">${doc.totalGrossWeight ? `${esc(doc.totalGrossWeight)} KG` : ''}</span>
+    <span class="total-vol accent-blue">${doc.totalMeasurement ? `${esc(doc.totalMeasurement)} CBM` : ''}</span>
   </div>
 
   <div class="signature-area">
