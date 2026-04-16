@@ -656,6 +656,9 @@ function cancelEditRequestIntent() {
   pendingEditRequest.value = null
 }
 
+// TODO: PI 수정 결재 API (request-modification) 가 백엔드에 추가되면
+//       PO 와 동일하게 requestPiModification 연동으로 교체한다.
+//       현재는 로컬-only 로 스냅샷 비교만 수행 → 새로고침 시 소실됨.
 function confirmEditApprovalRequest() {
   if (!pendingEditRequest.value) return
 

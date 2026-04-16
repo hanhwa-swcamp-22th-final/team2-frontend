@@ -25,6 +25,9 @@ export function createDocumentClientRows({
 
   return clientsData.map((client) => ({
     id: String(client.clientId),
+    clientId: client.clientId,
+    countryId: client.countryId,
+    currencyId: client.currencyId,
     code: client.clientCode ?? '-',
     name: client.clientName ?? '-',
     country: countryMap.get(String(client.countryId)) ?? client.countryName ?? '-',

@@ -12,7 +12,7 @@ import { formatRevisionEntry } from '@/utils/revisionFormat'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import PODocumentTemplate from '@/components/domain/document/PODocumentTemplate.vue'
 import POFormModal from '@/components/domain/document/POFormModal.vue'
-import { validatePoDeletable, requestPoDeletion } from '@/api/documents'
+import { requestPoModification, validatePoDeletable, requestPoDeletion } from '@/api/documents'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
@@ -26,8 +26,6 @@ import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import {
   buildApprovalInfoRows,
   buildApprovalRequestRows,
-  createDeleteApprovalMeta,
-  createEditApprovalMeta,
   DELETE_REQUEST_DOCUMENT_STATUS,
   DELETE_REQUEST_STATUS,
   EDIT_REQUEST_DOCUMENT_STATUS,
@@ -247,41 +245,6 @@ function buildChangeRows(originalSnapshot, revisedSnapshot) {
     },
     { label: '총액', before: originalSnapshot.amount || '-', after: revisedSnapshot.amount || '-' },
   ].filter((row) => row.before !== row.after)
-}
-
-function createApprovalReviewSnapshot({
-  title,
-  message,
-  requestRows = [],
-  documentRows = [],
-  changeRows = [],
-  itemRows = [],
-  itemSummaryRows = [],
-  referenceRows = [],
-  documentSectionTitle = '문서 정보',
-  changeSectionTitle = '변경 사항',
-  itemSectionTitle = '품목 정보',
-  referenceSectionTitle = '참조 문서 정보',
-  helperText = '',
-}) {
-  return {
-    title,
-    message,
-    requestRows: requestRows.map((row) => ({ ...row })),
-    requestSectionTitle: '팀장 결재 정보',
-    documentRows: documentRows.map((row) => ({ ...row })),
-    documentSectionTitle,
-    changeColumns: changeRows.length ? approvalChangeColumns.map((column) => ({ ...column })) : [],
-    changeRows: changeRows.map((row) => ({ ...row })),
-    changeSectionTitle,
-    itemColumns: itemRows.length ? approvalItemColumns.map((column) => ({ ...column })) : [],
-    itemRows: itemRows.map((row) => ({ ...row })),
-    itemSummaryRows: itemSummaryRows.map((row) => ({ ...row })),
-    itemSectionTitle,
-    referenceRows: referenceRows.map((row) => ({ ...row })),
-    referenceSectionTitle,
-    helperText,
-  }
 }
 
 function normalizeDetail(row) {
@@ -828,46 +791,21 @@ function cancelEditRequestIntent() {
   pendingEditRequest.value = null
 }
 
-function confirmEditApprovalRequest() {
+async function confirmEditApprovalRequest() {
   if (!pendingEditRequest.value) return
 
-  const requesterName = getCurrentRequesterName()
-  const requestedAt = getRequestedAt()
-  const approvalReview = createApprovalReviewSnapshot({
-    title: 'PO 수정 결재 검토',
-    message: '요청된 변경 사항과 연결 PI 기준 정보를 함께 검토한 뒤 승인 또는 반려를 결정합니다.',
-    requestRows: editApprovalRequestRows.value,
-    documentRows: editApprovalDocumentRows.value,
-    changeRows: pendingEditRequest.value.changeRows ?? [],
-    itemRows: editApprovalItemRows.value,
-    itemSummaryRows: editApprovalItemSummaryRows.value,
-    referenceRows: editApprovalReferenceRows.value,
-    documentSectionTitle: '수정 대상 PO 정보',
-    changeSectionTitle: '변경 사항 비교',
-    itemSectionTitle: '변경 후 PO 품목 정보',
-    referenceSectionTitle: '연결 PI 정보',
-    helperText: '수정 요청은 승인 전까지 확정되지 않으며, 반려 시 요청 상태만 반영됩니다.',
-  })
+  try {
+    const userId = authStore.currentUser?.userId
+    await requestPoModification({ poId: pendingEditRequest.value.id, userId })
+    await loadPoDocuments()
 
-  poDocuments.value = poDocuments.value.map((row) => (
-    row.id === pendingEditRequest.value.id
-      ? {
-        ...row,
-        ...pendingEditRequest.value.nextRow,
-        approvalReview,
-        ...createEditApprovalMeta({
-          approver: pendingEditRequest.value.approver,
-          requesterName,
-          requestedAt,
-        }),
-      }
-      : row
-  ))
-
-  editApprovalRequestOpen.value = false
-  pendingEditRequest.value = null
-  formOpen.value = false
-  success(`${sourceRow.value?.id} 수정 결재 요청이 전송되었습니다.`)
+    editApprovalRequestOpen.value = false
+    pendingEditRequest.value = null
+    formOpen.value = false
+    success(`${sourceRow.value?.id ?? ''} 수정 결재 요청이 전송되었습니다.`)
+  } catch (e) {
+    error(e.response?.data?.message || 'PO 수정 결재 요청 중 오류가 발생했습니다.')
+  }
 }
 
 function cancelEditApprovalRequest() {

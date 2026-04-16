@@ -43,6 +43,10 @@ export const fetchPurchaseOrder = (poId) =>
   api.get(`/purchase-orders/${poId}`).then((r) => r.data)
 export const createPurchaseOrder = (payload) =>
   api.post('/purchase-orders', payload).then((r) => r.data)
+export const requestPoRegistration = (payload) =>
+  api.post('/purchase-orders/request-registration', payload).then((r) => r.data)
+export const requestPoModification = (payload) =>
+  api.post('/purchase-orders/request-modification', payload).then((r) => r.data)
 export const validatePoDeletable = (poId) =>
   api.post(`/purchase-orders/${poId}/validate-deletable`).then((r) => r.data)
 export const requestPoDeletion = (payload) =>
