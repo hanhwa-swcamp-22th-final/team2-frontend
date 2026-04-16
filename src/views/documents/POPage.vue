@@ -181,7 +181,9 @@ const shipmentLockInfoByPoId = computed(() => (
 
 const availablePiRows = computed(() => (
   piRowsSource.value.filter((row) => (
-    getPiPoSelectionInfo(
+    // 결재 확정된(confirmed) PI 만 PO 연결 후보로 노출. draft/pending_approval/rejected/modification_requested 등은 제외.
+    row.status === 'confirmed'
+    && getPiPoSelectionInfo(
       row,
       poRowsData.value,
       shipmentOrderDocuments.value,
