@@ -30,7 +30,7 @@ const formDate = ref(new Date().toISOString().slice(0, 10))
 const formPriority = ref('medium')
 const formTitle = ref('')
 const formContent = ref('')
-const formAuthor = ref('')
+const formAuthor = ref(authStore.currentUser?.userName ?? '')
 const errors = ref({})
 
 watch(formClient, (val, oldVal) => {
@@ -39,13 +39,11 @@ watch(formClient, (val, oldVal) => {
   if (oldVal !== undefined && val !== oldVal) {
     formPoDisplay.value = ''
     formPoId.value = ''
-    formAuthor.value = ''
   }
 })
 watch(formType,   (val) => { if (val) errors.value.type   = undefined })
 watch(formDate,   (val) => { if (val) errors.value.date   = undefined })
 watch(formTitle,  (val) => { if (val.trim()) errors.value.title  = undefined })
-watch(formAuthor, (val) => { if (val.trim()) errors.value.author = undefined })
 
 // ── options ────────────────────────────────────────────────
 const clientOptions = ref([])
@@ -61,10 +59,10 @@ onMounted(async () => {
 })
 
 const typeOptions = [
-  { label: '미팅/협의', value: '미팅/협의' },
-  { label: '이슈', value: '이슈' },
-  { label: '메모/노트', value: '메모/노트' },
-  { label: '일정', value: '일정' },
+  { label: '미팅/협의', value: 'meeting' },
+  { label: '이슈', value: 'issue' },
+  { label: '메모/노트', value: 'memo' },
+  { label: '일정', value: 'schedule' },
 ]
 
 const priorityOptions = [
@@ -73,9 +71,8 @@ const priorityOptions = [
 ]
 
 // ── computed ───────────────────────────────────────────────
-const isIssue    = computed(() => formType.value === '이슈')
-const isSchedule = computed(() => formType.value === '일정')
-const isAuthorLocked = computed(() => !!formPoDisplay.value)
+const isIssue    = computed(() => formType.value === 'issue')
+const isSchedule = computed(() => formType.value === 'schedule')
 
 // ── 일정 기간 선택 ─────────────────────────────────────────
 const formScheduleFrom = ref('')
@@ -83,7 +80,7 @@ const formScheduleTo   = ref('')
 
 // 일정 유형 해제 시 기간 초기화
 watch(formType, (val) => {
-  if (val !== '일정') {
+  if (val !== 'schedule') {
     formScheduleFrom.value = ''
     formScheduleTo.value   = ''
   }
@@ -217,14 +214,12 @@ async function openPoSearch() {
 function selectPO(po) {
   formPoDisplay.value = po.poId
   formPoId.value = po.poId
-  formAuthor.value = authStore.currentUser?.userName ?? ''
   isPoSearchOpen.value = false
 }
 
 function clearPo() {
   formPoDisplay.value = ''
   formPoId.value = ''
-  formAuthor.value = ''
 }
 
 function validate() {
@@ -334,9 +329,8 @@ async function handleSubmit() {
           <FormField label="작성자" :required="true" :error="errors.author">
             <BaseTextField
               v-model="formAuthor"
-              :placeholder="isAuthorLocked ? '' : 'PO 선택 시 자동 입력됩니다'"
-              :readonly="isAuthorLocked"
-              :class="isAuthorLocked ? 'cursor-not-allowed bg-slate-50 text-slate-500' : ''"
+              readonly
+              class="cursor-not-allowed bg-slate-50 text-slate-500"
             />
           </FormField>
         </div>
