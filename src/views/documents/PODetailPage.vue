@@ -88,9 +88,17 @@ const approvalChangeColumns = [
   { key: 'after', label: '변경값', align: 'left' },
 ]
 
+// PO 는 결재 확정(CONFIRMED) PI 만 연결 가능. 초안·결재대기·수정요청 상태의 PI 가
+// 드롭다운에 노출되면 결재받지 않은 초안으로 PO 수정이 가능해지므로 프론트에서 먼저 차단.
+function isConfirmedPi(row) {
+  const status = String(row?.status ?? '').trim().toLowerCase()
+  return status === 'confirmed' || status === '확정'
+}
+
 const availablePiRows = computed(() => (
   piDocuments.value.filter((row) => (
-    getPiPoSelectionInfo(
+    isConfirmedPi(row)
+    && getPiPoSelectionInfo(
       row,
       poDocuments.value,
       shipmentOrderDocuments.value,
