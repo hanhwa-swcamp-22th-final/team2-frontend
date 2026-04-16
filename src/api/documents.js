@@ -27,6 +27,10 @@ export const createProformaInvoice = (payload) =>
   api.post('/proforma-invoices', payload).then((r) => r.data)
 export const requestPiRegistration = (payload) =>
   api.post('/proforma-invoices/request-registration', payload).then((r) => r.data)
+export const validatePiDeletable = (piId) =>
+  api.post(`/proforma-invoices/${piId}/validate-deletable`).then((r) => r.data)
+export const requestPiDeletion = (payload) =>
+  api.post('/proforma-invoices/request-deletion', payload).then((r) => r.data)
 
 // ── Purchase Orders ──────────────────────────────────────────
 export async function fetchPurchaseOrdersPaged({ page = 0, size = 20 } = {}) {
@@ -39,6 +43,10 @@ export const fetchPurchaseOrder = (poId) =>
   api.get(`/purchase-orders/${poId}`).then((r) => r.data)
 export const createPurchaseOrder = (payload) =>
   api.post('/purchase-orders', payload).then((r) => r.data)
+export const validatePoDeletable = (poId) =>
+  api.post(`/purchase-orders/${poId}/validate-deletable`).then((r) => r.data)
+export const requestPoDeletion = (payload) =>
+  api.post('/purchase-orders/request-deletion', payload).then((r) => r.data)
 
 // ── Commercial Invoices ──────────────────────────────────────
 export async function fetchCommercialInvoicesPaged({ page = 0, size = 20 } = {}) {

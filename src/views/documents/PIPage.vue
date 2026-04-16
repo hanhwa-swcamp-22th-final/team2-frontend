@@ -17,13 +17,14 @@ import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import PIFormModal from '@/components/domain/document/PIFormModal.vue'
+import { validatePiDeletable, requestPiDeletion } from '@/api/documents'
 import { fetchBuyers, fetchClients, fetchCountries, fetchCurrencies } from '@/api/master'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useAuthStore } from '@/stores/auth'
 import { loadExchangeRates, clearExchangeRates } from '@/stores/exchangeRates'
-import { usePiDocuments } from '@/stores/piDocuments'
+import { loadPiDocuments, usePiDocuments } from '@/stores/piDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
@@ -52,7 +53,7 @@ import { buildSelectOptionsFromRows } from '@/utils/selectOptions'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const { success, warning } = useToast()
+const { success, warning, error } = useToast()
 
 const isAdvancedOpen = ref(false)
 const formOpen = ref(false)
@@ -847,16 +848,29 @@ function handleSave(formValue) {
   editApprovalRequestOpen.value = true
 }
 
-function openDeleteApprovalRequest(row) {
+async function openDeleteApprovalRequest(row) {
   const shipmentLockInfo = shipmentLockInfoByPiId.value.get(row.id)
   if (shipmentLockInfo?.locked) {
     warning(formatPiShipmentLockMessage(shipmentLockInfo))
     return
   }
 
+  try {
+    await validatePiDeletable(row.id)
+  } catch (e) {
+    error(e.response?.data?.message || e.response?.data || '후속 문서가 존재하여 삭제할 수 없습니다.')
+    return
+  }
+
   if (isTeamLeader.value) {
-    rowsData.value = rowsData.value.filter((r) => r.id !== row.id)
-    success(`${row.id} PI가 삭제되었습니다.`)
+    try {
+      const userId = authStore.currentUser?.userId
+      await requestPiDeletion({ piId: row.id, userId })
+      await loadPiDocuments()
+      success(`${row.id} PI가 삭제되었습니다.`)
+    } catch (e) {
+      error(e.response?.data?.message || '삭제 처리 중 오류가 발생했습니다.')
+    }
     return
   }
 
@@ -864,7 +878,7 @@ function openDeleteApprovalRequest(row) {
   deleteApprovalRequestOpen.value = true
 }
 
-function confirmDeleteApprovalRequest() {
+async function confirmDeleteApprovalRequest() {
   if (!selectedRow.value) return
 
   const shipmentLockInfo = shipmentLockInfoByPiId.value.get(selectedRow.value.id)
@@ -875,35 +889,15 @@ function confirmDeleteApprovalRequest() {
     return
   }
 
-  const requesterName = getCurrentRequesterName()
-  const requestedAt = getRequestedAt()
-  const approvalReview = createApprovalReviewSnapshot({
-    title: 'PI 삭제 결재 검토',
-    message: '선택한 PI 삭제 요청 건입니다. 문서와 품목 정보를 확인한 뒤 승인 또는 반려를 결정합니다.',
-    requestRows: deleteApprovalRequestRows.value,
-    documentRows: deleteApprovalDocumentRows.value,
-    itemRows: deleteApprovalItemRows.value,
-    itemSummaryRows: deleteApprovalItemSummaryRows.value,
-    documentSectionTitle: '삭제 대상 PI 정보',
-    itemSectionTitle: '삭제 대상 PI 품목 정보',
-    helperText: '삭제 요청은 승인 전까지 실제 삭제되지 않으며, 승인 시 문서 상태가 취소로 전환됩니다.',
-  })
+  try {
+    const userId = authStore.currentUser?.userId
+    await requestPiDeletion({ piId: selectedRow.value.id, userId })
+    await loadPiDocuments()
+    success(`${selectedRow.value?.id} 삭제 결재 요청이 전송되었습니다.`)
+  } catch (e) {
+    error(e.response?.data?.message || '삭제 결재 요청 중 오류가 발생했습니다.')
+  }
 
-  rowsData.value = rowsData.value.map((row) => (
-    row.id === selectedRow.value?.id
-      ? {
-        ...row,
-        approvalReview,
-        ...createDeleteApprovalMeta({
-          approver: getDefaultDeleteApprover(selectedRow.value),
-          requesterName,
-          requestedAt,
-        }),
-      }
-      : row
-  ))
-
-  success(`${selectedRow.value?.id} 삭제 결재 요청이 전송되었습니다.`)
   deleteApprovalRequestOpen.value = false
   selectedRow.value = null
 }

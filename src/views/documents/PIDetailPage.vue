@@ -12,10 +12,11 @@ import { formatRevisionEntry } from '@/utils/revisionFormat'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import PIDocumentTemplate from '@/components/domain/document/PIDocumentTemplate.vue'
 import PIFormModal from '@/components/domain/document/PIFormModal.vue'
+import { validatePiDeletable, requestPiDeletion } from '@/api/documents'
 import { fetchBuyers, fetchClients, fetchCountries, fetchCurrencies } from '@/api/master'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
-import { usePiDocuments } from '@/stores/piDocuments'
+import { loadPiDocuments, usePiDocuments } from '@/stores/piDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
@@ -42,7 +43,7 @@ import { clientSearchColumns } from '@/utils/searchModalColumns'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
-const { info, success, warning } = useToast()
+const { info, success, warning, error } = useToast()
 
 const previewOpen = ref(false)
 const formOpen = ref(false)
@@ -57,6 +58,8 @@ const piDocuments = usePiDocuments()
 const poDocuments = usePoDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
+
+const isTeamLeader = computed(() => Number(authStore.currentUser?.positionId) === 1)
 
 const approvalItemColumns = [
   { key: 'name', label: '품목명', align: 'left' },
@@ -524,9 +527,28 @@ function handleEdit() {
   formOpen.value = true
 }
 
-function handleDelete() {
+async function handleDelete() {
   if (shipmentLockInfo.value.locked) {
     warning(shipmentLockMessage.value)
+    return
+  }
+
+  try {
+    await validatePiDeletable(sourceRow.value?.id)
+  } catch (e) {
+    error(e.response?.data?.message || e.response?.data || '후속 문서가 존재하여 삭제할 수 없습니다.')
+    return
+  }
+
+  if (isTeamLeader.value) {
+    try {
+      const userId = authStore.currentUser?.userId
+      await requestPiDeletion({ piId: sourceRow.value.id, userId })
+      await loadPiDocuments()
+      success(`${sourceRow.value.id} PI가 삭제되었습니다.`)
+    } catch (e) {
+      error(e.response?.data?.message || '삭제 처리 중 오류가 발생했습니다.')
+    }
     return
   }
 
@@ -678,7 +700,7 @@ function cancelEditApprovalRequest() {
   editApprovalRequestOpen.value = false
 }
 
-function confirmDeleteApprovalRequest() {
+async function confirmDeleteApprovalRequest() {
   if (!sourceRow.value) return
   if (shipmentLockInfo.value.locked) {
     warning(shipmentLockMessage.value)
@@ -686,36 +708,16 @@ function confirmDeleteApprovalRequest() {
     return
   }
 
-  const requesterName = getCurrentRequesterName()
-  const requestedAt = getRequestedAt()
-  const approvalReview = createApprovalReviewSnapshot({
-    title: 'PI 삭제 결재 검토',
-    message: '선택한 PI 삭제 요청 건입니다. 문서와 품목 정보를 확인한 뒤 승인 또는 반려를 결정합니다.',
-    requestRows: deleteApprovalRequestRows.value,
-    documentRows: deleteApprovalDocumentRows.value,
-    itemRows: deleteApprovalItemRows.value,
-    itemSummaryRows: deleteApprovalItemSummaryRows.value,
-    documentSectionTitle: '삭제 대상 PI 정보',
-    itemSectionTitle: '삭제 대상 PI 품목 정보',
-    helperText: '삭제 요청은 승인 전까지 실제 삭제되지 않으며, 승인 시 문서 상태가 취소로 전환됩니다.',
-  })
-
-  piDocuments.value = piDocuments.value.map((row) => (
-    row.id === sourceRow.value.id
-      ? {
-        ...row,
-        approvalReview,
-        ...createDeleteApprovalMeta({
-          approver: getDefaultDeleteApprover(sourceRow.value),
-          requesterName,
-          requestedAt,
-        }),
-      }
-      : row
-  ))
+  try {
+    const userId = authStore.currentUser?.userId
+    await requestPiDeletion({ piId: sourceRow.value.id, userId })
+    await loadPiDocuments()
+    success(`${sourceRow.value.id} 삭제 결재 요청이 전송되었습니다.`)
+  } catch (e) {
+    error(e.response?.data?.message || '삭제 결재 요청 중 오류가 발생했습니다.')
+  }
 
   deleteApprovalRequestOpen.value = false
-  success(`${sourceRow.value.id} 삭제 결재 요청이 전송되었습니다.`)
 }
 
 function cancelDeleteApprovalRequest() {
