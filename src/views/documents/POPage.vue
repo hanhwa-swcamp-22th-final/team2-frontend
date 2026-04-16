@@ -123,7 +123,7 @@ const columns = [
   { key: 'manager', label: '영업담당자', align: 'left', width: '120px' },
   { key: 'status', label: '상태', align: 'center', width: '120px' },
   { key: 'deliveryDate', label: '납기', align: 'center', width: '130px' },
-  { key: 'actions', label: '', align: 'center', width: '90px' },
+  { key: 'actions', label: '', align: 'center', width: '90px', sortable: false },
 ]
 
 const approvalItemColumns = [

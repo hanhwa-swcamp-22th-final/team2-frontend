@@ -57,7 +57,7 @@ const columns = [
   { key: 'country', label: '국가', align: 'center', width: '120px' },
   { key: 'itemName', label: '품목명', align: 'left', width: '220px' },
   { key: 'grossWeight', label: '총중량(kg)', align: 'right', width: '150px' },
-  { key: 'actions', label: '', align: 'center', width: '120px' },
+  { key: 'actions', label: '', align: 'center', width: '120px', sortable: false },
 ]
 
 const rowsData = usePlDocuments()
