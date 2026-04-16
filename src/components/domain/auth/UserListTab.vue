@@ -201,7 +201,7 @@ async function handleSave(formData) {
         name: formData.name,
         email: formData.email,
         password: 'password123',
-        role: formData.role,
+        role: String(formData.role).toUpperCase(),
       }
       await createUser(newUser)
       success('사용자가 등록되었습니다.')
