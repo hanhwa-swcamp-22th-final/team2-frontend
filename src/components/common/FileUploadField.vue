@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 
 const props = defineProps({
@@ -23,6 +23,8 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'remove'])
 
+const objectUrl = ref('')
+
 const fileName = computed(() => {
   if (!props.modelValue) {
     return ''
@@ -33,6 +35,39 @@ const fileName = computed(() => {
   }
 
   return props.modelValue.name || ''
+})
+
+// File 첨부 시 즉시 미리보기. S3 연동 전 단계에서도 사용자에게 첨부 결과 확인 UX 제공.
+// Blob URL 은 메모리 누수 방지를 위해 modelValue 변경/언마운트 시 명시적으로 revoke.
+const previewUrl = computed(() => {
+  if (!props.modelValue) return ''
+  if (typeof props.modelValue === 'string') return props.modelValue
+  if (props.modelValue instanceof File && props.modelValue.type.startsWith('image/')) {
+    return objectUrl.value
+  }
+  return ''
+})
+
+const isImageField = computed(() => props.accept.includes('image'))
+
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (objectUrl.value) {
+      URL.revokeObjectURL(objectUrl.value)
+      objectUrl.value = ''
+    }
+    if (newValue instanceof File && newValue.type.startsWith('image/')) {
+      objectUrl.value = URL.createObjectURL(newValue)
+    }
+  },
+  { immediate: true },
+)
+
+onBeforeUnmount(() => {
+  if (objectUrl.value) {
+    URL.revokeObjectURL(objectUrl.value)
+  }
 })
 
 function handleChange(event) {
@@ -63,6 +98,9 @@ function removeFile() {
         </label>
         <BaseButton v-if="fileName" variant="secondary" @click="removeFile">삭제</BaseButton>
       </div>
+    </div>
+    <div v-if="isImageField && previewUrl" class="mt-4 flex justify-center rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <img :src="previewUrl" :alt="label" class="max-h-40 max-w-full object-contain" />
     </div>
   </div>
 </template>
