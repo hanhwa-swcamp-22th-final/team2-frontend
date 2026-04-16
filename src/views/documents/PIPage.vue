@@ -17,13 +17,18 @@ import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import PIFormModal from '@/components/domain/document/PIFormModal.vue'
-import { validatePiDeletable, requestPiDeletion } from '@/api/documents'
-import { fetchBuyers, fetchClients, fetchCountries, fetchCurrencies } from '@/api/master'
+import {
+  createProformaInvoice,
+  requestPiRegistration,
+  validatePiDeletable,
+  requestPiDeletion,
+} from '@/api/documents'
+import { fetchBuyers, fetchClients, fetchCountries, fetchCurrencies, fetchItems } from '@/api/master'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useAuthStore } from '@/stores/auth'
-import { loadExchangeRates, clearExchangeRates } from '@/stores/exchangeRates'
+import { loadExchangeRates, clearExchangeRates, getKrwRate } from '@/stores/exchangeRates'
 import { loadPiDocuments, usePiDocuments } from '@/stores/piDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
@@ -73,6 +78,8 @@ const clientSearchContext = ref('filter')
 const pendingCreateFormValue = ref(null)
 const pendingEditRequest = ref(null)
 const clientRowsSource = ref(createDocumentClientRows())
+const currencyCatalog = ref([])
+const itemCatalog = ref([])
 const { createProductRows } = useSearchModalLookups()
 const rowsData = usePiDocuments()
 const poDocuments = usePoDocuments()
@@ -181,11 +188,12 @@ const currencySymbolMap = {
 
 async function loadClientRows() {
   try {
-    const [clientsData, countriesData, buyersData, currenciesData] = await Promise.all([
+    const [clientsData, countriesData, buyersData, currenciesData, itemsData] = await Promise.all([
       fetchClients(),
       fetchCountries(),
       fetchBuyers(),
       fetchCurrencies(),
+      fetchItems().catch(() => []),
     ])
 
     clientRowsSource.value = createDocumentClientRows({
@@ -194,8 +202,12 @@ async function loadClientRows() {
       currenciesData,
       buyersData,
     })
+    currencyCatalog.value = currenciesData ?? []
+    itemCatalog.value = itemsData ?? []
   } catch {
     clientRowsSource.value = createDocumentClientRows()
+    currencyCatalog.value = []
+    itemCatalog.value = []
   }
 }
 
@@ -489,6 +501,79 @@ function buildNextPiId() {
   return `PI26${String(rowsData.value.length + 1).padStart(3, '0')}`
 }
 
+function toIsoDate(value) {
+  if (!value) return null
+  return String(value).replaceAll('/', '-')
+}
+
+function findCurrencyIdByCode(code) {
+  if (!code) return null
+  const match = currencyCatalog.value.find((c) => (c.currencyCode ?? c.code) === code)
+  return match?.currencyId ?? match?.id ?? null
+}
+
+function findItemIdByName(name) {
+  if (!name) return null
+  const match = itemCatalog.value.find((item) => (item.itemName ?? item.name) === name)
+  return match?.itemId ?? match?.id ?? null
+}
+
+/**
+ * PIFormModal 의 @save payload 를 백엔드 ProformaInvoiceCreateRequest DTO 로 매핑.
+ * 주의: 백엔드는 totalAmount / unitPrice 를 KRW 기준으로 기대한다 (DTO 주석 참고).
+ * 폼은 선택 통화 기준의 단가/금액을 들고 있으므로 환율로 KRW 역변환이 필요하다.
+ */
+function buildCreatePayload(formValue) {
+  const matchedClient = clientRowsSource.value.find((client) => client.name === formValue.clientName)
+  const currencyCode = formValue.currency || matchedClient?.currency || 'USD'
+  const currencyId = findCurrencyIdByCode(currencyCode) ?? matchedClient?.currencyId ?? null
+  const krwRate = getKrwRate(currencyCode)
+  // krwRate: 1 <currency> = krwRate KRW. KRW 로 환산하려면 외화 금액 * krwRate.
+  const toKrw = (amountInCurrency) => {
+    const value = Number(amountInCurrency) || 0
+    if (!currencyCode || currencyCode === 'KRW') return value
+    if (!krwRate) return value
+    return Math.round(value * krwRate)
+  }
+
+  const items = (formValue.items ?? []).map((item) => {
+    const quantity = Number(item.qty ?? item.quantity ?? 0) || 0
+    const unitPriceInCurrency = Number(item.unitPrice ?? 0) || 0
+    const amountInCurrency = Number(item.amount ?? 0) || quantity * unitPriceInCurrency
+    return {
+      itemId: findItemIdByName(item.name),
+      itemName: item.name ?? '',
+      quantity,
+      unit: item.unit ?? '',
+      unitPrice: toKrw(unitPriceInCurrency),
+      amount: toKrw(amountInCurrency),
+      remark: item.remark ?? '',
+    }
+  })
+
+  const totalAmount = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
+
+  return {
+    piId: null,
+    issueDate: toIsoDate(formValue.issueDate),
+    clientId: matchedClient?.clientId ?? null,
+    currencyId,
+    managerId: authStore.currentUser?.userId ?? null,
+    deliveryDate: toIsoDate(formValue.deliveryDate),
+    incotermsCode: formValue.incoterms || 'FOB',
+    namedPlace: formValue.namedPlace || '',
+    totalAmount,
+    clientName: formValue.clientName || '',
+    clientAddress: formValue.clientAddress || matchedClient?.address || '',
+    country: matchedClient?.country || '',
+    currencyCode,
+    exchangeRate: currencyCode === 'KRW' || !krwRate ? null : Number((1 / krwRate).toFixed(8)),
+    managerName: authStore.currentUser?.userName || authStore.currentUser?.name || '',
+    userId: authStore.currentUser?.userId ?? null,
+    items,
+  }
+}
+
 function createApprovalReviewSnapshot({
   title,
   message,
@@ -697,44 +782,24 @@ const deleteApprovalItemSummaryRows = computed(() => {
   ]
 })
 
-function confirmCreateApprovalRequest() {
+async function confirmCreateApprovalRequest() {
   if (!pendingCreateFormValue.value) return
 
-  const { nextRow } = buildRowPayload(pendingCreateFormValue.value)
-  const requesterName = getCurrentRequesterName()
-  const requestedAt = getRequestedAt()
-  const approvalReview = createApprovalReviewSnapshot({
-    title: 'PI 등록 결재 검토',
-    message: '선택한 결재자에게 PI 등록 결재 요청이 접수되었습니다. 아래 문서 정보를 기준으로 승인 여부를 검토합니다.',
-    requestRows: createApprovalRequestRows.value,
-    documentRows: createApprovalDocumentRows.value,
-    itemRows: createApprovalItemRows.value,
-    itemSummaryRows: createApprovalItemSummaryRows.value,
-    documentSectionTitle: 'PI 문서 정보',
-    itemSectionTitle: 'PI 품목 정보',
-    helperText: '등록 요청은 팀장 승인 후 확정되며, 승인 전까지 문서는 결재대기 상태로 유지됩니다.',
-  })
+  try {
+    const payload = buildCreatePayload(pendingCreateFormValue.value)
+    const { piId } = await createProformaInvoice(payload)
+    const userId = authStore.currentUser?.userId
+    await requestPiRegistration({ piId, userId })
+    await loadPiDocuments()
 
-  rowsData.value = [
-    {
-      id: buildNextPiId(),
-      ...nextRow,
-      manager: requesterName,
-      approvalReview,
-      ...createRegistrationApprovalMeta({
-        approver: pendingCreateFormValue.value.approver,
-        requesterName,
-        requestedAt,
-      }),
-    },
-    ...rowsData.value,
-  ]
-
-  createApprovalRequestOpen.value = false
-  pendingCreateFormValue.value = null
-  formOpen.value = false
-  selectedClient.value = null
-  success('PI 등록 결재 요청이 전송되었습니다.')
+    createApprovalRequestOpen.value = false
+    pendingCreateFormValue.value = null
+    formOpen.value = false
+    selectedClient.value = null
+    success('PI 등록 결재 요청이 전송되었습니다.')
+  } catch (e) {
+    error(e.response?.data?.message || 'PI 등록 결재 요청 중 오류가 발생했습니다.')
+  }
 }
 
 function cancelCreateApprovalRequest() {
@@ -786,7 +851,7 @@ function cancelEditApprovalRequest() {
   editApprovalRequestOpen.value = false
 }
 
-function handleSave(formValue) {
+async function handleSave(formValue) {
   if (formMode.value === 'edit') {
     const shipmentLockInfo = shipmentLockInfoByPiId.value.get(selectedRow.value?.id)
     if (shipmentLockInfo?.locked) {
@@ -796,15 +861,21 @@ function handleSave(formValue) {
     }
   }
 
-  const { nextRow } = buildRowPayload(formValue)
-
   if (formMode.value === 'create') {
     if (isTeamLeader.value) {
-      const newId = buildNextPiId()
-      rowsData.value = [{ id: newId, ...nextRow, manager: authStore.currentUser?.name || '', status: '확정' }, ...rowsData.value]
-      formOpen.value = false
-      selectedClient.value = null
-      success('PI가 등록되었습니다.')
+      // 팀장 셀프 등록: 백엔드가 MANAGER 권한 기준으로 즉시 확정 처리
+      try {
+        const payload = buildCreatePayload(formValue)
+        const { piId } = await createProformaInvoice(payload)
+        const userId = authStore.currentUser?.userId
+        await requestPiRegistration({ piId, userId })
+        await loadPiDocuments()
+        formOpen.value = false
+        selectedClient.value = null
+        success('PI가 등록되었습니다.')
+      } catch (e) {
+        error(e.response?.data?.message || 'PI 등록 중 오류가 발생했습니다.')
+      }
       return
     }
     pendingCreateFormValue.value = {
@@ -814,6 +885,11 @@ function handleSave(formValue) {
     createApprovalRequestOpen.value = true
     return
   }
+
+  // TODO: PI 수정 결재 API (request-modification) 가 백엔드에 추가되면
+  //       PO 와 동일하게 requestPiModification 연동으로 교체한다.
+  //       현재는 로컬-only 로 스냅샷 비교만 수행.
+  const { nextRow } = buildRowPayload(formValue)
 
   if (isTeamLeader.value) {
     rowsData.value = rowsData.value.map((r) =>

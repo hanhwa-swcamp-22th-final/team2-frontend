@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import ApprovalRequestModal from '@/components/common/ApprovalRequestModal.vue'
@@ -17,12 +17,20 @@ import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
 import POFormModal from '@/components/domain/document/POFormModal.vue'
-import { validatePoDeletable, requestPoDeletion } from '@/api/documents'
+import {
+  createPurchaseOrder,
+  requestPoRegistration,
+  requestPoModification,
+  validatePoDeletable,
+  requestPoDeletion,
+} from '@/api/documents'
+import { fetchCurrencies, fetchItems } from '@/api/master'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useAuthStore } from '@/stores/auth'
 import { useCiDocuments } from '@/stores/ciDocuments'
+import { loadExchangeRates, clearExchangeRates, getKrwRate } from '@/stores/exchangeRates'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { usePlDocuments } from '@/stores/plDocuments'
 import { loadPoDocuments, usePoDocuments } from '@/stores/poDocuments'
@@ -32,9 +40,6 @@ import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import { useToast } from '@/composables/useToast'
 import {
   buildApprovalRequestRows,
-  createDeleteApprovalMeta,
-  createEditApprovalMeta,
-  createRegistrationApprovalMeta,
   DELETE_REQUEST_DOCUMENT_STATUS,
   DELETE_REQUEST_STATUS,
   EDIT_REQUEST_DOCUMENT_STATUS,
@@ -43,13 +48,6 @@ import {
   REGISTRATION_REQUEST_STATUS,
 } from '@/utils/documentApproval'
 import { openDocumentOutputByType, openTableOutput } from '@/utils/documentOutput'
-import {
-  applyShipmentOrderToCommercialDocuments,
-  createShipmentOrderFromPo,
-  createShipmentStatusFromOrder,
-  ensureCommercialDocumentsForPo,
-  recordDocumentEmailActivities,
-} from '@/utils/documentActivityEmail'
 import {
   formatPiPoSelectionMessage,
   formatPoShipmentLockMessage,
@@ -91,6 +89,29 @@ const productionOrderDocuments = useProductionOrderDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
 const { clientRowsSource, createClientRows, createProductRows } = useSearchModalLookups()
+const currencyCatalog = ref([])
+const itemCatalog = ref([])
+
+async function loadCatalogs() {
+  try {
+    const [currenciesData, itemsData] = await Promise.all([
+      fetchCurrencies().catch(() => []),
+      fetchItems().catch(() => []),
+    ])
+    currencyCatalog.value = currenciesData ?? []
+    itemCatalog.value = itemsData ?? []
+  } catch {
+    currencyCatalog.value = []
+    itemCatalog.value = []
+  }
+}
+
+onMounted(() => {
+  loadCatalogs()
+  loadExchangeRates()
+})
+
+onUnmounted(clearExchangeRates)
 
 const columns = [
   { key: 'id', label: 'PO 번호', align: 'center', width: '140px' },
@@ -386,6 +407,87 @@ function buildRowPayload(formValue) {
   }
 }
 
+function toIsoDate(value) {
+  if (!value) return null
+  return String(value).replaceAll('/', '-')
+}
+
+function findCurrencyIdByCode(code) {
+  if (!code) return null
+  const match = currencyCatalog.value.find((c) => (c.currencyCode ?? c.code) === code)
+  return match?.currencyId ?? match?.id ?? null
+}
+
+function findItemIdByName(name) {
+  if (!name) return null
+  const match = itemCatalog.value.find((item) => (item.itemName ?? item.name) === name)
+  return match?.itemId ?? match?.id ?? null
+}
+
+/**
+ * POFormModal @save payload 를 백엔드 PurchaseOrderCreateRequest DTO 로 매핑.
+ * 주의: 백엔드는 totalAmount / unitPrice 를 KRW 기준으로 기대한다 (PI 와 동일 규칙).
+ * 폼은 연결 PI 로부터 가져온 통화 기준 단가/금액을 들고 있으므로 환율로 KRW 역변환 수행.
+ */
+function buildCreatePayload(formValue) {
+  const linkedPi = piRowsSource.value.find((pi) => pi.id === formValue.linkedPiId)
+  const matchedClient = clientRowsSource.value.find((client) => (
+    client.name === (formValue.clientName || linkedPi?.clientName)
+  ))
+  const currencyCode = linkedPi?.currency || formValue.currency || matchedClient?.currency || 'USD'
+  const currencyId = findCurrencyIdByCode(currencyCode) ?? matchedClient?.currencyId ?? null
+  const krwRate = getKrwRate(currencyCode)
+  const toKrw = (amountInCurrency) => {
+    const value = Number(amountInCurrency) || 0
+    if (!currencyCode || currencyCode === 'KRW') return value
+    if (!krwRate) return value
+    return Math.round(value * krwRate)
+  }
+
+  const items = (linkedPi?.items ?? []).map((item) => {
+    const quantity = Number(item.qty ?? item.quantity ?? 0) || 0
+    const unitPriceInCurrency = Number(item.unitPrice ?? 0) || 0
+    const amountInCurrency = Number(item.amount ?? 0) || quantity * unitPriceInCurrency
+    return {
+      itemId: findItemIdByName(item.name),
+      itemName: item.name ?? '',
+      quantity,
+      unit: item.unit ?? '',
+      unitPrice: toKrw(unitPriceInCurrency),
+      amount: toKrw(amountInCurrency),
+      remark: item.remark ?? '',
+    }
+  })
+
+  const totalAmount = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
+  const sourceDeliveryDate = toIsoDate(
+    formValue.sourceDeliveryDate || linkedPi?.deliveryDate || formValue.deliveryDate,
+  )
+  const deliveryDate = toIsoDate(formValue.deliveryDate)
+
+  return {
+    poId: null,
+    piId: formValue.linkedPiId || null,
+    issueDate: toIsoDate(getTodaySlashDate()),
+    clientId: matchedClient?.clientId ?? null,
+    currencyId,
+    managerId: authStore.currentUser?.userId ?? null,
+    deliveryDate,
+    incotermsCode: linkedPi?.incoterms || 'FOB',
+    namedPlace: linkedPi?.namedPlace || '',
+    sourceDeliveryDate,
+    deliveryDateOverride: Boolean(formValue.linkedPiId && formValue.deliveryDateOverride),
+    totalAmount,
+    clientName: linkedPi?.clientName || formValue.clientName || '',
+    clientAddress: linkedPi?.clientAddress || matchedClient?.address || '',
+    country: linkedPi?.country || matchedClient?.country || '',
+    currencyCode,
+    managerName: authStore.currentUser?.userName || authStore.currentUser?.name || '',
+    userId: authStore.currentUser?.userId ?? null,
+    items,
+  }
+}
+
 function getCurrentRequesterName() {
   // 백엔드 user 객체는 userName 필드를 사용한다.
   return authStore.currentUser?.userName || authStore.currentUser?.name || '미지정'
@@ -441,41 +543,6 @@ function downloadTablePdf() {
       deliveryDate: row.deliveryDate,
     })),
   })
-}
-
-function createApprovalReviewSnapshot({
-  title,
-  message,
-  requestRows = [],
-  documentRows = [],
-  changeRows = [],
-  itemRows = [],
-  itemSummaryRows = [],
-  referenceRows = [],
-  documentSectionTitle = '문서 정보',
-  changeSectionTitle = '변경 사항',
-  itemSectionTitle = '품목 정보',
-  referenceSectionTitle = '참조 문서 정보',
-  helperText = '',
-}) {
-  return {
-    title,
-    message,
-    requestRows: requestRows.map((row) => ({ ...row })),
-    requestSectionTitle: '팀장 결재 정보',
-    documentRows: documentRows.map((row) => ({ ...row })),
-    documentSectionTitle,
-    changeColumns: changeRows.length ? approvalChangeColumns.map((column) => ({ ...column })) : [],
-    changeRows: changeRows.map((row) => ({ ...row })),
-    changeSectionTitle,
-    itemColumns: itemRows.length ? approvalItemColumns.map((column) => ({ ...column })) : [],
-    itemRows: itemRows.map((row) => ({ ...row })),
-    itemSummaryRows: itemSummaryRows.map((row) => ({ ...row })),
-    itemSectionTitle,
-    referenceRows: referenceRows.map((row) => ({ ...row })),
-    referenceSectionTitle,
-    helperText,
-  }
 }
 
 const createApprovalRequestRows = computed(() => {
@@ -713,149 +780,52 @@ const deleteApprovalItemSummaryRows = computed(() => {
 async function confirmCreateApprovalRequest() {
   if (!pendingCreateFormValue.value) return
 
-  const nextPoId = buildNextPoId()
-  const nextRow = buildRowPayload(pendingCreateFormValue.value)
-  const requesterName = getCurrentRequesterName()
-  const requestedAt = getRequestedAt()
-  const approvalMeta = createRegistrationApprovalMeta({
-    approver: pendingCreateFormValue.value.approver,
-    requesterName,
-    requestedAt,
-  })
-  const approvalReview = createApprovalReviewSnapshot({
-    title: 'PO 등록 결재 검토',
-    message: '선택한 결재자에게 PO 등록 결재 요청이 접수되었습니다. 연결 PI 기준 정보와 품목 내역을 검토합니다.',
-    requestRows: createApprovalRequestRows.value,
-    documentRows: createApprovalDocumentRows.value,
-    itemRows: createApprovalItemRows.value,
-    itemSummaryRows: createApprovalItemSummaryRows.value,
-    referenceRows: createApprovalReferenceRows.value,
-    documentSectionTitle: 'PO 문서 정보',
-    itemSectionTitle: '연결 PI 기준 품목',
-    referenceSectionTitle: '연결 PI 정보',
-    helperText: '등록 요청은 팀장 승인 후 확정되며, 승인 전까지 문서는 결재대기 상태로 유지됩니다.',
-  })
-
-  const createdPoRow = {
-    id: nextPoId,
-    ...nextRow,
-    manager: requesterName,
-    approvalReview,
-    ...approvalMeta,
-  }
-
-  const { ciDocument, plDocument, ciCreated, plCreated } = ensureCommercialDocumentsForPo(
-    createdPoRow,
-    ciDocuments.value,
-    plDocuments.value,
-  )
-  const nextShipmentOrder = createShipmentOrderFromPo(
-    createdPoRow,
-    shipmentOrderDocuments.value,
-    requesterName,
-    createdPoRow.piId ? [{ id: createdPoRow.piId, status: getLinkedPiById(createdPoRow.piId)?.status || '-' }] : [],
-  )
-  const nextShipmentStatus = createShipmentStatusFromOrder(
-    nextShipmentOrder,
-    shipmentStatusDocuments.value,
-    createdPoRow.status,
-  )
-  createdPoRow.linkedDocuments = [
-    ...(createdPoRow.piId ? [{ id: createdPoRow.piId, status: getLinkedPiById(createdPoRow.piId)?.status || '-' }] : []),
-    { id: nextShipmentOrder.id, status: nextShipmentOrder.status },
-  ]
-
-  poRowsData.value = [createdPoRow, ...poRowsData.value]
-  shipmentOrderDocuments.value = [nextShipmentOrder, ...shipmentOrderDocuments.value]
-  shipmentStatusDocuments.value = [nextShipmentStatus, ...shipmentStatusDocuments.value]
-
-  if (ciCreated) {
-    ciDocuments.value = [ciDocument, ...ciDocuments.value]
-  }
-
-  if (plCreated) {
-    plDocuments.value = [plDocument, ...plDocuments.value]
-  }
-
-  ciDocuments.value = applyShipmentOrderToCommercialDocuments(ciDocuments.value, createdPoRow.id, nextShipmentOrder.id)
-  plDocuments.value = applyShipmentOrderToCommercialDocuments(plDocuments.value, createdPoRow.id, nextShipmentOrder.id)
-
-  createApprovalRequestOpen.value = false
-  pendingCreateFormValue.value = null
-  formOpen.value = false
-  selectedPi.value = null
-  selectedClient.value = null
-
   try {
-    await recordDocumentEmailActivities({
-      clientName: createdPoRow.clientName,
-      poId: createdPoRow.id,
-      sender: requesterName,
-      title: `[SalesBoost] ${createdPoRow.id} 관련 문서 발송`,
-      types: ['출하지시서', 'CI', 'PL'],
-      attachments: [nextShipmentOrder.id, ciDocument.id, plDocument.id].map((id) => `${id}.pdf`),
-    })
-  } catch (emailError) {
-    console.error('PO 생성 후 관련 문서 메일 발송 이력 기록 실패', emailError)
-    warning('PO는 생성되었지만 관련 문서 메일 발송 이력 기록에는 실패했습니다.')
-  }
+    const payload = buildCreatePayload(pendingCreateFormValue.value)
+    const { poId } = await createPurchaseOrder(payload)
+    const userId = authStore.currentUser?.userId
+    await requestPoRegistration({ poId, userId })
+    await loadPoDocuments()
 
-  success('PO 등록 결재 요청이 전송되었습니다.')
+    createApprovalRequestOpen.value = false
+    pendingCreateFormValue.value = null
+    formOpen.value = false
+    selectedPi.value = null
+    selectedClient.value = null
+    success('PO 등록 결재 요청이 전송되었습니다.')
+  } catch (e) {
+    error(e.response?.data?.message || 'PO 등록 결재 요청 중 오류가 발생했습니다.')
+  }
 }
 
 function cancelCreateApprovalRequest() {
   createApprovalRequestOpen.value = false
 }
 
-function confirmEditApprovalRequest() {
+async function confirmEditApprovalRequest() {
   if (!pendingEditRequest.value) return
 
-  const requesterName = getCurrentRequesterName()
-  const requestedAt = getRequestedAt()
-  const approvalReview = createApprovalReviewSnapshot({
-    title: 'PO 수정 결재 검토',
-    message: '요청된 변경 사항과 연결 PI 기준 정보를 함께 검토한 뒤 승인 또는 반려를 결정합니다.',
-    requestRows: editApprovalRequestRows.value,
-    documentRows: editApprovalDocumentRows.value,
-    changeRows: pendingEditRequest.value.changeRows ?? [],
-    itemRows: editApprovalItemRows.value,
-    itemSummaryRows: editApprovalItemSummaryRows.value,
-    referenceRows: editApprovalReferenceRows.value,
-    documentSectionTitle: '수정 대상 PO 정보',
-    changeSectionTitle: '변경 사항 비교',
-    itemSectionTitle: '변경 후 PO 품목 정보',
-    referenceSectionTitle: '연결 PI 정보',
-    helperText: '수정 요청은 승인 전까지 확정되지 않으며, 반려 시 요청 상태만 반영됩니다.',
-  })
+  try {
+    const userId = authStore.currentUser?.userId
+    await requestPoModification({ poId: pendingEditRequest.value.id, userId })
+    await loadPoDocuments()
 
-  poRowsData.value = poRowsData.value.map((row) => (
-    row.id === pendingEditRequest.value.id
-      ? {
-        ...row,
-        ...pendingEditRequest.value.nextRow,
-        approvalReview,
-        ...createEditApprovalMeta({
-          approver: pendingEditRequest.value.approver || row.approver || '',
-          requesterName,
-          requestedAt,
-        }),
-      }
-      : row
-  ))
-
-  editApprovalRequestOpen.value = false
-  pendingEditRequest.value = null
-  formOpen.value = false
-  selectedPi.value = null
-  selectedClient.value = null
-  success('PO 수정 결재 요청이 전송되었습니다.')
+    editApprovalRequestOpen.value = false
+    pendingEditRequest.value = null
+    formOpen.value = false
+    selectedPi.value = null
+    selectedClient.value = null
+    success('PO 수정 결재 요청이 전송되었습니다.')
+  } catch (e) {
+    error(e.response?.data?.message || 'PO 수정 결재 요청 중 오류가 발생했습니다.')
+  }
 }
 
 function cancelEditApprovalRequest() {
   editApprovalRequestOpen.value = false
 }
 
-function handleSave(formValue) {
+async function handleSave(formValue) {
   if (formMode.value === 'edit') {
     const shipmentLockInfo = shipmentLockInfoByPoId.value.get(selectedRow.value?.id)
     if (shipmentLockInfo?.locked) {
@@ -867,56 +837,20 @@ function handleSave(formValue) {
 
   if (formMode.value === 'create') {
     if (isTeamLeader.value) {
-      const nextPoId = buildNextPoId()
-      const nextRow = buildRowPayload(formValue)
-      const requesterName = getCurrentRequesterName()
-
-      const createdPoRow = {
-        id: nextPoId,
-        ...nextRow,
-        manager: requesterName,
-        status: '확정',
+      // 팀장 셀프 등록: 백엔드 MANAGER 권한 기준 즉시 확정.
+      try {
+        const payload = buildCreatePayload(formValue)
+        const { poId } = await createPurchaseOrder(payload)
+        const userId = authStore.currentUser?.userId
+        await requestPoRegistration({ poId, userId })
+        await loadPoDocuments()
+        formOpen.value = false
+        selectedPi.value = null
+        selectedClient.value = null
+        success('PO가 등록되었습니다.')
+      } catch (e) {
+        error(e.response?.data?.message || 'PO 등록 중 오류가 발생했습니다.')
       }
-
-      const { ciDocument, plDocument, ciCreated, plCreated } = ensureCommercialDocumentsForPo(
-        createdPoRow,
-        ciDocuments.value,
-        plDocuments.value,
-      )
-      const nextShipmentOrder = createShipmentOrderFromPo(
-        createdPoRow,
-        shipmentOrderDocuments.value,
-        requesterName,
-        createdPoRow.piId ? [{ id: createdPoRow.piId, status: getLinkedPiById(createdPoRow.piId)?.status || '-' }] : [],
-      )
-      const nextShipmentStatus = createShipmentStatusFromOrder(
-        nextShipmentOrder,
-        shipmentStatusDocuments.value,
-        createdPoRow.status,
-      )
-      createdPoRow.linkedDocuments = [
-        ...(createdPoRow.piId ? [{ id: createdPoRow.piId, status: getLinkedPiById(createdPoRow.piId)?.status || '-' }] : []),
-        { id: nextShipmentOrder.id, status: nextShipmentOrder.status },
-      ]
-
-      poRowsData.value = [createdPoRow, ...poRowsData.value]
-      shipmentOrderDocuments.value = [nextShipmentOrder, ...shipmentOrderDocuments.value]
-      shipmentStatusDocuments.value = [nextShipmentStatus, ...shipmentStatusDocuments.value]
-
-      if (ciCreated) {
-        ciDocuments.value = [ciDocument, ...ciDocuments.value]
-      }
-      if (plCreated) {
-        plDocuments.value = [plDocument, ...plDocuments.value]
-      }
-
-      ciDocuments.value = applyShipmentOrderToCommercialDocuments(ciDocuments.value, createdPoRow.id, nextShipmentOrder.id)
-      plDocuments.value = applyShipmentOrderToCommercialDocuments(plDocuments.value, createdPoRow.id, nextShipmentOrder.id)
-
-      formOpen.value = false
-      selectedPi.value = null
-      selectedClient.value = null
-      success('PO가 즉시 확정 등록되었습니다.')
       return
     }
 
@@ -943,16 +877,18 @@ function handleSave(formValue) {
   }
 
   if (isTeamLeader.value) {
-    poRowsData.value = poRowsData.value.map((row) => (
-      row.id === selectedRow.value?.id
-        ? { ...row, ...nextRow }
-        : row
-    ))
-
-    formOpen.value = false
-    selectedPi.value = null
-    selectedClient.value = null
-    success('PO가 즉시 수정되었습니다.')
+    // 팀장 셀프 수정: 백엔드에 수정 결재 요청을 보내고 즉시 반영을 기대한다.
+    try {
+      const userId = authStore.currentUser?.userId
+      await requestPoModification({ poId: selectedRow.value?.id, userId })
+      await loadPoDocuments()
+      formOpen.value = false
+      selectedPi.value = null
+      selectedClient.value = null
+      success('PO가 수정되었습니다.')
+    } catch (e) {
+      error(e.response?.data?.message || 'PO 수정 중 오류가 발생했습니다.')
+    }
     return
   }
 
