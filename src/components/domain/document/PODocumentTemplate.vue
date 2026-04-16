@@ -39,8 +39,8 @@ function resolvePiReference(linkedDocuments) {
     <table class="doc-info-table">
       <colgroup>
         <col style="width:140px">
-        <col style="width:36%">
-        <col style="width:160px">
+        <col style="width:34%">
+        <col style="width:180px">
         <col>
       </colgroup>
       <tbody>
@@ -76,8 +76,8 @@ function resolvePiReference(linkedDocuments) {
     <table class="doc-info-table shipping-info-table" style="margin-top:-1px">
       <colgroup>
         <col style="width:140px">
-        <col style="width:36%">
-        <col style="width:160px">
+        <col style="width:34%">
+        <col style="width:180px">
         <col>
       </colgroup>
       <tbody>
@@ -165,9 +165,6 @@ function resolvePiReference(linkedDocuments) {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #475569;
-  white-space: nowrap;
-}
-.shipping-info-table .info-label {
   white-space: normal;
   word-break: keep-all;
   line-height: 1.3;
