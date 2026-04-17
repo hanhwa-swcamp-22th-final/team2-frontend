@@ -870,22 +870,6 @@ async function handleSave(formValue) {
       return
     }
 
-    if (isTeamLeader.value) {
-      // 팀장 셀프 등록: 백엔드가 MANAGER 권한 기준으로 즉시 확정 처리
-      try {
-        const payload = buildCreatePayload(formValue)
-        const { piId } = await createProformaInvoice(payload)
-        const userId = authStore.currentUser?.userId
-        await requestPiRegistration({ piId, userId })
-        await loadPiDocuments()
-        formOpen.value = false
-        selectedClient.value = null
-        success('PI가 등록되었습니다.')
-      } catch (e) {
-        error(e.response?.data?.message || 'PI 등록 중 오류가 발생했습니다.')
-      }
-      return
-    }
     pendingCreateFormValue.value = {
       ...formValue,
       items: (formValue.items ?? []).map((item) => ({ ...item })),
@@ -898,16 +882,6 @@ async function handleSave(formValue) {
   //       PO 와 동일하게 requestPiModification 연동으로 교체한다.
   //       현재는 로컬-only 로 스냅샷 비교만 수행.
   const { nextRow } = buildRowPayload(formValue)
-
-  if (isTeamLeader.value) {
-    rowsData.value = rowsData.value.map((r) =>
-      r.id === selectedRow.value?.id ? { ...r, ...nextRow } : r
-    )
-    formOpen.value = false
-    selectedClient.value = null
-    success('PI가 수정되었습니다.')
-    return
-  }
 
   const originalSnapshot = createComparableSnapshot(selectedRow.value ?? {})
   const revisedSnapshot = createComparableSnapshot({
@@ -943,18 +917,6 @@ async function openDeleteApprovalRequest(row) {
     await validatePiDeletable(row.id)
   } catch (e) {
     error(e.response?.data?.message || e.response?.data || '후속 문서가 존재하여 삭제할 수 없습니다.')
-    return
-  }
-
-  if (isTeamLeader.value) {
-    try {
-      const userId = authStore.currentUser?.userId
-      await requestPiDeletion({ piId: row.id, userId })
-      await loadPiDocuments()
-      success(`${row.id} PI가 삭제되었습니다.`)
-    } catch (e) {
-      error(e.response?.data?.message || '삭제 처리 중 오류가 발생했습니다.')
-    }
     return
   }
 

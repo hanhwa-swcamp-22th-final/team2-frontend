@@ -537,18 +537,6 @@ async function handleDelete() {
     return
   }
 
-  if (isTeamLeader.value) {
-    try {
-      const userId = authStore.currentUser?.userId
-      await requestPoDeletion({ poId: sourceRow.value.id, userId })
-      await loadPoDocuments()
-      success(`${sourceRow.value.id} PO가 삭제되었습니다.`)
-    } catch (e) {
-      error(e.response?.data?.message || '삭제 처리 중 오류가 발생했습니다.')
-    }
-    return
-  }
-
   deleteApprovalRequestOpen.value = true
 }
 

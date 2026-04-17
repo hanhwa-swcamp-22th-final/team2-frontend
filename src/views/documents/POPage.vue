@@ -844,24 +844,6 @@ async function handleSave(formValue) {
   }
 
   if (formMode.value === 'create') {
-    if (isTeamLeader.value) {
-      // 팀장 셀프 등록: 백엔드 MANAGER 권한 기준 즉시 확정.
-      try {
-        const payload = buildCreatePayload(formValue)
-        const { poId } = await createPurchaseOrder(payload)
-        const userId = authStore.currentUser?.userId
-        await requestPoRegistration({ poId, userId })
-        await loadPoDocuments()
-        formOpen.value = false
-        selectedPi.value = null
-        selectedClient.value = null
-        success('PO가 등록되었습니다.')
-      } catch (e) {
-        error(e.response?.data?.message || 'PO 등록 중 오류가 발생했습니다.')
-      }
-      return
-    }
-
     pendingCreateFormValue.value = { ...formValue }
     createApprovalRequestOpen.value = true
     return
@@ -881,22 +863,6 @@ async function handleSave(formValue) {
 
   if (!changeRows.length) {
     warning('변경된 내용이 없습니다.')
-    return
-  }
-
-  if (isTeamLeader.value) {
-    // 팀장 셀프 수정: 백엔드에 수정 결재 요청을 보내고 즉시 반영을 기대한다.
-    try {
-      const userId = authStore.currentUser?.userId
-      await requestPoModification({ poId: selectedRow.value?.id, userId })
-      await loadPoDocuments()
-      formOpen.value = false
-      selectedPi.value = null
-      selectedClient.value = null
-      success('PO가 수정되었습니다.')
-    } catch (e) {
-      error(e.response?.data?.message || 'PO 수정 중 오류가 발생했습니다.')
-    }
     return
   }
 
@@ -921,18 +887,6 @@ async function openDeleteApprovalRequest(row) {
     await validatePoDeletable(row.id)
   } catch (e) {
     error(e.response?.data?.message || e.response?.data || '후속 문서가 존재하여 삭제할 수 없습니다.')
-    return
-  }
-
-  if (isTeamLeader.value) {
-    try {
-      const userId = authStore.currentUser?.userId
-      await requestPoDeletion({ poId: row.id, userId })
-      await loadPoDocuments()
-      success(`${row.id} PO가 삭제되었습니다.`)
-    } catch (e) {
-      error(e.response?.data?.message || '삭제 처리 중 오류가 발생했습니다.')
-    }
     return
   }
 
