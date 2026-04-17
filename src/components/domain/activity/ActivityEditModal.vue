@@ -127,8 +127,8 @@ function initForm(val) {
   formTitle.value        = val?.title        ?? ''
   formContent.value      = val?.content      ?? ''
   formPriority.value     = val?.priority     ?? val?.activityPriority ?? 'medium'
-  formScheduleFrom.value = (val?.scheduleFrom ?? '').replaceAll('/', '-')
-  formScheduleTo.value   = (val?.scheduleTo   ?? '').replaceAll('/', '-')
+  formScheduleFrom.value = (val?.scheduleFrom ?? val?.activityScheduleFrom ?? '').replaceAll('/', '-')
+  formScheduleTo.value   = (val?.scheduleTo   ?? val?.activityScheduleTo   ?? '').replaceAll('/', '-')
   errors.value           = {}
   // 달력 월 동기화
   if (val?.scheduleFrom) {
