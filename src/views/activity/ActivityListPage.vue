@@ -33,10 +33,10 @@ const filterType = ref('')
 const filterTitle = ref('')
 
 const typeOptions = [
-  { label: '미팅/협의', value: '미팅/협의' },
-  { label: '이슈', value: '이슈' },
-  { label: '메모/노트', value: '메모/노트' },
-  { label: '일정', value: '일정' },
+  { label: '미팅/협의', value: 'meeting' },
+  { label: '이슈', value: 'issue' },
+  { label: '메모/노트', value: 'memo' },
+  { label: '일정', value: 'schedule' },
 ]
 
 const authorOptions = computed(() => {
@@ -156,15 +156,23 @@ function closeEdit() {
   editActivity.value = null
 }
 
+const isSaving = ref(false)
+
 async function handleSave(updated) {
+  if (isSaving.value) return
+  const activityId = editActivity.value?.id
+  if (!activityId) return
+  isSaving.value = true
   try {
-    await updateActivity(updated.id, updated)
-    const idx = activities.value.findIndex((a) => a.id === updated.id)
-    if (idx !== -1) activities.value[idx] = updated
+    await updateActivity(activityId, updated)
+    const idx = activities.value.findIndex((a) => a.id === activityId)
+    if (idx !== -1) activities.value[idx] = { ...activities.value[idx], ...updated }
     closeEdit()
   } catch (e) {
     console.error('기록 수정 실패', e)
     error('기록 수정에 실패했습니다. 다시 시도해주세요.')
+  } finally {
+    isSaving.value = false
   }
 }
 
@@ -182,9 +190,13 @@ function closeDelete() {
   deleteTarget.value = null
 }
 
+const isDeleting = ref(false)
+
 async function handleDelete() {
+  if (isDeleting.value) return
   const targetId = deleteTarget.value?.id
   if (!targetId) return
+  isDeleting.value = true
   try {
     await deleteActivity(targetId)
     activities.value = activities.value.filter((a) => a.id !== targetId)
@@ -192,6 +204,8 @@ async function handleDelete() {
   } catch (e) {
     console.error('기록 삭제 실패', e)
     error('기록 삭제에 실패했습니다. 다시 시도해주세요.')
+  } finally {
+    isDeleting.value = false
   }
 }
 
