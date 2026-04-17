@@ -17,7 +17,7 @@ export async function logoutApi(userId) {
 }
 
 export async function fetchUsers() {
-  const { data } = await api.get('/users')
+  const { data } = await api.get('/users', { params: { size: 1000 } })
   return unwrapCollection(data)
 }
 
