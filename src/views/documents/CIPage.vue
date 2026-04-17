@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BasePagination from '@/components/common/BasePagination.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue'
 import DateField from '@/components/common/DateField.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
@@ -58,6 +59,7 @@ const columns = [
   { key: 'country', label: '국가', align: 'center', width: '120px' },
   { key: 'itemName', label: '품목명', align: 'left', width: '220px' },
   { key: 'amount', label: '총액', align: 'right', width: '140px' },
+  { key: 'status', label: '상태', align: 'center', width: '120px' },
   { key: 'actions', label: '', align: 'center', width: '120px', sortable: false },
 ]
 
@@ -343,6 +345,10 @@ function handleProductSelect(row) {
         <button type="button" class="font-mono text-xs font-semibold text-brand-600 hover:underline" @click.stop="goToDetail(value)">
           {{ value }}
         </button>
+      </template>
+
+      <template #cell-status="{ value }">
+        <StatusBadge :value="value" />
       </template>
 
       <template #cell-actions="{ row }">
