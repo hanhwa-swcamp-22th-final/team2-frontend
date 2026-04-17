@@ -67,15 +67,28 @@ export function buildApprovalRequestRows({
   ]
 }
 
+// 문서 상태 + 요청 상태 + 결재 상태를 단일 라벨로 합산
+function resolveCompositeStatus(document) {
+  const status = document.status || ''
+  const request = document.requestStatus || ''
+  const approval = document.approvalStatus || ''
+
+  if (status === '결재대기' && request) {
+    if (approval === '대기') return `${request} 결재대기`
+    if (approval === '승인') return `${request} 승인`
+    if (approval === '반려') return `${request} 반려`
+    return `${request} 결재대기`
+  }
+  return status || '-'
+}
+
 export function buildApprovalInfoRows(document) {
   if (!document?.requestStatus) {
     return []
   }
 
   return [
-    { label: '문서 상태', value: document.status || '-' },
-    { label: '결재 상태', value: document.approvalStatus || '-' },
-    { label: '요청 상태', value: document.requestStatus || '-' },
+    { label: '상태', value: resolveCompositeStatus(document) },
     { label: '결재자', value: document.approver || '미지정' },
     { label: '요청자', value: document.approvalRequestedBy || '미지정' },
     { label: '요청 시각', value: document.approvalRequestedAt || '-' },
