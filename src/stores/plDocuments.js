@@ -60,7 +60,7 @@ function mapPlResponse(row) {
     poId: row.poId ?? '',
     shipmentOrderId: row.shipmentOrderId ?? '',
     remarks: row.remarks ?? '-',
-    totalQuantity: `${totalQuantity} EA`,
+    totalQuantity,
     totalNetWeight: formatNumber(totalNetWeight, 2),
     totalGrossWeight: formatNumber(totalGrossWeight, 2),
     totalMeasurement: formatNumber(totalMeasurement, 2),
