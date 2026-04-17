@@ -18,7 +18,11 @@ export async function logoutApi(userId) {
 
 export async function fetchUsers() {
   const { data } = await api.get('/users', { params: { size: 1000 } })
-  return unwrapCollection(data)
+  const result = unwrapCollection(data)
+  if (!result.length) {
+    console.warn('[fetchUsers] 0건 반환. raw:', JSON.stringify(data).slice(0, 500))
+  }
+  return result
 }
 
 export async function createUser(user) {
