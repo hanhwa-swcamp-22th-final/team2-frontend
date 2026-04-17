@@ -851,7 +851,7 @@ function cancelDeleteApprovalRequest() {
       <DetailPageHeader :title="detail.id" :status="detail.status" @back="goBack">
         <template #actions>
           <BaseButton
-            v-if="canIssueProductionOrder"
+            v-if="canIssueProductionOrder && detail.status !== '결재대기'"
             variant="secondary"
             size="sm"
             @click="openProductionIssueConfirm"
@@ -861,17 +861,17 @@ function cancelDeleteApprovalRequest() {
             </template>
             생산지시서 발행
           </BaseButton>
-          <BaseButton v-if="!shipmentLockInfo.locked" size="sm" @click="handleEdit">
+          <BaseButton v-if="!shipmentLockInfo.locked && detail.status !== '결재대기'" size="sm" @click="handleEdit">
             <template #leading>
               <i class="fas fa-edit text-xs" aria-hidden="true"></i>
             </template>
-            수정
+            {{ detail.status === '확정' ? '수정요청' : '수정' }}
           </BaseButton>
-          <BaseButton v-if="!shipmentLockInfo.locked" variant="secondary" size="sm" @click="handleDelete">
+          <BaseButton v-if="!shipmentLockInfo.locked && detail.status !== '결재대기'" variant="secondary" size="sm" @click="handleDelete">
             <template #leading>
               <i class="fas fa-trash text-xs" aria-hidden="true"></i>
             </template>
-            삭제
+            {{ detail.status === '확정' ? '삭제요청' : '삭제' }}
           </BaseButton>
           <BaseButton variant="secondary" size="sm" @click="openPreview">
             <template #leading>
