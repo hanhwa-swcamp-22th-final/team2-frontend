@@ -186,21 +186,30 @@ function isConfirmedPi(row) {
   return status === 'confirmed' || status === '확정'
 }
 
-const availablePiRows = computed(() => (
-  piRowsSource.value.filter((row) => (
-    isConfirmedPi(row)
-    && getPiPoSelectionInfo(
+const availablePiRows = computed(() => {
+  const poData = poRowsData.value
+  const result = piRowsSource.value.filter((row) => {
+    if (!isConfirmedPi(row)) return false
+    const info = getPiPoSelectionInfo(
       row,
-      poRowsData.value,
+      poData,
       shipmentOrderDocuments.value,
       shipmentStatusDocuments.value,
       productionOrderDocuments.value,
       ciDocuments.value,
       plDocuments.value,
       formMode.value === 'edit' ? selectedRow.value?.id || '' : '',
-    ).selectable
-  ))
-))
+    )
+    if (!info.selectable) {
+      console.debug(`[PI필터] ${row.id} 제외 — PO ${info.activeLinkedPoRows?.length}건 연결, canceled=${info.canceled}, pending=${info.approvalPending}, locked=${info.shipmentLockInfo?.locked}`)
+    }
+    return info.selectable
+  })
+  if (piRowsSource.value.length > 0 && poData.length === 0) {
+    console.warn('[PI필터] PO 데이터 0건 — 모든 PI가 선택 가능 상태로 표시됩니다')
+  }
+  return result
+})
 
 const piRows = computed(() => {
   const keyword = piSearchKeyword.value.trim().toLowerCase()
