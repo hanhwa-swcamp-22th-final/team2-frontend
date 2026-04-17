@@ -32,13 +32,13 @@ async function loadData() {
   loading.value = true
   try {
     const [usersData, positionsData, departmentsData, teamsData] = await Promise.all([
-      fetchUsers().catch((e) => { console.error('사용자 로드 실패', e); return [] }),
-      fetchPositions().catch((e) => { console.error('직급 로드 실패', e); return [] }),
-      fetchDepartments().catch((e) => { console.error('부서 로드 실패', e); return [] }),
-      fetchTeams().catch((e) => { console.error('팀 로드 실패', e); return [] }),
+      fetchUsers(),
+      fetchPositions(),
+      fetchDepartments(),
+      fetchTeams(),
     ])
-    users.value = usersData ?? []
-    positions.value = positionsData ?? []
+    users.value = usersData
+    positions.value = positionsData
     const seenDeptIds = new Set()
     departments.value = (departmentsData ?? []).filter((d) => {
       const id = String(d.departmentId ?? d.id ?? '')
