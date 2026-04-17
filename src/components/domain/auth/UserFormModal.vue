@@ -29,10 +29,19 @@ const form = ref(getInitialForm())
 const errors = ref({})
 const showResetConfirm = ref(false)
 
-const roleOptions = [
-  { label: '영업', value: 'sales' },
-  { label: '관리자', value: 'admin' },
-]
+// 부서 → role 자동 매핑 (부서명 기준)
+const DEPT_ROLE_MAP = {
+  '영업부': 'sales',
+  '생산부': 'production',
+  '출하부': 'shipping',
+  '경영지원부': 'admin',
+}
+
+function derivedRole(deptId) {
+  const dept = props.departments.find((d) => String(d.departmentId ?? d.id) === String(deptId))
+  const name = dept?.departmentName ?? dept?.name ?? ''
+  return DEPT_ROLE_MAP[name] ?? 'sales'
+}
 
 const statusOptions = [
   { label: '재직', value: 'active' },
@@ -86,12 +95,13 @@ watch(
   },
 )
 
-// 부서 변경 시 팀 초기화 (매칭 안 되는 팀이면)
+// 부서 변경 시 팀 초기화 + role 자동 파생
 watch(() => form.value.departmentId, (deptId) => {
   const team = props.teams.find((t) => String(t.teamId) === String(form.value.teamId))
   if (team && String(team.departmentId) !== String(deptId)) {
     form.value.teamId = ''
   }
+  form.value.role = derivedRole(deptId)
 })
 
 const teamOptions = computed(() => {
@@ -120,7 +130,6 @@ function validate() {
   }
 
   if (!form.value.positionId) e.positionId = '직급을 선택해주세요.'
-  if (!form.value.role) e.role = '역할을 선택해주세요.'
   if (!form.value.departmentId) e.departmentId = '부서를 선택해주세요.'
   if (!form.value.teamId) e.teamId = '팀을 선택해주세요.'
 
@@ -180,10 +189,6 @@ const currentTeamName = computed(() => {
             :options="positions.map((p) => ({ label: p.positionName ?? p.name, value: String(p.positionId ?? p.id) }))"
             placeholder="직급을 선택하세요"
           />
-        </FormField>
-
-        <FormField label="역할" required :error="errors.role">
-          <BaseSelect v-model="form.role" :options="roleOptions" placeholder="역할을 선택하세요" />
         </FormField>
 
         <FormField label="부서" required :error="errors.departmentId">
