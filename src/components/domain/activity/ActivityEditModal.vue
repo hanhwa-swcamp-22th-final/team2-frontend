@@ -7,6 +7,7 @@ import BaseTextarea from '@/components/common/BaseTextarea.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import DateField from '@/components/common/DateField.vue'
 import FormField from '@/components/common/FormField.vue'
+import BaseSelect from '@/components/common/BaseSelect.vue'
 import { useToast } from '@/composables/useToast'
 
 const props = defineProps({
@@ -23,15 +24,23 @@ const props = defineProps({
 const emit = defineEmits(['close', 'save'])
 const { warning } = useToast()
 
+const priorityOptions = [
+  { label: '보통', value: 'medium' },
+  { label: '높음', value: 'high' },
+]
+
 // ── 폼 상태 ────────────────────────────────────────────────
 const formDate         = ref('')
 const formTitle        = ref('')
 const formContent      = ref('')
+const formPriority     = ref('')
 const formScheduleFrom = ref('')
 const formScheduleTo   = ref('')
 const errors           = ref({})
 
-const isSchedule = computed(() => props.activity?.type === '일정')
+const activityType = computed(() => props.activity?.type ?? props.activity?.activityType ?? '')
+const isSchedule = computed(() => activityType.value === '일정' || activityType.value === 'schedule')
+const isIssue    = computed(() => activityType.value === '이슈' || activityType.value === 'issue')
 
 // ── 달력 (range picker) — watch 보다 먼저 선언 ────────────
 const calYear  = ref(new Date().getFullYear())
@@ -117,6 +126,7 @@ function initForm(val) {
   formDate.value         = (val?.date         ?? '').replaceAll('/', '-')
   formTitle.value        = val?.title        ?? ''
   formContent.value      = val?.content      ?? ''
+  formPriority.value     = val?.priority     ?? val?.activityPriority ?? 'medium'
   formScheduleFrom.value = (val?.scheduleFrom ?? '').replaceAll('/', '-')
   formScheduleTo.value   = (val?.scheduleTo   ?? '').replaceAll('/', '-')
   errors.value           = {}
@@ -158,11 +168,11 @@ function handleSave() {
   }
   emit('save', {
     activityDate:         formDate.value,
-    activityType:         props.activity.type ?? props.activity.activityType,
+    activityType:         activityType.value,
     activityTitle:        formTitle.value,
     activityContent:      isSchedule.value ? formTitle.value : formContent.value,
     poId:                 props.activity.poId,
-    activityPriority:     props.activity.priority ?? props.activity.activityPriority ?? undefined,
+    activityPriority:     isIssue.value ? formPriority.value : undefined,
     activityScheduleFrom: isSchedule.value ? formScheduleFrom.value : undefined,
     activityScheduleTo:   isSchedule.value ? formScheduleTo.value   : undefined,
   })
@@ -199,6 +209,12 @@ function handleSave() {
         </p>
         <BaseTextField v-model="formTitle" placeholder="활동 제목을 입력하세요" />
         <p v-if="errors.title" class="mt-1 text-xs text-red-500">{{ errors.title }}</p>
+      </div>
+
+      <!-- 우선순위 (이슈일 때만) -->
+      <div v-if="isIssue" class="space-y-1.5">
+        <p class="text-sm font-semibold text-slate-700">우선순위</p>
+        <BaseSelect v-model="formPriority" :options="priorityOptions" />
       </div>
 
       <!-- 내용 (일정이 아닐 때) -->
