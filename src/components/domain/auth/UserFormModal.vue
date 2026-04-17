@@ -86,19 +86,19 @@ watch(
   },
 )
 
-// 부서+팀 통합 옵션: "부서명 > 팀명" 형식으로 teamId 에 직접 매핑
-const teamOptionsGrouped = computed(() => {
-  const deptMap = new Map(props.departments.map((d) => [String(d.departmentId ?? d.id), d.departmentName ?? d.name]))
-  return props.teams.map((t) => {
-    const deptName = deptMap.get(String(t.departmentId)) ?? ''
-    return { label: deptName ? `${deptName} > ${t.teamName}` : t.teamName, value: String(t.teamId) }
-  })
+// 부서 변경 시 팀 초기화 (매칭 안 되는 팀이면)
+watch(() => form.value.departmentId, (deptId) => {
+  const team = props.teams.find((t) => String(t.teamId) === String(form.value.teamId))
+  if (team && String(team.departmentId) !== String(deptId)) {
+    form.value.teamId = ''
+  }
 })
 
-// teamId 변경 시 departmentId 자동 파생 (내부용)
-watch(() => form.value.teamId, (teamId) => {
-  const team = props.teams.find((t) => String(t.teamId) === String(teamId))
-  form.value.departmentId = team ? String(team.departmentId) : ''
+const teamOptions = computed(() => {
+  const filtered = form.value.departmentId
+    ? props.teams.filter((t) => String(t.departmentId) === String(form.value.departmentId))
+    : props.teams
+  return filtered.map((t) => ({ label: t.teamName, value: String(t.teamId) }))
 })
 
 function validate() {
@@ -121,7 +121,8 @@ function validate() {
 
   if (!form.value.positionId) e.positionId = '직급을 선택해주세요.'
   if (!form.value.role) e.role = '역할을 선택해주세요.'
-  if (!form.value.teamId) e.teamId = '소속을 선택해주세요.'
+  if (!form.value.departmentId) e.departmentId = '부서를 선택해주세요.'
+  if (!form.value.teamId) e.teamId = '팀을 선택해주세요.'
 
   errors.value = e
   return Object.keys(e).length === 0
@@ -185,11 +186,20 @@ const currentTeamName = computed(() => {
           <BaseSelect v-model="form.role" :options="roleOptions" placeholder="역할을 선택하세요" />
         </FormField>
 
-        <FormField label="소속" required :error="errors.teamId">
+        <FormField label="부서" required :error="errors.departmentId">
+          <BaseSelect
+            v-model="form.departmentId"
+            :options="departments.map((d) => ({ label: d.departmentName ?? d.name, value: String(d.departmentId ?? d.id) }))"
+            placeholder="부서를 선택하세요"
+          />
+        </FormField>
+
+        <FormField label="팀" required :error="errors.teamId">
           <BaseSelect
             v-model="form.teamId"
-            :options="teamOptionsGrouped"
-            placeholder="소속을 선택하세요"
+            :options="teamOptions"
+            :placeholder="form.departmentId ? '팀을 선택하세요' : '먼저 부서를 선택하세요'"
+            :disabled="!form.departmentId"
           />
         </FormField>
 
