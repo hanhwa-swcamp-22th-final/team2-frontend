@@ -1037,7 +1037,7 @@ function cancelDeleteApprovalRequest() {
               <span class="text-slate-500">{{ row.label }}</span>
               <div class="text-right">
                 <StatusBadge
-                  v-if="['문서 상태', '결재 상태', '요청 상태'].includes(row.label)"
+                  v-if="row.label === '상태'"
                   :value="row.value"
                 />
                 <span v-else class="break-words font-medium text-slate-700">{{ row.value }}</span>
