@@ -1165,7 +1165,7 @@ function handleProductSelect(product) {
       :document="selectedRow"
       :selected-pi="selectedPi"
       :selected-client="selectedClient"
-      @open-pi-search="piSearchOpen = true"
+      @open-pi-search="loadPoDocuments().then(() => { piSearchOpen = true })"
       @open-client-search="openClientSearch('form')"
       @close="closeForm"
       @save="handleSave"
