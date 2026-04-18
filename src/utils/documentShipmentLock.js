@@ -93,6 +93,45 @@ export function formatPoShipmentLockMessage(lockInfo) {
   return `출하완료된 ${reference.type} ${reference.id}가 연결되어 있어 이 PO는 수정/삭제할 수 없습니다.`
 }
 
+/**
+ * PO 의 Collection 수금완료 락. collection.status === '수금완료' 인 건이 있으면 잠금.
+ */
+export function getPoCollectionLockInfo(poId, collectionDocuments = []) {
+  if (!poId) return { locked: false, references: [] }
+  const references = collectionDocuments
+    .filter((row) => String(row.poId ?? '') === String(poId) && row.status === '수금완료')
+    .map((row) => ({ type: '수금완료', id: row.collectionId ?? row.id ?? '' }))
+  return { locked: references.length > 0, references }
+}
+
+export function formatPoCollectionLockMessage(lockInfo) {
+  if (!lockInfo?.locked || !lockInfo.references?.length) return ''
+  const reference = lockInfo.references[0]
+  return `수금완료된 건${reference.id ? ` (ID: ${reference.id})` : ''}이 있어 이 PO는 수정/삭제할 수 없습니다.`
+}
+
+/**
+ * PI 의 간접 수금 락 — linked PO 중 하나라도 Collection PAID 이면 잠금.
+ */
+export function getPiCollectionLockInfo(piId, poDocuments = [], collectionDocuments = []) {
+  if (!piId) return { locked: false, references: [] }
+  const linkedPoIds = poDocuments
+    .filter((row) => row.piId === piId || row.linkedPiId === piId)
+    .map((row) => row.id)
+  const references = linkedPoIds.flatMap((poId) => (
+    collectionDocuments
+      .filter((row) => String(row.poId ?? '') === String(poId) && row.status === '수금완료')
+      .map((row) => ({ type: '수금완료', id: row.collectionId ?? row.id ?? '', poId }))
+  ))
+  return { locked: references.length > 0, references }
+}
+
+export function formatPiCollectionLockMessage(lockInfo) {
+  if (!lockInfo?.locked || !lockInfo.references?.length) return ''
+  const reference = lockInfo.references[0]
+  return `수금완료된 건이 연결된 PO ${reference.poId}가 있어 이 PI는 수정/삭제할 수 없습니다.`
+}
+
 export function formatPiShipmentLockMessage(lockInfo) {
   if (!lockInfo?.locked || !lockInfo.references?.length) {
     return ''

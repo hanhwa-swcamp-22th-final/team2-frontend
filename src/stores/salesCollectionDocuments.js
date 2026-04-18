@@ -6,11 +6,25 @@ function normalizeDocumentCode(value = '') {
   return String(value ?? '').replace(/[^A-Za-z0-9]/g, '')
 }
 
+const COLLECTION_STATUS_LABEL = {
+  paid: '수금완료',
+  unpaid: '미수금',
+  '수금완료': '수금완료',
+  '미수금': '미수금',
+}
+
+function normalizeCollectionStatus(raw) {
+  if (raw == null || raw === '') return '미수금'
+  return COLLECTION_STATUS_LABEL[String(raw).toLowerCase()] ?? COLLECTION_STATUS_LABEL[raw] ?? '미수금'
+}
+
 function normalizeCollectionRow(row) {
+  const status = normalizeCollectionStatus(row.status)
   return {
     ...row,
+    status,
     poId: row.poId ? normalizeDocumentCode(row.poId) : (row.poNo ?? ''),
-    collectionDate: row.status === '수금완료' ? row.collectionDate || null : null,
+    collectionDate: status === '수금완료' ? row.collectionDate || null : null,
   }
 }
 

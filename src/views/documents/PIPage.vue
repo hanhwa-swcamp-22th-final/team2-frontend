@@ -32,6 +32,7 @@ import { useAuthStore } from '@/stores/auth'
 import { loadExchangeRates, clearExchangeRates, getKrwRate } from '@/stores/exchangeRates'
 import { loadPiDocuments, usePiDocuments } from '@/stores/piDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
+import { useSalesCollectionDocuments } from '@/stores/salesCollectionDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import { useToast } from '@/composables/useToast'
@@ -50,8 +51,11 @@ import {
 import { openDocumentOutputByType, openTableOutput } from '@/utils/documentOutput'
 import {
   formatPiShipmentLockMessage,
+  formatPiCollectionLockMessage,
   getPiShipmentLockInfo,
+  getPiCollectionLockInfo,
 } from '@/utils/documentShipmentLock'
+import { canMutateDocument } from '@/utils/documentOwnership'
 import { createDocumentClientRows } from '@/utils/documentClientRows'
 import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
 import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
@@ -146,6 +150,16 @@ const shipmentLockInfoByPiId = computed(() => (
         shipmentOrderDocuments.value,
         shipmentStatusDocuments.value,
       ),
+    ]),
+  )
+))
+
+const salesCollectionDocuments = useSalesCollectionDocuments()
+const collectionLockInfoByPiId = computed(() => (
+  new Map(
+    rowsData.value.map((row) => [
+      row.id,
+      getPiCollectionLockInfo(row.id, poDocuments.value, salesCollectionDocuments.value),
     ]),
   )
 ))
@@ -258,9 +272,18 @@ function closeForm() {
 }
 
 function openEditForm(row) {
+  if (!canMutateDocument(row, authStore.currentUser)) {
+    warning('본인 또는 팀장·ADMIN 만 수정할 수 있습니다.')
+    return
+  }
   const shipmentLockInfo = shipmentLockInfoByPiId.value.get(row.id)
   if (shipmentLockInfo?.locked) {
     warning(formatPiShipmentLockMessage(shipmentLockInfo))
+    return
+  }
+  const collectionLockInfo = collectionLockInfoByPiId.value.get(row.id)
+  if (collectionLockInfo?.locked) {
+    warning(formatPiCollectionLockMessage(collectionLockInfo))
     return
   }
 
@@ -919,9 +942,18 @@ async function handleSave(formValue) {
 }
 
 async function openDeleteApprovalRequest(row) {
+  if (!canMutateDocument(row, authStore.currentUser)) {
+    warning('본인 또는 팀장·ADMIN 만 삭제할 수 있습니다.')
+    return
+  }
   const shipmentLockInfo = shipmentLockInfoByPiId.value.get(row.id)
   if (shipmentLockInfo?.locked) {
     warning(formatPiShipmentLockMessage(shipmentLockInfo))
+    return
+  }
+  const collectionLockInfo = collectionLockInfoByPiId.value.get(row.id)
+  if (collectionLockInfo?.locked) {
+    warning(formatPiCollectionLockMessage(collectionLockInfo))
     return
   }
 
@@ -1136,8 +1168,8 @@ function handleProductSelect(product) {
 
       <template #cell-actions="{ row }">
         <TableActions
-          :show-edit="!shipmentLockInfoByPiId.get(row.id)?.locked"
-          :show-delete="!shipmentLockInfoByPiId.get(row.id)?.locked"
+          :show-edit="!shipmentLockInfoByPiId.get(row.id)?.locked && !collectionLockInfoByPiId.get(row.id)?.locked && canMutateDocument(row, authStore.currentUser)"
+          :show-delete="!shipmentLockInfoByPiId.get(row.id)?.locked && !collectionLockInfoByPiId.get(row.id)?.locked && canMutateDocument(row, authStore.currentUser)"
           @edit="openEditForm(row)"
           @delete="openDeleteApprovalRequest(row)"
         />

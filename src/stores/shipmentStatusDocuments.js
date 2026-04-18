@@ -6,10 +6,22 @@ function formatDate(value) {
   return String(value ?? '').replace(/-/g, '/')
 }
 
+const SHIPMENT_STATUS_LABEL = {
+  preparing: '출하준비',
+  completed: '출하완료',
+  '출하준비': '출하준비',
+  '출하완료': '출하완료',
+}
+
+function normalizeShipmentStatus(raw) {
+  if (raw == null || raw === '') return '출하준비'
+  return SHIPMENT_STATUS_LABEL[String(raw).toLowerCase()] ?? SHIPMENT_STATUS_LABEL[raw] ?? '출하준비'
+}
+
 function mapShipmentResponse(row) {
   return {
     id: String(row.shipmentId ?? row.id ?? ''),
-    status: row.shipmentStatus ?? row.status ?? '출하준비',
+    status: normalizeShipmentStatus(row.shipmentStatus ?? row.status),
     clientName: row.clientName ?? '-',
     country: row.country ?? '-',
     poId: row.poId ?? '',

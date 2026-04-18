@@ -42,6 +42,7 @@ import {
   formatPiShipmentLockMessage,
   getPiShipmentLockInfo,
 } from '@/utils/documentShipmentLock'
+import { canMutateDocument } from '@/utils/documentOwnership'
 import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
 import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
 import { clientSearchColumns } from '@/utils/searchModalColumns'
@@ -378,6 +379,8 @@ const shipmentLockInfo = computed(() => (
   )
 ))
 const shipmentLockMessage = computed(() => formatPiShipmentLockMessage(shipmentLockInfo.value))
+
+const canMutate = computed(() => canMutateDocument(sourceRow.value, authStore.currentUser))
 
 const editApprovalRequestRows = computed(() => {
   if (!pendingEditRequest.value) return []
@@ -741,13 +744,13 @@ async function handleCancelApproval() {
     <div class="mb-6">
       <DetailPageHeader :title="detail.id" :status="detail.status" @back="goBack">
         <template #actions>
-          <BaseButton v-if="!shipmentLockInfo.locked && !['결재대기','pending_approval','APPROVAL_PENDING'].includes(detail.status)" size="sm" @click="handleEdit">
+          <BaseButton v-if="canMutate && !shipmentLockInfo.locked && !['결재대기','pending_approval','APPROVAL_PENDING'].includes(detail.status)" size="sm" @click="handleEdit">
             <template #leading>
               <i class="fas fa-edit text-xs" aria-hidden="true"></i>
             </template>
             {{ ['확정','confirmed','CONFIRMED'].includes(detail.status) ? '수정요청' : '수정' }}
           </BaseButton>
-          <BaseButton v-if="!shipmentLockInfo.locked && !['결재대기','pending_approval','APPROVAL_PENDING'].includes(detail.status)" variant="secondary" size="sm" @click="handleDelete">
+          <BaseButton v-if="canMutate && !shipmentLockInfo.locked && !['결재대기','pending_approval','APPROVAL_PENDING'].includes(detail.status)" variant="secondary" size="sm" @click="handleDelete">
             <template #leading>
               <i class="fas fa-trash text-xs" aria-hidden="true"></i>
             </template>
