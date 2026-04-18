@@ -35,6 +35,12 @@ export function useSalesCollectionDocuments() {
   return salesCollectionDocuments
 }
 
+export function clearSalesCollectionDocuments() {
+  salesCollectionDocuments.value = []
+  salesCollectionPageInfo.value = { size: 1000, number: 0, totalElements: 0, totalPages: 0 }
+  loading = null
+}
+
 export function useSalesCollectionPageInfo() {
   return salesCollectionPageInfo
 }

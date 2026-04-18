@@ -94,3 +94,9 @@ export function useCiDocuments() {
 export function useCiPageInfo() {
   return ciPageInfo
 }
+
+export function clearCiDocuments() {
+  ciDocuments.value = []
+  ciPageInfo.value = { size: 1000, number: 0, totalElements: 0, totalPages: 0 }
+  loading = null
+}

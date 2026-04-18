@@ -15,6 +15,7 @@ import PIFormModal from '@/components/domain/document/PIFormModal.vue'
 import {
   validatePiDeletable,
   requestPiDeletion,
+  requestPiModification,
   deleteProformaInvoiceDraft,
   cancelProformaInvoiceApproval,
 } from '@/api/documents'
@@ -677,47 +678,20 @@ function cancelEditRequestIntent() {
   pendingEditRequest.value = null
 }
 
-// TODO: PI 수정 결재 API (request-modification) 가 백엔드에 추가되면
-//       PO 와 동일하게 requestPiModification 연동으로 교체한다.
-//       현재는 로컬-only 로 스냅샷 비교만 수행 → 새로고침 시 소실됨.
-function confirmEditApprovalRequest() {
+async function confirmEditApprovalRequest() {
   if (!pendingEditRequest.value) return
+  try {
+    const userId = authStore.currentUser?.userId
+    await requestPiModification({ piId: pendingEditRequest.value.id, userId })
+    await loadPiDocuments()
 
-  const requesterName = getCurrentRequesterName()
-  const requestedAt = getRequestedAt()
-  const approvalReview = createApprovalReviewSnapshot({
-    title: 'PI 수정 결재 검토',
-    message: '요청된 변경 사항과 변경 후 문서 정보를 검토한 뒤 승인 또는 반려를 결정합니다.',
-    requestRows: editApprovalRequestRows.value,
-    documentRows: editApprovalDocumentRows.value,
-    changeRows: pendingEditRequest.value.changeRows ?? [],
-    itemRows: editApprovalItemRows.value,
-    itemSummaryRows: editApprovalItemSummaryRows.value,
-    documentSectionTitle: '수정 대상 PI 정보',
-    changeSectionTitle: '변경 사항 비교',
-    itemSectionTitle: '변경 후 PI 품목 정보',
-    helperText: '수정 요청은 승인 전까지 확정되지 않으며, 반려 시 요청 상태만 반영됩니다.',
-  })
-
-  piDocuments.value = piDocuments.value.map((row) => (
-    row.id === pendingEditRequest.value.id
-      ? {
-        ...row,
-        ...pendingEditRequest.value.nextRow,
-        approvalReview,
-        ...createEditApprovalMeta({
-          approver: pendingEditRequest.value.approver,
-          requesterName,
-          requestedAt,
-        }),
-      }
-      : row
-  ))
-
-  editApprovalRequestOpen.value = false
-  pendingEditRequest.value = null
-  formOpen.value = false
-  success(`${sourceRow.value?.id} 수정 결재 요청이 전송되었습니다.`)
+    editApprovalRequestOpen.value = false
+    pendingEditRequest.value = null
+    formOpen.value = false
+    success(`${sourceRow.value?.id} 수정 결재 요청이 전송되었습니다.`)
+  } catch (e) {
+    error(e.response?.data?.message || '수정 결재 요청 중 오류가 발생했습니다.')
+  }
 }
 
 function cancelEditApprovalRequest() {

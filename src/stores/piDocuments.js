@@ -97,3 +97,10 @@ export function usePiDocuments() {
 export function usePiPageInfo() {
   return piPageInfo
 }
+
+/** 로그아웃 시 호출 — loading 플래그와 캐시를 초기화하여 재로그인 시 이전 세션 데이터 노출 방지. */
+export function clearPiDocuments() {
+  piDocuments.value = []
+  piPageInfo.value = { size: 1000, number: 0, totalElements: 0, totalPages: 0 }
+  loading = null
+}

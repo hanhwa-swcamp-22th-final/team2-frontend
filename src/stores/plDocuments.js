@@ -94,3 +94,9 @@ export function usePlDocuments() {
 export function usePlPageInfo() {
   return plPageInfo
 }
+
+export function clearPlDocuments() {
+  plDocuments.value = []
+  plPageInfo.value = { size: 1000, number: 0, totalElements: 0, totalPages: 0 }
+  loading = null
+}

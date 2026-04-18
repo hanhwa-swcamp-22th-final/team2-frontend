@@ -68,6 +68,12 @@ export function useShipmentOrderDocuments() {
   return shipmentOrderDocuments
 }
 
+export function clearShipmentOrderDocuments() {
+  shipmentOrderDocuments.value = []
+  shipmentOrderPageInfo.value = { size: 1000, number: 0, totalElements: 0, totalPages: 0 }
+  loading = null
+}
+
 export function useShipmentOrderPageInfo() {
   return shipmentOrderPageInfo
 }
