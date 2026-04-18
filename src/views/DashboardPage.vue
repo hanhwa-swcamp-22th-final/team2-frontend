@@ -684,7 +684,7 @@ async function confirmPackageDelete() {
         </div>
       </BaseCard>
 
-      <BaseCard>
+      <BaseCard v-if="!isProductionUser">
         <template #title>
           <h3 class="font-bold text-slate-800">출하 현황</h3>
         </template>

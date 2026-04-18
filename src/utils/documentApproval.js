@@ -67,19 +67,24 @@ export function buildApprovalRequestRows({
   ]
 }
 
-// 문서 상태 + 요청 상태 + 결재 상태를 단일 라벨로 합산
+// 문서 상태 + 요청 상태 + 결재 상태를 단일 라벨로 합산.
+// 백엔드가 영문 code('pending_approval','pending','approved','rejected')를 내려줄 때와
+// 프론트 로컬 뮤테이션으로 한글('결재대기','대기','승인','반려')을 박아 둔 상태를 둘 다 수용.
 function resolveCompositeStatus(document) {
-  const status = document.status || ''
+  const normalize = (v) => String(v ?? '').trim().toLowerCase()
+  const statusNorm = normalize(document.status)
+  const approvalNorm = normalize(document.approvalStatus)
   const request = document.requestStatus || ''
-  const approval = document.approvalStatus || ''
 
-  if (status === '결재대기' && request) {
-    if (approval === '대기') return `${request} 결재대기`
-    if (approval === '승인') return `${request} 승인`
-    if (approval === '반려') return `${request} 반려`
+  const isPendingApproval =
+      statusNorm === '결재대기' || statusNorm === 'approval_pending' || statusNorm === 'pending_approval'
+  if (isPendingApproval && request) {
+    if (approvalNorm === '대기' || approvalNorm === 'pending') return `${request} 결재대기`
+    if (approvalNorm === '승인' || approvalNorm === 'approved') return `${request} 승인`
+    if (approvalNorm === '반려' || approvalNorm === 'rejected') return `${request} 반려`
     return `${request} 결재대기`
   }
-  return status || '-'
+  return document.status || '-'
 }
 
 export function buildApprovalInfoRows(document) {
