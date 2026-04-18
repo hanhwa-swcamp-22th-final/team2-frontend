@@ -202,6 +202,10 @@ async function handleSave(formData) {
       success('품목이 등록되었습니다.')
     } else {
       await updateItem(selectedItem.value.id, formData)
+      // HTTP 캐시가 개입해 loadData() 가 이전 스냅샷을 돌려줄 수 있어, 전송한 값으로
+      // 로컬 items 를 선반영한다. 이후 loadData() 가 정상 응답하면 덮어써진다.
+      const idx = items.value.findIndex((i) => i.id === selectedItem.value.id)
+      if (idx !== -1) items.value[idx] = { ...items.value[idx], ...formData }
       success('품목 정보가 수정되었습니다.')
     }
     showFormModal.value = false

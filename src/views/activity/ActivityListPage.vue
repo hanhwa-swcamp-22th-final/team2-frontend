@@ -237,13 +237,15 @@ const columns = [
       </template>
     </DocumentPageHeader>
 
-    <!-- 키워드 검색 + 상세검색 토글 -->
-    <FilterToolbarCard
-      v-model="filterTitle"
-      placeholder="제목 검색..."
-      :advanced-open="isFilterOpen"
-      @toggle-advanced="isFilterOpen = !isFilterOpen"
-    />
+    <!-- 키워드 검색 + 상세검색 토글. Enter 로 검색 적용 (ItemListPage 와 동일 패턴) -->
+    <div @keyup.enter="applySearch">
+      <FilterToolbarCard
+        v-model="filterTitle"
+        placeholder="제목 검색..."
+        :advanced-open="isFilterOpen"
+        @toggle-advanced="isFilterOpen = !isFilterOpen"
+      />
+    </div>
 
     <!-- 상세검색 패널 -->
     <CollapsibleFilterCard :open="isFilterOpen" @toggle="isFilterOpen = !isFilterOpen">
