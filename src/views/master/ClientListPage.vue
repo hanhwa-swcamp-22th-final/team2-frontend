@@ -180,12 +180,12 @@ async function loadData() {
   loading.value = true
   try {
     const [clientsData, , deptsData, teamsData] = await Promise.all([
-      fetchClients(),
-      loadReferenceData(),
-      fetchDepartments(),
-      fetchTeams(),
+      fetchClients().catch((e) => { console.error('거래처 로드 실패', e); return [] }),
+      loadReferenceData().catch(() => {}),
+      fetchDepartments().catch((e) => { console.error('부서 로드 실패', e); return [] }),
+      fetchTeams().catch((e) => { console.error('팀 로드 실패', e); return [] }),
     ])
-    clients.value = clientsData
+    clients.value = clientsData ?? []
     departments.value = deptsData ?? []
     teams.value = teamsData ?? []
   } catch {
