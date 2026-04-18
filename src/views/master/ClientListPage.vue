@@ -332,7 +332,7 @@ function goToDetail(row) {
     </div>
 
     <BaseTable v-else :columns="columns" :rows="paginatedClients" row-key="id"
-      :empty-text="appliedFilters.keyword || appliedFilters.code || appliedFilters.name || appliedFilters.country || appliedFilters.manager || appliedFilters.status ? '검색 결과가 없습니다.' : '등록된 거래처가 없습니다.'"
+      :empty-text="appliedFilters.keyword || appliedFilters.code || appliedFilters.name || appliedFilters.country || appliedFilters.manager || appliedFilters.status ? '검색 결과가 없습니다.' : '데이터가 없습니다.'"
       :footer-text="`총 ${filteredClients.length}건`"
       clickable-rows
       @row-click="goToDetail"
