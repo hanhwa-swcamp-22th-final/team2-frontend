@@ -31,6 +31,7 @@ import { loadPoDocuments, usePoDocuments } from '@/stores/poDocuments'
 import { loadProductionOrderDocuments, useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
+import { useSalesCollectionDocuments } from '@/stores/salesCollectionDocuments'
 import {
   buildApprovalInfoRows,
   buildApprovalRequestRows,
@@ -44,10 +45,13 @@ import { openDocumentOutputByType } from '@/utils/documentOutput'
 import {
   formatPiPoSelectionMessage,
   formatPoShipmentLockMessage,
+  formatPoCollectionLockMessage,
   getPiPoSelectionInfo,
   getPoShipmentLockInfo,
+  getPoCollectionLockInfo,
   resolvePoShipmentDocumentStatus,
 } from '@/utils/documentShipmentLock'
+import { canMutateDocument } from '@/utils/documentOwnership'
 import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
 import { clientSearchColumns } from '@/utils/searchModalColumns'
 
@@ -317,6 +321,7 @@ const shipmentStatusLabel = computed(() => {
 })
 
 const approvalInfoRows = computed(() => buildApprovalInfoRows(detail.value))
+const canMutate = computed(() => canMutateDocument(sourceRow.value, authStore.currentUser))
 const shipmentLockInfo = computed(() => (
   getPoShipmentLockInfo(
     detail.value?.id,
@@ -325,6 +330,9 @@ const shipmentLockInfo = computed(() => (
   )
 ))
 const shipmentLockMessage = computed(() => formatPoShipmentLockMessage(shipmentLockInfo.value))
+const salesCollectionDocuments = useSalesCollectionDocuments()
+const collectionLockInfo = computed(() => getPoCollectionLockInfo(detail.value?.id, salesCollectionDocuments.value))
+const collectionLockMessage = computed(() => formatPoCollectionLockMessage(collectionLockInfo.value))
 const linkedPiDocument = computed(() => piDocuments.value.find((row) => row.id === (detail.value?.piId || detail.value?.linkedPiId)))
 const linkedProductionOrder = computed(() => productionOrderDocuments.value.find((row) => row.poId === detail.value?.id) ?? null)
 const canIssueProductionOrder = computed(() => Boolean(detail.value && !linkedProductionOrder.value && !shipmentLockInfo.value.locked))
@@ -873,13 +881,13 @@ async function handleCancelApproval() {
             </template>
             생산지시서 발행
           </BaseButton>
-          <BaseButton v-if="!shipmentLockInfo.locked && !['결재대기','pending_approval','APPROVAL_PENDING'].includes(detail.status)" size="sm" @click="handleEdit">
+          <BaseButton v-if="canMutate && !shipmentLockInfo.locked && !collectionLockInfo.locked && !['결재대기','pending_approval','APPROVAL_PENDING'].includes(detail.status)" size="sm" @click="handleEdit">
             <template #leading>
               <i class="fas fa-edit text-xs" aria-hidden="true"></i>
             </template>
             {{ ['확정','confirmed','CONFIRMED'].includes(detail.status) ? '수정요청' : '수정' }}
           </BaseButton>
-          <BaseButton v-if="!shipmentLockInfo.locked && !['결재대기','pending_approval','APPROVAL_PENDING'].includes(detail.status)" variant="secondary" size="sm" @click="handleDelete">
+          <BaseButton v-if="canMutate && !shipmentLockInfo.locked && !collectionLockInfo.locked && !['결재대기','pending_approval','APPROVAL_PENDING'].includes(detail.status)" variant="secondary" size="sm" @click="handleDelete">
             <template #leading>
               <i class="fas fa-trash text-xs" aria-hidden="true"></i>
             </template>
@@ -938,6 +946,14 @@ async function handleCancelApproval() {
           {{ reference.type }} {{ reference.id }}
         </span>
       </div>
+    </div>
+
+    <div
+      v-if="collectionLockInfo.locked"
+      class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-900"
+    >
+      <div class="font-semibold">수금완료된 건이 있어 수정 및 삭제가 제한됩니다.</div>
+      <div class="mt-1">{{ collectionLockMessage }}</div>
     </div>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">

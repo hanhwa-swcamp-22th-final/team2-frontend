@@ -49,6 +49,7 @@ function mapPoResponse(row) {
 
   return {
     id: row.poId,
+    managerId: row.managerId ?? null,
     piId: row.piId ?? '',
     linkedPiId: row.piId ?? '',
     issueDate: formatDate(row.issueDate),

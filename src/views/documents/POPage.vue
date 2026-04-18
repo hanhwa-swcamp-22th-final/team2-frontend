@@ -37,6 +37,7 @@ import { loadPoDocuments, usePoDocuments } from '@/stores/poDocuments'
 import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
+import { useSalesCollectionDocuments } from '@/stores/salesCollectionDocuments'
 import { useToast } from '@/composables/useToast'
 import {
   buildApprovalRequestRows,
@@ -51,10 +52,13 @@ import { openDocumentOutputByType, openTableOutput } from '@/utils/documentOutpu
 import {
   formatPiPoSelectionMessage,
   formatPoShipmentLockMessage,
+  formatPoCollectionLockMessage,
   getPiPoSelectionInfo,
   getPoShipmentLockInfo,
+  getPoCollectionLockInfo,
   resolvePoShipmentDocumentStatus,
 } from '@/utils/documentShipmentLock'
+import { canMutateDocument } from '@/utils/documentOwnership'
 import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
 import { buildSelectOptionsFromRows } from '@/utils/selectOptions'
 
@@ -187,6 +191,16 @@ const shipmentLockInfoByPoId = computed(() => (
   )
 ))
 
+const salesCollectionDocuments = useSalesCollectionDocuments()
+const collectionLockInfoByPoId = computed(() => (
+  new Map(
+    rowsData.value.map((row) => [
+      row.id,
+      getPoCollectionLockInfo(row.id, salesCollectionDocuments.value),
+    ]),
+  )
+))
+
 // PO 는 결재 확정(CONFIRMED) PI 만 연결 가능. 초안·결재대기·수정요청 상태의 PI 가
 // 드롭다운에 노출되면 결재받지 않은 초안으로 PO 생성이 가능해지므로 프론트에서 먼저 차단.
 function isConfirmedPi(row) {
@@ -275,9 +289,18 @@ function closeForm() {
 }
 
 function openEditForm(row) {
+  if (!canMutateDocument(row, authStore.currentUser)) {
+    warning('본인 또는 팀장·ADMIN 만 수정할 수 있습니다.')
+    return
+  }
   const shipmentLockInfo = shipmentLockInfoByPoId.value.get(row.id)
   if (shipmentLockInfo?.locked) {
     warning(formatPoShipmentLockMessage(shipmentLockInfo))
+    return
+  }
+  const collectionLockInfo = collectionLockInfoByPoId.value.get(row.id)
+  if (collectionLockInfo?.locked) {
+    warning(formatPoCollectionLockMessage(collectionLockInfo))
     return
   }
 
@@ -928,9 +951,18 @@ async function handleSave(formValue) {
 }
 
 async function openDeleteApprovalRequest(row) {
+  if (!canMutateDocument(row, authStore.currentUser)) {
+    warning('본인 또는 팀장·ADMIN 만 삭제할 수 있습니다.')
+    return
+  }
   const shipmentLockInfo = shipmentLockInfoByPoId.value.get(row.id)
   if (shipmentLockInfo?.locked) {
     warning(formatPoShipmentLockMessage(shipmentLockInfo))
+    return
+  }
+  const collectionLockInfo = collectionLockInfoByPoId.value.get(row.id)
+  if (collectionLockInfo?.locked) {
+    warning(formatPoCollectionLockMessage(collectionLockInfo))
     return
   }
 
@@ -1163,8 +1195,8 @@ function handleProductSelect(product) {
 
       <template #cell-actions="{ row }">
         <TableActions
-          :show-edit="!shipmentLockInfoByPoId.get(row.id)?.locked"
-          :show-delete="!shipmentLockInfoByPoId.get(row.id)?.locked"
+          :show-edit="!shipmentLockInfoByPoId.get(row.id)?.locked && !collectionLockInfoByPoId.get(row.id)?.locked && canMutateDocument(row, authStore.currentUser)"
+          :show-delete="!shipmentLockInfoByPoId.get(row.id)?.locked && !collectionLockInfoByPoId.get(row.id)?.locked && canMutateDocument(row, authStore.currentUser)"
           @edit="openEditForm(row)"
           @delete="openDeleteApprovalRequest(row)"
         />

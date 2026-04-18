@@ -41,6 +41,7 @@ function mapPiResponse(row) {
 
   return {
     id: row.piId,
+    managerId: row.managerId ?? null,
     issueDate: formatDate(row.issueDate),
     clientName: row.clientName ?? '-',
     clientAddress: row.clientAddress ?? '-',

@@ -22,5 +22,10 @@ export function deletePackage(id) {
 }
 
 export function fetchAllUsers() {
-  return api.get('/users', { params: { size: 1000 } }).then((r) => unwrapCollection(r.data))
+  // 뷰어 선택용 최소 정보 엔드포인트. ADMIN 외 사용자도 조회 가능.
+  return api.get('/users/viewable').then((r) => {
+    const data = r.data
+    if (Array.isArray(data)) return data
+    return unwrapCollection(data)
+  })
 }

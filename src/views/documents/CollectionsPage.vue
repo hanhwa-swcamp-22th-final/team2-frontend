@@ -15,6 +15,7 @@ import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
+import { useToast } from '@/composables/useToast'
 import { useSalesCollectionDocuments, normalizeSalesCollectionRow } from '@/stores/salesCollectionDocuments'
 import { openTableOutput } from '@/utils/documentOutput'
 import { convertCurrencyAmountToKrw } from '@/utils/exchangeRate'
@@ -29,6 +30,7 @@ const poSearchKeyword = ref('')
 const viewScope = ref('all')
 const currencyFilter = ref('')
 const appliedCurrencyFilter = ref('')
+const { warning } = useToast()
 const statusConfirmOpen = ref(false)
 const pendingStatusChange = ref(null)
 
@@ -249,6 +251,10 @@ function handlePoSelect(row) {
 }
 
 function openStatusConfirm(row, nextStatusValue) {
+  if (row.status === '수금완료' && nextStatusValue === 'UNPAID') {
+    warning('수금완료 건은 되돌릴 수 없습니다.')
+    return
+  }
   const nextStatus = nextStatusValue === 'PAID' ? '수금완료' : '미수금'
   const nextCollectionDate = resolveNextCollectionDate(row, nextStatusValue)
 
@@ -557,9 +563,17 @@ function downloadCurrentTablePdf() {
                   {{ formatCollectionDate(row.collectionDate) }}
                 </td>
                 <td class="border-b border-slate-200 px-4 py-3 text-center text-sm">
+                  <span
+                    v-if="row.status === '수금완료'"
+                    class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800"
+                    title="수금완료된 건은 상태를 변경할 수 없습니다."
+                  >
+                    수금완료
+                  </span>
                   <select
+                    v-else
                     class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:border-brand-400 focus:outline-none"
-                    :value="row.status === '수금완료' ? 'PAID' : 'UNPAID'"
+                    :value="'UNPAID'"
                     @change="openStatusConfirm(row, $event.target.value)"
                   >
                     <option value="UNPAID">미수금</option>
