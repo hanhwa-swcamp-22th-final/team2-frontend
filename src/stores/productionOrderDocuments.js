@@ -38,6 +38,7 @@ function mapProductionOrderResponse(row) {
     clientAddress: row.clientAddress ?? '-',
     itemName: row.itemName ?? items[0]?.name ?? '-',
     manager: row.managerName ?? '-',
+    managerId: row.managerId ?? null,
     dueDate: formatDate(row.dueDate),
     department: row.department ?? '-',
     productionSite: row.productionSite ?? '-',

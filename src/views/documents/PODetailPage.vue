@@ -12,12 +12,14 @@ import { formatRevisionEntry } from '@/utils/revisionFormat'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import PODocumentTemplate from '@/components/domain/document/PODocumentTemplate.vue'
 import POFormModal from '@/components/domain/document/POFormModal.vue'
+import ProductionOrderIssueModal from '@/components/domain/document/ProductionOrderIssueModal.vue'
 import {
   requestPoModification,
   validatePoDeletable,
   requestPoDeletion,
   deletePurchaseOrderDraft,
   cancelPurchaseOrderApproval,
+  generateProductionOrder,
 } from '@/api/documents'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useToast } from '@/composables/useToast'
@@ -26,7 +28,7 @@ import { useCiDocuments } from '@/stores/ciDocuments'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { usePlDocuments } from '@/stores/plDocuments'
 import { loadPoDocuments, usePoDocuments } from '@/stores/poDocuments'
-import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
+import { loadProductionOrderDocuments, useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import {
@@ -741,79 +743,50 @@ function createNextProductionOrderId() {
   return `MO${String(maxNumber + 1)}`
 }
 
-async function confirmIssueProductionOrder() {
+// 발행 모달 확인 시 호출 — payload: { assigneeUserId, assigneeName } | null.
+// 백엔드가 실제 DB 레코드를 생성하므로 저장 후 store refetch.
+const productionIssueSaving = ref(false)
+async function confirmIssueProductionOrder(payload) {
   if (!sourceRow.value || !canIssueProductionOrder.value) return
+  if (productionIssueSaving.value) return
 
-  const productionOrderId = createNextProductionOrderId()
-  const currency = sourceRow.value.currency || 'USD'
-  const items = (sourceRow.value.items ?? []).map((item) => {
-    const quantity = String(item.qty ?? item.quantity ?? '')
-    const unit = item.unit ?? 'EA'
-    const unitPriceValue = parseNumericValue(item.unitPrice)
-    const amountValue = parseNumericValue(item.amount)
-
-    return {
-      name: item.name ?? '',
-      quantity,
-      unit,
-      unitPrice: formatCurrencyValue(currency, unitPriceValue),
-      amount: formatCurrencyValue(currency, amountValue),
-      remark: item.remark ?? '',
-    }
-  })
-
-  const nextProductionOrder = {
-    id: productionOrderId,
-    status: '진행중',
-    issueDate: formatTodaySlashDate(),
-    poId: sourceRow.value.id,
-    country: sourceRow.value.country || '-',
-    clientName: sourceRow.value.clientName,
-    clientAddress: sourceRow.value.clientAddress || '',
-    itemName: sourceRow.value.itemName || items[0]?.name || '-',
-    manager: sourceRow.value.manager || authStore.currentUser?.name || '-',
-    dueDate: sourceRow.value.deliveryDate || '-',
-    department: '영업부',
-    productionSite: '-',
-    requestedBy: authStore.currentUser?.name || sourceRow.value.manager || '-',
-    completionTarget: sourceRow.value.deliveryDate || '-',
-    remarks: 'PO 기준으로 생산지시서가 발행되었습니다.',
-    linkedDocuments: [{ id: sourceRow.value.id, status: sourceRow.value.status }],
-    items,
+  const poId = sourceRow.value.id
+  productionIssueSaving.value = true
+  try {
+    await generateProductionOrder(poId, payload ?? null)
+  } catch (e) {
+    productionIssueSaving.value = false
+    error(e.response?.data?.message || '생산지시서 발행 중 오류가 발생했습니다.')
+    return
   }
 
-  productionOrderDocuments.value = [nextProductionOrder, ...productionOrderDocuments.value]
-  poDocuments.value = poDocuments.value.map((row) => {
-    if (row.id !== sourceRow.value.id) return row
-
-    const currentLinks = row.linkedDocuments ?? []
-    const hasProductionLink = currentLinks.some((document) => document.id === productionOrderId)
-
-    return {
-      ...row,
-      linkedDocuments: hasProductionLink
-        ? currentLinks
-        : [...currentLinks, { id: productionOrderId, status: nextProductionOrder.status }],
-    }
-  })
-
+  await loadProductionOrderDocuments()
+  productionIssueSaving.value = false
   productionIssueConfirmOpen.value = false
+
+  // 메일 이력은 best-effort (백엔드가 자동 발송하지만 활동 로그는 이 경로 유지).
   try {
     await recordDocumentEmailActivities({
-      clientName: nextProductionOrder.clientName,
-      poId: nextProductionOrder.poId,
-      sender: authStore.currentUser?.name || nextProductionOrder.requestedBy,
-      title: `[SalesBoost] ${nextProductionOrder.id} 생산지시서 발송`,
+      clientName: sourceRow.value.clientName,
+      poId,
+      sender: authStore.currentUser?.userName || authStore.currentUser?.name || '-',
+      title: `[SalesBoost] ${poId} 생산지시서 발송`,
       types: ['생산지시서'],
-      attachments: [`${nextProductionOrder.id}.pdf`],
+      attachments: [],
     })
   } catch (emailError) {
     console.error('생산지시서 메일 발송 이력 기록 실패', emailError)
-    warning('생산지시서는 발행되었지만 메일 발송 이력 기록에는 실패했습니다.')
   }
-  success(`${productionOrderId} 생산지시서가 발행되었습니다.`)
-  await nextTick()
-  router.push({ name: 'production-detail', params: { id: productionOrderId } })
+
+  // 방금 발행된 지시서 상세로 이동 (poId 매칭 + 생성일 최신).
+  const latest = productionOrderDocuments.value
+      .filter((p) => p.poId === poId)
+      .sort((a, b) => String(b.id).localeCompare(String(a.id)))[0]
+  success(`${latest?.id ?? ''} 생산지시서가 발행되었습니다.`.trim())
+  if (latest?.id) {
+    await nextTick()
+    router.push({ name: 'production-detail', params: { id: latest.id } })
+  }
 }
 
 function confirmEditRequestIntent() {
@@ -1222,15 +1195,10 @@ async function handleCancelApproval() {
       @cancel="cancelDeleteApprovalRequest"
     />
 
-    <ConfirmModal
+    <ProductionOrderIssueModal
       :open="productionIssueConfirmOpen"
-      title="생산지시서 발행"
-      message="선택한 PO를 기준으로 생산지시서를 발행하시겠습니까?"
-      :detail-rows="productionIssueConfirmRows"
-      confirm-label="발행"
-      cancel-label="취소"
-      helper-text="생산지시서는 선택 분기 문서이며, 발행 후 참조 문서에 자동 연결됩니다."
-      width="max-w-2xl"
+      :po="sourceRow"
+      :saving="productionIssueSaving"
       @confirm="confirmIssueProductionOrder"
       @cancel="closeProductionIssueConfirm"
     />
