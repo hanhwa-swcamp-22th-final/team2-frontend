@@ -12,7 +12,13 @@ import { formatRevisionEntry } from '@/utils/revisionFormat'
 import DocumentPreviewModal from '@/components/domain/document/DocumentPreviewModal.vue'
 import PODocumentTemplate from '@/components/domain/document/PODocumentTemplate.vue'
 import POFormModal from '@/components/domain/document/POFormModal.vue'
-import { requestPoModification, validatePoDeletable, requestPoDeletion } from '@/api/documents'
+import {
+  requestPoModification,
+  validatePoDeletable,
+  requestPoDeletion,
+  deletePurchaseOrderDraft,
+  cancelPurchaseOrderApproval,
+} from '@/api/documents'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
@@ -543,6 +549,21 @@ async function handleDelete() {
     return
   }
 
+  // DRAFT 는 결재 없이 바로 삭제 (백엔드 DELETE /purchase-orders/{id}).
+  const statusKey = String(sourceRow.value?.status ?? '').trim().toLowerCase()
+  const isDraft = statusKey === 'draft' || statusKey === '초안'
+  if (isDraft) {
+    try {
+      await deletePurchaseOrderDraft(sourceRow.value.id)
+      await loadPoDocuments()
+      success(`${sourceRow.value.id} 초안 PO가 삭제되었습니다.`)
+      router.back()
+    } catch (e) {
+      error(e.response?.data?.message || '초안 삭제 중 오류가 발생했습니다.')
+    }
+    return
+  }
+
   if (isTeamLeader.value) {
     try {
       const userId = authStore.currentUser?.userId
@@ -849,6 +870,18 @@ async function confirmDeleteApprovalRequest() {
 function cancelDeleteApprovalRequest() {
   deleteApprovalRequestOpen.value = false
 }
+
+// APPROVAL_PENDING 상태에서 요청자 본인이 결재 요청을 취소.
+async function handleCancelApproval() {
+  if (!sourceRow.value) return
+  try {
+    await cancelPurchaseOrderApproval(sourceRow.value.id)
+    await loadPoDocuments()
+    success(`${sourceRow.value.id} 결재 요청이 취소되었습니다.`)
+  } catch (e) {
+    error(e.response?.data?.message || '결재 요청 취소 중 오류가 발생했습니다.')
+  }
+}
 </script>
 
 <template>
@@ -878,6 +911,17 @@ function cancelDeleteApprovalRequest() {
               <i class="fas fa-trash text-xs" aria-hidden="true"></i>
             </template>
             {{ ['확정','confirmed','CONFIRMED'].includes(detail.status) ? '삭제요청' : '삭제' }}
+          </BaseButton>
+          <BaseButton
+            v-if="['결재대기','pending_approval','APPROVAL_PENDING'].includes(detail.status)"
+            variant="secondary"
+            size="sm"
+            @click="handleCancelApproval"
+          >
+            <template #leading>
+              <i class="fas fa-undo text-xs" aria-hidden="true"></i>
+            </template>
+            결재 요청 취소
           </BaseButton>
           <BaseButton variant="secondary" size="sm" @click="openPreview">
             <template #leading>
