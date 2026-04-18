@@ -39,6 +39,7 @@ import {
 import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
 import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
 import { clientSearchColumns } from '@/utils/searchModalColumns'
+import { label, PI_PO_STATUS_LABEL } from '@/utils/enumLabels'
 
 const route = useRoute()
 const router = useRouter()
@@ -449,7 +450,7 @@ const deleteApprovalDocumentRows = computed(() => {
 
   return [
     { label: '대상 PI 번호', value: sourceRow.value.id || '-' },
-    { label: '현재 상태', value: sourceRow.value.status || '-' },
+    { label: '현재 상태', value: sourceRow.value.status ? label(PI_PO_STATUS_LABEL, sourceRow.value.status) : '-' },
     { label: '거래처', value: snapshot.clientName || '-' },
     { label: '영문주소', value: snapshot.clientAddress || '-', fullWidth: true },
     { label: '바이어', value: snapshot.buyerName || '-' },

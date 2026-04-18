@@ -498,7 +498,8 @@ function getRequestedAt() {
 }
 
 function buildNextPiId() {
-  return `PI26${String(rowsData.value.length + 1).padStart(3, '0')}`
+  // 실제 DB 포맷: PI + 2자리년도 + 4자리 시퀀스 (예: PI260011). 미리보기도 동일 자리수 유지.
+  return `PI26${String(rowsData.value.length + 1).padStart(4, '0')}`
 }
 
 function toIsoDate(value) {
