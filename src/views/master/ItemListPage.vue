@@ -201,11 +201,14 @@ async function handleSave(formData) {
       await createItem({ ...formData, itemRegDate: new Date().toISOString().slice(0, 10) })
       success('품목이 등록되었습니다.')
     } else {
+      // 백엔드는 상태 변경을 PATCH /api/items/{id}/status 로 분리해 둠.
+      // PUT 의 UpdateItemRequest DTO 에는 itemStatus 필드가 없어 포함시켜도 무시된다.
+      // 따라서 상태가 변경된 경우에는 PATCH 를 별도로 호출해야 실제 반영됨.
+      const statusChanged = formData.itemStatus !== selectedItem.value.itemStatus
       await updateItem(selectedItem.value.id, formData)
-      // HTTP 캐시가 개입해 loadData() 가 이전 스냅샷을 돌려줄 수 있어, 전송한 값으로
-      // 로컬 items 를 선반영한다. 이후 loadData() 가 정상 응답하면 덮어써진다.
-      const idx = items.value.findIndex((i) => i.id === selectedItem.value.id)
-      if (idx !== -1) items.value[idx] = { ...items.value[idx], ...formData }
+      if (statusChanged) {
+        await changeItemStatus(selectedItem.value.id, formData.itemStatus)
+      }
       success('품목 정보가 수정되었습니다.')
     }
     showFormModal.value = false

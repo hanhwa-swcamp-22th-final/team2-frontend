@@ -123,6 +123,14 @@ const { currentPage, totalPages, paginatedRows } = usePagination(filteredRows)
 
 const isTeamLeader = computed(() => Number(authStore.currentUser?.positionId) === 1)
 
+// 팀장(MANAGER) 은 백엔드 requestRegistration 에서 즉시 CONFIRMED 처리되므로
+// 결재대기 문구가 오해를 준다. 실제 동작에 맞춘 안내로 분기.
+const createHelperText = computed(() => (
+  isTeamLeader.value
+    ? '팀장 권한이므로 저장 시 PI 가 즉시 확정 처리됩니다.'
+    : '요청 후 PI는 결재대기 상태로 등록되며, 승인 전까지 확정 처리되지 않습니다.'
+))
+
 const managerOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'manager'))
 const countryOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'country'))
 const statusOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'status'))
@@ -1186,7 +1194,7 @@ function handleProductSelect(product) {
       :item-summary-rows="createApprovalItemSummaryRows"
       document-section-title="PI 문서 정보"
       item-section-title="PI 품목 정보"
-      helper-text="요청 후 PI는 결재대기 상태로 등록되며, 승인 전까지 확정 처리되지 않습니다."
+      :helper-text="createHelperText"
       width="max-w-6xl"
       confirm-label="결재 요청"
       @confirm="confirmCreateApprovalRequest"
