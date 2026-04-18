@@ -98,6 +98,12 @@ export const fetchProductionOrder = (id) =>
   api.get(`/production-orders/${id}`).then((r) => r.data)
 export const completeProductionOrder = (productionOrderId) =>
   api.put(`/production-orders/${productionOrderId}/complete`).then((r) => r.data)
+// 생산지시서 발행 (담당자 지정 가능). payload: { assigneeUserId, assigneeName } | null
+export const generateProductionOrder = (poId, payload) =>
+  api.post(`/purchase-orders/${poId}/generate-production-order`, payload ?? {}).then((r) => r.data)
+// 담당자 후보 조회: role=production|shipping. Documents 가 Auth Feign 으로 프록시.
+export const fetchAssignableUsers = (role) =>
+  api.get('/assignable-users', { params: { role } }).then((r) => r.data)
 
 // ── Shipment Orders ──────────────────────────────────────────
 export async function fetchShipmentOrdersPaged({ page = 0, size = 20 } = {}) {

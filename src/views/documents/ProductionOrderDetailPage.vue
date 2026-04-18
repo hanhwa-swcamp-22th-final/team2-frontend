@@ -48,8 +48,18 @@ const detail = computed(() => {
 const displayItems = computed(() => enrichDocumentItems(detail.value?.items ?? []))
 const isProductionUser = computed(() => authStore.currentUser?.role === 'production')
 const isAdminUser = computed(() => authStore.currentUser?.role === 'admin')
+// 담당자 본인만 완료 처리 가능 (admin 면제). managerId 가 지정되지 않은 레거시 데이터는 role 체크로 통과.
+const isAssignee = computed(() => {
+  if (detail.value?.managerId == null) return true
+  const uid = authStore.currentUser?.userId
+  return uid != null && Number(detail.value.managerId) === Number(uid)
+})
 const canShowCompleteButton = computed(() => isProductionUser.value || isAdminUser.value)
-const canCompleteProduction = computed(() => canShowCompleteButton.value && detail.value?.status === '진행중')
+const canCompleteProduction = computed(() => (
+  canShowCompleteButton.value
+  && detail.value?.status === '진행중'
+  && (isAdminUser.value || isAssignee.value)
+))
 const totalQuantity = computed(() => (
   displayItems.value.reduce((sum, item) => sum + Number.parseInt(item.quantity, 10), 0)
 ))
@@ -130,6 +140,8 @@ async function confirmCompleteProduction() {
   } catch (e) {
     if (e.response?.status === 403) {
       toast.error('생산완료 처리 권한이 없습니다.')
+    } else if (e.response?.status === 409 || /담당자/.test(e.response?.data?.message ?? '')) {
+      toast.error('지정된 담당자만 생산완료 처리할 수 있습니다.')
     } else {
       toast.error('생산완료 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
     }
