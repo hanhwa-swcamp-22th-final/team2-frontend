@@ -39,6 +39,9 @@ export const deleteProformaInvoiceDraft = (piId) =>
 // 결재대기 상태의 PI 결재 요청을 요청자 본인이 취소.
 export const cancelProformaInvoiceApproval = (piId) =>
   api.post(`/proforma-invoices/${piId}/cancel-approval`).then((r) => r.data)
+// 확정 PI 수정 결재 요청 (PO 의 requestPoModification 과 대칭).
+export const requestPiModification = (payload) =>
+  api.post('/proforma-invoices/request-modification', payload).then((r) => r.data)
 
 // ── Purchase Orders ──────────────────────────────────────────
 export async function fetchPurchaseOrdersPaged({ page = 0, size = 20 } = {}) {

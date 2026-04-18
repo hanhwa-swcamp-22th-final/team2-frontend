@@ -68,6 +68,12 @@ export function useProductionOrderPageInfo() {
   return productionOrderPageInfo
 }
 
+export function clearProductionOrderDocuments() {
+  productionOrderDocuments.value = []
+  productionOrderPageInfo.value = { size: 1000, number: 0, totalElements: 0, totalPages: 0 }
+  loading = null
+}
+
 export function useProductionOrderDocuments() {
   const auth = useAuthStore()
   const role = auth.currentUser?.role

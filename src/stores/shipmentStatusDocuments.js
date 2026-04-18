@@ -42,6 +42,12 @@ export function useShipmentStatusPageInfo() {
   return shipmentStatusPageInfo
 }
 
+export function clearShipmentStatusDocuments() {
+  shipmentStatusDocuments.value = []
+  shipmentStatusPageInfo.value = { size: 1000, number: 0, totalElements: 0, totalPages: 0 }
+  loading = null
+}
+
 export function useShipmentStatusDocuments() {
   const auth = useAuthStore()
   const role = auth.currentUser?.role

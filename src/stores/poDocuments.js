@@ -108,3 +108,9 @@ export function usePoDocuments() {
 export function usePoPageInfo() {
   return poPageInfo
 }
+
+export function clearPoDocuments() {
+  poDocuments.value = []
+  poPageInfo.value = { size: 1000, number: 0, totalElements: 0, totalPages: 0 }
+  loading = null
+}

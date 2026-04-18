@@ -50,6 +50,19 @@ export const useAuthStore = defineStore('auth', () => {
     }
     accessToken.value = null
     user.value = null
+
+    // 재로그인 시 이전 계정 캐시 노출 방지. document/status store 전체 초기화.
+    // 동적 import 로 circular dependency 회피 (각 store 는 auth store 를 use).
+    await Promise.all([
+      import('./piDocuments').then((m) => m.clearPiDocuments()),
+      import('./poDocuments').then((m) => m.clearPoDocuments()),
+      import('./ciDocuments').then((m) => m.clearCiDocuments()),
+      import('./plDocuments').then((m) => m.clearPlDocuments()),
+      import('./productionOrderDocuments').then((m) => m.clearProductionOrderDocuments()),
+      import('./shipmentOrderDocuments').then((m) => m.clearShipmentOrderDocuments()),
+      import('./shipmentStatusDocuments').then((m) => m.clearShipmentStatusDocuments()),
+      import('./salesCollectionDocuments').then((m) => m.clearSalesCollectionDocuments()),
+    ]).catch((e) => console.error('document store reset 중 오류', e))
   }
 
   /**
