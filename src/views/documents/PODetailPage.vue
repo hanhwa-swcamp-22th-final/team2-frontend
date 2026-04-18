@@ -145,12 +145,18 @@ function buildLinkedDocuments(row) {
   const linkedPi = piDocuments.value.find((pi) => pi.id === (row.piId || row.linkedPiId))
   const linkedProductionOrder = productionOrderDocuments.value.find((production) => production.poId === row.id)
 
-  if (linkedPi && !currentLinks.some((document) => document.id === linkedPi.id)) {
-    currentLinks.unshift({ id: linkedPi.id, status: linkedPi.status })
+  // 스냅샷 status 는 PO 생성 시점 기준이라 PI 가 이후 확정돼도 stale 유지.
+  // live store 에서 찾은 문서가 이미 링크에 있으면 최신 status 로 덮어쓴다.
+  if (linkedPi) {
+    const idx = currentLinks.findIndex((document) => document.id === linkedPi.id)
+    if (idx === -1) currentLinks.unshift({ id: linkedPi.id, status: linkedPi.status })
+    else currentLinks[idx] = { ...currentLinks[idx], status: linkedPi.status }
   }
 
-  if (linkedProductionOrder && !currentLinks.some((document) => document.id === linkedProductionOrder.id)) {
-    currentLinks.push({ id: linkedProductionOrder.id, status: linkedProductionOrder.status })
+  if (linkedProductionOrder) {
+    const idx = currentLinks.findIndex((document) => document.id === linkedProductionOrder.id)
+    if (idx === -1) currentLinks.push({ id: linkedProductionOrder.id, status: linkedProductionOrder.status })
+    else currentLinks[idx] = { ...currentLinks[idx], status: linkedProductionOrder.status }
   }
 
   return currentLinks

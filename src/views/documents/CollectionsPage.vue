@@ -188,6 +188,8 @@ const currencySymbols = {
 }
 
 function formatAmount(value, currency) {
+  // 백엔드 응답 필드 누락/null 로 인한 'undefined' 문자열 렌더 방지.
+  if (value == null || (typeof value === 'number' && Number.isNaN(value))) return '-'
   const symbol = currencySymbols[currency] || ''
   if (typeof value === 'number') {
     return `${symbol}${value.toLocaleString()}`
