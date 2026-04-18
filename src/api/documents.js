@@ -31,6 +31,14 @@ export const validatePiDeletable = (piId) =>
   api.post(`/proforma-invoices/${piId}/validate-deletable`).then((r) => r.data)
 export const requestPiDeletion = (payload) =>
   api.post('/proforma-invoices/request-deletion', payload).then((r) => r.data)
+// 초안(DRAFT) 상태 PI 를 결재 없이 직접 수정/삭제. 상태 위배 시 409.
+export const updateProformaInvoiceDraft = (piId, payload) =>
+  api.put(`/proforma-invoices/${piId}`, payload).then((r) => r.data)
+export const deleteProformaInvoiceDraft = (piId) =>
+  api.delete(`/proforma-invoices/${piId}`).then((r) => r.data)
+// 결재대기 상태의 PI 결재 요청을 요청자 본인이 취소.
+export const cancelProformaInvoiceApproval = (piId) =>
+  api.post(`/proforma-invoices/${piId}/cancel-approval`).then((r) => r.data)
 
 // ── Purchase Orders ──────────────────────────────────────────
 export async function fetchPurchaseOrdersPaged({ page = 0, size = 20 } = {}) {
@@ -51,6 +59,13 @@ export const validatePoDeletable = (poId) =>
   api.post(`/purchase-orders/${poId}/validate-deletable`).then((r) => r.data)
 export const requestPoDeletion = (payload) =>
   api.post('/purchase-orders/request-deletion', payload).then((r) => r.data)
+// 초안(DRAFT) 상태 PO 를 결재 없이 직접 수정/삭제.
+export const updatePurchaseOrderDraft = (poId, payload) =>
+  api.put(`/purchase-orders/${poId}`, payload).then((r) => r.data)
+export const deletePurchaseOrderDraft = (poId) =>
+  api.delete(`/purchase-orders/${poId}`).then((r) => r.data)
+export const cancelPurchaseOrderApproval = (poId) =>
+  api.post(`/purchase-orders/${poId}/cancel-approval`).then((r) => r.data)
 
 // ── Commercial Invoices ──────────────────────────────────────
 export async function fetchCommercialInvoicesPaged({ page = 0, size = 20 } = {}) {
