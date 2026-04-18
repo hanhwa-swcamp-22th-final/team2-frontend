@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, watch } from 'vue'
+import { onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps({
   open: {
@@ -30,14 +30,28 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
+// 드래그-세이프 백드롭 닫기:
+// 브라우저는 mousedown 과 mouseup 의 공통 조상에서 click 을 디스패치한다.
+// 입력 필드에서 텍스트를 드래그 선택하다가 백드롭 위에서 마우스를 떼면
+// click 타겟이 백드롭이 되어버려 사용자가 의도하지 않은 닫기가 일어난다.
+// mousedown 도 백드롭에서 시작됐을 때에만 닫도록 게이트.
+const backdropMousedown = ref(false)
+
 function closeModal() {
   emit('close')
 }
 
-function handleBackdropClick() {
-  if (props.closeOnBackdrop) {
-    closeModal()
-  }
+function handleBackdropMousedown(e) {
+  backdropMousedown.value = e.target === e.currentTarget
+}
+
+function handleBackdropClick(e) {
+  // mousedown 이 모달 내부에서 시작됐다면 (드래그 후 백드롭에서 떼진 경우) 무시
+  if (!backdropMousedown.value) return
+  backdropMousedown.value = false
+  if (!props.closeOnBackdrop) return
+  if (e.target !== e.currentTarget) return
+  closeModal()
 }
 
 function handleKeydown(e) {
@@ -65,7 +79,8 @@ onUnmounted(() => {
       v-if="open"
       class="fixed inset-0 flex items-center justify-center bg-slate-900/50 px-4 py-8"
       :style="{ zIndex: props.zIndex }"
-      @click.self="handleBackdropClick"
+      @mousedown="handleBackdropMousedown"
+      @click="handleBackdropClick"
     >
       <div
         class="flex max-h-[90vh] w-full flex-col overflow-hidden rounded-lg bg-white shadow-2xl"
