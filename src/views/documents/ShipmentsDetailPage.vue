@@ -107,13 +107,15 @@ async function completeShipment() {
     return
   }
   try {
-    // 백엔드 PUT /api/shipments/{id} (controller @PreAuthorize ADMIN/SHIPPING)
-    await updateShipment(detail.value.id, { status: 'completed' })
+    // 백엔드 PUT /api/shipments/{id} (controller @PreAuthorize ADMIN/SHIPPING).
+    // Jackson 이 JSON 문자열 → ShipmentStatus enum 을 name() 기준으로 역직렬화하므로
+    // 'completed' 소문자로 보내면 400 → UI hang 처럼 관측되던 B-6 blocker. enum name 사용.
+    await updateShipment(detail.value.id, { status: 'COMPLETED' })
   } catch (e) {
     if (e.response?.status === 403) {
       toast.error('출하완료 처리 권한이 없습니다.')
     } else {
-      toast.error('출하완료 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+      toast.error(e?.response?.data?.message || '출하완료 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
     }
     return
   }
