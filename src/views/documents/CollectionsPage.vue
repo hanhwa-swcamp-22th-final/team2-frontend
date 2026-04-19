@@ -93,13 +93,19 @@ const enrichedRows = computed(() => filteredRows.value.map((row) => ({
 
 const sortedRows = computed(() => {
   return [...enrichedRows.value].sort((left, right) => {
-    const currencyCompare = left.currency.localeCompare(right.currency)
+    // currency / issueDate 가 undefined 인 행이 섞이면 localeCompare 가 throw 되어
+    // 페이지 전체가 렌더되지 않는다. 기본값으로 빈 문자열 coalesce.
+    const leftCurrency = String(left.currency ?? '')
+    const rightCurrency = String(right.currency ?? '')
+    const currencyCompare = leftCurrency.localeCompare(rightCurrency)
 
     if (currencyCompare !== 0) {
       return currencyCompare
     }
 
-    return right.issueDate.localeCompare(left.issueDate)
+    const leftIssue = String(left.issueDate ?? '')
+    const rightIssue = String(right.issueDate ?? '')
+    return rightIssue.localeCompare(leftIssue)
   })
 })
 

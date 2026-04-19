@@ -718,6 +718,8 @@ function handleSave() {
   // 외화 PI 인데 환율 미확보면 단가가 KRW 값 그대로 남아 서버 환산 시 금액이 비정상으로 저장된다.
   if (form.value.currency && form.value.currency !== 'KRW' && !exchangeRatesLoaded.value) {
     validationErrors.value.currency = '환율 로딩이 완료되지 않았습니다. 잠시 후 다시 시도해주세요.'
+    // 인라인 메시지만으로는 사용자가 버튼 근처를 보고 있어 인지가 어렵다 — validateForm 과 동일하게 toast 도 발생.
+    error(validationErrors.value.currency, '입력 확인')
     return
   }
 
@@ -779,10 +781,14 @@ watch(
   { immediate: true },
 )
 
-// 환율 데이터가 늦게 로드되는 경우 (catalog 적용 시점에 rates 비어있을 때)
-// loaded 가 true 로 바뀌면 자동 환산 다시 실행. 수정 모드에서도 baseUnitPrice 기반 재환산.
+// 환율 데이터가 늦게 로드되는 경우 (생성 모드에서 catalog 적용 시점에 rates 비어있을 때)
+// loaded 가 true 로 바뀌면 자동 환산 다시 실행.
+// 수정 모드에서는 저장된 외화 unitPrice 가 late-rates 에 의해 (catalog KRW × 현재 환율) 로
+// 덮어써지는 데이터 손실이 있어 발동하지 않는다. 수정 시 통화/발행일 변경은 기존 watcher 가 처리.
 watch(exchangeRatesLoaded, (ready) => {
-  if (ready) refreshAutoPricedItems()
+  if (!ready) return
+  if (props.mode === 'edit') return
+  refreshAutoPricedItems()
 })
 </script>
 

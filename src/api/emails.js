@@ -1,10 +1,18 @@
 import { api } from '@/lib/api'
 import { unwrapCollection } from '@/utils/apiResponse'
 
+function normalizeEmailStatus(raw) {
+  if (!raw) return ''
+  const value = String(raw).toLowerCase()
+  if (value === 'failed') return '실패'
+  if (value === 'sent') return '발송'
+  return String(raw)
+}
+
 export async function fetchActivityEmails() {
   const { data } = await api.get('/email-logs')
-  // 백엔드 응답은 { clientName, types: [{emailLogTypeId, emailDocType}], ... } 형태.
-  // UI 는 e.client (문자열), e.types (문자열 배열) 를 기대하므로 여기서 평탄화.
+  // 백엔드 응답은 { clientName, types: [{emailLogTypeId, emailDocType}], status: 'failed'|'sent', ... } 형태.
+  // UI 는 e.client (문자열), e.types (문자열 배열), e.status (한글 라벨) 을 기대하므로 여기서 평탄화.
   return unwrapCollection(data).map((row) => ({
     ...row,
     client: row.client ?? row.clientName ?? '-',
@@ -15,6 +23,7 @@ export async function fetchActivityEmails() {
     email: row.email ?? row.recipientEmail ?? row.emailRecipientEmail ?? '',
     sender: row.sender ?? row.senderName ?? '-',
     sentAt: row.sentAt ?? row.sentDate ?? row.emailSentAt ?? '',
+    status: normalizeEmailStatus(row.status),
   }))
 }
 

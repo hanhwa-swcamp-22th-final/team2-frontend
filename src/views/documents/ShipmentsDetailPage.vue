@@ -11,7 +11,7 @@ import { useAuthStore } from '@/stores/auth'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
-import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
+import { useProductionOrderDocuments, useProductionOrdersLoaded } from '@/stores/productionOrderDocuments'
 import { useToast } from '@/composables/useToast'
 import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
 import { getPoProductionGate, formatPoProductionGateMessage } from '@/utils/documentShipmentLock'
@@ -24,8 +24,9 @@ const authStore = useAuthStore()
 const poDocuments = usePoDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
-// 출하팀은 productionOrder 조회가 막혀있을 수 있음 (store 가 permission 체크). 결과가 빈 배열이면 gate 미적용.
+// 모든 인증 사용자에게 허용됨 (shipping 포함). loaded 플래그로 race 방지.
 const productionOrderDocuments = useProductionOrderDocuments()
+const productionOrdersLoaded = useProductionOrdersLoaded()
 const { loadItemCatalog, enrichDocumentItems } = useDocumentItemCatalog()
 
 function enrichShipmentStatusRow(row) {
@@ -97,6 +98,10 @@ function goToShipmentOrder() {
 
 async function completeShipment() {
   if (!detail.value || detail.value.status === '출하완료') return
+  if (!productionOrdersLoaded.value) {
+    toast.warning('생산지시 상태를 확인 중입니다. 잠시 후 다시 시도해주세요.')
+    return
+  }
   if (productionGate.value.blocked) {
     toast.warning(formatPoProductionGateMessage(productionGate.value))
     return
@@ -160,8 +165,8 @@ onMounted(() => {
           <BaseButton
             v-if="canCompleteShipment"
             size="sm"
-            :disabled="detail.status === '출하완료' || productionGate.blocked"
-            :title="productionGate.blocked ? formatPoProductionGateMessage(productionGate) : ''"
+            :disabled="detail.status === '출하완료' || !productionOrdersLoaded || productionGate.blocked"
+            :title="productionGate.blocked ? formatPoProductionGateMessage(productionGate) : (!productionOrdersLoaded ? '생산지시 상태 확인 중...' : '')"
             @click="completeShipment"
           >
             <template #leading>
