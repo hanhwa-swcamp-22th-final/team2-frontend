@@ -610,6 +610,8 @@ function buildCreatePayload(formValue) {
     exchangeRate: currencyCode === 'KRW' || !krwRate ? null : Number((1 / krwRate).toFixed(8)),
     managerName: authStore.currentUser?.userName || authStore.currentUser?.name || '',
     userId: authStore.currentUser?.userId ?? null,
+    // 특기사항 (N4): 폼의 reason 필드를 백엔드 remarks 컬럼으로 매핑.
+    remarks: formValue.reason ?? '',
     items,
   }
 }

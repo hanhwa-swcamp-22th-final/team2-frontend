@@ -532,6 +532,8 @@ function buildCreatePayload(formValue) {
     currencyCode,
     managerName: authStore.currentUser?.userName || authStore.currentUser?.name || '',
     userId: authStore.currentUser?.userId ?? null,
+    // 특기사항 (N4): POFormModal 은 폼에 reason 필드가 없어도 미래 대비 pass-through.
+    remarks: formValue.reason ?? '',
     items,
   }
 }

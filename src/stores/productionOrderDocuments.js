@@ -14,8 +14,20 @@ function parseLinkedDocuments(value) {
   return Array.isArray(value) ? value : []
 }
 
+function parseItemsSnapshot(value) {
+  if (!value) return []
+  if (typeof value === 'string') {
+    try { return JSON.parse(value) } catch { return [] }
+  }
+  return Array.isArray(value) ? value : []
+}
+
 function mapProductionOrderResponse(row) {
-  const items = (row.items ?? []).map((item) => {
+  // NEW-6: 백엔드가 itemsSnapshot(JSON) 을 내려주면 그걸 우선 사용해 품목/수량 전이.
+  // 빈/미발행 레거시는 row.items (String 배열) 로 fallback.
+  const snapshotItems = parseItemsSnapshot(row.itemsSnapshot)
+  const sourceItems = snapshotItems.length > 0 ? snapshotItems : (row.items ?? [])
+  const items = sourceItems.map((item) => {
     if (typeof item === 'string') {
       return { code: '', name: item, quantity: '1', unit: 'EA', remark: '' }
     }
@@ -24,6 +36,8 @@ function mapProductionOrderResponse(row) {
       name: item.itemName ?? item.name ?? '-',
       quantity: String(item.quantity ?? 1),
       unit: item.unit ?? 'EA',
+      unitPrice: String(item.unitPrice ?? 0),
+      amount: String(item.amount ?? 0),
       remark: item.remark ?? '',
     }
   })
