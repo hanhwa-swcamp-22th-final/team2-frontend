@@ -34,6 +34,7 @@ const appliedCurrencyFilter = ref('')
 const { warning, success, error: toastError } = useToast()
 const statusConfirmOpen = ref(false)
 const pendingStatusChange = ref(null)
+const statusSaving = ref(false)
 
 const columns = [
   { key: 'poId', label: 'PO 번호', align: 'center', width: '140px' },
@@ -288,7 +289,7 @@ function toIsoDate(slashDate) {
 }
 
 async function confirmStatusChange() {
-  if (!pendingStatusChange.value) return
+  if (!pendingStatusChange.value || statusSaving.value) return
 
   const pending = pendingStatusChange.value
   // 백엔드 complete(id, status, date): 1차 re-verification 에서 로컬 뮤테이션만
@@ -300,6 +301,7 @@ async function confirmStatusChange() {
     return
   }
 
+  statusSaving.value = true
   try {
     await updateCollection(pending.collectionId, {
       status: pending.nextStatus, // "수금완료" / "미수금"
@@ -312,6 +314,7 @@ async function confirmStatusChange() {
   } catch (e) {
     toastError(e?.response?.data?.message || '수금 상태 변경 중 오류가 발생했습니다.')
   } finally {
+    statusSaving.value = false
     statusConfirmOpen.value = false
     pendingStatusChange.value = null
   }
@@ -676,6 +679,7 @@ function downloadCurrentTablePdf() {
       confirm-label="변경"
       helper-text="수금상태 변경 시 수금일자도 함께 조정됩니다."
       width="max-w-lg"
+      :loading="statusSaving"
       @confirm="confirmStatusChange"
       @cancel="cancelStatusChange"
     />

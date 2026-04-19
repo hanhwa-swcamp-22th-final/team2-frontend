@@ -18,11 +18,19 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  // 제출 중일 때 연타 방지 + 스피너 노출. :disabled 를 따로 묶지 않아도
+  // loading=true 면 자동으로 비활성화됨.
+  loading: {
+    type: Boolean,
+    default: false,
+  },
   block: {
     type: Boolean,
     default: false,
   },
 })
+
+const isDisabled = computed(() => props.disabled || props.loading)
 
 const variantClasses = {
   primary: 'border-brand bg-brand text-white shadow-sm hover:border-brand-600 hover:bg-brand-600 focus-visible:ring-brand/30',
@@ -48,10 +56,14 @@ const buttonClasses = computed(() => [
 <template>
   <button
     :type="type"
-    :disabled="disabled"
+    :disabled="isDisabled"
     :class="buttonClasses"
+    :aria-busy="loading || null"
   >
-    <slot name="leading" />
+    <span v-if="loading" class="inline-flex h-3.5 w-3.5 animate-spin items-center justify-center" aria-hidden="true">
+      <i class="fas fa-spinner text-[11px]"></i>
+    </span>
+    <slot v-else name="leading" />
     <slot />
     <slot name="trailing" />
   </button>

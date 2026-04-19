@@ -76,6 +76,15 @@ function resetFilters() {
 const activities = ref([])
 const clients = ref([])
 
+async function loadActivities() {
+  try {
+    activities.value = await fetchActivities()
+  } catch (e) {
+    console.error('기록 목록 로드 실패', e)
+    error('기록 목록을 불러오지 못했습니다.')
+  }
+}
+
 onMounted(async () => {
   try {
     const [activityData, clientData] = await Promise.all([
@@ -165,12 +174,13 @@ async function handleSave(updated) {
   isSaving.value = true
   try {
     await updateActivity(activityId, updated)
-    const idx = activities.value.findIndex((a) => a.id === activityId)
-    if (idx !== -1) activities.value[idx] = { ...activities.value[idx], ...updated }
+    // 이전엔 폼 payload 를 로컬 row 에 spread 해서 type/author 등 서버 가공값이
+    // 덮이지 않아 목록이 stale 로 보임. 서버 응답을 신뢰하기 위해 목록 재fetch.
+    await loadActivities()
     closeEdit()
   } catch (e) {
     console.error('기록 수정 실패', e)
-    error('기록 수정에 실패했습니다. 다시 시도해주세요.')
+    error(e?.response?.data?.message || '기록 수정에 실패했습니다. 다시 시도해주세요.')
   } finally {
     isSaving.value = false
   }
@@ -370,6 +380,7 @@ const columns = [
       :detail="deleteTarget?.title"
       confirm-label="삭제"
       confirm-variant="danger"
+      :loading="isDeleting"
       @confirm="handleDelete"
       @cancel="closeDelete"
     />
