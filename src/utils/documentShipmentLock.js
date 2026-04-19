@@ -135,12 +135,16 @@ export function formatPiCollectionLockMessage(lockInfo) {
 /**
  * 생산지시서(MO) 발행된 PO 는 MO 가 '생산완료' 되기 전까지 출하완료 처리 불가.
  * MO 자체가 없으면 출하만으로 진행 (영업담당자가 재고 보유 가정).
+ *
+ * 상태 비교는 백엔드 영문 enum('completed') 과 프론트 라벨('생산완료') 양쪽 허용.
+ * 3차→4차 QA 에서 백엔드 raw 값이 store 로 들어오면서 A-8 blocker 발생한 케이스.
  */
+const MO_COMPLETED_STATES = new Set(['생산완료', 'completed', 'COMPLETED'])
 export function getPoProductionGate(poId, productionOrderDocuments = []) {
   if (!poId) return { blocked: false, pendingIds: [] }
   const mos = productionOrderDocuments.filter((row) => row.poId === poId)
   if (mos.length === 0) return { blocked: false, pendingIds: [] }
-  const pending = mos.filter((row) => row.status !== '생산완료')
+  const pending = mos.filter((row) => !MO_COMPLETED_STATES.has(String(row.status ?? '').trim()))
   return { blocked: pending.length > 0, pendingIds: pending.map((r) => r.id) }
 }
 

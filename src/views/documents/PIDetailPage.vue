@@ -184,23 +184,38 @@ function formatSlashDate(value) {
 }
 
 function buildLinkedDocuments(documentId) {
-  // NEW-7: 직계 PO 뿐 아니라 그 PO 로부터 파생된 CI/PL/SO/출하현황까지 전이 표시.
+  // NEW-7: PI 역참조는 PO.linkedDocuments JSON 을 중간 매개로 사용. 이유:
+  // 백엔드 CI/PL 응답의 poId 가 Long PK 로 내려오는데 poDocuments 의 id 는 PO code 문자열.
+  // 그래서 `ciDocuments.filter(r => linkedPoIds.includes(r.poId))` 는 매칭 실패.
+  // PO.linkedDocuments 는 자동 생성된 CI/PL/SO code 를 문자열로 담고 있으니 그걸로 매칭.
   const linkedPos = poDocuments.value
     .filter((row) => (row.piId || row.linkedPiId) === documentId)
-  const linkedPoIds = linkedPos.map((row) => row.id)
+
+  const childCodesByType = { CI: new Set(), PL: new Set(), SO: new Set() }
+  for (const po of linkedPos) {
+    const list = Array.isArray(po.linkedDocuments) ? po.linkedDocuments : []
+    for (const doc of list) {
+      if (!doc?.id || !doc?.type) continue
+      if (childCodesByType[doc.type]) {
+        childCodesByType[doc.type].add(doc.id)
+      }
+    }
+  }
 
   const childDocs = [
     ...ciDocuments.value
-      .filter((row) => linkedPoIds.includes(row.poId))
+      .filter((row) => childCodesByType.CI.has(row.id))
       .map((row) => ({ id: row.id, status: row.status, type: 'CI' })),
     ...plDocuments.value
-      .filter((row) => linkedPoIds.includes(row.poId))
+      .filter((row) => childCodesByType.PL.has(row.id))
       .map((row) => ({ id: row.id, status: row.status, type: 'PL' })),
     ...shipmentOrderDocuments.value
-      .filter((row) => linkedPoIds.includes(row.poId))
+      .filter((row) => childCodesByType.SO.has(row.id))
       .map((row) => ({ id: row.id, status: row.status, type: 'SO' })),
+    // 출하현황(Shipment) 은 PO.linkedDocuments 에 들어가지 않아 poId 로 역매칭.
+    // poDocuments.id 가 PO code 이고 shipmentStatusDocuments.poId 도 PO code 라 OK.
     ...shipmentStatusDocuments.value
-      .filter((row) => linkedPoIds.includes(row.poId))
+      .filter((row) => linkedPos.some((po) => po.id === row.poId))
       .map((row) => ({ id: row.id, status: row.status, type: '출하현황' })),
   ]
 
@@ -693,20 +708,29 @@ function handleClientSelect(client) {
   clientSearchKeyword.value = ''
 }
 
-function goToLinkedDocument(documentId) {
-  // NEW-7 지원: 문서 prefix 기반으로 적절한 상세 라우트로 분기.
-  // PI260015/PO260004/CI260005/PL260005/SO260005/SH... 등.
+function goToLinkedDocument(documentId, docType) {
+  // NEW-7 지원: type 을 1순위로, prefix 를 fallback 으로 라우트 분기.
+  // Shipment 는 ID 가 숫자("8") 라 prefix 매칭 실패해서 type 직접 전달 필수.
   if (!documentId) return
-  const prefix = documentId.substring(0, 2).toUpperCase()
-  const routeName = ({
+  const routeByType = {
+    PO: 'po-detail',
+    CI: 'ci-detail',
+    PL: 'pl-detail',
+    SO: 'shipment-order-detail',
+    출하현황: 'shipment-detail',
+  }
+  const routeByPrefix = {
     PO: 'po-detail',
     CI: 'ci-detail',
     PL: 'pl-detail',
     SO: 'shipment-order-detail',
     SH: 'shipment-detail',
-  })[prefix]
+  }
+  const routeName =
+    routeByType[docType] ||
+    routeByPrefix[String(documentId).substring(0, 2).toUpperCase()]
   if (!routeName) return
-  router.push({ name: routeName, params: { id: documentId } })
+  router.push({ name: routeName, params: { id: String(documentId) } })
 }
 
 function confirmEditRequestIntent() {
@@ -1056,7 +1080,7 @@ async function confirmReject() {
                 :key="document.id"
                 type="button"
                 class="flex items-center gap-2 rounded-lg p-2.5 text-brand-500 transition hover:bg-slate-50"
-                @click="goToLinkedDocument(document.id)"
+                @click="goToLinkedDocument(document.id, document.type)"
               >
                 <i class="fas fa-file-contract" aria-hidden="true"></i>
                 {{ document.id }}
