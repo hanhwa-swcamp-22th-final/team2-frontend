@@ -55,9 +55,13 @@ const isAssignee = computed(() => {
   return uid != null && Number(detail.value.managerId) === Number(uid)
 })
 const canShowCompleteButton = computed(() => isProductionUser.value || isAdminUser.value)
+// G10: 이전엔 '진행중' 한글 리터럴만 허용했으나 백엔드가 상황따라 DB enum
+// 'in_progress' 를 그대로 반환하는 경우가 있어 버튼이 영원히 disabled.
+// 한영 양쪽 값을 모두 수용.
+const IN_PROGRESS_STATES = new Set(['진행중', 'in_progress', 'IN_PROGRESS'])
 const canCompleteProduction = computed(() => (
   canShowCompleteButton.value
-  && detail.value?.status === '진행중'
+  && IN_PROGRESS_STATES.has(String(detail.value?.status ?? '').trim())
   && (isAdminUser.value || isAssignee.value)
 ))
 const totalQuantity = computed(() => (

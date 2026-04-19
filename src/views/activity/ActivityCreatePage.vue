@@ -202,12 +202,18 @@ async function openPoSearch() {
     return
   }
   try {
-    poList.value = await fetchPOsByClient(formClient.value)
+    const list = await fetchPOsByClient(formClient.value)
+    poList.value = Array.isArray(list) ? list : []
     poKeyword.value = ''
     isPoSearchOpen.value = true
+    // 클라이언트에는 확정된 PO 가 아직 없는 정상 상태. 빈 목록을 열어 안내.
+    if (poList.value.length === 0) {
+      warning('해당 거래처의 PO 가 아직 없습니다.')
+    }
   } catch (e) {
     console.error('PO 목록 로드 실패', e)
-    error('PO 목록을 불러오지 못했습니다. 다시 시도해주세요.')
+    // 서버 응답 메시지를 그대로 노출 (403/500 등 원인 추적 가능).
+    error(e?.response?.data?.message || 'PO 목록을 불러오지 못했습니다. 다시 시도해주세요.')
   }
 }
 
