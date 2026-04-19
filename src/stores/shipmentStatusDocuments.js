@@ -18,7 +18,28 @@ function normalizeShipmentStatus(raw) {
   return SHIPMENT_STATUS_LABEL[String(raw).toLowerCase()] ?? SHIPMENT_STATUS_LABEL[raw] ?? '출하준비'
 }
 
+function parseItemsSnapshot(value) {
+  if (!value) return []
+  if (Array.isArray(value)) return value
+  if (typeof value === 'string') {
+    try { return JSON.parse(value) } catch { return [] }
+  }
+  return []
+}
+
 function mapShipmentResponse(row) {
+  // Step E — PO.po_items_snapshot 을 JOIN 으로 가져온 row.itemsSnapshot(JSON) 을 우선.
+  // 레거시 레코드(snapshot NULL) 는 row.items fallback.
+  const snapshotItems = parseItemsSnapshot(row.itemsSnapshot)
+  const sourceItems = snapshotItems.length > 0 ? snapshotItems : (row.items ?? [])
+  const items = sourceItems.map((item) => ({
+    code: item.itemCode ?? item.code ?? '',
+    name: item.itemName ?? item.name ?? '-',
+    quantity: String(item.quantity ?? item.qty ?? 1),
+    unit: item.unit ?? 'EA',
+    remark: item.remark ?? '',
+  }))
+
   return {
     id: String(row.shipmentId ?? row.id ?? ''),
     status: normalizeShipmentStatus(row.shipmentStatus ?? row.status),
@@ -31,7 +52,7 @@ function mapShipmentResponse(row) {
     updatedAt: row.updatedAt ?? '',
     manager: row.managerName ?? row.manager ?? '-',
     remarks: row.remarks ?? '-',
-    items: row.items ?? [],
+    items,
     linkedDocuments: row.linkedDocuments ?? [],
   }
 }

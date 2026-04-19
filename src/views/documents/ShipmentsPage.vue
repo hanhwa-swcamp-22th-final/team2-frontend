@@ -39,11 +39,13 @@ const shipmentSearchKeyword = ref('')
 const poDocuments = usePoDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 
+// Step E — 출하 번호는 Long PK 라 폭이 컸음(140px). 숫자만 들어가니 70px 충분.
+// PO 번호는 사용자 요구대로 출하지시서(SO) 번호 컬럼으로 대체.
 const columns = [
-  { key: 'id', label: '출하 번호', align: 'center', width: '140px' },
+  { key: 'id', label: '출하 번호', align: 'center', width: '70px' },
   { key: 'clientName', label: '거래처', align: 'left', width: '220px' },
   { key: 'country', label: '국가', align: 'center', width: '120px' },
-  { key: 'poId', label: 'PO 번호', align: 'center', width: '140px' },
+  { key: 'shipmentOrderId', label: '출하지시서', align: 'center', width: '150px' },
   { key: 'requestDate', label: '출하요청일', align: 'center', width: '130px' },
   { key: 'dueDate', label: '납기일', align: 'center', width: '130px' },
   { key: 'status', label: '상태', align: 'center', width: '120px' },
@@ -66,7 +68,7 @@ const countryOptions = computed(() => buildSelectOptionsFromRows(rowsData.value,
 const statusOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'status'))
 
 const { filters, filteredRows, resetFilters, applyFilters } = useDocumentFilter(rowsData, {
-  keywordFields: ['id', 'clientName', 'country', 'poId', 'requestDate', 'dueDate', 'status'],
+  keywordFields: ['id', 'clientName', 'country', 'shipmentOrderId', 'poId', 'requestDate', 'dueDate', 'status'],
   issueDateField: 'requestDate',
   deliveryDateField: 'dueDate',
   codeField: 'id',
