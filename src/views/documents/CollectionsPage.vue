@@ -16,7 +16,8 @@ import { useDocumentFilter } from '@/composables/useDocumentFilter'
 import { usePagination } from '@/composables/usePagination'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useToast } from '@/composables/useToast'
-import { useSalesCollectionDocuments, normalizeSalesCollectionRow } from '@/stores/salesCollectionDocuments'
+import { updateCollection } from '@/api/documents'
+import { useSalesCollectionDocuments, loadSalesCollectionDocuments, normalizeSalesCollectionRow } from '@/stores/salesCollectionDocuments'
 import { openTableOutput } from '@/utils/documentOutput'
 import { convertCurrencyAmountToKrw } from '@/utils/exchangeRate'
 import { clientSearchColumns } from '@/utils/searchModalColumns'
@@ -30,7 +31,7 @@ const poSearchKeyword = ref('')
 const viewScope = ref('all')
 const currencyFilter = ref('')
 const appliedCurrencyFilter = ref('')
-const { warning } = useToast()
+const { warning, success, error: toastError } = useToast()
 const statusConfirmOpen = ref(false)
 const pendingStatusChange = ref(null)
 
@@ -265,6 +266,8 @@ function openStatusConfirm(row, nextStatusValue) {
   const nextCollectionDate = resolveNextCollectionDate(row, nextStatusValue)
 
   pendingStatusChange.value = {
+    // 실제 백엔드 호출은 collectionId 기준. poId 는 표시용으로만 유지.
+    collectionId: row.collectionId,
     poId: row.poId,
     clientName: row.clientName,
     currentStatus: row.status,
@@ -278,24 +281,40 @@ function openStatusConfirm(row, nextStatusValue) {
   statusConfirmOpen.value = true
 }
 
-function updateStatus(poId, value) {
-  rowsData.value = rowsData.value.map((row) => (
-    row.poId === poId
-      ? normalizeSalesCollectionRow({
-        ...row,
-        status: value === 'PAID' ? '수금완료' : '미수금',
-        collectionDate: resolveNextCollectionDate(row, value),
-      })
-      : row
-  ))
+// resolveNextCollectionDate 는 "YYYY/MM/DD" 를 반환. 백엔드는 LocalDate("YYYY-MM-DD").
+function toIsoDate(slashDate) {
+  if (!slashDate) return null
+  return String(slashDate).replace(/\//g, '-')
 }
 
-function confirmStatusChange() {
+async function confirmStatusChange() {
   if (!pendingStatusChange.value) return
 
-  updateStatus(pendingStatusChange.value.poId, pendingStatusChange.value.nextStatusValue)
-  statusConfirmOpen.value = false
-  pendingStatusChange.value = null
+  const pending = pendingStatusChange.value
+  // 백엔드 complete(id, status, date): 1차 re-verification 에서 로컬 뮤테이션만
+  // 하던 회귀(NEW-2)를 해소. 성공 후 store refresh 로 서버 진실값으로 통일.
+  if (!pending.collectionId) {
+    toastError('수금 ID 를 찾을 수 없습니다. 새로고침 후 다시 시도해주세요.')
+    statusConfirmOpen.value = false
+    pendingStatusChange.value = null
+    return
+  }
+
+  try {
+    await updateCollection(pending.collectionId, {
+      status: pending.nextStatus, // "수금완료" / "미수금"
+      collectionCompletedDate: pending.nextStatusValue === 'PAID'
+        ? toIsoDate(pending.nextCollectionDate)
+        : null,
+    })
+    await loadSalesCollectionDocuments()
+    success(`${pending.poId} 수금 상태가 ${pending.nextStatus} 로 반영되었습니다.`)
+  } catch (e) {
+    toastError(e?.response?.data?.message || '수금 상태 변경 중 오류가 발생했습니다.')
+  } finally {
+    statusConfirmOpen.value = false
+    pendingStatusChange.value = null
+  }
 }
 
 function cancelStatusChange() {
