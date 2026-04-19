@@ -49,7 +49,7 @@ const salesCollectionDocuments = ref([])
 const salesCollectionPageInfo = ref({ size: 1000, number: 0, totalElements: 0, totalPages: 0 })
 let loading = null
 
-async function loadSalesCollectionDocuments({ page = 0, size = 1000 } = {}) {
+export async function loadSalesCollectionDocuments({ page = 0, size = 1000 } = {}) {
   try {
     const { content, page: pageInfo } = await fetchCollectionsPaged({ page, size })
     salesCollectionDocuments.value = (Array.isArray(content) ? content : []).map(normalizeCollectionRow)
