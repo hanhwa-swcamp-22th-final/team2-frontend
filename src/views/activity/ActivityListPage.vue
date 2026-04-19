@@ -319,6 +319,17 @@ const columns = [
           <span class="font-medium text-slate-800">{{ row.title }}</span>
         </template>
 
+        <!-- PO — poId 없으면 거래처명으로 대체 (미연결 활동 기록) -->
+        <template #cell-poId="{ row }">
+          <span v-if="row.poId" class="text-slate-800">{{ row.poId }}</span>
+          <span
+            v-else-if="clientMap[row.clientId]"
+            class="text-xs text-slate-500"
+            :title="`${clientMap[row.clientId].clientName} — PO 미연결 기록`"
+          >{{ clientMap[row.clientId].clientName }}</span>
+          <span v-else class="text-slate-400">-</span>
+        </template>
+
         <!-- 작업 버튼 -->
         <template #cell-actions="{ row }">
           <div @click.stop>

@@ -18,12 +18,20 @@ function normalizeCollectionStatus(raw) {
   return COLLECTION_STATUS_LABEL[String(raw).toLowerCase()] ?? COLLECTION_STATUS_LABEL[raw] ?? '미수금'
 }
 
+function toSlashDate(value) {
+  if (!value) return ''
+  return String(value).replace(/-/g, '/')
+}
+
 function normalizeCollectionRow(row) {
   const status = normalizeCollectionStatus(row.status)
   return {
     ...row,
     status,
     poId: row.poId ? normalizeDocumentCode(row.poId) : (row.poNo ?? ''),
+    // 정렬/표시용 필드 — 백엔드가 일부를 null 로 내려주는 경우 페이지 렌더가 localeCompare 에서 죽는다.
+    currency: row.currency ?? row.currencyCode ?? row.poCurrencyCode ?? '',
+    issueDate: toSlashDate(row.issueDate ?? row.collectionIssueDate ?? row.createdAt ?? ''),
     collectionDate: status === '수금완료' ? row.collectionDate || null : null,
   }
 }
