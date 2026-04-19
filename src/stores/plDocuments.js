@@ -19,6 +19,26 @@ function parseJsonSafe(value, fallback = []) {
   try { return JSON.parse(value) } catch { return fallback }
 }
 
+const DOC_STATUS_LABEL = {
+  pending: '발행대기',
+  issued: '발행완료',
+  sent: '발송완료',
+  draft: '초안',
+  cancelled: '취소',
+  canceled: '취소',
+  deleted: '삭제',
+  '발행대기': '발행대기',
+  '발행완료': '발행완료',
+  '발송완료': '발송완료',
+  '초안': '초안',
+  '취소': '취소',
+}
+
+function normalizeDocStatus(raw, fallback = '발행대기') {
+  if (raw == null || raw === '') return fallback
+  return DOC_STATUS_LABEL[String(raw).toLowerCase()] ?? DOC_STATUS_LABEL[raw] ?? String(raw)
+}
+
 function mapPlResponse(row) {
   const rawItems = row.items?.length ? row.items : parseJsonSafe(row.itemsSnapshot)
   const items = rawItems.map((item) => ({
@@ -36,7 +56,7 @@ function mapPlResponse(row) {
 
   return {
     id: row.plId,
-    status: row.status ?? '발행대기',
+    status: normalizeDocStatus(row.status),
     issueDate: formatDate(row.invoiceDate ?? row.issueDate),
     clientId: row.clientId ?? row.client_id ?? null,
     clientName: row.clientName ?? '-',
