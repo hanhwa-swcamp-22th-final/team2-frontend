@@ -48,7 +48,12 @@ function mapCiResponse(row) {
     country: row.country ?? '-',
     currencyCode: row.currencyCode ?? 'USD',
     currency: row.currencyCode ?? 'USD',
-    itemName: items[0]?.name ?? row.itemName ?? '-',
+    itemName: items[0]?.name
+      ?? row.itemName
+      ?? row.firstItemName
+      ?? row.representativeItemName
+      ?? row.ciItemName
+      ?? '-',
     amount: formatCurrencyAmount(row.totalAmount, row.currencyCode),
     totalAmount: formatNumber(Number(row.totalAmount ?? 0), 2),
     incotermCode: row.incotermsCode ?? '',

@@ -31,6 +31,7 @@ import {
   createExchangeRateHint,
   convertFromKrw,
   getKrwRate,
+  useExchangeRates,
 } from '@/stores/exchangeRates'
 
 const props = defineProps({
@@ -142,6 +143,7 @@ const approverOptions = ref([...defaultApproverOptions])
 const productCatalog = ref([...fallbackProductCatalog])
 const incotermCatalog = ref([...fallbackIncotermsCatalog])
 const exchangeRateHint = ref(createExchangeRateHint('USD', getTodayDateInput()))
+const { loaded: exchangeRatesLoaded } = useExchangeRates()
 const currentCurrency = computed(() => form.value.currency || 'USD')
 
 const currentCurrencySymbol = computed(() => currencySymbolMap[currentCurrency.value] ?? currentCurrency.value)
@@ -254,7 +256,14 @@ const reasonFieldPlaceholder = computed(() => (
 ))
 
 const isReasonRequired = computed(() => props.mode === 'edit')
-const showApproverField = computed(() => true)
+// 팀장(positionLevel=1)·ADMIN 은 결재 없이 즉시 확정되므로 결재자 필드 숨김.
+const isTeamLeaderOrAdmin = computed(() => {
+  const user = authStore.currentUser
+  if (!user) return false
+  if (user.role === 'admin') return true
+  return Number(user.positionLevel) === 1
+})
+const showApproverField = computed(() => !isTeamLeaderOrAdmin.value)
 
 function mapBuyerLabel(buyer) {
   if (!buyer?.name) return ''
@@ -706,6 +715,11 @@ function removeItem(index) {
 
 function handleSave() {
   if (!validateForm()) return
+  // 외화 PI 인데 환율 미확보면 단가가 KRW 값 그대로 남아 서버 환산 시 금액이 비정상으로 저장된다.
+  if (form.value.currency && form.value.currency !== 'KRW' && !exchangeRatesLoaded.value) {
+    validationErrors.value.currency = '환율 로딩이 완료되지 않았습니다. 잠시 후 다시 시도해주세요.'
+    return
+  }
 
   emit('save', {
     ...form.value,
@@ -764,6 +778,12 @@ watch(
   },
   { immediate: true },
 )
+
+// 환율 데이터가 늦게 로드되는 경우 (catalog 적용 시점에 rates 비어있을 때)
+// loaded 가 true 로 바뀌면 자동 환산 다시 실행. 수정 모드에서도 baseUnitPrice 기반 재환산.
+watch(exchangeRatesLoaded, (ready) => {
+  if (ready) refreshAutoPricedItems()
+})
 </script>
 
 <template>

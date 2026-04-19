@@ -104,7 +104,9 @@ const filteredEmails = computed(() => {
   return emails.value
     .filter((e) => {
       const q = applied.value.keyword.trim().toLowerCase()
-      const matchKeyword   = !q || e.title.toLowerCase().includes(q) || e.client.toLowerCase().includes(q)
+      const matchKeyword   = !q
+        || (e.title ?? '').toLowerCase().includes(q)
+        || (e.client ?? '').toLowerCase().includes(q)
       const matchType      = !applied.value.type      || (e.types ?? []).includes(applied.value.type)
       const matchStatus    = !applied.value.status    || e.status === applied.value.status
       const matchSender    = !applied.value.sender    || e.sender === applied.value.sender

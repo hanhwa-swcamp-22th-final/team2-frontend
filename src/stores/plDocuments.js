@@ -44,7 +44,12 @@ function mapPlResponse(row) {
     clientAddress: row.clientAddress ?? '-',
     buyer: row.buyerName ?? '-',
     country: row.country ?? '-',
-    itemName: items[0]?.name ?? row.itemName ?? '-',
+    itemName: items[0]?.name
+      ?? row.itemName
+      ?? row.firstItemName
+      ?? row.representativeItemName
+      ?? row.plItemName
+      ?? '-',
     grossWeight: formatNumber(Number(row.grossWeight ?? totalGrossWeight), 2),
     bookingNo: row.bookingNo ?? '-',
     incotermCode: row.incotermsCode ?? '',

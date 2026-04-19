@@ -45,7 +45,7 @@ const quickGroups = [
   {
     department: '출하부',
     accounts: [
-      { team: '출하1팀', role: '팀원', name: '정출하', email: 'jung.ship@hanwha.com' },
+      { team: '출하1팀', role: '팀장', name: '정출하', email: 'jung.ship@hanwha.com' },
     ],
   },
 ]

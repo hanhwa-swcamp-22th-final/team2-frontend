@@ -11,8 +11,10 @@ import { useAuthStore } from '@/stores/auth'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
+import { useProductionOrderDocuments } from '@/stores/productionOrderDocuments'
 import { useToast } from '@/composables/useToast'
 import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
+import { getPoProductionGate, formatPoProductionGateMessage } from '@/utils/documentShipmentLock'
 import { canAccessRouteByRole } from '@/utils/roleAccess'
 
 const route = useRoute()
@@ -22,6 +24,8 @@ const authStore = useAuthStore()
 const poDocuments = usePoDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
+// 출하팀은 productionOrder 조회가 막혀있을 수 있음 (store 가 permission 체크). 결과가 빈 배열이면 gate 미적용.
+const productionOrderDocuments = useProductionOrderDocuments()
 const { loadItemCatalog, enrichDocumentItems } = useDocumentItemCatalog()
 
 function enrichShipmentStatusRow(row) {
@@ -47,6 +51,9 @@ const displayItems = computed(() => enrichDocumentItems(detail.value?.items ?? [
 const currentStep = computed(() => (detail.value?.status === '출하완료' ? 2 : 1))
 const currentRole = computed(() => (authStore.currentUser?.role ?? '').toLowerCase())
 const canCompleteShipment = computed(() => currentRole.value === 'admin' || currentRole.value === 'shipping')
+
+// 생산지시서가 연결된 PO 는 MO 완료 전에 출하 완료 금지.
+const productionGate = computed(() => getPoProductionGate(detail.value?.poId, productionOrderDocuments.value))
 function parseNumericValue(value) {
   const numeric = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))
   return Number.isFinite(numeric) ? numeric : 0
@@ -66,7 +73,7 @@ const summaryRows = computed(() => {
 
   return [
     { label: '거래처', value: detail.value.clientName },
-    { label: '영업담당자', value: detail.value.manager || '-' },
+    { label: '담당자', value: detail.value.manager || '-' },
     { label: '품목 건수', value: `${detail.value.items.length}건` },
     { label: '납기일', value: detail.value.dueDate || '-' },
   ]
@@ -90,6 +97,10 @@ function goToShipmentOrder() {
 
 async function completeShipment() {
   if (!detail.value || detail.value.status === '출하완료') return
+  if (productionGate.value.blocked) {
+    toast.warning(formatPoProductionGateMessage(productionGate.value))
+    return
+  }
   try {
     // 백엔드 PUT /api/shipments/{id} (controller @PreAuthorize ADMIN/SHIPPING)
     await updateShipment(detail.value.id, { status: 'completed' })
@@ -149,7 +160,8 @@ onMounted(() => {
           <BaseButton
             v-if="canCompleteShipment"
             size="sm"
-            :disabled="detail.status === '출하완료'"
+            :disabled="detail.status === '출하완료' || productionGate.blocked"
+            :title="productionGate.blocked ? formatPoProductionGateMessage(productionGate) : ''"
             @click="completeShipment"
           >
             <template #leading>
@@ -188,7 +200,7 @@ onMounted(() => {
             <div><span class="text-slate-500">출하지시서</span><div class="mt-0.5">{{ detail.shipmentOrderId }}</div></div>
             <div><span class="text-slate-500">출하요청일</span><div class="mt-0.5 font-medium">{{ detail.requestDate }}</div></div>
             <div><span class="text-slate-500">납기일</span><div class="mt-0.5 font-medium">{{ detail.dueDate }}</div></div>
-            <div><span class="text-slate-500">영업담당자</span><div class="mt-0.5">{{ detail.manager || '-' }}</div></div>
+            <div><span class="text-slate-500">담당자</span><div class="mt-0.5">{{ detail.manager || '-' }}</div></div>
             <div><span class="text-slate-500">최종 업데이트</span><div class="mt-0.5 text-xs text-slate-400">{{ detail.updatedAt }}</div></div>
           </div>
         </div>

@@ -98,7 +98,7 @@ const previewFields = computed(() => {
     { label: '거래처', value: detail.value.clientName },
     { label: '국가', value: detail.value.country },
     { label: '품목명', value: detail.value.itemName },
-    { label: '영업담당자', value: detail.value.manager },
+    { label: '담당자', value: detail.value.manager },
     { label: '상태', value: detail.value.status },
     { label: '납기일', value: detail.value.dueDate },
   ]
@@ -109,7 +109,7 @@ const summaryRows = computed(() => {
 
   return [
     { label: '거래처', value: detail.value.clientName },
-    { label: '영업담당자', value: detail.value.manager || '-' },
+    { label: '담당자', value: detail.value.manager || '-' },
     { label: '총수량', value: `${totalQuantity.value} EA` },
     { label: '납기일', value: detail.value.dueDate || '-' },
   ]
@@ -196,7 +196,7 @@ onMounted(() => {
             <div><span class="text-slate-500">PO</span><div class="mt-0.5 font-medium">{{ detail.poId }}</div></div>
             <div><span class="text-slate-500">거래처</span><div class="mt-0.5 font-medium">{{ detail.clientName }}</div></div>
             <div><span class="text-slate-500">국가</span><div class="mt-0.5">{{ detail.country }}</div></div>
-            <div><span class="text-slate-500">영업담당자</span><div class="mt-0.5">{{ detail.manager }}</div></div>
+            <div><span class="text-slate-500">담당자</span><div class="mt-0.5">{{ detail.manager }}</div></div>
             <div><span class="text-slate-500">납기일</span><div class="mt-0.5">{{ detail.dueDate }}</div></div>
             <div><span class="text-slate-500">출하지시번호</span><div class="mt-0.5 font-medium">{{ detail.id }}</div></div>
             <div><span class="text-slate-500">출하 예정일</span><div class="mt-0.5">{{ detail.plannedShipDate }}</div></div>

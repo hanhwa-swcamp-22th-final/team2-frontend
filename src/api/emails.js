@@ -3,7 +3,19 @@ import { unwrapCollection } from '@/utils/apiResponse'
 
 export async function fetchActivityEmails() {
   const { data } = await api.get('/email-logs')
-  return unwrapCollection(data)
+  // 백엔드 응답은 { clientName, types: [{emailLogTypeId, emailDocType}], ... } 형태.
+  // UI 는 e.client (문자열), e.types (문자열 배열) 를 기대하므로 여기서 평탄화.
+  return unwrapCollection(data).map((row) => ({
+    ...row,
+    client: row.client ?? row.clientName ?? '-',
+    types: (row.types ?? row.docTypes ?? [])
+      .map((t) => (typeof t === 'string' ? t : (t?.emailDocType ?? t?.docType ?? t?.type ?? t?.name)))
+      .filter(Boolean),
+    recipient: row.recipient ?? row.recipientName ?? row.emailRecipientName ?? '',
+    email: row.email ?? row.recipientEmail ?? row.emailRecipientEmail ?? '',
+    sender: row.sender ?? row.senderName ?? '-',
+    sentAt: row.sentAt ?? row.sentDate ?? row.emailSentAt ?? '',
+  }))
 }
 
 /**
