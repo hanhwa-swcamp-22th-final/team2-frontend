@@ -1,6 +1,7 @@
 import { useAuthStore } from './auth'
 import { ref } from 'vue'
 import { fetchPurchaseOrdersPaged } from '@/api/documents'
+import { loadApprovalRequests, pickLatestRequestFor } from './approvalRequests'
 
 function formatDate(value) {
   return String(value ?? '').replace(/-/g, '/')
@@ -91,11 +92,29 @@ let loading = null
 
 export async function loadPoDocuments({ page = 0, size = 1000 } = {}) {
   try {
-    const { content, page: pageInfo } = await fetchPurchaseOrdersPaged({ page, size })
-    poDocuments.value = (Array.isArray(content) ? content : []).map(mapPoResponse)
+    const [{ content, page: pageInfo }] = await Promise.all([
+      fetchPurchaseOrdersPaged({ page, size }),
+      loadApprovalRequests(),
+    ])
+    const mapped = (Array.isArray(content) ? content : []).map(mapPoResponse)
+    poDocuments.value = mapped.map((row) => attachApprovalInfo(row))
     poPageInfo.value = pageInfo
   } catch (e) {
     console.error('Failed to load PO documents:', e)
+  }
+}
+
+function attachApprovalInfo(row) {
+  const req = pickLatestRequestFor('PO', row.id)
+  if (!req) return row
+  const statusLower = String(req.status ?? '').toLowerCase()
+  return {
+    ...row,
+    approvalRequestId: req.approvalRequestId ?? row.approvalRequestId ?? null,
+    approverId: req.approverId ?? row.approverId ?? null,
+    approverName: req.approverName ?? row.approverName ?? null,
+    approvalRejectReason:
+      statusLower === 'rejected' ? (req.reason ?? row.approvalRejectReason ?? null) : (row.approvalRejectReason ?? null),
   }
 }
 

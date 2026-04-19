@@ -15,6 +15,9 @@ import { useShipmentStatusDocuments, loadShipmentStatusDocuments } from '@/store
 import { fetchActivities } from '@/api/activity'
 import { fetchClients } from '@/api/master'
 import { fetchPackages, deletePackage as deletePackageApi } from '@/api/package'
+import { updateApprovalRequest } from '@/api/documents'
+import { loadApprovalRequests } from '@/stores/approvalRequests'
+import { label as enumLabel, PI_PO_STATUS_LABEL } from '@/utils/enumLabels'
 import { useToast } from '@/composables/useToast'
 import PackageDetailModal from '@/components/domain/activity/PackageDetailModal.vue'
 
@@ -221,9 +224,10 @@ function buildFallbackReview(docType, row) {
     message: '요청 시점의 검토 데이터가 없어 현재 문서 스냅샷 기준으로 표시합니다.',
     requestRows: [
       { label: '요청 유형', value: `${row.approvalAction || '-'} 요청` },
-      { label: '결재자', value: row.approver || '미지정' },
+      { label: '결재자', value: row.approverName || row.approver || '미지정' },
       { label: '요청자', value: row.approvalRequestedBy || '미지정' },
-      { label: '문서 상태', value: row.status || '-' },
+      // 백엔드가 내려주는 raw enum(pending_approval 등)이 그대로 노출되는 UX 결함을 방지.
+      { label: '문서 상태', value: enumLabel(PI_PO_STATUS_LABEL, row.status) || '-' },
       { label: '요청 상태', value: row.requestStatus || '-' },
       { label: '요청 시각', value: row.approvalRequestedAt || '-' },
       ...(row.approvalRejectReason
@@ -266,10 +270,12 @@ function createRequestItem(docType, row) {
     id: `${docType}-${row.id}`,
     docType,
     docId: row.id,
+    // 실제 승인/반려 PUT 에 필요한 approvalRequestId (piDocuments/poDocuments 가 병합해둠)
+    approvalRequestId: row.approvalRequestId ?? null,
     actionLabel: row.approvalAction || row.requestStatus?.replace('요청', '') || '결재',
     company: row.clientName || '-',
     requester: row.approvalRequestedBy || '미지정',
-    approver: row.approver || '미지정',
+    approver: row.approverName || row.approver || '미지정',
     status: row.approvalStatus || '-',
     requestStatus: row.requestStatus || '-',
     requestedAt: row.approvalRequestedAt || '-',
@@ -330,15 +336,6 @@ function closeDecisionConfirm() {
   rejectReason.value = ''
 }
 
-function updateRequestDocument(item, patch) {
-  const targetStore = item.docType === 'PI' ? piDocuments : poDocuments
-  targetStore.value = targetStore.value.map((row) => (
-    row.id === item.docId
-      ? { ...row, ...patch }
-      : row
-  ))
-}
-
 function getReviewedAt() {
   const now = new Date()
   const year = now.getFullYear()
@@ -384,29 +381,40 @@ function openRejectConfirm() {
   decisionConfirmOpen.value = true
 }
 
-function confirmDecision() {
+async function confirmDecision() {
   if (!selectedRequest.value || !pendingDecision.value) return
 
-  if (pendingDecision.value === 'approve') {
-    const nextStatus = selectedRequest.value.actionLabel === '삭제' ? '취소' : '확정'
-    updateRequestDocument(selectedRequest.value, {
-      status: nextStatus,
-      approvalStatus: '승인',
-      approvalReviewedBy: currentUser.value?.name || '',
-      approvalReviewedAt: getReviewedAt(),
-    })
-  } else {
-    updateRequestDocument(selectedRequest.value, {
-      status: '반려',
-      approvalStatus: '반려',
-      approvalReviewedBy: currentUser.value?.name || '',
-      approvalReviewedAt: getReviewedAt(),
-      approvalRejectReason: rejectReason.value.trim() || '',
-    })
+  const item = selectedRequest.value
+  const approvalRequestId = item.approvalRequestId
+  if (!approvalRequestId) {
+    toastError('해당 요청의 결재 요청 ID를 찾을 수 없습니다. 새로고침 후 다시 시도해주세요.')
+    closeDecisionConfirm()
+    closeRequestReview()
+    return
   }
 
-  closeDecisionConfirm()
-  closeRequestReview()
+  try {
+    if (pendingDecision.value === 'approve') {
+      await updateApprovalRequest(approvalRequestId, { status: 'APPROVED' })
+    } else {
+      await updateApprovalRequest(approvalRequestId, {
+        status: 'REJECTED',
+        reason: rejectReason.value.trim() || '',
+      })
+    }
+
+    // 백엔드가 approval_requests + 원본 문서(PI/PO) 상태를 모두 갱신하므로
+    // 양쪽 store 를 모두 다시 fetch 해 UI 에 즉시 반영. approvalRequests 는
+    // PI/PO loader 가 내부에서 다시 호출한다.
+    await Promise.all([loadPiDocuments(), loadPoDocuments(), loadApprovalRequests()])
+
+    success(pendingDecision.value === 'approve' ? '결재가 승인되었습니다.' : '결재가 반려되었습니다.')
+  } catch (e) {
+    toastError(e?.response?.data?.message || '결재 처리 중 오류가 발생했습니다.')
+  } finally {
+    closeDecisionConfirm()
+    closeRequestReview()
+  }
 }
 
 function goToRequestDetail() {

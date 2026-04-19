@@ -92,10 +92,26 @@ export function buildApprovalInfoRows(document) {
     return []
   }
 
-  return [
+  const rows = [
     { label: '상태', value: resolveCompositeStatus(document) },
-    { label: '결재자', value: document.approver || '미지정' },
+    // approvalRequests 병합 결과로 붙는 approverName 을 우선. 과거 로컬 뮤테이션으로만
+    // 채워지던 document.approver 는 백업 fallback.
+    { label: '결재자', value: document.approverName || document.approver || '미지정' },
     { label: '요청자', value: document.approvalRequestedBy || '미지정' },
     { label: '요청 시각', value: document.approvalRequestedAt || '-' },
   ]
+
+  // 반려 상태일 때 사유 노출 (I9). 상태 정규화는 resolveCompositeStatus 와 동일 규칙.
+  const statusNorm = String(document.status ?? '').trim().toLowerCase()
+  const approvalNorm = String(document.approvalStatus ?? '').trim().toLowerCase()
+  const isRejected =
+    statusNorm === '반려' ||
+    statusNorm === 'rejected' ||
+    approvalNorm === '반려' ||
+    approvalNorm === 'rejected'
+  if (isRejected && document.approvalRejectReason) {
+    rows.push({ label: '반려 사유', value: document.approvalRejectReason, fullWidth: true })
+  }
+
+  return rows
 }
