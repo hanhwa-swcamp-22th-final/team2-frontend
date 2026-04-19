@@ -46,7 +46,7 @@ const columns = [
   { key: 'clientName', label: '거래처', align: 'left', width: '220px' },
   { key: 'country', label: '국가', align: 'center', width: '120px' },
   { key: 'itemName', label: '품목명', align: 'left', width: '220px' },
-  { key: 'manager', label: '영업담당자', align: 'left', width: '120px' },
+  { key: 'manager', label: '담당자', align: 'left', width: '120px' },
   { key: 'status', label: '상태', align: 'center', width: '120px' },
   { key: 'dueDate', label: '납기', align: 'center', width: '130px' },
   { key: 'actions', label: '', align: 'center', width: '120px', sortable: false },
@@ -77,7 +77,7 @@ const previewFields = computed(() => {
     { label: '국가', value: previewTarget.value.country },
     { label: '거래처', value: previewTarget.value.clientName },
     { label: '품목명', value: previewTarget.value.itemName },
-    { label: '영업담당자', value: previewTarget.value.manager },
+    { label: '담당자', value: previewTarget.value.manager },
     { label: '상태', value: previewTarget.value.status },
     { label: '납기일', value: previewTarget.value.dueDate },
   ]
@@ -192,7 +192,7 @@ function downloadPdf(row) {
           </div>
         </FormField>
 
-        <FormField label="영업담당자">
+        <FormField label="담당자">
           <SearchableCombobox
             v-model="filters.manager"
             :options="managerOptions"

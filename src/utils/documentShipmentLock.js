@@ -132,6 +132,24 @@ export function formatPiCollectionLockMessage(lockInfo) {
   return `수금완료된 건이 연결된 PO ${reference.poId}가 있어 이 PI는 수정/삭제할 수 없습니다.`
 }
 
+/**
+ * 생산지시서(MO) 발행된 PO 는 MO 가 '생산완료' 되기 전까지 출하완료 처리 불가.
+ * MO 자체가 없으면 출하만으로 진행 (영업담당자가 재고 보유 가정).
+ */
+export function getPoProductionGate(poId, productionOrderDocuments = []) {
+  if (!poId) return { blocked: false, pendingIds: [] }
+  const mos = productionOrderDocuments.filter((row) => row.poId === poId)
+  if (mos.length === 0) return { blocked: false, pendingIds: [] }
+  const pending = mos.filter((row) => row.status !== '생산완료')
+  return { blocked: pending.length > 0, pendingIds: pending.map((r) => r.id) }
+}
+
+export function formatPoProductionGateMessage(gate) {
+  if (!gate?.blocked) return ''
+  const first = gate.pendingIds[0]
+  return `생산지시서${first ? ` ${first}` : ''}가 생산완료 상태가 아니므로 출하완료 처리할 수 없습니다.`
+}
+
 export function formatPiShipmentLockMessage(lockInfo) {
   if (!lockInfo?.locked || !lockInfo.references?.length) {
     return ''

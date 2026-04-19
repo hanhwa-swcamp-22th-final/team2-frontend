@@ -19,6 +19,15 @@ const emit = defineEmits(['close', 'save', 'open-pi-search', 'open-client-search
 const defaultApproverOptions = []
 const authStore = useAuthStore()
 
+// 팀장·ADMIN 은 결재 없이 즉시 확정되므로 결재자 필드 숨김.
+const isTeamLeaderOrAdmin = computed(() => {
+  const user = authStore.currentUser
+  if (!user) return false
+  if (user.role === 'admin') return true
+  return Number(user.positionLevel) === 1
+})
+const showApproverField = computed(() => !isTeamLeaderOrAdmin.value)
+
 function createInitialForm() {
   return {
     linkedPiId: '',
@@ -101,7 +110,7 @@ function validate() {
   if (!form.value.clientName?.trim()) e.clientName = '거래처를 선택해주세요.'
   if (!form.value.deliveryDate) e.deliveryDate = '납기일을 입력해주세요.'
   if (!form.value.currency?.trim()) e.currency = '통화가 지정되지 않았습니다.'
-  if (!form.value.approver?.trim()) e.approver = '결재자를 선택해주세요.'
+  if (showApproverField.value && !form.value.approver?.trim()) e.approver = '결재자를 선택해주세요.'
   errors.value = e
   return Object.keys(e).length === 0
 }
@@ -279,7 +288,7 @@ watch(
         </div>
       </div>
 
-      <div>
+      <div v-if="showApproverField">
         <label class="mb-1 block text-slate-600">결재자</label>
         <BaseSelect
           v-model="form.approver"
