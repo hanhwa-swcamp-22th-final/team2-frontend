@@ -4,7 +4,7 @@ import { computed, ref, watch } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
-import { fetchApprovers } from '@/api/documents'
+import { fetchApprovers, fetchAssignableUsers } from '@/api/documents'
 import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps({
@@ -38,6 +38,10 @@ function createInitialForm() {
     sourceDeliveryDate: '',
     deliveryDateOverride: false,
     approver: '',
+    // Step C — 후속 흐름 분기. 기본값 DIRECT(직출하).
+    productionRoute: 'DIRECT',
+    productionAssigneeId: null,
+    shippingAssigneeId: null,
   }
 }
 
@@ -46,6 +50,10 @@ const errors = ref({})
 const approverOptions = ref([...defaultApproverOptions])
 // fetchApprovers 원본 (userId/userName/userRole). name → userId 해소용.
 const approverDirectory = ref([])
+// Step C — 생산/출하 담당자 후보 (fetchAssignableUsers 응답: {userId, userName, ...})
+const productionAssignees = ref([])
+const shippingAssignees = ref([])
+const assigneesLoaded = ref(false)
 const isLinkedToPi = computed(() => Boolean(form.value.linkedPiId))
 const isDeliveryDateLocked = computed(() => isLinkedToPi.value && !form.value.deliveryDateOverride)
 
@@ -78,12 +86,33 @@ function resolveApproverId(name) {
   return match?.userId ?? null
 }
 
+async function loadAssigneeOptions() {
+  if (assigneesLoaded.value) return
+  try {
+    const [prod, ship] = await Promise.all([
+      fetchAssignableUsers('production').catch(() => []),
+      fetchAssignableUsers('shipping').catch(() => []),
+    ])
+    productionAssignees.value = Array.isArray(prod) ? prod : []
+    shippingAssignees.value = Array.isArray(ship) ? ship : []
+  } finally {
+    assigneesLoaded.value = true
+  }
+}
+
+const productionAssigneeOptions = computed(() =>
+  productionAssignees.value.map((u) => ({ label: u.userName, value: u.userId })),
+)
+const shippingAssigneeOptions = computed(() =>
+  shippingAssignees.value.map((u) => ({ label: u.userName, value: u.userId })),
+)
+
 watch(
   () => props.open,
   async (isOpen) => {
     if (!isOpen) return
 
-    await loadApproverOptions()
+    await Promise.all([loadApproverOptions(), loadAssigneeOptions()])
 
     if (props.mode === 'edit' && props.document) {
       form.value = {
@@ -95,6 +124,9 @@ watch(
         sourceDeliveryDate: props.document.sourceDeliveryDate?.replaceAll('/', '-') ?? props.document.deliveryDate?.replaceAll('/', '-') ?? '',
         deliveryDateOverride: Boolean(props.document.deliveryDateOverride),
         approver: props.document.approver ?? approverOptions.value[0] ?? '',
+        productionRoute: props.document.productionRoute ?? 'DIRECT',
+        productionAssigneeId: props.document.productionAssigneeId ?? null,
+        shippingAssigneeId: props.document.shippingAssigneeId ?? null,
       }
       return
     }
@@ -135,6 +167,10 @@ function handleSave() {
   emit('save', {
     ...form.value,
     approverId: resolveApproverId(form.value.approver),
+    // Step C — DIRECT 면 생산 담당자는 무시 (null 로 넘김).
+    productionAssigneeId: form.value.productionRoute === 'PRODUCTION'
+      ? form.value.productionAssigneeId
+      : null,
   })
 }
 
@@ -314,6 +350,54 @@ watch(
           placeholder="결재자 선택"
         />
         <p v-if="errors.approver" class="mt-1 text-xs text-red-500">{{ errors.approver }}</p>
+      </div>
+
+      <!-- Step C — 후속 흐름 분기: 생산 경유 vs 직출하 -->
+      <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+        <label class="mb-2 block text-sm font-semibold text-slate-700">후속 흐름 *</label>
+        <div class="flex gap-4 text-sm">
+          <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input
+              v-model="form.productionRoute"
+              type="radio"
+              value="DIRECT"
+              class="h-4 w-4 text-brand-600 focus:ring-brand-500"
+            >
+            직출하 (MO 없음)
+          </label>
+          <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input
+              v-model="form.productionRoute"
+              type="radio"
+              value="PRODUCTION"
+              class="h-4 w-4 text-brand-600 focus:ring-brand-500"
+            >
+            생산 경유 (MO 자동 발행)
+          </label>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div v-if="form.productionRoute === 'PRODUCTION'">
+          <label class="mb-1 block text-slate-600">생산 담당자</label>
+          <BaseSelect
+            v-model="form.productionAssigneeId"
+            :options="productionAssigneeOptions"
+            placeholder="담당자 선택 (미지정 허용)"
+          />
+          <p class="mt-1 text-xs text-slate-500">
+            생산 경유 선택 시 PO 승인과 동시에 MO 가 자동 발행되며, 여기서 고른 담당자가 바로 할당됩니다.
+          </p>
+        </div>
+
+        <div>
+          <label class="mb-1 block text-slate-600">출하 담당자</label>
+          <BaseSelect
+            v-model="form.shippingAssigneeId"
+            :options="shippingAssigneeOptions"
+            placeholder="출하 담당자 선택 (미지정 시 영업담당자가 기본)"
+          />
+        </div>
       </div>
 
       <p class="text-xs text-gray-400">

@@ -534,6 +534,10 @@ function buildCreatePayload(formValue) {
     userId: authStore.currentUser?.userId ?? null,
     // 특기사항 (N4): POFormModal 은 폼에 reason 필드가 없어도 미래 대비 pass-through.
     remarks: formValue.reason ?? '',
+    // Step C — 후속 흐름 분기 + 담당자. 백엔드가 미전달 시 DIRECT 기본.
+    productionRoute: formValue.productionRoute ?? 'DIRECT',
+    productionAssigneeId: formValue.productionAssigneeId ?? null,
+    shippingAssigneeId: formValue.shippingAssigneeId ?? null,
     items,
   }
 }
