@@ -519,6 +519,13 @@ function getDefaultDeleteApprover(row) {
   return row?.approver || ''
 }
 
+// 결재대기 중인 행은 요청자 본인도 임의 수정/삭제 불가(I2 불변식).
+// 상세 페이지는 이미 이 가드를 적용 중이므로 목록도 parity 를 맞춘다.
+const PENDING_APPROVAL_STATUSES = new Set(['결재대기', 'pending_approval', 'APPROVAL_PENDING'])
+function isPendingApproval(row) {
+  return PENDING_APPROVAL_STATUSES.has(row?.status)
+}
+
 function getRequestedAt() {
   const now = new Date()
   const year = now.getFullYear()
@@ -662,7 +669,9 @@ const createApprovalDocumentRows = computed(() => {
   const { nextRow } = buildRowPayload(pendingCreateFormValue.value)
 
   return [
-    { label: '예정 PI 번호', value: buildNextPiId() },
+    // 서버의 채번규칙과 화면 추정값이 다르면 사용자가 "같은 문서"를 추적하기 어려워져
+    // QA 리포트(PI 번호 생성 불일치)로 지적됨. 예측값 대신 안내 문구로 대체.
+    { label: '예정 PI 번호', value: '저장 후 자동 생성' },
     { label: '거래처', value: nextRow.clientName },
     { label: '영문주소', value: nextRow.clientAddress || '-', fullWidth: true },
     { label: '바이어', value: nextRow.buyerName || '-' },
@@ -822,7 +831,8 @@ async function confirmCreateApprovalRequest() {
     const payload = buildCreatePayload(pendingCreateFormValue.value)
     const { piId } = await createProformaInvoice(payload)
     const userId = authStore.currentUser?.userId
-    await requestPiRegistration({ piId, userId })
+    const approverId = pendingCreateFormValue.value.approverId ?? null
+    await requestPiRegistration({ piId, userId, approverId })
     await loadPiDocuments()
 
     createApprovalRequestOpen.value = false
@@ -1168,8 +1178,8 @@ function handleProductSelect(product) {
 
       <template #cell-actions="{ row }">
         <TableActions
-          :show-edit="!shipmentLockInfoByPiId.get(row.id)?.locked && !collectionLockInfoByPiId.get(row.id)?.locked && canMutateDocument(row, authStore.currentUser)"
-          :show-delete="!shipmentLockInfoByPiId.get(row.id)?.locked && !collectionLockInfoByPiId.get(row.id)?.locked && canMutateDocument(row, authStore.currentUser)"
+          :show-edit="!shipmentLockInfoByPiId.get(row.id)?.locked && !collectionLockInfoByPiId.get(row.id)?.locked && canMutateDocument(row, authStore.currentUser) && !isPendingApproval(row)"
+          :show-delete="!shipmentLockInfoByPiId.get(row.id)?.locked && !collectionLockInfoByPiId.get(row.id)?.locked && canMutateDocument(row, authStore.currentUser) && !isPendingApproval(row)"
           @edit="openEditForm(row)"
           @delete="openDeleteApprovalRequest(row)"
         />

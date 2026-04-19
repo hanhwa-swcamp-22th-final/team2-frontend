@@ -62,6 +62,7 @@ export const useAuthStore = defineStore('auth', () => {
       import('./shipmentOrderDocuments').then((m) => m.clearShipmentOrderDocuments()),
       import('./shipmentStatusDocuments').then((m) => m.clearShipmentStatusDocuments()),
       import('./salesCollectionDocuments').then((m) => m.clearSalesCollectionDocuments()),
+      import('./approvalRequests').then((m) => m.clearApprovalRequests()),
     ]).catch((e) => console.error('document store reset 중 오류', e))
   }
 

@@ -100,7 +100,18 @@ function getTodayDateInput() {
 }
 
 function getDefaultApprover() {
+  // 요청자의 직속 팀장(= non-ADMIN) 을 우선. approverDirectory 가 비어 있으면 approverOptions fallback.
+  const leader = approverDirectory.value.find(
+    (u) => String(u.userRole ?? '').toUpperCase() !== 'ADMIN',
+  )
+  if (leader?.userName) return leader.userName
   return approverOptions.value[0] ?? defaultApproverOptions[0]
+}
+
+function resolveApproverId(name) {
+  if (!name) return null
+  const match = approverDirectory.value.find((u) => u.userName === name)
+  return match?.userId ?? null
 }
 
 function createInitialForm() {
@@ -140,6 +151,8 @@ const clientCatalog = ref([])
 const buyerRows = ref([])
 const currencyOptions = ref([...defaultCurrencyOptions])
 const approverOptions = ref([...defaultApproverOptions])
+// fetchApprovers 응답 원본 (userId/userName/userRole). 제출 시 name → userId 해소용.
+const approverDirectory = ref([])
 const productCatalog = ref([...fallbackProductCatalog])
 const incotermCatalog = ref([...fallbackIncotermsCatalog])
 const exchangeRateHint = ref(createExchangeRateHint('USD', getTodayDateInput()))
@@ -327,9 +340,14 @@ async function loadReferenceData() {
       .filter((item) => item.code)
 
     // 결재자 후보: 우리팀 팀장 + ADMIN (팀장/ADMIN 본인이 포함되면 셀프 결재 테스트 가능)
-    const approverNames = (approversData ?? [])
-      .map((user) => user.userName)
-      .filter(Boolean)
+    approverDirectory.value = Array.isArray(approversData) ? approversData : []
+    // non-ADMIN(팀장)이 먼저 노출되도록 정렬 → 기본값이 admin 으로 고정되는 UX 버그 방지.
+    approverDirectory.value.sort((a, b) => {
+      const aAdmin = String(a.userRole ?? '').toUpperCase() === 'ADMIN' ? 1 : 0
+      const bAdmin = String(b.userRole ?? '').toUpperCase() === 'ADMIN' ? 1 : 0
+      return aAdmin - bAdmin
+    })
+    const approverNames = approverDirectory.value.map((user) => user.userName).filter(Boolean)
 
     if (approverNames.length) {
       approverOptions.value = approverNames
@@ -725,6 +743,9 @@ function handleSave() {
 
   emit('save', {
     ...form.value,
+    // 결재자 userId 를 함께 전달. 백엔드 request-registration 의 approverId 로 들어가
+    // 요청자 팀장(이영업 등)이 실제로 승인 가능해진다.
+    approverId: resolveApproverId(form.value.approver),
     items: form.value.items.map(({ baseUnitPrice, ...item }) => ({ ...item })),
   })
 }

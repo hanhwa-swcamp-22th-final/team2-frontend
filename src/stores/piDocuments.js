@@ -1,6 +1,7 @@
 import { useAuthStore } from './auth'
 import { ref } from 'vue'
 import { fetchProformaInvoicesPaged } from '@/api/documents'
+import { loadApprovalRequests, pickLatestRequestFor } from './approvalRequests'
 
 function tryParseJson(value, fallback = null) {
   if (typeof value !== 'string') return value ?? fallback
@@ -80,11 +81,32 @@ let loading = null
  */
 export async function loadPiDocuments({ page = 0, size = 1000 } = {}) {
   try {
-    const { content, page: pageInfo } = await fetchProformaInvoicesPaged({ page, size })
-    piDocuments.value = (Array.isArray(content) ? content : []).map(mapPiResponse)
+    // PI 목록과 결재 요청 리스트를 동시에 가져와, 각 PI 에 결재자/반려사유를 병합한다.
+    // 백엔드 proforma_invoices 뷰에는 approverId/reason 이 없어서 approval-requests 를
+    // 별도 조회해 documentId 로 매칭시킨다.
+    const [{ content, page: pageInfo }] = await Promise.all([
+      fetchProformaInvoicesPaged({ page, size }),
+      loadApprovalRequests(),
+    ])
+    const mapped = (Array.isArray(content) ? content : []).map(mapPiResponse)
+    piDocuments.value = mapped.map((row) => attachApprovalInfo(row))
     piPageInfo.value = pageInfo
   } catch (e) {
     console.error('Failed to load PI documents:', e)
+  }
+}
+
+function attachApprovalInfo(row) {
+  const req = pickLatestRequestFor('PI', row.id)
+  if (!req) return row
+  const statusLower = String(req.status ?? '').toLowerCase()
+  return {
+    ...row,
+    approvalRequestId: req.approvalRequestId ?? row.approvalRequestId ?? null,
+    approverId: req.approverId ?? row.approverId ?? null,
+    approverName: req.approverName ?? row.approverName ?? null,
+    approvalRejectReason:
+      statusLower === 'rejected' ? (req.reason ?? row.approvalRejectReason ?? null) : (row.approvalRejectReason ?? null),
   }
 }
 

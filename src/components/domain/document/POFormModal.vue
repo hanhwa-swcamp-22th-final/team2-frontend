@@ -44,6 +44,8 @@ function createInitialForm() {
 const form = ref(createInitialForm())
 const errors = ref({})
 const approverOptions = ref([...defaultApproverOptions])
+// fetchApprovers 원본 (userId/userName/userRole). name → userId 해소용.
+const approverDirectory = ref([])
 const isLinkedToPi = computed(() => Boolean(form.value.linkedPiId))
 const isDeliveryDateLocked = computed(() => isLinkedToPi.value && !form.value.deliveryDateOverride)
 
@@ -52,15 +54,28 @@ async function loadApproverOptions() {
     // 결재자 후보: 우리팀 팀장 + ADMIN (셀프 결재 가능)
     const teamId = authStore.currentUser?.teamId ?? null
     const approvers = await fetchApprovers(teamId)
-    const names = (approvers ?? []).map((u) => u.userName).filter(Boolean)
-    approverOptions.value = names
+    approverDirectory.value = Array.isArray(approvers) ? approvers : []
+    // non-ADMIN 을 앞으로: 기본값이 admin 에 고정되는 UX 버그 방지.
+    approverDirectory.value.sort((a, b) => {
+      const aAdmin = String(a.userRole ?? '').toUpperCase() === 'ADMIN' ? 1 : 0
+      const bAdmin = String(b.userRole ?? '').toUpperCase() === 'ADMIN' ? 1 : 0
+      return aAdmin - bAdmin
+    })
+    approverOptions.value = approverDirectory.value.map((u) => u.userName).filter(Boolean)
   } catch {
     approverOptions.value = []
+    approverDirectory.value = []
   }
 
   if (!approverOptions.value.includes(form.value.approver)) {
     form.value.approver = approverOptions.value[0] ?? ''
   }
+}
+
+function resolveApproverId(name) {
+  if (!name) return null
+  const match = approverDirectory.value.find((u) => u.userName === name)
+  return match?.userId ?? null
 }
 
 watch(
@@ -117,7 +132,10 @@ function validate() {
 
 function handleSave() {
   if (!validate()) return
-  emit('save', { ...form.value })
+  emit('save', {
+    ...form.value,
+    approverId: resolveApproverId(form.value.approver),
+  })
 }
 
 watch(

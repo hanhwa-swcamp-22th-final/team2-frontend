@@ -158,3 +158,12 @@ export const fetchApprovers = (teamId = null) =>
   api
     .get('/approval-requests/approvers', { params: teamId != null ? { teamId } : {} })
     .then((r) => (Array.isArray(r.data) ? r.data : unwrapCollection(r.data)))
+
+/**
+ * 결재 요청 승인/반려. 백엔드 PUT /approval-requests/{id} 로 상태 전환 + 연결된 문서
+ * (PI/PO 등) 상태까지 일괄 갱신한다. 대시보드 승인/반려 액션에서 사용.
+ * @param {string|number} approvalRequestId
+ * @param {{ status: 'APPROVED'|'REJECTED', comment?: string, reason?: string }} payload
+ */
+export const updateApprovalRequest = (approvalRequestId, payload) =>
+  api.put(`/approval-requests/${approvalRequestId}`, payload).then((r) => r.data)
