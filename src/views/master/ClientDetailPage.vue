@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
-import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import DetailPageHeader from '@/components/common/DetailPageHeader.vue'
@@ -54,11 +53,6 @@ const buyerErrors = ref({})
 const buyerSaving = ref(false)
 const showBuyerDeleteModal = ref(false)
 const buyerToDelete = ref(null)
-
-const positionOptions = [
-  { label: '팀장', value: '팀장' },
-  { label: '팀원', value: '팀원' },
-]
 
 function resolvePortLabel(portName, portId) {
   const candidate = portName || getPortName(portId)
@@ -260,8 +254,10 @@ async function handleBuyerSave() {
     }
     showBuyerModal.value = false
     await reloadBuyers()
-  } catch {
-    error('바이어 저장 중 오류가 발생했습니다.')
+  } catch (e) {
+    // 서버 응답(권한 403, validation 400 등) 를 사용자에게 노출해 디버깅 가능하게.
+    const serverMsg = e?.response?.data?.message || e?.response?.data?.error
+    error(serverMsg || '바이어 저장 중 오류가 발생했습니다.')
   } finally {
     buyerSaving.value = false
   }
@@ -399,7 +395,8 @@ function goBack() {
           <BaseTextField v-model="buyerForm.name" placeholder="바이어 이름" />
         </FormField>
         <FormField label="직책">
-          <BaseSelect v-model="buyerForm.position" :options="positionOptions" placeholder="직책 선택" />
+          <!-- 조직마다 직책 체계가 달라 드롭다운(팀장/팀원) 으로 제한하지 않고 수기 입력. -->
+          <BaseTextField v-model="buyerForm.position" placeholder="직책 (예: 구매팀장, Procurement Manager)" />
         </FormField>
         <FormField label="이메일" required :error="buyerErrors.email">
           <BaseTextField v-model="buyerForm.email" type="email" placeholder="buyer@example.com" />
