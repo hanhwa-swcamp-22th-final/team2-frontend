@@ -28,6 +28,8 @@ import { loadPiDocuments, usePiDocuments } from '@/stores/piDocuments'
 import { usePoDocuments } from '@/stores/poDocuments'
 import { useShipmentOrderDocuments } from '@/stores/shipmentOrderDocuments'
 import { useShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
+import { useCiDocuments } from '@/stores/ciDocuments'
+import { usePlDocuments } from '@/stores/plDocuments'
 import {
   buildApprovalInfoRows,
   buildApprovalRequestRows,
@@ -68,6 +70,8 @@ const piDocuments = usePiDocuments()
 const poDocuments = usePoDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
+const ciDocuments = useCiDocuments()
+const plDocuments = usePlDocuments()
 
 const isTeamLeader = computed(() => Number(authStore.currentUser?.positionId) === 1)
 
@@ -180,9 +184,30 @@ function formatSlashDate(value) {
 }
 
 function buildLinkedDocuments(documentId) {
-  return poDocuments.value
+  // NEW-7: 직계 PO 뿐 아니라 그 PO 로부터 파생된 CI/PL/SO/출하현황까지 전이 표시.
+  const linkedPos = poDocuments.value
     .filter((row) => (row.piId || row.linkedPiId) === documentId)
-    .map((row) => ({ id: row.id, status: row.status }))
+  const linkedPoIds = linkedPos.map((row) => row.id)
+
+  const childDocs = [
+    ...ciDocuments.value
+      .filter((row) => linkedPoIds.includes(row.poId))
+      .map((row) => ({ id: row.id, status: row.status, type: 'CI' })),
+    ...plDocuments.value
+      .filter((row) => linkedPoIds.includes(row.poId))
+      .map((row) => ({ id: row.id, status: row.status, type: 'PL' })),
+    ...shipmentOrderDocuments.value
+      .filter((row) => linkedPoIds.includes(row.poId))
+      .map((row) => ({ id: row.id, status: row.status, type: 'SO' })),
+    ...shipmentStatusDocuments.value
+      .filter((row) => linkedPoIds.includes(row.poId))
+      .map((row) => ({ id: row.id, status: row.status, type: '출하현황' })),
+  ]
+
+  return [
+    ...linkedPos.map((row) => ({ id: row.id, status: row.status, type: 'PO' })),
+    ...childDocs,
+  ]
 }
 
 function getCurrentRequesterName() {
@@ -669,8 +694,19 @@ function handleClientSelect(client) {
 }
 
 function goToLinkedDocument(documentId) {
-  if (!documentId?.startsWith('PO')) return
-  router.push({ name: 'po-detail', params: { id: documentId } })
+  // NEW-7 지원: 문서 prefix 기반으로 적절한 상세 라우트로 분기.
+  // PI260015/PO260004/CI260005/PL260005/SO260005/SH... 등.
+  if (!documentId) return
+  const prefix = documentId.substring(0, 2).toUpperCase()
+  const routeName = ({
+    PO: 'po-detail',
+    CI: 'ci-detail',
+    PL: 'pl-detail',
+    SO: 'shipment-order-detail',
+    SH: 'shipment-detail',
+  })[prefix]
+  if (!routeName) return
+  router.push({ name: routeName, params: { id: documentId } })
 }
 
 function confirmEditRequestIntent() {
