@@ -389,13 +389,17 @@ async function savePackage() {
       await updatePackage(editId.value, payload)
       success('패키지가 수정되었습니다.')
     } else {
-      payload.id = `PKG${String(Date.now()).slice(-6)}`
+      // 이전엔 클라이언트가 "PKG..." prefix id 를 추가로 보냈는데, 백엔드
+      // ActivityPackageCreateRequest 레코드엔 해당 필드가 없고 PK 는 DB auto.
+      // Jackson strict 설정에서 이 알 수 없는 필드가 400 을 유발해 저장이 실패하던
+      // 문제(G6). id 를 보내지 않도록 정리.
       await createPackage(payload)
       success('패키지가 저장되었습니다.')
     }
     router.push('/')
-  } catch {
-    error('패키지 저장에 실패했습니다.')
+  } catch (e) {
+    // 서버 400/403 메시지를 토스트에 그대로 노출해 디버깅 가능.
+    error(e?.response?.data?.message || '패키지 저장에 실패했습니다.')
   } finally {
     isSaving.value = false
   }
