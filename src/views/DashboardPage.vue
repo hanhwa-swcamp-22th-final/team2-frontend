@@ -32,6 +32,7 @@ const productionOrderDocuments = useProductionOrderDocuments()
 const shipmentStatusDocuments = useShipmentStatusDocuments()
 const selectedRequest = ref(null)
 const decisionConfirmOpen = ref(false)
+const decisionSaving = ref(false)
 const pendingDecision = ref('')
 const rejectReason = ref('')
 const clientsData = ref([])
@@ -382,7 +383,7 @@ function openRejectConfirm() {
 }
 
 async function confirmDecision() {
-  if (!selectedRequest.value || !pendingDecision.value) return
+  if (!selectedRequest.value || !pendingDecision.value || decisionSaving.value) return
 
   const item = selectedRequest.value
   const approvalRequestId = item.approvalRequestId
@@ -393,6 +394,7 @@ async function confirmDecision() {
     return
   }
 
+  decisionSaving.value = true
   try {
     if (pendingDecision.value === 'approve') {
       await updateApprovalRequest(approvalRequestId, { status: 'APPROVED' })
@@ -412,6 +414,7 @@ async function confirmDecision() {
   } catch (e) {
     toastError(e?.response?.data?.message || '결재 처리 중 오류가 발생했습니다.')
   } finally {
+    decisionSaving.value = false
     closeDecisionConfirm()
     closeRequestReview()
   }
@@ -756,6 +759,7 @@ async function confirmPackageDelete() {
       helper-text="처리 후 요청 상태와 문서 상태가 즉시 갱신됩니다."
       width="max-w-2xl"
       :z-index="90"
+      :loading="decisionSaving"
       @confirm="confirmDecision"
       @cancel="closeDecisionConfirm"
     >

@@ -47,6 +47,11 @@ const props = defineProps({
     type: String,
     default: 'primary',
   },
+  // 확인 버튼을 처리 중 상태로 표시. 스피너 + disabled 자동. 연타 가드 용도.
+  loading: {
+    type: Boolean,
+    default: false,
+  },
   helperText: {
     type: String,
     default: '이 작업은 되돌릴 수 없습니다.',
@@ -177,8 +182,8 @@ const emit = defineEmits(['confirm', 'cancel'])
     </div>
 
     <template #footer>
-      <BaseButton variant="secondary" @click="emit('cancel')">{{ cancelLabel }}</BaseButton>
-      <BaseButton :variant="confirmVariant" @click="emit('confirm')">{{ confirmLabel }}</BaseButton>
+      <BaseButton variant="secondary" :disabled="loading" @click="emit('cancel')">{{ cancelLabel }}</BaseButton>
+      <BaseButton :variant="confirmVariant" :loading="loading" @click="emit('confirm')">{{ confirmLabel }}</BaseButton>
     </template>
   </BaseModal>
 </template>
