@@ -388,7 +388,7 @@ function goToDetail(row) {
       :payment-terms="paymentTerms"
       :departments="departments"
       :teams="teams"
-      :default-team-id="currentUser?.teamId ?? null"
+      :default-team-id="isAdmin ? null : (currentUser?.teamId ?? null)"
       :lock-team="!isAdmin"
       :all-clients="clients"
       :saving="saving"
