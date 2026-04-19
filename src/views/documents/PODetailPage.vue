@@ -20,7 +20,9 @@ import {
   deletePurchaseOrderDraft,
   cancelPurchaseOrderApproval,
   generateProductionOrder,
+  updateApprovalRequest,
 } from '@/api/documents'
+import { loadApprovalRequests } from '@/stores/approvalRequests'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
@@ -863,6 +865,59 @@ async function handleCancelApproval() {
     error(e.response?.data?.message || '결재 요청 취소 중 오류가 발생했습니다.')
   }
 }
+
+// --- 팀장 본인 결재 승인/반려 (R3) -----------------------------------------
+const approveConfirmOpen = ref(false)
+const rejectConfirmOpen = ref(false)
+const rejectReason = ref('')
+
+const isPendingApprovalStatus = computed(() =>
+  ['결재대기', 'pending_approval', 'APPROVAL_PENDING'].includes(String(sourceRow.value?.status ?? '')),
+)
+const isCurrentUserApprover = computed(() => {
+  const currentId = Number(authStore.currentUser?.userId)
+  const approverId = Number(sourceRow.value?.approverId)
+  return Boolean(currentId && approverId && currentId === approverId)
+})
+const canReviewAsApprover = computed(() =>
+  Boolean(sourceRow.value?.approvalRequestId) && isPendingApprovalStatus.value && isCurrentUserApprover.value,
+)
+
+function openApproveConfirm() {
+  approveConfirmOpen.value = true
+}
+function openRejectConfirm() {
+  rejectReason.value = ''
+  rejectConfirmOpen.value = true
+}
+async function confirmApprove() {
+  if (!sourceRow.value?.approvalRequestId) return
+  try {
+    await updateApprovalRequest(sourceRow.value.approvalRequestId, { status: 'APPROVED' })
+    await Promise.all([loadPoDocuments(), loadApprovalRequests()])
+    success(`${sourceRow.value.id} 결재가 승인되었습니다.`)
+  } catch (e) {
+    error(e?.response?.data?.message || '결재 승인 중 오류가 발생했습니다.')
+  } finally {
+    approveConfirmOpen.value = false
+  }
+}
+async function confirmReject() {
+  if (!sourceRow.value?.approvalRequestId) return
+  try {
+    await updateApprovalRequest(sourceRow.value.approvalRequestId, {
+      status: 'REJECTED',
+      reason: rejectReason.value.trim(),
+    })
+    await Promise.all([loadPoDocuments(), loadApprovalRequests()])
+    success(`${sourceRow.value.id} 결재가 반려되었습니다.`)
+  } catch (e) {
+    error(e?.response?.data?.message || '결재 반려 중 오류가 발생했습니다.')
+  } finally {
+    rejectConfirmOpen.value = false
+    rejectReason.value = ''
+  }
+}
 </script>
 
 <template>
@@ -894,7 +949,28 @@ async function handleCancelApproval() {
             {{ ['확정','confirmed','CONFIRMED'].includes(detail.status) ? '삭제요청' : '삭제' }}
           </BaseButton>
           <BaseButton
-            v-if="['결재대기','pending_approval','APPROVAL_PENDING'].includes(detail.status)"
+            v-if="canReviewAsApprover"
+            size="sm"
+            @click="openApproveConfirm"
+          >
+            <template #leading>
+              <i class="fas fa-check text-xs" aria-hidden="true"></i>
+            </template>
+            승인
+          </BaseButton>
+          <BaseButton
+            v-if="canReviewAsApprover"
+            variant="secondary"
+            size="sm"
+            @click="openRejectConfirm"
+          >
+            <template #leading>
+              <i class="fas fa-times text-xs" aria-hidden="true"></i>
+            </template>
+            반려
+          </BaseButton>
+          <BaseButton
+            v-if="['결재대기','pending_approval','APPROVAL_PENDING'].includes(detail.status) && !canReviewAsApprover"
             variant="secondary"
             size="sm"
             @click="handleCancelApproval"
@@ -1245,6 +1321,37 @@ async function handleCancelApproval() {
       @close="clientSearchOpen = false"
       @select="handleClientSelect"
     />
+
+    <ConfirmModal
+      :open="approveConfirmOpen"
+      title="PO 결재 승인"
+      message="해당 PO 결재 요청을 승인하시겠습니까?"
+      :detail="sourceRow?.id || ''"
+      confirm-label="승인"
+      @confirm="confirmApprove"
+      @cancel="approveConfirmOpen = false"
+    />
+
+    <ConfirmModal
+      :open="rejectConfirmOpen"
+      title="PO 결재 반려"
+      message="해당 PO 결재 요청을 반려하시겠습니까? 반려 사유는 요청자에게 노출됩니다."
+      :detail="sourceRow?.id || ''"
+      confirm-label="반려"
+      confirm-variant="secondary"
+      @confirm="confirmReject"
+      @cancel="rejectConfirmOpen = false"
+    >
+      <div>
+        <label class="text-sm font-semibold text-slate-700">반려 사유</label>
+        <textarea
+          v-model="rejectReason"
+          rows="3"
+          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          placeholder="반려 사유를 입력하세요."
+        ></textarea>
+      </div>
+    </ConfirmModal>
   </div>
 
   <div v-else class="flex items-center justify-center py-20 text-slate-400">
