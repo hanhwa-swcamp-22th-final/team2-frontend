@@ -61,8 +61,10 @@ function mapCiResponse(row) {
     clientAddress: row.clientAddress ?? '-',
     buyer: row.buyerName ?? '-',
     country: row.country ?? '-',
-    currencyCode: row.currencyCode ?? 'USD',
-    currency: row.currencyCode ?? 'USD',
+    // row.currencyCode 가 빈 문자열 ("") 이어도 fallback 이 동작하도록 || 사용.
+    // 기존 ?? 는 "" 를 그대로 사용해 통화 기호가 누락됐음 (Issue #10).
+    currencyCode: row.currencyCode || 'USD',
+    currency: row.currencyCode || 'USD',
     itemName: items[0]?.name
       ?? row.itemName
       ?? row.firstItemName

@@ -19,14 +19,22 @@ export function getCurrencyDecimals(currencyCode) {
   return CURRENCY_DECIMALS[currencyCode] ?? 2
 }
 
+// row.currencyCode 가 null/"" 인 케이스를 USD 로 간주. CI 목록 "1,200,000" 처럼
+// 통화 기호가 통째로 누락되던 증상 방지 (Issue #10).
+function resolveCurrency(currencyCode) {
+  return currencyCode && currencyCode !== '' ? currencyCode : 'USD'
+}
+
 /**
  * 통화 기호 + 숫자 포맷팅. 통화별 소수 자릿수 자동 적용.
  * 이전에는 maximumFractionDigits 를 0 으로 하드코딩해 $3,999.97 → $4,000 같이
  * 소수점 2자리가 강제 반올림 되는 표시 오류(Issue #2) 가 있었음.
+ * currencyCode 가 null/"" 인 경우 USD 로 간주해 기호 누락 방지 (Issue #10).
  */
 export function formatCurrencyAmount(amount, currencyCode) {
-  const symbol = getCurrencySymbol(currencyCode)
-  const decimals = getCurrencyDecimals(currencyCode)
+  const resolved = resolveCurrency(currencyCode)
+  const symbol = getCurrencySymbol(resolved)
+  const decimals = getCurrencyDecimals(resolved)
   const value = Number(amount || 0)
   const formatted = value.toLocaleString('en-US', {
     minimumFractionDigits: 0,
