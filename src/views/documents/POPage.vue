@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import ApprovalRequestModal from '@/components/common/ApprovalRequestModal.vue'
@@ -30,7 +30,6 @@ import { usePagination } from '@/composables/usePagination'
 import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useAuthStore } from '@/stores/auth'
 import { useCiDocuments } from '@/stores/ciDocuments'
-import { loadExchangeRates, clearExchangeRates, getKrwRate } from '@/stores/exchangeRates'
 import { usePiDocuments } from '@/stores/piDocuments'
 import { usePlDocuments } from '@/stores/plDocuments'
 import { loadPoDocuments, usePoDocuments } from '@/stores/poDocuments'
@@ -118,10 +117,7 @@ async function loadCatalogs() {
 
 onMounted(() => {
   loadCatalogs()
-  loadExchangeRates()
 })
-
-onUnmounted(clearExchangeRates)
 
 const columns = [
   { key: 'id', label: 'PO 번호', align: 'center', width: '140px' },
@@ -480,8 +476,10 @@ function findItemIdByName(name) {
 
 /**
  * POFormModal @save payload 를 백엔드 PurchaseOrderCreateRequest DTO 로 매핑.
- * 주의: 백엔드는 totalAmount / unitPrice 를 KRW 기준으로 기대한다 (PI 와 동일 규칙).
- * 폼은 연결 PI 로부터 가져온 통화 기준 단가/금액을 들고 있으므로 환율로 KRW 역변환 수행.
+ * PO 는 연결 PI 가 이미 거래처 통화로 변환·저장해 둔 외화 단가/금액을 그대로 승계한다.
+ * 백엔드 purchase_orders.po_total_amount / po_items.po_item_unit_price 는 거래처 통화
+ * 기준이며, PI 와 달리 KRW→외화 재변환을 수행하지 않는다. PDF·CI·PL·Collection 도
+ * 모두 PO 의 통화 기준 값을 그대로 참조하므로 단일 소스를 유지해야 정합성이 깨지지 않는다.
  */
 function buildCreatePayload(formValue) {
   const linkedPi = piRowsSource.value.find((pi) => pi.id === formValue.linkedPiId)
@@ -490,25 +488,18 @@ function buildCreatePayload(formValue) {
   ))
   const currencyCode = linkedPi?.currency || formValue.currency || matchedClient?.currency || 'USD'
   const currencyId = findCurrencyIdByCode(currencyCode) ?? matchedClient?.currencyId ?? null
-  const krwRate = getKrwRate(currencyCode)
-  const toKrw = (amountInCurrency) => {
-    const value = Number(amountInCurrency) || 0
-    if (!currencyCode || currencyCode === 'KRW') return value
-    if (!krwRate) return value
-    return Math.round(value * krwRate)
-  }
 
   const items = (linkedPi?.items ?? []).map((item) => {
     const quantity = Number(item.qty ?? item.quantity ?? 0) || 0
-    const unitPriceInCurrency = Number(item.unitPrice ?? 0) || 0
-    const amountInCurrency = Number(item.amount ?? 0) || quantity * unitPriceInCurrency
+    const unitPrice = Number(item.unitPrice ?? 0) || 0
+    const amount = Number(item.amount ?? 0) || quantity * unitPrice
     return {
       itemId: findItemIdByName(item.name),
       itemName: item.name ?? '',
       quantity,
       unit: item.unit ?? '',
-      unitPrice: toKrw(unitPriceInCurrency),
-      amount: toKrw(amountInCurrency),
+      unitPrice,
+      amount,
       remark: item.remark ?? '',
     }
   })
