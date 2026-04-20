@@ -1091,14 +1091,9 @@ watch(exchangeRatesLoaded, (ready) => {
           </template>
 
           <template #cell-unit="{ row }">
-            <div class="mx-auto w-[72px] py-1">
-              <BaseTextField
-                v-model="row.unit"
-                placeholder="EA"
-                class="text-center"
-                @update:modelValue="clearItemError(row.id, 'unit')"
-              />
-              <p v-if="getItemError(row.id, 'unit')" class="mt-1 text-[11px] text-red-500">{{ getItemError(row.id, 'unit') }}</p>
+            <!-- Step D: 단위는 상품 마스터 값에서 자동 채워지는 값이라 편집 불가. -->
+            <div class="mx-auto w-[72px] rounded-md bg-slate-50 px-2 py-2 text-center text-sm text-slate-700">
+              {{ row.unit || '-' }}
             </div>
           </template>
 
