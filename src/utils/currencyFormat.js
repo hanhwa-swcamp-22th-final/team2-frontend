@@ -36,8 +36,10 @@ export function formatCurrencyAmount(amount, currencyCode) {
   const symbol = getCurrencySymbol(resolved)
   const decimals = getCurrencyDecimals(resolved)
   const value = Number(amount || 0)
+  // min = max = decimals 로 통일해 trailing zero 유지. USD $139,998.90 가 $139,998.9
+  // 로 잘려 보이던 F3 해소. KRW/JPY 는 decimals=0 이므로 자연히 정수만 노출.
   const formatted = value.toLocaleString('en-US', {
-    minimumFractionDigits: 0,
+    minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   })
   return `${symbol}${formatted}`

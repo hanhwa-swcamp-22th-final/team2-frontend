@@ -1,7 +1,7 @@
 import { useAuthStore } from './auth'
 import { ref } from 'vue'
 import { fetchCommercialInvoicesPaged } from '@/api/documents'
-import { formatCurrencyAmount } from '@/utils/currencyFormat'
+import { formatCurrencyAmount, getCurrencyDecimals } from '@/utils/currencyFormat'
 
 function formatDate(value) {
   return String(value ?? '').replace(/-/g, '/')
@@ -42,12 +42,15 @@ function normalizeDocStatus(raw, fallback = '발행대기') {
 
 function mapCiResponse(row) {
   const rawItems = row.items?.length ? row.items : parseJsonSafe(row.itemsSnapshot)
+  // F4 — 품목 라인 셀의 소수 자릿수를 통화별로 결정. KRW/JPY=0, 그 외=2.
+  // 이전엔 2자리 고정이라 CI260011(KRW) 도 "12,000.00" 처럼 찍혀 이상했음.
+  const itemDecimals = getCurrencyDecimals(row.currencyCode)
   const items = rawItems.map((item) => ({
     name: item.itemName ?? item.name ?? '-',
     hsCode: item.hsCode ?? '-',
     quantity: String(item.quantity ?? 1),
-    unitPrice: formatNumber(Number(item.unitPrice ?? 0), 2),
-    amount: formatNumber(Number(item.amount ?? 0), 2),
+    unitPrice: formatNumber(Number(item.unitPrice ?? 0), itemDecimals),
+    amount: formatNumber(Number(item.amount ?? 0), itemDecimals),
     remark: item.remark ?? '',
   }))
 
@@ -59,7 +62,9 @@ function mapCiResponse(row) {
     clientName: row.clientName ?? '-',
     clientEmail: row.clientEmail ?? row.client_email ?? '',
     clientAddress: row.clientAddress ?? '-',
-    buyer: row.buyerName ?? '-',
+    // 백엔드 CommercialInvoiceResponse.buyer 필드명이므로 row.buyer 로 읽는다.
+    // 이전 row.buyerName 은 undefined → 항상 '-' 로 떨어져 CI 상세 "바이어" 비어보였음 (F1).
+    buyer: row.buyer ?? row.buyerName ?? '-',
     country: row.country ?? '-',
     // row.currencyCode 가 빈 문자열 ("") 이어도 fallback 이 동작하도록 || 사용.
     // 기존 ?? 는 "" 를 그대로 사용해 통화 기호가 누락됐음 (Issue #10).

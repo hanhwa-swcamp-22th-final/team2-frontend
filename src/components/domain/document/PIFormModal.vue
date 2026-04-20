@@ -831,10 +831,20 @@ watch(
   },
 )
 
+// 수정 모드 초기 진입 시 refreshAutoPricedItems 가 catalog 의 KRW 기준 master price
+// 에 현재 환율을 곱해 기존 저장 unitPrice (외화) 를 덮어쓰는 데이터 손실 버그(B4) 를
+// 일으켰다. 즉 PI260021 을 편집 모달로 열기만 해도 $999.99 가 (KRW_master × 현재_rate)
+// 로 재계산돼 폼에 찍히고, 저장 시 DB 가 덮어씀. edit 모드 초기 실행은 건너뛰고 이후
+// 사용자가 통화/발행일을 명시적으로 바꿀 때만 refresh.
+let currencyDateWatchReady = props.mode !== 'edit'
 watch(
   () => [form.value.currency, form.value.issueDate],
   ([currency, issueDate]) => {
     exchangeRateHint.value = createExchangeRateHint(currency || 'USD', issueDate)
+    if (!currencyDateWatchReady) {
+      currencyDateWatchReady = true
+      return
+    }
     refreshAutoPricedItems()
   },
   { immediate: true },
