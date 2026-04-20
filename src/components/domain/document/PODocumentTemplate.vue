@@ -30,6 +30,15 @@ function extractIncotermPlace(value, namedPlace) {
 function resolvePiReference(linkedDocuments) {
   return linkedDocuments?.find((linkedDocument) => String(linkedDocument.id).startsWith('PI'))?.id || '-'
 }
+
+// B3 — item.unit 에 시드 오타("E121A") 같은 garbage 문자열이 그대로 통과해
+// PDF "UOM" 컬럼에 노출되던 문제. 허용 단위 화이트리스트로 검증, 맞지 않으면 'EA' 폴백.
+const ALLOWED_UOM = new Set(['EA', 'SET', 'PCS', 'BOX', 'PKG', 'KG', 'G', 'L', 'M', 'CM', 'MM'])
+function resolveUom(raw) {
+  const normalized = String(raw ?? '').trim().toUpperCase()
+  if (!normalized) return 'EA'
+  return ALLOWED_UOM.has(normalized) ? normalized : 'EA'
+}
 </script>
 
 <template>
@@ -124,7 +133,7 @@ function resolvePiReference(linkedDocuments) {
           <td class="text-center">{{ String(index + 1).padStart(3, '0') }}</td>
           <td>{{ item.name }}</td>
           <td class="text-center">{{ item.quantity }}</td>
-          <td class="text-center">{{ item.unit || 'EA' }}</td>
+          <td class="text-center">{{ resolveUom(item.unit) }}</td>
           <td class="text-right">{{ item.unitPrice }}</td>
           <td class="text-right font-semibold">{{ item.amount }}</td>
         </tr>
