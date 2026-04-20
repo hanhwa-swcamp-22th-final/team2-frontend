@@ -526,6 +526,9 @@ const summaryRows = computed(() => {
 
   return [
     { label: '거래처', value: detail.value.clientName },
+    // F2 — PO 상세에도 바이어 라인 추가. detail.value.buyer 는 이미 mapPoResponse 가
+    // PI 에서 승계된 값을 전달. 템플릿이 렌더링만 안 하고 있어 "-" 로 보이던 것.
+    { label: '바이어', value: detail.value.buyer || detail.value.buyerName || '-' },
     { label: '영업담당자', value: detail.value.manager || '-' },
     { label: '통화 / 총액', value: `${detail.value.currency} / ${detail.value.totalAmount}` },
     { label: '납기일', value: detail.value.deliveryDate || '-' },

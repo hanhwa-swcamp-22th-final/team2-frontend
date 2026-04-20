@@ -129,6 +129,9 @@ const summaryRows = computed(() => {
 
   return [
     { label: '거래처', value: detail.value.clientName },
+    // F2 — PI 상세 summary 에 바이어 라인 추가. 데이터(detail.value.buyerName) 는 이미
+    // poDocuments 와 동일하게 piDocuments 가 매핑해 주지만 템플릿에 필드가 없어 노출되지 않음.
+    { label: '바이어', value: detail.value.buyerName || detail.value.buyer || '-' },
     { label: '영업담당자', value: detail.value.manager || '-' },
     { label: '통화 / 총액', value: `${detail.value.currency} / ${detail.value.totalAmount}` },
     { label: '납기일', value: detail.value.deliveryDate || '-' },

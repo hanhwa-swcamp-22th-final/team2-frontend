@@ -62,7 +62,8 @@ function mapPlResponse(row) {
     clientName: row.clientName ?? '-',
     clientEmail: row.clientEmail ?? row.client_email ?? '',
     clientAddress: row.clientAddress ?? '-',
-    buyer: row.buyerName ?? '-',
+    // 백엔드 PackingListResponse.buyer 필드명 기준. F1 (CI 와 동일 패턴).
+    buyer: row.buyer ?? row.buyerName ?? '-',
     country: row.country ?? '-',
     itemName: items[0]?.name
       ?? row.itemName
