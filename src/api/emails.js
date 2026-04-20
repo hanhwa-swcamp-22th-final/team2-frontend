@@ -9,6 +9,22 @@ function normalizeEmailStatus(raw) {
   return String(raw)
 }
 
+/**
+ * LocalDateTime ISO 문자열 ("2025-04-10T14:00:00") 또는 LocalDate ("2025-04-10")
+ * 을 사용자 표시용 "2025/04/10 14:00" / "2025/04/10" 로 변환 (Issue #16).
+ * 잘못된 값은 원본 그대로 반환해 표시 누락을 피한다.
+ */
+function formatEmailSentAt(value) {
+  if (!value) return ''
+  const str = String(value)
+  if (str.includes('T')) {
+    const [datePart, timePart = ''] = str.split('T')
+    const hhmm = timePart.substring(0, 5)
+    return hhmm ? `${datePart.replaceAll('-', '/')} ${hhmm}` : datePart.replaceAll('-', '/')
+  }
+  return str.replaceAll('-', '/')
+}
+
 export async function fetchActivityEmails() {
   const { data } = await api.get('/email-logs')
   // 백엔드 응답은 { clientName, types: [{emailLogTypeId, emailDocType}], status: 'failed'|'sent', ... } 형태.
@@ -22,7 +38,7 @@ export async function fetchActivityEmails() {
     recipient: row.recipient ?? row.recipientName ?? row.emailRecipientName ?? '',
     email: row.email ?? row.recipientEmail ?? row.emailRecipientEmail ?? '',
     sender: row.sender ?? row.senderName ?? '-',
-    sentAt: row.sentAt ?? row.sentDate ?? row.emailSentAt ?? '',
+    sentAt: formatEmailSentAt(row.sentAt ?? row.sentDate ?? row.emailSentAt ?? ''),
     status: normalizeEmailStatus(row.status),
   }))
 }

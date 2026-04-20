@@ -124,7 +124,7 @@ function resolvePiReference(linkedDocuments) {
           <td class="text-center">{{ String(index + 1).padStart(3, '0') }}</td>
           <td>{{ item.name }}</td>
           <td class="text-center">{{ item.quantity }}</td>
-          <td class="text-center">EA</td>
+          <td class="text-center">{{ item.unit || 'EA' }}</td>
           <td class="text-right">{{ item.unitPrice }}</td>
           <td class="text-right font-semibold">{{ item.amount }}</td>
         </tr>
