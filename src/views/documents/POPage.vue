@@ -85,6 +85,12 @@ const productSearchOpen = ref(false)
 const productSearchKeyword = ref('')
 const clientSearchContext = ref('filter')
 const pendingCreateFormValue = ref(null)
+// G5: createPurchaseOrder 성공 후 requestPoRegistration 가 실패하면 DRAFT PO 가
+// 서버에 남는다. 같은 buildCreatePayload 결과로 재시도하면 또 다른 DRAFT 가
+// 생겨버려 초안 중복이 쌓이던 문제를 방지하기 위해, 생성된 poId 를 보관하고
+// 다음 시도에서는 create 를 건너뛰고 request-registration 만 재시도한다.
+const pendingDraftPoId = ref(null)
+const createSaving = ref(false)
 const pendingEditRequest = ref(null)
 const ciDocuments = useCiDocuments()
 const piRowsSource = usePiDocuments()
@@ -839,24 +845,39 @@ const deleteApprovalItemSummaryRows = computed(() => {
 })
 
 async function confirmCreateApprovalRequest() {
-  if (!pendingCreateFormValue.value) return
+  if (!pendingCreateFormValue.value || createSaving.value) return
 
+  createSaving.value = true
   try {
-    const payload = buildCreatePayload(pendingCreateFormValue.value)
-    const { poId } = await createPurchaseOrder(payload)
     const userId = authStore.currentUser?.userId
     const approverId = pendingCreateFormValue.value.approverId ?? null
+
+    // Idempotency: 직전 시도에서 DRAFT 는 만들어졌지만 requestPoRegistration 이
+    // 실패했을 경우 pendingDraftPoId 가 살아있다. 이번엔 create 를 스킵하고
+    // requestPoRegistration 만 재시도.
+    let poId = pendingDraftPoId.value
+    if (!poId) {
+      const payload = buildCreatePayload(pendingCreateFormValue.value)
+      const created = await createPurchaseOrder(payload)
+      poId = created.poId
+      pendingDraftPoId.value = poId
+    }
     await requestPoRegistration({ poId, userId, approverId })
     await loadPoDocuments()
 
     createApprovalRequestOpen.value = false
     pendingCreateFormValue.value = null
+    pendingDraftPoId.value = null
     formOpen.value = false
     selectedPi.value = null
     selectedClient.value = null
     success('PO 등록 결재 요청이 전송되었습니다.')
   } catch (e) {
     error(e.response?.data?.message || 'PO 등록 결재 요청 중 오류가 발생했습니다.')
+    // DRAFT 는 남겨둠 (pendingDraftPoId 유지). 모달이 열려 있으면 재시도 시 위
+    // if(!poId) 분기가 create 를 스킵하고 request-registration 만 재시도한다.
+  } finally {
+    createSaving.value = false
   }
 }
 
