@@ -41,6 +41,8 @@ function mapPoResponse(row) {
     unitPrice: String(item.unitPrice ?? 0),
     amount: String(item.amount ?? 0),
     remark: item.remark ?? '',
+    // Issue D — 수정 모달 재제출 시 kg 값 유지. 백엔드 응답에 itemWeight 필드가 포함되면 그대로 pass-through.
+    itemWeight: item.itemWeight ?? null,
   }))
 
   return {
