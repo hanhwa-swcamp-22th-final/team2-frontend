@@ -41,17 +41,32 @@ function normalizeDocStatus(raw, fallback = '발행대기') {
 
 function mapPlResponse(row) {
   const rawItems = row.items?.length ? row.items : parseJsonSafe(row.itemsSnapshot)
-  const items = rawItems.map((item) => ({
-    name: item.itemName ?? item.name ?? '-',
-    quantity: String(item.quantity ?? 1),
-    netWeight: formatNumber(Number(item.netWeight ?? 0), 2),
-    grossWeight: formatNumber(Number(item.grossWeight ?? 0), 2),
-    measurement: formatNumber(Number(item.measurement ?? 0), 2),
-  }))
+  // Issue D 후속 — 라인 Gross Weight = 개당 item_weight(kg) × 수량. po_items_snapshot
+  // JSON 은 itemWeight 키로 개당 중량 담음 (PurchaseOrderCreationService.serializeItemsSnapshot).
+  // netWeight 는 master 에 별도 필드가 없어 동일값 폴백.
+  const items = rawItems.map((item) => {
+    const qty = Number(item.quantity ?? 1) || 0
+    const perItemWeight = Number(item.itemWeight ?? 0) || 0
+    const lineWeight = qty * perItemWeight
+    return {
+      name: item.itemName ?? item.name ?? '-',
+      quantity: String(item.quantity ?? 1),
+      itemWeight: perItemWeight,
+      netWeight: formatNumber(Number(item.netWeight ?? lineWeight), 2),
+      grossWeight: formatNumber(Number(item.grossWeight ?? lineWeight), 2),
+      measurement: formatNumber(Number(item.measurement ?? 0), 2),
+    }
+  })
 
   const totalQuantity = items.reduce((sum, item) => sum + Number(item.quantity), 0)
   const totalNetWeight = items.reduce((sum, item) => sum + Number(String(item.netWeight).replace(/,/g, '')), 0)
-  const totalGrossWeight = items.reduce((sum, item) => sum + Number(String(item.grossWeight).replace(/,/g, '')), 0)
+  const computedGrossFromItems = items.reduce((sum, item) => sum + Number(String(item.grossWeight).replace(/,/g, '')), 0)
+  // DB 의 pl_gross_weight 는 createFromPurchaseOrder SQL 이 SUM(qty×weight) 로 이미
+  // 채움 (Issue D). 우선순위: row.grossWeight(DB) > items 합계. 상세 페이지 0kg 회귀(저녁
+  // QA) 는 여기서 item 합계만 쓰고 DB 값을 무시해 발생. 이제 DB 우선.
+  const totalGrossWeight = Number(row.grossWeight ?? 0) > 0
+    ? Number(row.grossWeight)
+    : computedGrossFromItems
   const totalMeasurement = items.reduce((sum, item) => sum + Number(String(item.measurement).replace(/,/g, '')), 0)
 
   return {
