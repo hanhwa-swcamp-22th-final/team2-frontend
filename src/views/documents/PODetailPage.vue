@@ -695,6 +695,8 @@ function buildManagerUpdatePoPayload(formValue) {
     unitPrice: Number(item.unitPrice ?? 0) || 0,
     amount: Number(item.amount ?? 0) || 0,
     remark: item.remark ?? '',
+    // Issue D — 팀장 수정 시에도 기존 PO 의 itemWeight 를 보존해 PL 재계산이 빗나가지 않게.
+    itemWeight: item.itemWeight != null ? Number(item.itemWeight) : null,
   }))
   const totalAmount = mappedItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
   return {

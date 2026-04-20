@@ -475,6 +475,15 @@ function findItemIdByName(name) {
   return match?.itemId ?? match?.id ?? null
 }
 
+// Issue D — master.items.item_weight(kg) 을 PO 생성 payload 스냅샷에 포함시키기
+// 위해 품목명으로 조회. 스냅샷 후 master 가 바뀌어도 PL 총중량은 PO 시점 값 고정.
+function findItemWeightByName(name) {
+  if (!name) return null
+  const match = itemCatalog.value.find((item) => (item.itemName ?? item.name) === name)
+  const raw = match?.itemWeight ?? match?.weight ?? null
+  return raw == null || raw === '' ? null : Number(raw)
+}
+
 /**
  * POFormModal @save payload 를 백엔드 PurchaseOrderCreateRequest DTO 로 매핑.
  * PO 는 연결 PI 가 이미 거래처 통화로 변환·저장해 둔 외화 단가/금액을 그대로 승계한다.
@@ -502,6 +511,8 @@ function buildCreatePayload(formValue) {
       unitPrice,
       amount,
       remark: item.remark ?? '',
+      // Issue D — master.items.item_weight(kg) 스냅샷. PL 자동생성 총중량 계산에 사용.
+      itemWeight: findItemWeightByName(item.name),
     }
   })
 

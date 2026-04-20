@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from '@/composables/useToast'
 import { fetchContacts, createContact, updateContact, deleteContact } from '@/api/contacts'
+import { applyPhoneMask } from '@/utils/phoneFormat'
 import BaseButton from '@/components/common/BaseButton.vue'
 import FormField from '@/components/common/FormField.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
@@ -92,6 +93,12 @@ function openEdit(contact) {
 
 function closeForm() {
   isFormOpen.value = false
+}
+
+function onContactTelInput(value) {
+  // 숫자만 추출해서 하이픈 포맷 자동 적용. 길이에 따라 3-4-4 (한국 휴대) 또는
+  // 유연하게 ###-####-#### 마스크로 채움. 국가번호는 컨택에 필드가 없어 생략.
+  formTel.value = applyPhoneMask(value, '###-####-####')
 }
 
 function validate() {
@@ -267,7 +274,10 @@ async function handleDelete() {
           <BaseTextField v-model="formEmail" type="email" placeholder="hong@example.com" />
         </FormField>
         <FormField label="전화" :error="formErrors.contactTel">
-          <BaseTextField v-model="formTel" placeholder="010-1234-5678" />
+          <!-- 연락처 입력 편의성: 입력 중 숫자만 추출해 "###-####-####" 포맷으로 하이픈
+               자동 삽입. 컨택은 국가 필드가 없어 국가번호 자동은 생략 (Client/Buyer 폼
+               은 country 기반 prefix 자동). -->
+          <BaseTextField :model-value="formTel" placeholder="010-1234-5678" @update:modelValue="onContactTelInput" />
         </FormField>
       </form>
       <template #footer>
