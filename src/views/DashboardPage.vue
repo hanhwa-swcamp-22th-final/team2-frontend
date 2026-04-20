@@ -316,7 +316,12 @@ const requestItems = computed(() => {
     return allRequestItems.value.filter((item) => item.status === '대기' && canReviewRequest(item))
   }
   if (isSalesMember.value) {
-    return allRequestItems.value.filter((item) => item.requester === currentUser.value?.name)
+    // 백엔드 UserInfo DTO 는 userName 필드로 내려오지만 프론트 다른 곳은
+    // userName 을 우선 사용 → name 폴백. 여기서도 동일 패턴으로 맞춰야 본인이
+    // 요청한 결재가 대시보드 "내 요청 현황" 에 나타난다 (과거 name 하나만 비교해
+    // STAFF 본인 요청이 리스트에서 빠지던 Issue A).
+    const myDisplayName = currentUser.value?.userName || currentUser.value?.name
+    return allRequestItems.value.filter((item) => item.requester === myDisplayName)
   }
   return []
 })

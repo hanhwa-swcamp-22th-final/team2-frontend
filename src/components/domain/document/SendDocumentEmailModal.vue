@@ -39,15 +39,25 @@ const canSubmit = computed(
     !!props.clientId,
 )
 
+// 외국 거래처 대상이 기본이므로 제목 템플릿은 영문으로 기본화한다 (Issue F).
+// 사용자는 모달에서 제목을 자유롭게 수정 가능하므로 국내 거래처면 직접 편집.
+const DOC_TYPE_ENGLISH_LABEL = {
+  PI: 'Proforma Invoice',
+  PO: 'Purchase Order',
+  CI: 'Commercial Invoice',
+  PL: 'Packing List',
+}
+
 watch(
   () => props.open,
   (next) => {
     if (next) {
       recipientName.value = props.defaultRecipientName ?? ''
       recipientEmail.value = props.defaultRecipientEmail ?? ''
+      const englishLabel = DOC_TYPE_ENGLISH_LABEL[props.docType] ?? props.docType
       subject.value = props.documentLabel
-        ? `[${props.docType}] ${props.documentLabel} 송부드립니다.`
-        : `[${props.docType}] 문서 송부`
+        ? `${englishLabel} ${props.documentLabel} — Please find attached`
+        : `${englishLabel} — Document enclosed`
     } else {
       submitting.value = false
     }

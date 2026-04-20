@@ -186,6 +186,10 @@ const poRows = computed(() => {
   return source.filter((row) => [row.poId, row.clientName, row.issueDate].some((value) => String(value).toLowerCase().includes(keyword)))
 })
 
+// 수금완료 처리 시 완료일은 사용자가 모달 내에서 직접 편집 (Issue G).
+// 기본값은 오늘 (YYYY-MM-DD). 미수금 복귀 시 null 처리.
+const editableCollectionDate = ref('')
+
 const statusConfirmRows = computed(() => {
   if (!pendingStatusChange.value) return []
 
@@ -194,7 +198,6 @@ const statusConfirmRows = computed(() => {
     { label: '거래처', value: pendingStatusChange.value.clientName },
     { label: '현재 수금상태', value: pendingStatusChange.value.currentStatus },
     { label: '변경 수금상태', value: pendingStatusChange.value.nextStatus },
-    { label: '수금일자 처리', value: pendingStatusChange.value.collectionDatePolicy, fullWidth: true },
   ]
 })
 
@@ -284,10 +287,11 @@ function openStatusConfirm(row, nextStatusValue) {
     nextStatus,
     nextStatusValue,
     nextCollectionDate,
-    collectionDatePolicy: nextStatus === '수금완료'
-      ? `수금일자가 ${formatCollectionDate(nextCollectionDate)} 로 반영됩니다.`
-      : '수금일자가 초기화되고 화면에는 - 로 표시됩니다.',
   }
+  // 편집 가능한 완료일 초기화 — 수금완료는 기본값 오늘, 미수금 복귀는 빈 값.
+  editableCollectionDate.value = nextStatusValue === 'PAID'
+    ? toIsoDate(nextCollectionDate)
+    : ''
   statusConfirmOpen.value = true
 }
 
@@ -314,8 +318,9 @@ async function confirmStatusChange() {
   try {
     await updateCollection(pending.collectionId, {
       status: pending.nextStatus, // "수금완료" / "미수금"
+      // 사용자가 모달 내 date input 에서 수정한 값 사용. 비워 제출하면 null.
       collectionCompletedDate: pending.nextStatusValue === 'PAID'
-        ? toIsoDate(pending.nextCollectionDate)
+        ? (editableCollectionDate.value || null)
         : null,
     })
     await loadSalesCollectionDocuments()
@@ -686,11 +691,23 @@ function downloadCurrentTablePdf() {
       message="선택한 수금상태를 반영하시겠습니까?"
       :detail-rows="statusConfirmRows"
       confirm-label="변경"
-      helper-text="수금상태 변경 시 수금일자도 함께 조정됩니다."
+      helper-text="수금일자는 기본 오늘 날짜로 채워지며, 필요 시 위 입력에서 수동 조정 가능합니다."
       width="max-w-lg"
       :loading="statusSaving"
       @confirm="confirmStatusChange"
       @cancel="cancelStatusChange"
-    />
+    >
+      <!-- Issue G — 수금완료 전환 시 완료일 input 을 모달 내에서 편집 가능하게. -->
+      <div
+        v-if="pendingStatusChange?.nextStatusValue === 'PAID'"
+        class="rounded-lg border border-slate-200 bg-white px-4 py-3"
+      >
+        <label class="mb-2 block text-xs font-medium text-slate-500">수금 완료일</label>
+        <DateField
+          v-model="editableCollectionDate"
+          :disabled="statusSaving"
+        />
+      </div>
+    </ConfirmModal>
   </div>
 </template>
