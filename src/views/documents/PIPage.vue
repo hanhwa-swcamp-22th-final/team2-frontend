@@ -60,6 +60,7 @@ import { createDocumentClientRows } from '@/utils/documentClientRows'
 import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
 import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
 import { buildSelectOptionsFromRows } from '@/utils/selectOptions'
+import { formatCurrencyAmount } from '@/utils/currencyFormat'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -332,8 +333,10 @@ function parseAmount(value) {
 }
 
 function formatAmount(currency, value) {
-  const symbol = currencySymbolMap[currency] ?? `${currency} `
-  return `${symbol}${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+  // B1 — 승인 검토 모달 품목 라인에서 통화 기호 누락되던 버그(ss_0288tpb39 PI260024 등)
+  // 해소. 공용 formatCurrencyAmount 로 위임해 빈/누락 currency 도 USD 폴백(Issue #10),
+  // 통화별 소수 자릿수(Issue #2) 자동 적용.
+  return formatCurrencyAmount(value, currency)
 }
 
 function downloadPdf(row) {

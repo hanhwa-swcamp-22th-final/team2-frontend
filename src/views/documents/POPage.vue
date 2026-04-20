@@ -60,6 +60,7 @@ import {
 import { canMutateDocument } from '@/utils/documentOwnership'
 import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
 import { buildSelectOptionsFromRows } from '@/utils/selectOptions'
+import { formatCurrencyAmount } from '@/utils/currencyFormat'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -335,9 +336,9 @@ function parseAmount(value) {
 }
 
 function formatAmount(currency, value) {
-  const symbolMap = { USD: '$', EUR: '€', JPY: '¥', KRW: '₩' }
-  const symbol = symbolMap[currency] ?? ''
-  return `${symbol}${Number(value || 0).toLocaleString()}`
+  // B1 — 승인 검토 모달 품목 라인 통화 기호·소수 자릿수 일관화. 공용 formatCurrencyAmount
+  // 로 위임 (Issue #2·#10 공통 픽스 경로).
+  return formatCurrencyAmount(value, currency)
 }
 
 function createComparableItem(item) {
