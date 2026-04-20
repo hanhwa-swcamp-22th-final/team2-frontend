@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BasePagination from '@/components/common/BasePagination.vue'
@@ -18,6 +18,7 @@ import { useSearchModalLookups } from '@/composables/useSearchModalLookups'
 import { useToast } from '@/composables/useToast'
 import { updateCollection } from '@/api/documents'
 import { useSalesCollectionDocuments, loadSalesCollectionDocuments, normalizeSalesCollectionRow } from '@/stores/salesCollectionDocuments'
+import { loadExchangeRates, clearExchangeRates } from '@/stores/exchangeRates'
 import { openTableOutput } from '@/utils/documentOutput'
 import { convertCurrencyAmountToKrw } from '@/utils/exchangeRate'
 import { clientSearchColumns } from '@/utils/searchModalColumns'
@@ -51,6 +52,14 @@ const columns = [
 
 const rowsData = useSalesCollectionDocuments()
 const statusOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'status'))
+
+// 환산매출액(KRW) 컬럼·원화환산 총계는 convertCurrencyAmountToKrw 가 getKrwRate 로
+// 실시간 환율을 참조한다. 페이지 진입 시 rate 가 메모리에 없으면 모든 외화 금액이
+// 0 으로 계산돼 수억대 집계가 0 또는 1:1 수치로 깨진다. 페이지 onMount 에서 강제 로드.
+onMounted(() => {
+  loadExchangeRates()
+})
+onUnmounted(clearExchangeRates)
 
 function createOptionList(values) {
   return [...new Set(values.filter(Boolean))]

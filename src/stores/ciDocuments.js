@@ -1,6 +1,7 @@
 import { useAuthStore } from './auth'
 import { ref } from 'vue'
 import { fetchCommercialInvoicesPaged } from '@/api/documents'
+import { formatCurrencyAmount } from '@/utils/currencyFormat'
 
 function formatDate(value) {
   return String(value ?? '').replace(/-/g, '/')
@@ -11,12 +12,6 @@ function formatNumber(value, maximumFractionDigits = 0) {
     minimumFractionDigits: maximumFractionDigits,
     maximumFractionDigits,
   })
-}
-
-function formatCurrencyAmount(amount, currencyCode) {
-  const symbols = { USD: '$', EUR: '€', JPY: '¥', GBP: '£', AUD: 'A$', CAD: 'C$', SGD: 'S$', AED: 'د.إ', CNY: '¥', MYR: 'RM', THB: '฿', VND: '₫', IDR: 'Rp', INR: '₹', SAR: '﷼', BRL: 'R$', SEK: 'kr', CHF: 'CHF', KRW: '₩' }
-  const symbol = symbols[currencyCode] ?? ''
-  return `${symbol}${formatNumber(amount, 0)}`
 }
 
 function parseJsonSafe(value, fallback = []) {

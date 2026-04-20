@@ -432,7 +432,11 @@ function findProductByName(name) {
 
 function formatUnitPriceValue(value) {
   if (!Number.isFinite(value)) return '0'
-  return String(Math.max(0, Math.round(value)))
+  // 소수점 2자리까지 보존 (USD / EUR 등 외화는 센트 단위가 의미있음).
+  // KRW 는 센트 개념이 없지만 "1000.00" 식 표기가 해되지는 않으므로 단일 포맷 유지.
+  const clamped = Math.max(0, value)
+  const rounded = Math.round(clamped * 100) / 100
+  return String(rounded)
 }
 
 function convertKrwPriceToCurrency(basePrice, currency) {
@@ -459,6 +463,34 @@ function sanitizeNonNegativeInteger(value, fallback = '0') {
   return String(Math.max(0, Math.round(numericValue)))
 }
 
+/**
+ * 소수점 보존 sanitizer.
+ * 입력 중 "." 뒤 자릿수가 아직 없는 상태("250.")를 보존하기 위해 숫자 파싱이
+ * 아니라 문자 단위로 정제한다. 소수점은 첫 하나만 유지, 소수 자리수는 maxDecimals
+ * 로 제한. 통화별 (KRW/JPY = 0, USD/EUR 등 = 2) 로 자릿수를 다르게 주입.
+ */
+function sanitizeNonNegativeDecimal(value, fallback = '0', maxDecimals = 2) {
+  const raw = String(value ?? '').replace(/[^0-9.]/g, '')
+
+  if (raw === '') {
+    return fallback
+  }
+
+  const [head, ...rest] = raw.split('.')
+  if (rest.length === 0) {
+    return head === '' ? fallback : head
+  }
+
+  const tail = rest.join('').slice(0, Math.max(0, maxDecimals))
+  const normalizedHead = head === '' ? '0' : head
+  return maxDecimals === 0 ? normalizedHead : `${normalizedHead}.${tail}`
+}
+
+function unitPriceDecimalsFor(currency) {
+  // KRW 와 JPY 는 소수 단위 없음 (원·엔). 그 외 통화는 2자리까지 허용.
+  return currency === 'KRW' || currency === 'JPY' ? 0 : 2
+}
+
 function handleQuantityChange(item) {
   item.qty = sanitizeNonNegativeInteger(item.qty, '0')
   clearItemError(item.id, 'qty')
@@ -466,7 +498,8 @@ function handleQuantityChange(item) {
 }
 
 function handleUnitPriceChange(item) {
-  item.unitPrice = sanitizeNonNegativeInteger(item.unitPrice, '0')
+  const decimals = unitPriceDecimalsFor(form.value.currency)
+  item.unitPrice = sanitizeNonNegativeDecimal(item.unitPrice, '0', decimals)
   clearItemError(item.id, 'unitPrice')
   updateItemAmount(item)
 }
@@ -603,7 +636,11 @@ function validateForm() {
 
 function formatAmount(value) {
   if (!Number.isFinite(value)) return '0'
-  return Math.max(0, Math.round(value)).toLocaleString('en-US')
+  // 소수점 2자리까지 보존. KRW/JPY 도 동일 포맷이지만 소수 자리 0 으로 입력되면
+  // toLocaleString 이 자연히 정수로 찍음 (100,000).
+  const clamped = Math.max(0, value)
+  const rounded = Math.round(clamped * 100) / 100
+  return rounded.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
 }
 
 function updateItemAmount(item) {
@@ -622,12 +659,13 @@ function normalizeEditItem(item, index) {
   const normalizedQty = parseNumericInput(item.qty ?? item.quantity)
   const normalizedUnitPrice = parseNumericInput(item.unitPrice)
   const normalizedAmount = parseNumericInput(item.amount)
+  const toTwoDecimals = (n) => Math.round(n * 100) / 100
   const resolvedUnitPrice = normalizedUnitPrice > 0
-    ? normalizedUnitPrice
-    : (normalizedAmount > 0 && normalizedQty > 0 ? Math.round(normalizedAmount / normalizedQty) : 0)
+    ? toTwoDecimals(normalizedUnitPrice)
+    : (normalizedAmount > 0 && normalizedQty > 0 ? toTwoDecimals(normalizedAmount / normalizedQty) : 0)
   const resolvedAmount = normalizedAmount > 0
-    ? normalizedAmount
-    : normalizedQty * resolvedUnitPrice
+    ? toTwoDecimals(normalizedAmount)
+    : toTwoDecimals(normalizedQty * resolvedUnitPrice)
 
   return {
     id: item.id ?? index + 1,
