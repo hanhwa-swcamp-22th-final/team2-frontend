@@ -17,6 +17,7 @@ import {
   requestPiDeletion,
   requestPiModification,
   deleteProformaInvoiceDraft,
+  updateProformaInvoiceDraft,
   cancelProformaInvoiceApproval,
   updateApprovalRequest,
 } from '@/api/documents'
@@ -691,11 +692,53 @@ function handleSave(formValue) {
   pendingEditRequest.value = {
     id: sourceRow.value.id,
     approver: formValue.approver || sourceRow.value.approver || '',
+    // formValue 를 보존해 confirmEditApprovalRequest 단계에서 팀장 직접 수정 PUT
+    // payload 를 만들 수 있게 한다 (G3+G4 프론트 반영).
+    formValue,
     nextRow,
     revisedSnapshot,
     changeRows,
   }
   editConfirmOpen.value = true
+}
+
+// 팀장 직접 수정용 PUT payload 빌더. ProformaInvoiceCreateRequest 구조에 맞춤.
+// PI 상세의 sourceRow 는 clientId/currencyId 같은 FK 를 보존하지 않으므로 가능
+// 한 범위 내에서 resolve 하고 나머지는 null 로 둬 백엔드 updateDraft 가 기존
+// 값을 유지하도록 한다.
+function buildManagerUpdatePayload(formValue) {
+  const matchedClient = clientRowsSource.value.find((c) => c.name === formValue.clientName)
+  const currencyCode = formValue.currency || sourceRow.value?.currency || 'USD'
+  const items = (formValue.items ?? []).map((item) => ({
+    itemId: null,
+    itemName: item.name ?? '',
+    quantity: Number(item.qty ?? item.quantity ?? 0) || 0,
+    unit: item.unit ?? '',
+    unitPrice: Number(item.unitPrice ?? 0) || 0,
+    amount: Number(item.amount ?? 0) || 0,
+    remark: item.remark ?? '',
+  }))
+  const totalAmount = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
+  return {
+    piId: null,
+    issueDate: (formValue.issueDate ?? '').replaceAll('/', '-'),
+    clientId: matchedClient?.clientId ?? null,
+    currencyId: null,
+    managerId: sourceRow.value?.managerId ?? authStore.currentUser?.userId ?? null,
+    deliveryDate: (formValue.deliveryDate ?? '').replaceAll('/', '-') || null,
+    incotermsCode: formValue.incoterms || 'FOB',
+    namedPlace: formValue.namedPlace || '',
+    totalAmount,
+    clientName: formValue.clientName || '',
+    clientAddress: formValue.clientAddress || matchedClient?.address || sourceRow.value?.clientAddress || '',
+    country: matchedClient?.country || sourceRow.value?.country || '',
+    currencyCode,
+    exchangeRate: null,
+    managerName: sourceRow.value?.manager || authStore.currentUser?.userName || '',
+    userId: authStore.currentUser?.userId ?? null,
+    remarks: formValue.reason ?? sourceRow.value?.remarks ?? '',
+    items,
+  }
 }
 
 function openClientSearch() {
@@ -747,15 +790,25 @@ async function confirmEditApprovalRequest() {
   if (!pendingEditRequest.value) return
   try {
     const userId = authStore.currentUser?.userId
-    await requestPiModification({ piId: pendingEditRequest.value.id, userId })
+    if (isTeamLeader.value) {
+      // 팀장/ADMIN: 결재 요청 경로를 건너뛰고 PUT /proforma-invoices/{id} 로 즉시
+      // 필드 반영. 백엔드 updateDraft 가 MANAGER 모드에서 CONFIRMED 도 허용하도록
+      // 확장됨 (docs 98bc5d4). 상태는 그대로 유지.
+      const payload = buildManagerUpdatePayload(pendingEditRequest.value.formValue)
+      await updateProformaInvoiceDraft(pendingEditRequest.value.id, payload)
+    } else {
+      await requestPiModification({ piId: pendingEditRequest.value.id, userId })
+    }
     await loadPiDocuments()
 
     editApprovalRequestOpen.value = false
     pendingEditRequest.value = null
     formOpen.value = false
-    success(`${sourceRow.value?.id} 수정 결재 요청이 전송되었습니다.`)
+    success(isTeamLeader.value
+      ? `${sourceRow.value?.id} 수정 내용이 즉시 반영되었습니다.`
+      : `${sourceRow.value?.id} 수정 결재 요청이 전송되었습니다.`)
   } catch (e) {
-    error(e.response?.data?.message || '수정 결재 요청 중 오류가 발생했습니다.')
+    error(e.response?.data?.message || '수정 처리 중 오류가 발생했습니다.')
   }
 }
 

@@ -15,6 +15,7 @@ import POFormModal from '@/components/domain/document/POFormModal.vue'
 import ProductionOrderIssueModal from '@/components/domain/document/ProductionOrderIssueModal.vue'
 import {
   requestPoModification,
+  updatePurchaseOrderDraft,
   validatePoDeletable,
   requestPoDeletion,
   deletePurchaseOrderDraft,
@@ -668,11 +669,52 @@ function handleSave(formValue) {
   pendingEditRequest.value = {
     id: sourceRow.value.id,
     approver: formValue.approver || sourceRow.value.approver || '',
+    formValue,
     nextRow,
     revisedSnapshot,
     changeRows,
   }
   editConfirmOpen.value = true
+}
+
+// 팀장 직접 수정용 PO PUT payload. PurchaseOrderCreateRequest 구조.
+function buildManagerUpdatePoPayload(formValue) {
+  const items = Array.isArray(formValue.items) ? formValue.items : (sourceRow.value?.items ?? [])
+  const mappedItems = items.map((item) => ({
+    itemId: null,
+    itemName: item.name ?? item.itemName ?? '',
+    quantity: Number(item.qty ?? item.quantity ?? 0) || 0,
+    unit: item.unit ?? '',
+    unitPrice: Number(item.unitPrice ?? 0) || 0,
+    amount: Number(item.amount ?? 0) || 0,
+    remark: item.remark ?? '',
+  }))
+  const totalAmount = mappedItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
+  return {
+    poId: null,
+    piId: formValue.linkedPiId || sourceRow.value?.piId || null,
+    issueDate: (sourceRow.value?.issueDate ?? '').replaceAll('/', '-') || null,
+    clientId: null,
+    currencyId: null,
+    managerId: sourceRow.value?.managerId ?? authStore.currentUser?.userId ?? null,
+    deliveryDate: (formValue.deliveryDate ?? sourceRow.value?.deliveryDate ?? '').replaceAll('/', '-') || null,
+    incotermsCode: sourceRow.value?.incoterms || 'FOB',
+    namedPlace: sourceRow.value?.namedPlace || '',
+    sourceDeliveryDate: (sourceRow.value?.sourceDeliveryDate ?? sourceRow.value?.deliveryDate ?? '').replaceAll('/', '-') || null,
+    deliveryDateOverride: Boolean(sourceRow.value?.deliveryDateOverride),
+    totalAmount,
+    clientName: formValue.clientName || sourceRow.value?.clientName || '',
+    clientAddress: sourceRow.value?.clientAddress || '',
+    country: sourceRow.value?.country || '',
+    currencyCode: formValue.currency || sourceRow.value?.currency || 'USD',
+    managerName: sourceRow.value?.manager || authStore.currentUser?.userName || '',
+    userId: authStore.currentUser?.userId ?? null,
+    remarks: formValue.reason ?? sourceRow.value?.remarks ?? '',
+    productionRoute: formValue.productionRoute ?? sourceRow.value?.productionRoute ?? 'DIRECT',
+    productionAssigneeId: formValue.productionAssigneeId ?? sourceRow.value?.productionAssigneeId ?? null,
+    shippingAssigneeId: formValue.shippingAssigneeId ?? sourceRow.value?.shippingAssigneeId ?? null,
+    items: mappedItems,
+  }
 }
 
 function openPiSearch() {
@@ -814,15 +856,24 @@ async function confirmEditApprovalRequest() {
 
   try {
     const userId = authStore.currentUser?.userId
-    await requestPoModification({ poId: pendingEditRequest.value.id, userId })
+    if (isTeamLeader.value) {
+      // 팀장: 결재 경로 건너뛰고 PUT /purchase-orders/{id} 로 즉시 필드 반영.
+      // 백엔드 updateDraft 가 MANAGER 모드에서 CONFIRMED 도 허용 (docs 98bc5d4).
+      const payload = buildManagerUpdatePoPayload(pendingEditRequest.value.formValue)
+      await updatePurchaseOrderDraft(pendingEditRequest.value.id, payload)
+    } else {
+      await requestPoModification({ poId: pendingEditRequest.value.id, userId })
+    }
     await loadPoDocuments()
 
     editApprovalRequestOpen.value = false
     pendingEditRequest.value = null
     formOpen.value = false
-    success(`${sourceRow.value?.id ?? ''} 수정 결재 요청이 전송되었습니다.`)
+    success(isTeamLeader.value
+      ? `${sourceRow.value?.id ?? ''} 수정 내용이 즉시 반영되었습니다.`
+      : `${sourceRow.value?.id ?? ''} 수정 결재 요청이 전송되었습니다.`)
   } catch (e) {
-    error(e.response?.data?.message || 'PO 수정 결재 요청 중 오류가 발생했습니다.')
+    error(e.response?.data?.message || 'PO 수정 처리 중 오류가 발생했습니다.')
   }
 }
 
