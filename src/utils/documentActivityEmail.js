@@ -1,6 +1,7 @@
 import { fetchBuyersByClient, fetchClients, fetchCurrencies, fetchItems, fetchPorts } from '@/api/master'
 import { api } from '@/lib/api'
 import { resolveMasterCurrency, resolvePaymentTermLabel, resolvePortLabel } from '@/utils/ciplMaster'
+import { formatCurrencyAmount } from '@/utils/currencyFormat'
 import { resolveIncotermState } from '@/utils/incoterms'
 
 const clientsByName = new Map()
@@ -64,11 +65,6 @@ function formatNumber(value, maximumFractionDigits = 0) {
   })
 }
 
-function formatCurrencyAmount(amount, currencyCode) {
-  const symbolMap = { KRW: '₩', USD: '$', EUR: '€', JPY: '¥' }
-  const symbol = symbolMap[currencyCode] ?? ''
-  return `${symbol}${formatNumber(amount, 0)}`
-}
 
 function getClientByName(clientName) {
   return clientsByName.get(clientName) ?? null

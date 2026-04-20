@@ -143,9 +143,13 @@ function parseNumericValue(value) {
 }
 
 function formatCurrencyValue(currency, value) {
-  const symbolMap = { KRW: '₩', USD: '$', EUR: '€', JPY: '¥' }
-  const symbol = symbolMap[currency] ?? `${currency} `
-  return `${symbol}${Math.round(value).toLocaleString('en-US')}`
+  // 통화별 소수 자릿수 자동 적용 (KRW/JPY=0, USD/EUR 등=2). 이전 Math.round 강제
+  // 정수화로 $3,999.97 → $4,000 로 표시되던 버그(Issue #2) 해소.
+  const numeric = Number(value || 0)
+  const decimals = currency === 'KRW' || currency === 'JPY' ? 0 : 2
+  const symbolMap = { KRW: '₩', USD: '$', EUR: '€', JPY: '¥', GBP: '£', AUD: 'A$', CAD: 'C$', CNY: '¥', SGD: 'S$', CHF: 'CHF' }
+  const symbol = symbolMap[currency] ?? `${currency || ''} `
+  return `${symbol}${numeric.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: decimals })}`
 }
 
 const totalItemQuantity = computed(() => (

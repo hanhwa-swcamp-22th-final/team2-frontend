@@ -2,6 +2,7 @@ import { useAuthStore } from './auth'
 import { ref } from 'vue'
 import { fetchProformaInvoicesPaged } from '@/api/documents'
 import { loadApprovalRequests, pickLatestRequestFor } from './approvalRequests'
+import { formatCurrencyAmount } from '@/utils/currencyFormat'
 
 function tryParseJson(value, fallback = null) {
   if (typeof value !== 'string') return value ?? fallback
@@ -20,12 +21,6 @@ function formatTimestamp(value) {
 
 function formatDate(value) {
   return String(value ?? '').replace(/-/g, '/')
-}
-
-function formatCurrencyAmount(amount, currencyCode) {
-  const symbols = { USD: '$', EUR: '€', JPY: '¥', GBP: '£', AUD: 'A$', CAD: 'C$', SGD: 'S$', AED: 'د.إ', CNY: '¥', MYR: 'RM', THB: '฿', VND: '₫', IDR: 'Rp', INR: '₹', SAR: '﷼', BRL: 'R$', SEK: 'kr', CHF: 'CHF', KRW: '₩' }
-  const symbol = symbols[currencyCode] ?? ''
-  return `${symbol}${Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 }
 
 function mapPiResponse(row) {
