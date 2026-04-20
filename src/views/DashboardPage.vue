@@ -91,13 +91,50 @@ function findLatestRow(rows, dateField) {
   return [...rows].sort((left, right) => parseSlashDate(right?.[dateField]) - parseSlashDate(left?.[dateField]))[0] ?? null
 }
 
+// 카드에 어떤 상태를 어떤 순서로 노출할지 정의. 결재대기/초안 같이 "액션 필요" 상태를
+// 앞쪽에 배치해 시선이 먼저 가게 한다. 가장 중요하지 않은 "확정·발행완료" 는 뒤.
+const STATUS_PRIORITY = [
+  '결재대기',
+  '초안',
+  '등록요청',
+  '수정요청',
+  '삭제요청',
+  '반려',
+  '발행대기',
+  '발송대기',
+  '발송완료',
+  '발행완료',
+  '확정',
+  '취소',
+  '삭제',
+]
+
+function sortByStatusPriority(label) {
+  const index = STATUS_PRIORITY.indexOf(label)
+  return index === -1 ? STATUS_PRIORITY.length : index
+}
+
+function buildStatusBuckets(rows) {
+  const counts = new Map()
+  for (const row of rows) {
+    const status = String(row?.status ?? '').trim() || '기타'
+    counts.set(status, (counts.get(status) ?? 0) + 1)
+  }
+  return [...counts.entries()]
+    .filter(([, count]) => count > 0)
+    .sort(([a], [b]) => sortByStatusPriority(a) - sortByStatusPriority(b))
+    .map(([label, count]) => ({ label, count }))
+}
+
 function createSummaryCard(id, title, rows, dateField, to, iconClass, helperPrefix = '최근 발행') {
   const latestRow = findLatestRow(rows, dateField)
   return {
     id,
     title,
     count: String(rows.length),
-    status: latestRow?.status || '-',
+    // 이전에는 "최신 문서 한 건의 상태" 만 표시해 전체 현황을 오인할 여지가 컸다.
+    // 지금은 각 상태별 카운트를 같이 노출 (예: 결재대기 2 · 초안 3 · 확정 11).
+    statusBuckets: buildStatusBuckets(rows),
     helper: latestRow?.[dateField] ? `${helperPrefix} ${latestRow[dateField]}` : '데이터 없음',
     to,
     iconClass,
@@ -106,14 +143,13 @@ function createSummaryCard(id, title, rows, dateField, to, iconClass, helperPref
 
 const summaryCards = computed(() => {
   if (isProductionUser.value) {
-    const inProgressCount = productionOrderDocuments.value.filter((row) => row.status !== '생산완료').length
     return [
       {
         id: 'production',
         title: '생산 관리',
         count: String(productionOrderDocuments.value.length),
-        status: inProgressCount > 0 ? '진행중' : '생산완료',
-        helper: `진행중 ${inProgressCount}건`,
+        statusBuckets: buildStatusBuckets(productionOrderDocuments.value),
+        helper: '',
         to: '/production',
         iconClass: 'fa-industry',
       },
@@ -121,40 +157,30 @@ const summaryCards = computed(() => {
   }
 
   if (isShippingUser.value) {
-    const pendingCount = shipmentStatusDocuments.value.filter((row) => row.status !== '출하완료').length
     return [
       {
         id: 'shipments',
         title: '출하현황',
         count: String(shipmentStatusDocuments.value.length),
-        status: pendingCount > 0 ? '출하준비' : '출하완료',
-        helper: `출하완료 대기 ${pendingCount}건`,
+        statusBuckets: buildStatusBuckets(shipmentStatusDocuments.value),
+        helper: '',
         to: '/shipments',
         iconClass: 'fa-truck',
-      },
-      {
-        id: 'shipment-pending',
-        title: '출하완료 대기',
-        count: String(pendingCount),
-        status: pendingCount > 0 ? '출하준비' : '출하완료',
-        helper: pendingCount > 0 ? '미완료 출하 건 확인' : '대기 건이 없습니다.',
-        to: { path: '/shipments', query: { status: '출하준비' } },
-        iconClass: 'fa-hourglass-half',
       },
     ]
   }
 
+  const ciPlRows = [...ciDocuments.value, ...plDocuments.value]
+  const latestCiPl = findLatestRow(ciPlRows, 'issueDate')
   return [
     createSummaryCard('pi', 'PI 관리', piDocuments.value, 'issueDate', '/pi', 'fa-file-invoice'),
     createSummaryCard('po', 'PO 관리', poDocuments.value, 'issueDate', '/po', 'fa-file-contract'),
     {
       id: 'cipl',
       title: 'CI/PL 관리',
-      count: String(ciDocuments.value.length + plDocuments.value.length),
-      status: findLatestRow([...ciDocuments.value, ...plDocuments.value], 'issueDate')?.status || '-',
-      helper: findLatestRow([...ciDocuments.value, ...plDocuments.value], 'issueDate')?.issueDate
-        ? `최근 발행 ${findLatestRow([...ciDocuments.value, ...plDocuments.value], 'issueDate')?.issueDate}`
-        : '데이터 없음',
+      count: String(ciPlRows.length),
+      statusBuckets: buildStatusBuckets(ciPlRows),
+      helper: latestCiPl?.issueDate ? `최근 발행 ${latestCiPl.issueDate}` : '데이터 없음',
       to: '/ci',
       iconClass: 'fa-file-pdf',
     },
@@ -266,7 +292,18 @@ function buildFallbackReview(docType, row) {
   }
 }
 
+// 24 시간 이내 요청 임계값. NEW 배지 + 행 강조용.
+const NEW_REQUEST_WINDOW_MS = 24 * 60 * 60 * 1000
+
+function isRecentlyRequested(requestedAt) {
+  const ts = parseRequestedAt(requestedAt)
+  if (!ts) return false
+  return Date.now() - ts < NEW_REQUEST_WINDOW_MS
+}
+
 function createRequestItem(docType, row) {
+  const requestedAt = row.approvalRequestedAt || '-'
+  const status = row.approvalStatus || '-'
   return {
     id: `${docType}-${row.id}`,
     docType,
@@ -277,11 +314,14 @@ function createRequestItem(docType, row) {
     company: row.clientName || '-',
     requester: row.approvalRequestedBy || '미지정',
     approver: row.approverName || row.approver || '미지정',
-    status: row.approvalStatus || '-',
+    status,
     requestStatus: row.requestStatus || '-',
-    requestedAt: row.approvalRequestedAt || '-',
+    requestedAt,
     rejectReason: row.approvalRejectReason || '',
     urgent: false,
+    // "대기" 상태 + 24h 이내 요청된 건은 "NEW" 배지 + 행 강조. 결재자가 신규 유입을
+    // 한눈에 식별하도록 (기존에는 status 만 보이고 "얼마나 새 요청인지" 단서 없음).
+    isNew: status === '대기' && isRecentlyRequested(requestedAt),
     routeName: docType === 'PI' ? 'pi-detail' : 'po-detail',
     review: row.approvalReview || buildFallbackReview(docType, row),
   }
@@ -527,7 +567,7 @@ async function confirmPackageDelete() {
         v-for="card in summaryCards"
         :key="card.id"
         :to="card.to"
-        class="min-h-[136px] rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md sm:min-h-[148px]"
+        class="min-h-[148px] rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md sm:min-h-[168px]"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-50">
@@ -536,16 +576,29 @@ async function confirmPackageDelete() {
               :class="card.iconClass"
             />
           </div>
-          <StatusBadge :value="card.status" />
-        </div>
-        <div class="mt-4 flex items-end justify-between gap-3">
           <div class="min-w-0">
-            <div class="truncate text-xs font-medium text-slate-500">{{ card.title }}</div>
-            <div class="mt-1 text-2xl font-bold text-slate-800">{{ card.count }}</div>
+            <div class="truncate text-right text-xs font-medium text-slate-500">{{ card.title }}</div>
+            <div class="mt-0.5 text-right text-2xl font-bold text-slate-800">{{ card.count }}</div>
           </div>
+        </div>
+        <!--
+          상태별 카운트 칩: "결재대기 2 · 초안 3 · 확정 11" 식으로 전체 현황을 한 눈에.
+          최신 문서 한 건의 상태만 보여주던 이전 배지는 오인 여지 있어 제거.
+        -->
+        <div v-if="card.statusBuckets?.length" class="mt-3 flex flex-wrap gap-1.5">
+          <span
+            v-for="bucket in card.statusBuckets"
+            :key="bucket.label"
+            class="inline-flex items-center gap-1 rounded-md bg-slate-50 px-2 py-0.5 text-xs text-slate-600"
+          >
+            <StatusBadge :value="bucket.label" />
+            <span class="font-semibold text-slate-800">{{ bucket.count }}</span>
+          </span>
+        </div>
+        <div v-if="card.helper" class="mt-2 flex items-center justify-between gap-3">
+          <div class="truncate text-xs text-slate-400">{{ card.helper }}</div>
           <i class="fas fa-chevron-right text-xs text-slate-300" />
         </div>
-        <div class="mt-3 truncate text-xs text-slate-400">{{ card.helper }}</div>
       </RouterLink>
     </section>
 
@@ -599,9 +652,19 @@ async function confirmPackageDelete() {
         v-for="item in requestItems"
         :key="item.id"
         class="flex cursor-pointer flex-col items-start gap-3 px-5 py-3.5 transition hover:bg-slate-50/50 sm:flex-row sm:items-center sm:justify-between"
+        :class="item.isNew ? 'bg-amber-50/40 hover:bg-amber-50/60' : ''"
         @click="openRequestReview(item)"
       >
         <div class="flex min-w-0 items-center gap-3">
+          <!-- NEW 표시 점: 24h 이내 요청된 대기 건에만 노출. 행 배경 강조와 함께 신규 유입 식별. -->
+          <span
+            v-if="item.isNew"
+            class="relative flex h-2 w-2 flex-shrink-0"
+            title="24시간 이내 신규 요청"
+          >
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+            <span class="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+          </span>
           <div
             class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg"
             :class="item.actionLabel === '삭제' ? 'bg-red-50' : 'bg-blue-50'"
@@ -612,7 +675,10 @@ async function confirmPackageDelete() {
             />
           </div>
           <div class="min-w-0">
-            <div class="truncate text-sm font-medium text-slate-800">
+            <div
+              class="truncate text-sm text-slate-800"
+              :class="item.isNew ? 'font-semibold' : 'font-medium'"
+            >
               {{ item.docType }} {{ item.docId }} — {{ item.actionLabel }} 요청
             </div>
             <div class="truncate text-xs text-slate-400 sm:whitespace-normal">
@@ -622,8 +688,14 @@ async function confirmPackageDelete() {
         </div>
         <div class="flex flex-shrink-0 items-center gap-2 self-end sm:self-auto">
           <span
+            v-if="item.isNew"
+            class="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700"
+          >
+            NEW
+          </span>
+          <span
             v-if="item.urgent"
-            class="rounded px-1.5 py-0.5 text-[10px] font-bold text-red-600 bg-red-50"
+            class="rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-bold text-red-600"
           >
             긴급
           </span>
