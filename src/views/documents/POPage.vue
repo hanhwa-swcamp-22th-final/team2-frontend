@@ -531,6 +531,9 @@ function buildCreatePayload(formValue) {
     userId: authStore.currentUser?.userId ?? null,
     // 특기사항 (N4): POFormModal 은 폼에 reason 필드가 없어도 미래 대비 pass-through.
     remarks: formValue.reason ?? '',
+    // 바이어 이름 (Issue C): 연결 PI 에 저장된 buyerName 을 그대로 승계.
+    // PO 저장 시 함께 보관되어 CI.ci_buyer / PL.pl_buyer 로 전이되고, PDF·결재 모달에 노출.
+    buyerName: linkedPi?.buyerName || formValue.buyerName || '',
     // Step C — 후속 흐름 분기 + 담당자. 백엔드가 미전달 시 DIRECT 기본.
     productionRoute: formValue.productionRoute ?? 'DIRECT',
     productionAssigneeId: formValue.productionAssigneeId ?? null,

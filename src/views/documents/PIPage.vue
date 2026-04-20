@@ -612,6 +612,9 @@ function buildCreatePayload(formValue) {
     userId: authStore.currentUser?.userId ?? null,
     // 특기사항 (N4): 폼의 reason 필드를 백엔드 remarks 컬럼으로 매핑.
     remarks: formValue.reason ?? '',
+    // 바이어 이름 (Issue C): PIFormModal 의 바이어 드롭다운 선택값을 그대로 전달.
+    // PI 에 저장된 뒤 PO 생성 시 승계되고, CI/PL 로도 전이된다.
+    buyerName: formValue.buyerName ?? '',
     items,
   }
 }

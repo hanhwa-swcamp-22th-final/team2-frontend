@@ -741,6 +741,8 @@ function buildManagerUpdatePayload(formValue) {
     managerName: sourceRow.value?.manager || authStore.currentUser?.userName || '',
     userId: authStore.currentUser?.userId ?? null,
     remarks: formValue.reason ?? sourceRow.value?.remarks ?? '',
+    // Issue C — 팀장 즉시 수정 경로도 buyerName 을 pass-through.
+    buyerName: formValue.buyerName ?? sourceRow.value?.buyerName ?? '',
     items,
   }
 }
