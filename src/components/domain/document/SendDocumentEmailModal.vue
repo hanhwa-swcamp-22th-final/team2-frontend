@@ -6,6 +6,7 @@ import BaseModal from '@/components/common/BaseModal.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import { useToast } from '@/composables/useToast'
 import { sendDocumentEmail } from '@/api/emails'
+import { buildDocumentPdfAttachment } from '@/utils/documentOutput'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -17,6 +18,8 @@ const props = defineProps({
   poId: { type: String, default: '' },
   // 모달 상단에 노출할 문서 식별자 (예: 'CI-2026-0001')
   documentLabel: { type: String, default: '' },
+  // 메일 첨부 PDF를 현재 미리보기와 같은 HTML 빌더로 렌더링하기 위한 문서 데이터
+  document: { type: Object, default: null },
   // 기본 수신자 정보 (거래처 담당자 등)
   defaultRecipientName: { type: String, default: '' },
   defaultRecipientEmail: { type: String, default: '' },
@@ -30,6 +33,7 @@ const recipientName = ref('')
 const recipientEmail = ref('')
 const subject = ref('')
 const submitting = ref(false)
+const submitStatus = ref('')
 
 // clientId 가 0/null 이라도 수신자 이메일·제목만 있으면 발송 허용한다.
 // (과거 빌드에서 생성된 PO/CI/PL 은 ClientResponse.id 필드 명명 버그로 clientId=0 로 저장됐는데,
@@ -63,6 +67,7 @@ watch(
         : `${englishLabel} — Document enclosed`
     } else {
       submitting.value = false
+      submitStatus.value = ''
     }
   },
 )
@@ -76,7 +81,16 @@ async function handleSubmit() {
   if (!canSubmit.value) return
 
   submitting.value = true
+  submitStatus.value = '첨부 PDF 생성 중...'
   try {
+    const attachments = []
+    if (props.document) {
+      attachments.push(await buildDocumentPdfAttachment(props.docType, props.document, {
+        filename: props.documentLabel || props.document?.id || props.docType,
+      }))
+    }
+
+    submitStatus.value = '메일 발송 중...'
     const payload = {
       // clientId 가 비어있는 과거 문서도 발송 가능하도록 0 으로 fallback.
       // 백엔드 EmailSendRequest 는 @NotNull 이라 0 은 통과(로그에 clientId=0 기록).
@@ -86,6 +100,7 @@ async function handleSubmit() {
       emailRecipientName: recipientName.value.trim() || undefined,
       emailRecipientEmail: recipientEmail.value.trim(),
       docTypes: [props.docType],
+      attachments,
     }
     const response = await sendDocumentEmail(payload)
     if (response?.status === 'SENT') {
@@ -96,10 +111,11 @@ async function handleSubmit() {
       toast.error(response?.message || '메일 발송에 실패했습니다.')
     }
   } catch (error) {
-    const message = error?.response?.data?.message ?? '메일 발송에 실패했습니다.'
+    const message = error?.response?.data?.message ?? error?.message ?? '메일 발송에 실패했습니다.'
     toast.error(message)
   } finally {
     submitting.value = false
+    submitStatus.value = ''
   }
 }
 </script>
@@ -145,7 +161,8 @@ async function handleSubmit() {
       </div>
 
       <div class="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
-        <p>첨부 파일은 서버에서 자동으로 생성되어 첨부됩니다 ({{ docType }} PDF).</p>
+        <p v-if="document">첨부 파일은 현재 미리보기 양식 그대로 PDF로 렌더링되어 첨부됩니다 ({{ docType }} PDF).</p>
+        <p v-else>첨부 파일은 서버에서 자동으로 생성되어 첨부됩니다 ({{ docType }} PDF).</p>
         <p v-if="!clientId" class="mt-1 text-amber-600">
           ⚠ 거래처 ID 가 문서에 기록되어 있지 않습니다. 메일은 발송되지만 이력에 거래처 연결이 누락될 수 있습니다.
         </p>
@@ -160,7 +177,7 @@ async function handleSubmit() {
         <template #leading>
           <i class="fas fa-paper-plane text-xs" aria-hidden="true"></i>
         </template>
-        {{ submitting ? '발송 중...' : '발송' }}
+        {{ submitting ? (submitStatus || '발송 중...') : '발송' }}
       </BaseButton>
     </template>
   </BaseModal>

@@ -935,6 +935,13 @@ export function openTableOutput({ title, subtitle = '', columns = [], rows = [],
  * @param {boolean} autoPrint - true면 자동으로 인쇄 대화상자 표시
  */
 export function openDocumentOutputByType(type, doc, autoPrint = false) {
+  const html = buildDocumentOutputHtmlByType(type, doc)
+  if (!html) return false
+
+  return openPrintWindow(html, autoPrint)
+}
+
+export function buildDocumentOutputHtmlByType(type, doc) {
   const builders = {
     PI: buildPIOutputHtml,
     PO: buildPOOutputHtml,
@@ -947,11 +954,27 @@ export function openDocumentOutputByType(type, doc, autoPrint = false) {
   const builder = builders[type]
   if (!builder) {
     console.warn(`[documentOutput] 알 수 없는 문서 유형: ${type}`)
-    return false
+    return ''
   }
 
-  const html = builder(doc)
-  return openPrintWindow(html, autoPrint)
+  return builder(doc)
+}
+
+export async function buildDocumentPdfAttachment(type, doc, { filename } = {}) {
+  const html = buildDocumentOutputHtmlByType(type, doc)
+  if (!html) {
+    throw new Error(`지원하지 않는 문서 유형입니다: ${type}`)
+  }
+
+  const pdfBlob = await renderHtmlToPdfBlob(html)
+  const contentBase64 = await blobToBase64(pdfBlob)
+  const resolvedFilename = normalizePdfFilename(filename || doc?.id || type || 'document')
+
+  return {
+    filename: resolvedFilename,
+    contentType: 'application/pdf',
+    contentBase64,
+  }
 }
 
 /**
@@ -986,4 +1009,133 @@ function openPrintWindow(html, autoPrint) {
   setTimeout(revokePreviewUrl, 5000)
 
   return true
+}
+
+async function renderHtmlToPdfBlob(html) {
+  const iframe = await createHiddenDocumentFrame(markCanvasSafeImages(html))
+
+  try {
+    const frameDocument = iframe.contentDocument
+    const source = frameDocument?.body
+    if (!source) {
+      throw new Error('PDF 렌더링 대상 문서를 열 수 없습니다.')
+    }
+
+    await waitForFrameAssets(frameDocument)
+
+    const pageWidth = 595.28
+    const sourceWidth = Math.max(794, source.scrollWidth || source.offsetWidth || 794)
+    const { jsPDF } = await import('jspdf')
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: 'a4',
+      compress: true,
+    })
+
+    return await new Promise((resolve, reject) => {
+      const htmlRenderResult = pdf.html(source, {
+        callback: (doc) => {
+          try {
+            resolve(doc.output('blob'))
+          } catch (error) {
+            reject(error)
+          }
+        },
+        margin: [0, 0, 0, 0],
+        width: pageWidth,
+        windowWidth: sourceWidth,
+        autoPaging: 'text',
+        html2canvas: {
+          backgroundColor: '#ffffff',
+          scale: 0.72,
+          useCORS: true,
+          allowTaint: false,
+        },
+      })
+      if (htmlRenderResult && typeof htmlRenderResult.catch === 'function') {
+        htmlRenderResult.catch(reject)
+      }
+    })
+  } finally {
+    iframe.remove()
+  }
+}
+
+function createHiddenDocumentFrame(html) {
+  return new Promise((resolve, reject) => {
+    const iframe = document.createElement('iframe')
+    iframe.setAttribute('aria-hidden', 'true')
+    iframe.style.position = 'fixed'
+    iframe.style.left = '-10000px'
+    iframe.style.top = '0'
+    iframe.style.width = '794px'
+    iframe.style.height = '1123px'
+    iframe.style.border = '0'
+    iframe.style.visibility = 'hidden'
+
+    const timeoutId = window.setTimeout(() => {
+      iframe.remove()
+      reject(new Error('PDF 렌더링 시간이 초과되었습니다.'))
+    }, 12000)
+
+    iframe.addEventListener(
+      'load',
+      () => {
+        window.clearTimeout(timeoutId)
+        resolve(iframe)
+      },
+      { once: true },
+    )
+
+    document.body.appendChild(iframe)
+    iframe.srcdoc = html
+  })
+}
+
+async function waitForFrameAssets(frameDocument) {
+  try {
+    await frameDocument.fonts?.ready
+  } catch (error) {
+    // Font loading failure should not block email sending.
+  }
+
+  const images = Array.from(frameDocument.images || [])
+  await Promise.all(images.map((image) => {
+    if (image.complete) return Promise.resolve()
+    return new Promise((resolve) => {
+      const finish = () => resolve()
+      image.addEventListener('load', finish, { once: true })
+      image.addEventListener('error', finish, { once: true })
+      window.setTimeout(finish, 3000)
+    })
+  }))
+
+  await new Promise((resolve) => window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(resolve)
+  }))
+}
+
+function markCanvasSafeImages(html) {
+  return html.replaceAll('<img ', '<img crossorigin="anonymous" ')
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.addEventListener('load', () => {
+      const result = String(reader.result || '')
+      const [, base64 = ''] = result.split(',')
+      resolve(base64)
+    })
+    reader.addEventListener('error', () => reject(reader.error))
+    reader.readAsDataURL(blob)
+  })
+}
+
+function normalizePdfFilename(filename) {
+  const base = String(filename || 'document')
+    .replace(/[\\/:*?"<>|]/g, '_')
+    .trim() || 'document'
+  return base.toLowerCase().endsWith('.pdf') ? base : `${base}.pdf`
 }
