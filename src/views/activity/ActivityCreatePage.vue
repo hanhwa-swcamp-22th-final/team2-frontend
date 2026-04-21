@@ -18,7 +18,7 @@ import SearchModal from '@/components/common/SearchModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const { warning, error } = useToast()
+const { success, warning, error } = useToast()
 
 // ── state ──────────────────────────────────────────────────
 const isSubmitting = ref(false)
@@ -253,7 +253,7 @@ async function handleSubmit() {
   }
   isSubmitting.value = true
   try {
-    await createActivity({
+    const savedActivity = await createActivity({
       clientId:             formClient.value,
       activityType:         formType.value,
       activityDate:         formDate.value,
@@ -264,10 +264,14 @@ async function handleSubmit() {
       activityScheduleFrom: isSchedule.value ? formScheduleFrom.value : undefined,
       activityScheduleTo:   isSchedule.value ? formScheduleTo.value : undefined,
     })
-    router.push('/activities')
+    success('기록이 등록되었습니다.')
+    const savedActivityId = savedActivity?.id ?? savedActivity?.activityId
+    router.push(savedActivityId
+      ? { path: '/activities', query: { createdActivityId: String(savedActivityId) } }
+      : '/activities')
   } catch (e) {
     console.error('기록 등록 실패', e)
-    error('기록 등록에 실패했습니다. 다시 시도해주세요.')
+    error(e?.response?.data?.message || '기록 등록에 실패했습니다. 다시 시도해주세요.')
   } finally {
     isSubmitting.value = false
   }

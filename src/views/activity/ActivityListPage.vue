@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { fetchActivities, deleteActivity, updateActivity } from '@/api/activity'
+import { useRoute, useRouter } from 'vue-router'
+import { fetchActivity, fetchActivities, deleteActivity, updateActivity } from '@/api/activity'
 import { fetchClients } from '@/api/master'
 import { useToast } from '@/composables/useToast'
 import ActivityDetailModal from '@/components/domain/activity/ActivityDetailModal.vue'
@@ -21,7 +21,8 @@ import TableActions from '@/components/common/TableActions.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 
 const router = useRouter()
-const { error } = useToast()
+const route = useRoute()
+const { success, error } = useToast()
 
 // ── 필터 상태 ──────────────────────────────────────────────
 const isFilterOpen = ref(false)
@@ -76,6 +77,38 @@ function resetFilters() {
 const activities = ref([])
 const clients = ref([])
 
+function activityIdOf(activity) {
+  return activity?.id ?? activity?.activityId
+}
+
+function upsertActivity(activity) {
+  const activityId = activityIdOf(activity)
+  if (!activityId) return
+  const exists = activities.value.some((row) => String(activityIdOf(row)) === String(activityId))
+  activities.value = exists
+    ? activities.value.map((row) => String(activityIdOf(row)) === String(activityId) ? activity : row)
+    : [activity, ...activities.value]
+}
+
+async function ensureCreatedActivityVisible() {
+  const rawId = Array.isArray(route.query.createdActivityId)
+    ? route.query.createdActivityId[0]
+    : route.query.createdActivityId
+  if (!rawId) return
+  const existing = activities.value.find((activity) => String(activityIdOf(activity)) === String(rawId))
+  if (existing) {
+    openDetail(existing)
+    return
+  }
+  try {
+    const activity = await fetchActivity(rawId)
+    upsertActivity(activity)
+    openDetail(activity)
+  } catch (e) {
+    console.error('생성 기록 상세 로드 실패', e)
+  }
+}
+
 async function loadActivities() {
   try {
     activities.value = await fetchActivities()
@@ -93,6 +126,7 @@ onMounted(async () => {
     ])
     activities.value = activityData
     clients.value = clientData
+    await ensureCreatedActivityVisible()
   } catch (e) {
     console.error('데이터 로드 실패', e)
     error('데이터를 불러오지 못했습니다. 페이지를 새로고침해주세요.')
@@ -174,7 +208,7 @@ const isSaving = ref(false)
 
 async function handleSave(updated) {
   if (isSaving.value) return
-  const activityId = editActivity.value?.id
+  const activityId = activityIdOf(editActivity.value)
   if (!activityId) return
   isSaving.value = true
   try {
@@ -182,6 +216,7 @@ async function handleSave(updated) {
     // 이전엔 폼 payload 를 로컬 row 에 spread 해서 type/author 등 서버 가공값이
     // 덮이지 않아 목록이 stale 로 보임. 서버 응답을 신뢰하기 위해 목록 재fetch.
     await loadActivities()
+    success('기록이 수정되었습니다.')
     closeEdit()
   } catch (e) {
     console.error('기록 수정 실패', e)
@@ -209,16 +244,17 @@ const isDeleting = ref(false)
 
 async function handleDelete() {
   if (isDeleting.value) return
-  const targetId = deleteTarget.value?.id
+  const targetId = activityIdOf(deleteTarget.value)
   if (!targetId) return
   isDeleting.value = true
   try {
     await deleteActivity(targetId)
-    activities.value = activities.value.filter((a) => a.id !== targetId)
+    activities.value = activities.value.filter((a) => String(activityIdOf(a)) !== String(targetId))
+    success('기록이 삭제되었습니다.')
     closeDelete()
   } catch (e) {
     console.error('기록 삭제 실패', e)
-    error('기록 삭제에 실패했습니다. 다시 시도해주세요.')
+    error(e?.response?.data?.message || '기록 삭제에 실패했습니다. 다시 시도해주세요.')
   } finally {
     isDeleting.value = false
   }
