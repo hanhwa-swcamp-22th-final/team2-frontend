@@ -80,7 +80,10 @@ const deleting = ref(false)
 
 // department → team → users 트리 구성
 const tree = computed(() => {
-  let filtered = users.value
+  // 퇴직(retired) 사용자는 트리에서 자동 제외. 복직은 별도 API 로 status 'active' 복구.
+  let filtered = users.value.filter(
+    (u) => String(u.userStatus ?? 'active').toLowerCase() !== 'retired',
+  )
   if (searchKeyword.value) {
     const kw = searchKeyword.value.toLowerCase()
     filtered = filtered.filter(
@@ -171,7 +174,7 @@ const userColumns = [
   { key: 'employeeNo', label: '사번', width: '120px' },
   { key: 'userName', label: '이름', width: '200px' },
   { key: 'userEmail', label: '이메일' },
-  { key: 'status', label: '상태', width: '100px', align: 'center' },
+  // 상태(status) 컬럼 숨김 — 퇴직자는 tree 에서 자동 제외, 재직자만 노출.
   { key: 'actions', label: '', width: '140px', align: 'center', sortable: false },
 ]
 
@@ -324,12 +327,6 @@ defineExpose({ openCreateModal })
                       <p class="text-xs text-slate-400">{{ row.positionName || positionMap[row.positionId] || '' }}</p>
                     </div>
                   </div>
-                </template>
-                <template #cell-status="{ row }">
-                  <StatusBadge
-                    :value="label(USER_STATUS_LABEL, row.userStatus)"
-                    :variant="row.userStatus === 'active' ? 'active' : 'inactive'"
-                  />
                 </template>
                 <template #cell-actions="{ row }">
                   <TableActions

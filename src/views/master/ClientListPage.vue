@@ -84,7 +84,8 @@ const columns = [
   { key: 'currency', label: '통화', width: '80px', align: 'center' },
   { key: 'clientManager', label: '거래처 담당자', width: '140px' },
   { key: 'teamLabel', label: '담당 팀', width: '130px' },
-  { key: 'clientStatus', label: '상태', width: '80px', align: 'center' },
+  // 상태(clientStatus) 컬럼은 시연/운영 UX 상 숨긴다 — 삭제=비활성화(soft delete) 로
+  // 취급하므로 활성만 목록에 노출되고, 비활성 행은 filteredClients 에서 자동 제외.
   { key: 'actions', label: '', width: '120px', align: 'center', sortable: false },
 ]
 
@@ -122,7 +123,11 @@ function searchRows() {
 }
 
 const filteredClients = computed(() => {
-  let result = enrichedClients.value
+  // 비활성(inactive) 거래처는 그리드에서 자동 제외. 삭제 = status 'inactive' soft-delete 이므로
+  // 삭제된 거래처가 리스트에 계속 보이는 현상을 막는다. ADMIN 이 복구 필요한 경우는 별도 API.
+  let result = enrichedClients.value.filter(
+    (c) => String(c.clientStatus ?? 'active').toLowerCase() !== 'inactive',
+  )
 
   // RBAC: 영업 사용자는 자기 팀 거래처만 표시 (팀→부서는 역참조)
   if (!isAdmin.value && currentUser.value?.role === 'sales') {
@@ -299,14 +304,6 @@ function goToDetail(row) {
           <FormField label="담당자">
             <BaseTextField v-model="filters.manager" placeholder="담당자명..." />
           </FormField>
-
-          <FormField label="상태">
-            <SearchableCombobox
-              v-model="filters.status"
-              :options="statusOptions"
-              placeholder="상태 선택..."
-            />
-          </FormField>
         </div>
 
         <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
@@ -362,10 +359,6 @@ function goToDetail(row) {
 
       <template #cell-currency="{ row }">
         {{ row.currencyCode }}
-      </template>
-
-      <template #cell-clientStatus="{ row }">
-        <StatusBadge :value="label(CLIENT_STATUS_LABEL, row.clientStatus)" />
       </template>
 
       <template #cell-actions="{ row }">

@@ -220,9 +220,8 @@ const currentTeamName = computed(() => {
       </div>
 
       <template v-if="mode === 'edit'">
-        <FormField label="상태">
-          <BaseSelect v-model="form.status" :options="statusOptions" />
-        </FormField>
+        <!-- 상태 필드는 UI 에서 숨김 — 신규 = active, "삭제" 버튼이 퇴직 처리 담당.
+             form.status 는 submit 시 기존 값 그대로 유지됨 (undefined 방지). -->
 
         <div class="space-y-2 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
           <p class="text-xs text-slate-500">

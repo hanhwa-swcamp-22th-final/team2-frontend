@@ -9,8 +9,10 @@
  *       + 품목 테이블 + Total
  */
 import DocumentPrintLayout from './DocumentPrintLayout.vue'
+import { computed } from 'vue'
 import { resolveConsigneeAddress } from '@/utils/ciplTemplate'
 import { normalizeIncoterms } from '@/utils/incoterms'
+import { useCompany } from '@/stores/company'
 
 defineProps({
   document: {
@@ -18,6 +20,9 @@ defineProps({
     required: true,
   },
 })
+
+const company = useCompany()
+const companySealUrl = computed(() => company.value?.companySealImageUrl || '')
 
 function extractIncotermCode(value, namedPlace) {
   return normalizeIncoterms(value, namedPlace).code || '-'
@@ -149,6 +154,21 @@ function resolveUom(raw) {
         </tr>
       </tfoot>
     </table>
+
+    <!-- ── 서명 / 자사 직인 ── -->
+    <div class="po-signature">
+      <div class="signature-box">
+        <div class="signature-line"></div>
+        <p>Authorized Signature</p>
+        <img
+          v-if="companySealUrl"
+          :src="companySealUrl"
+          alt="Company Seal"
+          class="company-seal"
+          crossorigin="anonymous"
+        />
+      </div>
+    </div>
   </DocumentPrintLayout>
 </template>
 
@@ -240,4 +260,40 @@ function resolveUom(raw) {
 .text-right { text-align: right; }
 .font-semibold { font-weight: 600; }
 .font-bold { font-weight: 700; }
+
+/* ── 서명 / 직인 ── */
+.po-signature {
+  margin-top: 42px;
+  padding-top: 12px;
+  border-top: 1px solid #cbd5e1;
+  display: flex;
+  justify-content: flex-end;
+}
+.signature-box {
+  text-align: center;
+  width: 220px;
+  position: relative;
+}
+.signature-line {
+  border-bottom: 1px solid #0f172a;
+  height: 58px;
+}
+.signature-box p {
+  margin: 8px 0 0;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+.company-seal {
+  position: absolute;
+  right: 10px;
+  top: 4px;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  opacity: 0.7;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
 </style>

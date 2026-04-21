@@ -275,9 +275,8 @@ function handleSave() {
             <BaseTextField v-model="form.hsCode" placeholder="HS Code를 입력하세요" />
             <p v-if="errors.hsCode" class="mt-1 text-xs text-red-500">{{ errors.hsCode }}</p>
           </FormField>
-          <FormField label="상태">
-            <BaseSelect v-model="form.status" :options="statusOptions" placeholder="상태를 선택하세요" />
-          </FormField>
+          <!-- 상태 필드는 UI 에서 숨김 — 신규 = active, 삭제 버튼이 soft-delete(inactive) 담당.
+               ADMIN 이 재활성화 필요하면 별도 REST API (PATCH /api/items/{id}/status) 호출. -->
         </div>
       </div>
     </form>
