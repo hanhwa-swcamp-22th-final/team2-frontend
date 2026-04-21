@@ -165,7 +165,6 @@ function resolveUom(raw) {
           :src="companySealUrl"
           alt="Company Seal"
           class="company-seal"
-          crossorigin="anonymous"
         />
       </div>
     </div>
