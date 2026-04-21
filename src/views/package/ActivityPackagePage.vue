@@ -251,8 +251,18 @@ function validate() {
   const e = {}
   if (!packageTitle.value.trim()) e.title = '패키지 제목을 입력해주세요.'
   if (!poDisplay.value)  e.po       = '수주건 값이 누락되었습니다.'
-  if (!dateFrom.value)   e.dateFrom = '기간 시작일 값이 누락되었습니다.'
-  if (!dateTo.value)     e.dateTo   = '기간 종료일 값이 누락되었습니다.'
+  // dateFrom/dateTo 는 더 이상 필수 아님. 기간은 활동기록 필터링에만 쓰이고,
+  // 사용자가 이미 활동을 직접 선택했으면 기간 공란이어도 문제 없음. 다만 한쪽만 입력된
+  // 경우에는 여전히 문제가 되므로 "둘 다 공란 OR 둘 다 입력" 중 하나만 허용.
+  const hasFrom = !!dateFrom.value
+  const hasTo = !!dateTo.value
+  if (hasFrom !== hasTo) {
+    if (!hasFrom) e.dateFrom = '기간 시작일을 입력하거나 종료일을 비워주세요.'
+    if (!hasTo)   e.dateTo   = '기간 종료일을 입력하거나 시작일을 비워주세요.'
+  }
+  if (hasFrom && hasTo && dateFrom.value > dateTo.value) {
+    e.dateTo = '종료일은 시작일 이후여야 합니다.'
+  }
   if (selectedViewerIds.value.length === 0) e.viewers = '열람 권한을 1명 이상 선택해주세요.'
   if (selectedActivityIds.value.length === 0) e.activities = '활동기록을 1건 이상 선택해주세요.'
   errors.value = e
