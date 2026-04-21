@@ -1,4 +1,5 @@
 import { computed, ref, watch } from 'vue'
+import { formatKstDateInput, parseKstDateValue } from '@/utils/dateTime'
 
 /**
  * 문서 목록 페이지 공통 필터 composable
@@ -42,15 +43,11 @@ export function useDocumentFilter(rows, options = {}) {
   }
 
   function normalizeDate(value) {
-    return String(value ?? '').replaceAll('/', '-')
+    return formatKstDateInput(value)
   }
 
   function parseSortableDate(value) {
-    const normalized = normalizeDate(value)
-    if (!normalized) return 0
-
-    const timestamp = new Date(normalized).getTime()
-    return Number.isFinite(timestamp) ? timestamp : 0
+    return parseKstDateValue(value)
   }
 
   function resetFilters() {

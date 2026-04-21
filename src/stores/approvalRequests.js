@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { fetchApprovalRequests } from '@/api/documents'
 import { useAuthStore } from './auth'
+import { parseKstDateTimeValue } from '@/utils/dateTime'
 
 const approvalRequests = ref([])
 let loading = null
@@ -62,8 +63,8 @@ export function pickLatestRequestFor(documentType, documentId) {
 }
 
 function byRequestedAtDesc(a, b) {
-  const ta = a?.requestedAt ? new Date(a.requestedAt).getTime() : 0
-  const tb = b?.requestedAt ? new Date(b.requestedAt).getTime() : 0
+  const ta = parseKstDateTimeValue(a?.requestedAt)
+  const tb = parseKstDateTimeValue(b?.requestedAt)
   return tb - ta
 }
 

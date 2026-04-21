@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { parseKstDateValue } from '@/utils/dateTime'
 
 const props = defineProps({
   columns: {
@@ -129,8 +130,8 @@ function parseSortValue(val) {
   if (!Number.isNaN(num) && typeof val !== 'boolean') return num
   // 날짜 패턴 (YYYY/MM/DD, YYYY-MM-DD, YYYY.MM.DD)
   const dateStr = String(val).replace(/\./g, '-').replace(/\//g, '-')
-  const ts = Date.parse(dateStr)
-  if (Number.isFinite(ts)) return ts
+  const ts = parseKstDateValue(dateStr)
+  if (ts > 0) return ts
   // 문자열
   return String(val).toLowerCase()
 }

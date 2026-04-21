@@ -52,6 +52,7 @@ import { formatReferenceDocumentStatus } from '@/utils/referenceDocumentStatus'
 import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
 import { clientSearchColumns } from '@/utils/searchModalColumns'
 import { label, PI_PO_STATUS_LABEL } from '@/utils/enumLabels'
+import { formatKstDateTime } from '@/utils/dateTime'
 
 const route = useRoute()
 const router = useRouter()
@@ -239,13 +240,7 @@ function getCurrentRequesterName() {
 }
 
 function getRequestedAt() {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  const hours = String(now.getHours()).padStart(2, '0')
-  const minutes = String(now.getMinutes()).padStart(2, '0')
-  return `${year}/${month}/${day} ${hours}:${minutes}`
+  return formatKstDateTime()
 }
 
 function getDefaultDeleteApprover(row) {

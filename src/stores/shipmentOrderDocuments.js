@@ -1,9 +1,10 @@
 import { useAuthStore } from './auth'
 import { ref } from 'vue'
 import { fetchShipmentOrdersPaged } from '@/api/documents'
+import { formatKstSlashDate } from '@/utils/dateTime'
 
 function formatDate(value) {
-  return String(value ?? '').replace(/-/g, '/')
+  return formatKstSlashDate(value)
 }
 
 function parseLinkedDocuments(value) {

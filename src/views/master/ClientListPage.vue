@@ -25,6 +25,7 @@ import { fetchDepartments, fetchTeams } from '@/api/auth'
 import { useMasterLookup } from '@/composables/useMasterLookup'
 import { useToast } from '@/composables/useToast'
 import { label, CLIENT_STATUS_LABEL } from '@/utils/enumLabels'
+import { formatKstDateInput } from '@/utils/dateTime'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -247,7 +248,7 @@ async function handleSave(formData) {
   try {
     if (formMode.value === 'create') {
       const teamId = isAdmin.value ? formData.teamId : Number(currentUser.value?.teamId)
-      await createClient({ ...formData, clientRegDate: new Date().toISOString().slice(0, 10), ...(teamId && { teamId }) })
+      await createClient({ ...formData, clientRegDate: formatKstDateInput(), ...(teamId && { teamId }) })
       success('거래처가 등록되었습니다.')
     } else {
       await updateClient(selectedClient.value.clientId, formData)

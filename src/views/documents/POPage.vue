@@ -61,6 +61,7 @@ import { canMutateDocument } from '@/utils/documentOwnership'
 import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
 import { buildSelectOptionsFromRows } from '@/utils/selectOptions'
 import { formatCurrencyAmount } from '@/utils/currencyFormat'
+import { formatKstDateTime, formatKstSlashDate } from '@/utils/dateTime'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -323,11 +324,7 @@ function openEditForm(row) {
 }
 
 function getTodaySlashDate() {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-  return `${year}/${month}/${day}`
+  return formatKstSlashDate()
 }
 
 function parseAmount(value) {
@@ -570,13 +567,7 @@ function isPendingApproval(row) {
 }
 
 function getRequestedAt() {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  const hours = String(now.getHours()).padStart(2, '0')
-  const minutes = String(now.getMinutes()).padStart(2, '0')
-  return `${year}/${month}/${day} ${hours}:${minutes}`
+  return formatKstDateTime()
 }
 
 function buildNextPoId() {

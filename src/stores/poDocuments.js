@@ -3,19 +3,14 @@ import { ref } from 'vue'
 import { fetchPurchaseOrdersPaged } from '@/api/documents'
 import { loadApprovalRequests, pickLatestRequestFor } from './approvalRequests'
 import { formatCurrencyAmount } from '@/utils/currencyFormat'
+import { formatKstDateTime, formatKstSlashDate } from '@/utils/dateTime'
 
 function formatDate(value) {
-  return String(value ?? '').replace(/-/g, '/')
+  return formatKstSlashDate(value)
 }
 
 function formatTimestamp(value) {
-  if (!value) return null
-  const str = String(value)
-  if (str.includes('T')) {
-    const [date, time] = str.split('T')
-    return `${date.replace(/-/g, '/')} ${time.substring(0, 5)}`
-  }
-  return str
+  return value ? formatKstDateTime(value) : null
 }
 
 function parseJsonSafe(value, fallback = null) {
