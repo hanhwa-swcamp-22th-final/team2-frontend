@@ -127,6 +127,10 @@ function validate() {
     e.unit = '단위를 선택하세요.'
   }
 
+  if (!form.value.packUnit) {
+    e.packUnit = '포장단위를 선택하세요.'
+  }
+
   if (form.value.unitPrice === '' || form.value.unitPrice === null || form.value.unitPrice === undefined) {
     e.unitPrice = '단가를 입력하세요.'
   } else {
@@ -253,8 +257,9 @@ function handleSave() {
             <BaseSelect v-model="form.unit" :options="unitOptions" placeholder="단위를 선택하세요" />
             <p v-if="errors.unit" class="mt-1 text-xs text-red-500">{{ errors.unit }}</p>
           </FormField>
-          <FormField label="포장단위">
+          <FormField label="포장단위" required>
             <BaseSelect v-model="form.packUnit" :options="packUnitOptions" placeholder="포장단위를 선택하세요" />
+            <p v-if="errors.packUnit" class="mt-1 text-xs text-red-500">{{ errors.packUnit }}</p>
           </FormField>
         </div>
       </div>
