@@ -170,7 +170,6 @@ const companySealUrl = computed(() => company.value?.companySealImageUrl || '')
           :src="companySealUrl"
           alt="Company Seal"
           class="company-seal"
-          crossorigin="anonymous"
         />
       </div>
     </div>

@@ -149,7 +149,6 @@ function resolveItemQuantity(item) {
             :src="companySealUrl"
             alt="Company Seal"
             class="company-seal"
-            crossorigin="anonymous"
           />
         </div>
       </div>

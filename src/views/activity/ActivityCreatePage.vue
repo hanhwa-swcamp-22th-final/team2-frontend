@@ -51,7 +51,13 @@ const clientOptions = ref([])
 onMounted(async () => {
   try {
     const data = await fetchClients()
-    clientOptions.value = data.map((c) => ({ label: `${c.clientName} (${c.clientNameKr})`, value: c.clientId }))
+    // clientCode 를 라벨에 포함해 동명이인 거래처 식별 가능. 비활성은 제외.
+    clientOptions.value = data
+      .filter((c) => String(c.clientStatus ?? 'active').toLowerCase() !== 'inactive')
+      .map((c) => ({
+        label: `[${c.clientCode}] ${c.clientName}${c.clientNameKr ? ` (${c.clientNameKr})` : ''}`,
+        value: c.clientId,
+      }))
   } catch (e) {
     console.error('거래처 목록 로드 실패', e)
     error('거래처 목록을 불러오지 못했습니다. 페이지를 새로고침해주세요.')
