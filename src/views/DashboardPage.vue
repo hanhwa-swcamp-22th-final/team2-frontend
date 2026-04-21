@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import ApprovalReviewModal from '@/components/common/ApprovalReviewModal.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
@@ -14,7 +14,7 @@ import { useProductionOrderDocuments, loadProductionOrderDocuments } from '@/sto
 import { useShipmentStatusDocuments, loadShipmentStatusDocuments } from '@/stores/shipmentStatusDocuments'
 import { fetchActivities } from '@/api/activity'
 import { fetchClients } from '@/api/master'
-import { fetchPackages, deletePackage as deletePackageApi } from '@/api/package'
+import { fetchPackageById, fetchPackages, deletePackage as deletePackageApi } from '@/api/package'
 import { updateApprovalRequest } from '@/api/documents'
 import { loadApprovalRequests } from '@/stores/approvalRequests'
 import { label as enumLabel, PI_PO_STATUS_LABEL } from '@/utils/enumLabels'
@@ -22,6 +22,7 @@ import { useToast } from '@/composables/useToast'
 import PackageDetailModal from '@/components/domain/activity/PackageDetailModal.vue'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const { success, error: toastError } = useToast()
 const ciDocuments = useCiDocuments()
@@ -66,6 +67,10 @@ onMounted(async () => {
     loadProductionOrderDocuments(),
     loadShipmentStatusDocuments(),
   ])
+
+  if (canFetchPackages) {
+    await ensureCreatedPackageVisible()
+  }
 })
 
 const currentUser = computed(() => authStore.currentUser ?? null)
@@ -85,6 +90,44 @@ const requestSectionTitle = computed(() => {
 function parseSlashDate(value) {
   if (!value) return 0
   return new Date(String(value).replace(/\./g, '-').replace(/\//g, '-')).getTime() || 0
+}
+
+function packageIdOf(pkg) {
+  return pkg?.packageId ?? pkg?.id
+}
+
+function packageViewerIds(pkg) {
+  return (pkg?.viewerIds ?? pkg?.viewers ?? [])
+    .map((viewer) => (viewer && typeof viewer === 'object' ? viewer.userId ?? viewer.id : viewer))
+    .filter((viewer) => viewer != null)
+}
+
+function upsertPackage(pkg) {
+  const packageId = packageIdOf(pkg)
+  if (!packageId) return
+  const exists = packagesData.value.some((row) => String(packageIdOf(row)) === String(packageId))
+  packagesData.value = exists
+    ? packagesData.value.map((row) => String(packageIdOf(row)) === String(packageId) ? pkg : row)
+    : [pkg, ...packagesData.value]
+}
+
+async function ensureCreatedPackageVisible() {
+  const rawId = Array.isArray(route.query.createdPackageId)
+    ? route.query.createdPackageId[0]
+    : route.query.createdPackageId
+  if (!rawId) return
+  const existing = packagesData.value.find((pkg) => String(packageIdOf(pkg)) === String(rawId))
+  if (existing) {
+    selectedPackage.value = existing
+    return
+  }
+  try {
+    const pkg = await fetchPackageById(rawId)
+    upsertPackage(pkg)
+    selectedPackage.value = pkg
+  } catch (e) {
+    console.error('생성 패키지 상세 로드 실패', e)
+  }
 }
 
 function findLatestRow(rows, dateField) {
@@ -535,7 +578,7 @@ const visiblePackages = computed(() => {
   }
   const uid = currentUserId.value
   return [...packagesData.value]
-    .filter((pkg) => String(pkg.creatorId) === uid || (pkg.viewers ?? []).map(String).includes(uid))
+    .filter((pkg) => String(pkg.creatorId) === uid || packageViewerIds(pkg).map(String).includes(uid))
     .sort((a, b) => parseSlashDate(b.createdAt) - parseSlashDate(a.createdAt))
     .slice(0, 5)
 })
