@@ -366,6 +366,20 @@ const requestItems = computed(() => {
   return []
 })
 
+const REQUEST_PAGE_STEP = 5
+const requestDisplayLimit = ref(REQUEST_PAGE_STEP)
+const visibleRequestItems = computed(() => requestItems.value.slice(0, requestDisplayLimit.value))
+const hasMoreRequestItems = computed(() => requestItems.value.length > requestDisplayLimit.value)
+function showMoreRequests() {
+  requestDisplayLimit.value = Math.min(
+    requestDisplayLimit.value + REQUEST_PAGE_STEP,
+    requestItems.value.length,
+  )
+}
+function resetRequestPagination() {
+  requestDisplayLimit.value = REQUEST_PAGE_STEP
+}
+
 const selectedRequestReview = computed(() => selectedRequest.value?.review ?? null)
 
 function openRequestReview(item) {
@@ -649,7 +663,7 @@ async function confirmPackageDelete() {
         표시할 결재 요청이 없습니다.
       </div>
       <div
-        v-for="item in requestItems"
+        v-for="item in visibleRequestItems"
         :key="item.id"
         class="flex cursor-pointer flex-col items-start gap-3 px-5 py-3.5 transition hover:bg-slate-50/50 sm:flex-row sm:items-center sm:justify-between"
         :class="item.isNew ? 'bg-amber-50/40 hover:bg-amber-50/60' : ''"
@@ -703,6 +717,24 @@ async function confirmPackageDelete() {
           <i class="fas fa-chevron-right text-xs text-slate-300" />
         </div>
       </div>
+      <button
+        v-if="hasMoreRequestItems"
+        type="button"
+        class="flex w-full items-center justify-center gap-2 px-5 py-3 text-xs font-medium text-slate-500 transition hover:bg-slate-50/70 hover:text-slate-700"
+        @click="showMoreRequests"
+      >
+        <i class="fas fa-chevron-down text-[10px]" />
+        더보기 ({{ visibleRequestItems.length }} / {{ requestItems.length }})
+      </button>
+      <button
+        v-else-if="requestDisplayLimit > REQUEST_PAGE_STEP && requestItems.length > REQUEST_PAGE_STEP"
+        type="button"
+        class="flex w-full items-center justify-center gap-2 px-5 py-3 text-xs font-medium text-slate-400 transition hover:bg-slate-50/70 hover:text-slate-600"
+        @click="resetRequestPagination"
+      >
+        <i class="fas fa-chevron-up text-[10px]" />
+        접기
+      </button>
     </BaseCard>
 
     <!-- 공유 활동기록 패키지 (생산/출하: 요약카드 바로 뒤에 표시됨, 영업: 결재 뒤에 표시) -->
