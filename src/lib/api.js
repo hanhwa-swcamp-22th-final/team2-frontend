@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { startLoading, stopLoading } from '@/stores/loading'
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
@@ -28,6 +29,12 @@ export function setRouter(router) {
 api.interceptors.request.use((config) => {
   if (_authStore?.accessToken) {
     config.headers.Authorization = `Bearer ${_authStore.accessToken}`
+  }
+
+  // 전역 로딩 오버레이 on. config.meta.silent=true 면 카운터 증가 생략 (폴링/백그라운드).
+  if (!config?.meta?.silent) {
+    startLoading()
+    config._loadingTracked = true
   }
 
   return config
@@ -61,9 +68,17 @@ let isRefreshing = false
 let pendingRequests = []
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response?.config?._loadingTracked) stopLoading()
+    return response
+  },
   async (error) => {
     const originalRequest = error.config
+
+    if (originalRequest?._loadingTracked) {
+      stopLoading()
+      originalRequest._loadingTracked = false
+    }
 
     // /auth/refresh, /auth/login 의 401 은 인터셉터에서 제외 — 데드락/오류 가림 방지.
     // refresh 401 을 또 refresh 로 보내면 큐 대기 무한루프, login 401 을 refresh 로 가리면
