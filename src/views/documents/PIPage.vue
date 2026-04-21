@@ -23,6 +23,7 @@ import {
   requestPiModification,
   validatePiDeletable,
   requestPiDeletion,
+  updateProformaInvoiceDraft,
 } from '@/api/documents'
 import { fetchBuyers, fetchClients, fetchCountries, fetchCurrencies, fetchItems } from '@/api/master'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
@@ -857,7 +858,8 @@ async function confirmEditApprovalRequest() {
   if (!pendingEditRequest.value) return
   try {
     const userId = authStore.currentUser?.userId
-    await requestPiModification({ piId: pendingEditRequest.value.id, userId })
+    const revisedRequest = buildCreatePayload(pendingEditRequest.value.formValue)
+    await requestPiModification({ piId: pendingEditRequest.value.id, userId, revisedRequest })
     await loadPiDocuments()
 
     editApprovalRequestOpen.value = false
@@ -917,18 +919,19 @@ async function handleSave(formValue) {
     return
   }
 
-  // TODO: PI 수정 결재 API (request-modification) 가 백엔드에 추가되면
-  //       PO 와 동일하게 requestPiModification 연동으로 교체한다.
-  //       현재는 로컬-only 로 스냅샷 비교만 수행.
   const { nextRow } = buildRowPayload(formValue)
 
   if (isTeamLeader.value) {
-    rowsData.value = rowsData.value.map((r) =>
-      r.id === selectedRow.value?.id ? { ...r, ...nextRow } : r
-    )
-    formOpen.value = false
-    selectedClient.value = null
-    success('PI가 수정되었습니다.')
+    try {
+      const payload = buildCreatePayload(formValue)
+      await updateProformaInvoiceDraft(selectedRow.value?.id, payload)
+      await loadPiDocuments()
+      formOpen.value = false
+      selectedClient.value = null
+      success('PI가 수정되었습니다.')
+    } catch (e) {
+      error(e.response?.data?.message || 'PI 수정 중 오류가 발생했습니다.')
+    }
     return
   }
 
@@ -948,6 +951,10 @@ async function handleSave(formValue) {
   pendingEditRequest.value = {
     id: selectedRow.value?.id,
     approver: formValue.approver || '',
+    formValue: {
+      ...formValue,
+      items: (formValue.items ?? []).map((item) => ({ ...item })),
+    },
     nextRow,
     revisedSnapshot,
     changeRows,

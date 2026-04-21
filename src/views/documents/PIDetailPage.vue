@@ -824,7 +824,8 @@ async function confirmEditApprovalRequest() {
       const payload = buildManagerUpdatePayload(pendingEditRequest.value.formValue)
       await updateProformaInvoiceDraft(pendingEditRequest.value.id, payload)
     } else {
-      await requestPiModification({ piId: pendingEditRequest.value.id, userId })
+      const revisedRequest = buildManagerUpdatePayload(pendingEditRequest.value.formValue)
+      await requestPiModification({ piId: pendingEditRequest.value.id, userId, revisedRequest })
     }
     await loadPiDocuments()
 

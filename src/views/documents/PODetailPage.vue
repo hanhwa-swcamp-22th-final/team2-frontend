@@ -337,7 +337,9 @@ const collectionLockInfo = computed(() => getPoCollectionLockInfo(detail.value?.
 const collectionLockMessage = computed(() => formatPoCollectionLockMessage(collectionLockInfo.value))
 const linkedPiDocument = computed(() => piDocuments.value.find((row) => row.id === (detail.value?.piId || detail.value?.linkedPiId)))
 const linkedProductionOrder = computed(() => productionOrderDocuments.value.find((row) => row.poId === detail.value?.id) ?? null)
-const canIssueProductionOrder = computed(() => Boolean(detail.value && !linkedProductionOrder.value && !shipmentLockInfo.value.locked))
+// 생산 경유 여부와 담당자는 PO 등록/등록요청 시점에 확정한다. 상세 화면에서는
+// 수동 생산지시서 발행 진입점을 제공하지 않는다.
+const canIssueProductionOrder = computed(() => false)
 const productionIssueConfirmRows = computed(() => {
   if (!detail.value) return []
 
@@ -864,7 +866,8 @@ async function confirmEditApprovalRequest() {
       const payload = buildManagerUpdatePoPayload(pendingEditRequest.value.formValue)
       await updatePurchaseOrderDraft(pendingEditRequest.value.id, payload)
     } else {
-      await requestPoModification({ poId: pendingEditRequest.value.id, userId })
+      const revisedRequest = buildManagerUpdatePoPayload(pendingEditRequest.value.formValue)
+      await requestPoModification({ poId: pendingEditRequest.value.id, userId, revisedRequest })
     }
     await loadPoDocuments()
 
