@@ -1025,6 +1025,7 @@ async function renderHtmlToPdfBlob(html) {
 
     const pageWidth = 595.28
     const sourceWidth = Math.max(794, source.scrollWidth || source.offsetWidth || 794)
+    const sourceHeight = Math.max(1123, source.scrollHeight || source.offsetHeight || 1123)
     const { jsPDF } = await import('jspdf')
     const pdf = new jsPDF({
       orientation: 'portrait',
@@ -1045,12 +1046,17 @@ async function renderHtmlToPdfBlob(html) {
         margin: [0, 0, 0, 0],
         width: pageWidth,
         windowWidth: sourceWidth,
-        autoPaging: 'text',
+        autoPaging: 'slice',
         html2canvas: {
           backgroundColor: '#ffffff',
-          scale: 0.72,
+          scale: 1,
           useCORS: true,
           allowTaint: false,
+          logging: false,
+          windowWidth: sourceWidth,
+          windowHeight: sourceHeight,
+          scrollX: 0,
+          scrollY: 0,
         },
       })
       if (htmlRenderResult && typeof htmlRenderResult.catch === 'function') {
@@ -1070,9 +1076,10 @@ function createHiddenDocumentFrame(html) {
     iframe.style.left = '-10000px'
     iframe.style.top = '0'
     iframe.style.width = '794px'
-    iframe.style.height = '1123px'
+    iframe.style.height = '1400px'
     iframe.style.border = '0'
-    iframe.style.visibility = 'hidden'
+    iframe.style.visibility = 'visible'
+    iframe.style.pointerEvents = 'none'
 
     const timeoutId = window.setTimeout(() => {
       iframe.remove()

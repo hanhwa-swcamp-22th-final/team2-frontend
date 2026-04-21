@@ -3,9 +3,11 @@ import { computed, ref, watch } from 'vue'
 
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
+import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseTextField from '@/components/common/BaseTextField.vue'
 import { useToast } from '@/composables/useToast'
 import { sendDocumentEmail } from '@/api/emails'
+import { fetchBuyersByClient, fetchClient } from '@/api/master'
 import { buildDocumentPdfAttachment } from '@/utils/documentOutput'
 
 const props = defineProps({
@@ -31,9 +33,13 @@ const toast = useToast()
 
 const recipientName = ref('')
 const recipientEmail = ref('')
+const recipientChoice = ref('')
+const recipientCandidates = ref([])
+const recipientsLoading = ref(false)
 const subject = ref('')
 const submitting = ref(false)
 const submitStatus = ref('')
+let recipientLoadSeq = 0
 
 // clientId 가 0/null 이라도 수신자 이메일·제목만 있으면 발송 허용한다.
 // (과거 빌드에서 생성된 PO/CI/PL 은 ClientResponse.id 필드 명명 버그로 clientId=0 로 저장됐는데,
@@ -55,22 +61,173 @@ const DOC_TYPE_ENGLISH_LABEL = {
   PL: 'Packing List',
 }
 
+const recipientOptions = computed(() => recipientCandidates.value.map((candidate) => ({
+  value: candidate.key,
+  label: `${candidate.typeLabel} · ${candidate.name || candidate.email} (${candidate.email})`,
+})))
+
 watch(
   () => props.open,
   (next) => {
     if (next) {
-      recipientName.value = props.defaultRecipientName ?? ''
-      recipientEmail.value = props.defaultRecipientEmail ?? ''
-      const englishLabel = DOC_TYPE_ENGLISH_LABEL[props.docType] ?? props.docType
-      subject.value = props.documentLabel
-        ? `${englishLabel} ${props.documentLabel} — Please find attached`
-        : `${englishLabel} — Document enclosed`
+      void initializeModal()
     } else {
       submitting.value = false
       submitStatus.value = ''
+      recipientsLoading.value = false
     }
   },
 )
+
+function firstString(...values) {
+  return values.find((value) => typeof value === 'string' && value.trim())?.trim() ?? ''
+}
+
+function normalizeEmail(value) {
+  return firstString(value).toLowerCase()
+}
+
+function normalizeName(value) {
+  return firstString(value)
+    .replace(/\s*\([^)]*\)\s*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+}
+
+function isSameRecipientName(left, right) {
+  const a = normalizeName(left)
+  const b = normalizeName(right)
+  return !!a && !!b && (a === b || a.includes(b) || b.includes(a))
+}
+
+function addRecipientCandidate(candidates, candidate) {
+  const email = firstString(candidate.email)
+  if (!email) return
+
+  const name = firstString(candidate.name, email)
+  const type = candidate.type || 'manual'
+  const key = `${type}:${candidate.id ?? candidates.length}:${email.toLowerCase()}`
+  const duplicate = candidates.some((row) => row.key === key)
+  if (duplicate) return
+
+  candidates.push({
+    key,
+    type,
+    typeLabel: candidate.typeLabel || '수신자',
+    name,
+    email,
+  })
+}
+
+async function buildRecipientCandidates() {
+  const candidates = []
+
+  addRecipientCandidate(candidates, {
+    type: 'default',
+    typeLabel: '기본',
+    name: props.defaultRecipientName,
+    email: props.defaultRecipientEmail,
+  })
+
+  const clientId = Number(props.clientId)
+  if (!Number.isFinite(clientId) || clientId <= 0) {
+    return candidates
+  }
+
+  const [clientResult, buyersResult] = await Promise.allSettled([
+    fetchClient(clientId),
+    fetchBuyersByClient(clientId),
+  ])
+
+  if (clientResult.status === 'fulfilled') {
+    const client = clientResult.value ?? {}
+    addRecipientCandidate(candidates, {
+      type: 'client',
+      typeLabel: '거래처 대표',
+      id: client.clientId ?? client.id ?? clientId,
+      name: firstString(client.clientManager, client.manager, client.clientName, client.name, props.defaultRecipientName),
+      email: firstString(client.clientEmail, client.email),
+    })
+  }
+
+  if (buyersResult.status === 'fulfilled') {
+    for (const buyer of buyersResult.value ?? []) {
+      addRecipientCandidate(candidates, {
+        type: 'buyer',
+        typeLabel: '바이어',
+        id: buyer.buyerId ?? buyer.id,
+        name: firstString(buyer.buyerName, buyer.name, buyer.contactName),
+        email: firstString(buyer.buyerEmail, buyer.email, buyer.contactEmail),
+      })
+    }
+  }
+
+  return candidates
+}
+
+function applyRecipientCandidate(candidate) {
+  recipientName.value = candidate?.name ?? props.defaultRecipientName ?? ''
+  recipientEmail.value = candidate?.email ?? props.defaultRecipientEmail ?? ''
+}
+
+function chooseInitialRecipient() {
+  const defaultEmail = normalizeEmail(props.defaultRecipientEmail)
+  const defaultName = props.defaultRecipientName
+  const candidates = recipientCandidates.value
+  const candidate =
+    (defaultEmail && candidates.find((row) => normalizeEmail(row.email) === defaultEmail)) ||
+    candidates.find((row) => isSameRecipientName(row.name, defaultName)) ||
+    candidates.find((row) => row.type === 'buyer') ||
+    candidates.find((row) => row.type === 'client') ||
+    candidates[0]
+
+  if (candidate) {
+    recipientChoice.value = candidate.key
+    applyRecipientCandidate(candidate)
+    return
+  }
+
+  recipientChoice.value = ''
+  recipientName.value = props.defaultRecipientName ?? ''
+  recipientEmail.value = props.defaultRecipientEmail ?? ''
+}
+
+async function initializeModal() {
+  const seq = ++recipientLoadSeq
+  recipientName.value = props.defaultRecipientName ?? ''
+  recipientEmail.value = props.defaultRecipientEmail ?? ''
+  recipientChoice.value = ''
+  recipientCandidates.value = []
+  recipientsLoading.value = true
+
+  const englishLabel = DOC_TYPE_ENGLISH_LABEL[props.docType] ?? props.docType
+  subject.value = props.documentLabel
+    ? `${englishLabel} ${props.documentLabel} — Please find attached`
+    : `${englishLabel} — Document enclosed`
+
+  try {
+    const candidates = await buildRecipientCandidates()
+    if (seq !== recipientLoadSeq) return
+    recipientCandidates.value = candidates
+    chooseInitialRecipient()
+  } catch (error) {
+    if (seq !== recipientLoadSeq) return
+    recipientCandidates.value = []
+  } finally {
+    if (seq === recipientLoadSeq) {
+      recipientsLoading.value = false
+    }
+  }
+}
+
+function handleRecipientChoiceChange(value) {
+  recipientChoice.value = value
+  const candidate = recipientCandidates.value.find((row) => row.key === value)
+  if (candidate) {
+    applyRecipientCandidate(candidate)
+  }
+}
 
 function handleClose() {
   if (submitting.value) return
@@ -129,6 +286,19 @@ async function handleSubmit() {
     @close="handleClose"
   >
     <div class="space-y-4">
+      <div v-if="recipientOptions.length || recipientsLoading">
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+          수신 대상
+        </label>
+        <BaseSelect
+          :model-value="recipientChoice"
+          :options="recipientOptions"
+          :placeholder="recipientsLoading ? '수신자 불러오는 중...' : '수신 대상 선택'"
+          :disabled="submitting || recipientsLoading"
+          @update:modelValue="handleRecipientChoiceChange"
+        />
+      </div>
+
       <div>
         <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
           수신자명 (선택)
