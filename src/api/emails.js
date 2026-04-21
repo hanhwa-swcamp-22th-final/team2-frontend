@@ -52,6 +52,7 @@ export async function fetchActivityEmails() {
  * @param {string} [payload.emailRecipientName]
  * @param {string} payload.emailRecipientEmail
  * @param {string[]} payload.docTypes     ['CI'] | ['PL'] | ['PI'] 등
+ * @param {{filename:string, contentType:string, contentBase64:string}[]} [payload.attachments]
  * @returns {Promise<{status:'SENT'|'FAILED', message:string, attachmentFilenames:string[]}>}
  */
 export async function sendDocumentEmail(payload) {

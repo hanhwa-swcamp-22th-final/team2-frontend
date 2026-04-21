@@ -306,6 +306,7 @@ function goToLinkedDocument(document) {
       :client-id="detail.clientId"
       :po-id="linkedPo?.id ?? detail.poId ?? ''"
       :document-label="detail.id"
+      :document="detail"
       :default-recipient-name="detail.buyer || detail.clientName"
       :default-recipient-email="detail.clientEmail || ''"
       @close="sendEmailOpen = false"
