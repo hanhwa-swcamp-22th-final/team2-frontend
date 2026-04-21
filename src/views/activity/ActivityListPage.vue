@@ -104,6 +104,14 @@ const clientMap = computed(() =>
   Object.fromEntries(clients.value.map((c) => [c.clientId, c])),
 )
 
+// 백엔드 activity.date 는 하이픈 포맷 ("2026-04-21") 인데 DateField 입력값도 동일 포맷이다.
+// 이전 코드는 filter 쪽만 "/" 로 replaceAll 해버려서 "2026-04-21" >= "2026/04/21" 문자열 비교가
+// false 가 됐고, 날짜 필터를 조금이라도 켠 상태면 실제 해당 기간의 활동이 통째로 숨는 현상.
+// 양쪽을 동일 포맷(하이픈) 으로 정규화해 비교한다.
+function normalizeDateStr(s) {
+  return String(s ?? '').replaceAll('/', '-')
+}
+
 const filteredActivities = computed(() => {
   return activities.value.filter((a) => {
     const client = clientMap.value[a.clientId]
@@ -112,10 +120,11 @@ const filteredActivities = computed(() => {
       || client?.clientName.includes(applied.value.title) || client?.clientNameKr.includes(applied.value.title)
     const matchAuthor = !applied.value.author || a.author === applied.value.author
     const matchPo     = !applied.value.po     || (a.poId ?? '').includes(applied.value.po)
-    const dateFrom = applied.value.dateFrom.replaceAll('-', '/')
-    const dateTo   = applied.value.dateTo.replaceAll('-', '/')
-    const matchFrom   = !dateFrom || a.date >= dateFrom
-    const matchTo     = !dateTo   || a.date <= dateTo
+    const dateFrom = normalizeDateStr(applied.value.dateFrom)
+    const dateTo   = normalizeDateStr(applied.value.dateTo)
+    const aDate    = normalizeDateStr(a.date)
+    const matchFrom   = !dateFrom || aDate >= dateFrom
+    const matchTo     = !dateTo   || aDate <= dateTo
     return matchType && matchTitle && matchAuthor && matchPo && matchFrom && matchTo
   })
 })
