@@ -153,8 +153,12 @@ const approverDirectory = ref([])
 const productCatalog = ref([...fallbackProductCatalog])
 const incotermCatalog = ref([...fallbackIncotermsCatalog])
 const exchangeRateHint = ref(createExchangeRateHint('USD', getTodayDateInput()))
-const { loaded: exchangeRatesLoaded } = useExchangeRates()
+const {
+  loaded: exchangeRatesLoaded,
+  loadExchangeRates: ensureExchangeRatesLoaded,
+} = useExchangeRates()
 const currentCurrency = computed(() => form.value.currency || 'USD')
+let currencyDateWatchReady = props.mode !== 'edit'
 
 const currentCurrencySymbol = computed(() => currencySymbolMap[currentCurrency.value] ?? currentCurrency.value)
 
@@ -680,6 +684,8 @@ async function initializeForm() {
   if (!props.open) return
 
   validationErrors.value = {}
+  currencyDateWatchReady = props.mode !== 'edit'
+  void ensureExchangeRatesLoaded()
 
   if (props.mode === 'edit' && props.document) {
     const normalizedIncoterms = resolveIncotermState(
@@ -769,8 +775,9 @@ function removeItem(index) {
 function handleSave() {
   if (!validateForm()) return
   // 외화 PI 인데 환율 미확보면 단가가 KRW 값 그대로 남아 서버 환산 시 금액이 비정상으로 저장된다.
-  if (form.value.currency && form.value.currency !== 'KRW' && !exchangeRatesLoaded.value) {
-    validationErrors.value.currency = '환율 로딩이 완료되지 않았습니다. 잠시 후 다시 시도해주세요.'
+  const currencyCode = form.value.currency || 'USD'
+  if (currencyCode !== 'KRW' && !getKrwRate(currencyCode)) {
+    validationErrors.value.currency = `${currencyCode} 환율 정보가 준비되지 않았습니다. 잠시 후 다시 시도해주세요.`
     // 인라인 메시지만으로는 사용자가 버튼 근처를 보고 있어 인지가 어렵다 — validateForm 과 동일하게 toast 도 발생.
     error(validationErrors.value.currency, '입력 확인')
     return
@@ -833,7 +840,6 @@ watch(
 // 일으켰다. 즉 PI260021 을 편집 모달로 열기만 해도 $999.99 가 (KRW_master × 현재_rate)
 // 로 재계산돼 폼에 찍히고, 저장 시 DB 가 덮어씀. edit 모드 초기 실행은 건너뛰고 이후
 // 사용자가 통화/발행일을 명시적으로 바꿀 때만 refresh.
-let currencyDateWatchReady = props.mode !== 'edit'
 watch(
   () => [form.value.currency, form.value.issueDate],
   ([currency, issueDate]) => {

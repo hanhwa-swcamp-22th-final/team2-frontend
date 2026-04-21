@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import ApprovalRequestModal from '@/components/common/ApprovalRequestModal.vue'
@@ -53,6 +53,7 @@ import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
 import { clientSearchColumns } from '@/utils/searchModalColumns'
 import { label, PI_PO_STATUS_LABEL } from '@/utils/enumLabels'
 import { formatKstDateTime } from '@/utils/dateTime'
+import { clearExchangeRates, getKrwRate, loadExchangeRates } from '@/stores/exchangeRates'
 
 const route = useRoute()
 const router = useRouter()
@@ -93,6 +94,7 @@ const approvalChangeColumns = [
 ]
 
 const clientRowsSource = ref(createDocumentClientRows())
+const currencyCatalog = ref([])
 
 const clientRows = computed(() => {
   const keyword = clientSearchKeyword.value.trim().toLowerCase()
@@ -190,6 +192,12 @@ function formatCurrencyValue(currency, value) {
 
 function formatSlashDate(value) {
   return value ? value.replaceAll('-', '/') : '-'
+}
+
+function findCurrencyIdByCode(code) {
+  if (!code) return null
+  const match = currencyCatalog.value.find((currency) => (currency.currencyCode ?? currency.code) === code)
+  return match?.currencyId ?? match?.id ?? null
 }
 
 function buildLinkedDocuments(documentId) {
@@ -557,12 +565,19 @@ async function loadClientRows() {
       currenciesData,
       buyersData,
     })
+    currencyCatalog.value = currenciesData ?? []
   } catch {
     clientRowsSource.value = createDocumentClientRows()
+    currencyCatalog.value = []
   }
 }
 
-onMounted(loadClientRows)
+onMounted(() => {
+  loadClientRows()
+  loadExchangeRates()
+})
+
+onUnmounted(clearExchangeRates)
 
 function goBack() {
   router.push({ name: 'pi' })
@@ -711,13 +726,21 @@ function handleSave(formValue) {
 function buildManagerUpdatePayload(formValue) {
   const matchedClient = clientRowsSource.value.find((c) => c.name === formValue.clientName)
   const currencyCode = formValue.currency || sourceRow.value?.currency || 'USD'
+  const currencyId = findCurrencyIdByCode(currencyCode) ?? matchedClient?.currencyId ?? null
+  const krwRate = getKrwRate(currencyCode)
+  const toKrw = (amountInCurrency) => {
+    const value = Number(amountInCurrency) || 0
+    if (!currencyCode || currencyCode === 'KRW') return value
+    if (!krwRate) return value
+    return Math.round(value * krwRate)
+  }
   const items = (formValue.items ?? []).map((item) => ({
     itemId: null,
     itemName: item.name ?? '',
     quantity: Number(item.qty ?? item.quantity ?? 0) || 0,
     unit: item.unit ?? '',
-    unitPrice: Number(item.unitPrice ?? 0) || 0,
-    amount: Number(item.amount ?? 0) || 0,
+    unitPrice: toKrw(item.unitPrice),
+    amount: toKrw(item.amount),
     remark: item.remark ?? '',
   }))
   const totalAmount = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
@@ -725,7 +748,7 @@ function buildManagerUpdatePayload(formValue) {
     piId: null,
     issueDate: (formValue.issueDate ?? '').replaceAll('/', '-'),
     clientId: matchedClient?.clientId ?? null,
-    currencyId: null,
+    currencyId,
     managerId: sourceRow.value?.managerId ?? authStore.currentUser?.userId ?? null,
     deliveryDate: (formValue.deliveryDate ?? '').replaceAll('/', '-') || null,
     incotermsCode: formValue.incoterms || 'FOB',
@@ -735,7 +758,7 @@ function buildManagerUpdatePayload(formValue) {
     clientAddress: formValue.clientAddress || matchedClient?.address || sourceRow.value?.clientAddress || '',
     country: matchedClient?.country || sourceRow.value?.country || '',
     currencyCode,
-    exchangeRate: null,
+    exchangeRate: currencyCode === 'KRW' || !krwRate ? null : Number((1 / krwRate).toFixed(8)),
     managerName: sourceRow.value?.manager || authStore.currentUser?.userName || '',
     userId: authStore.currentUser?.userId ?? null,
     remarks: formValue.reason ?? sourceRow.value?.remarks ?? '',
