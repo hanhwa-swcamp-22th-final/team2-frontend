@@ -23,6 +23,7 @@ import {
   requestPoModification,
   validatePoDeletable,
   requestPoDeletion,
+  updatePurchaseOrderDraft,
 } from '@/api/documents'
 import { fetchCurrencies, fetchItems } from '@/api/master'
 import { useDocumentFilter } from '@/composables/useDocumentFilter'
@@ -497,7 +498,10 @@ function buildCreatePayload(formValue) {
   const currencyCode = linkedPi?.currency || formValue.currency || matchedClient?.currency || 'USD'
   const currencyId = findCurrencyIdByCode(currencyCode) ?? matchedClient?.currencyId ?? null
 
-  const items = (linkedPi?.items ?? []).map((item) => {
+  const sourceItems = Array.isArray(formValue.items) && formValue.items.length
+    ? formValue.items
+    : (linkedPi?.items ?? [])
+  const items = sourceItems.map((item) => {
     const quantity = Number(item.qty ?? item.quantity ?? 0) || 0
     const unitPrice = Number(item.unitPrice ?? 0) || 0
     const amount = Number(item.amount ?? 0) || quantity * unitPrice
@@ -523,7 +527,7 @@ function buildCreatePayload(formValue) {
   return {
     poId: null,
     piId: formValue.linkedPiId || null,
-    issueDate: toIsoDate(getTodaySlashDate()),
+    issueDate: toIsoDate(formValue.issueDate || selectedRow.value?.issueDate || getTodaySlashDate()),
     clientId: matchedClient?.clientId ?? null,
     currencyId,
     managerId: authStore.currentUser?.userId ?? null,
@@ -888,7 +892,8 @@ async function confirmEditApprovalRequest() {
 
   try {
     const userId = authStore.currentUser?.userId
-    await requestPoModification({ poId: pendingEditRequest.value.id, userId })
+    const revisedRequest = buildCreatePayload(pendingEditRequest.value.formValue)
+    await requestPoModification({ poId: pendingEditRequest.value.id, userId, revisedRequest })
     await loadPoDocuments()
 
     editApprovalRequestOpen.value = false
@@ -958,10 +963,9 @@ async function handleSave(formValue) {
   }
 
   if (isTeamLeader.value) {
-    // 팀장 셀프 수정: 백엔드에 수정 결재 요청을 보내고 즉시 반영을 기대한다.
     try {
-      const userId = authStore.currentUser?.userId
-      await requestPoModification({ poId: selectedRow.value?.id, userId })
+      const payload = buildCreatePayload(formValue)
+      await updatePurchaseOrderDraft(selectedRow.value?.id, payload)
       await loadPoDocuments()
       formOpen.value = false
       selectedPi.value = null
@@ -976,6 +980,10 @@ async function handleSave(formValue) {
   pendingEditRequest.value = {
     id: selectedRow.value?.id,
     approver: formValue.approver || '',
+    formValue: {
+      ...formValue,
+      items: (formValue.items ?? []).map((item) => ({ ...item })),
+    },
     nextRow,
     revisedSnapshot,
     changeRows,
