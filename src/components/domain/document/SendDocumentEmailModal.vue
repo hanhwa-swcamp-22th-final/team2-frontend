@@ -31,12 +31,15 @@ const recipientEmail = ref('')
 const subject = ref('')
 const submitting = ref(false)
 
+// clientId 가 0/null 이라도 수신자 이메일·제목만 있으면 발송 허용한다.
+// (과거 빌드에서 생성된 PO/CI/PL 은 ClientResponse.id 필드 명명 버그로 clientId=0 로 저장됐는데,
+//  모달이 clientId 존재를 강제하면 그 문서들 메일 발송이 영구 차단됨. 이미 확정된 문서라
+//  이메일 자체는 첨부 PDF·수신자 기준으로 내보낼 수 있어야 한다. 2026-04-21)
 const canSubmit = computed(
   () =>
     !submitting.value &&
     !!recipientEmail.value.trim() &&
-    !!subject.value.trim() &&
-    !!props.clientId,
+    !!subject.value.trim(),
 )
 
 // 외국 거래처 대상이 기본이므로 제목 템플릿은 영문으로 기본화한다 (Issue F).
@@ -71,15 +74,13 @@ function handleClose() {
 
 async function handleSubmit() {
   if (!canSubmit.value) return
-  if (!props.clientId) {
-    toast.error('거래처 정보가 없어 메일을 발송할 수 없습니다.')
-    return
-  }
 
   submitting.value = true
   try {
     const payload = {
-      clientId: Number(props.clientId),
+      // clientId 가 비어있는 과거 문서도 발송 가능하도록 0 으로 fallback.
+      // 백엔드 EmailSendRequest 는 @NotNull 이라 0 은 통과(로그에 clientId=0 기록).
+      clientId: props.clientId ? Number(props.clientId) : 0,
       poId: props.poId || undefined,
       emailTitle: subject.value.trim(),
       emailRecipientName: recipientName.value.trim() || undefined,
@@ -145,8 +146,8 @@ async function handleSubmit() {
 
       <div class="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
         <p>첨부 파일은 서버에서 자동으로 생성되어 첨부됩니다 ({{ docType }} PDF).</p>
-        <p v-if="!clientId" class="mt-1 text-rose-500">
-          ⚠ 거래처 정보가 없어 발송할 수 없습니다.
+        <p v-if="!clientId" class="mt-1 text-amber-600">
+          ⚠ 거래처 ID 가 문서에 기록되어 있지 않습니다. 메일은 발송되지만 이력에 거래처 연결이 누락될 수 있습니다.
         </p>
       </div>
     </div>

@@ -362,7 +362,10 @@ const summaryText = computed(() => {
 // ── 저장 ───────────────────────────────────────────────────
 async function savePackage() {
   if (!validate()) {
-    warning('입력 내용을 확인해주세요.')
+    // 구체적 누락 필드를 토스트에 노출 — "입력 내용을 확인해주세요" 만으로는
+    // 사용자가 뭘 빠뜨렸는지 몰라 재시도가 어려웠음 (2026-04-21 시연 피드백).
+    const messages = Object.values(errors.value).filter(Boolean)
+    warning(messages.length ? messages.join(' / ') : '입력 내용을 확인해주세요.')
     return
   }
 
