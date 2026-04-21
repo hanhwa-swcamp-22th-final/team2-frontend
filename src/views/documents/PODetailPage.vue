@@ -1002,13 +1002,13 @@ async function confirmReject() {
             <template #leading>
               <i class="fas fa-edit text-xs" aria-hidden="true"></i>
             </template>
-            {{ ['확정','confirmed','CONFIRMED'].includes(detail.status) ? '수정요청' : '수정' }}
+            {{ isTeamLeader || !['확정','confirmed','CONFIRMED'].includes(detail.status) ? '수정' : '수정요청' }}
           </BaseButton>
           <BaseButton v-if="canMutate && !shipmentLockInfo.locked && !collectionLockInfo.locked && !['결재대기','pending_approval','APPROVAL_PENDING'].includes(detail.status)" variant="secondary" size="sm" @click="handleDelete">
             <template #leading>
               <i class="fas fa-trash text-xs" aria-hidden="true"></i>
             </template>
-            {{ ['확정','confirmed','CONFIRMED'].includes(detail.status) ? '삭제요청' : '삭제' }}
+            {{ isTeamLeader || !['확정','confirmed','CONFIRMED'].includes(detail.status) ? '삭제' : '삭제요청' }}
           </BaseButton>
           <BaseButton
             v-if="canReviewAsApprover"
