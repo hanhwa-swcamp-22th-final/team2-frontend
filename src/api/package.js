@@ -1,24 +1,37 @@
 import { api } from '@/lib/api'
 import { unwrapCollection } from '@/utils/apiResponse'
 
+function normalizePackage(pkg) {
+  if (!pkg) return pkg
+  return {
+    ...pkg,
+    id: pkg.id ?? pkg.packageId,
+    title: pkg.title ?? pkg.packageTitle,
+  }
+}
+
 export function fetchPackages() {
-  return api.get('/activity-packages').then((r) => unwrapCollection(r.data))
+  return api.get('/activity-packages').then((r) => unwrapCollection(r.data).map(normalizePackage))
 }
 
 export function fetchPackageById(id) {
-  return api.get(`/activity-packages/${id}`).then((r) => r.data)
+  return api.get(`/activity-packages/${id}`).then((r) => normalizePackage(r.data))
 }
 
 export function createPackage(data) {
-  return api.post('/activity-packages', data).then((r) => r.data)
+  return api.post('/activity-packages', data).then((r) => normalizePackage(r.data?.content ?? r.data))
 }
 
 export function updatePackage(id, data) {
-  return api.put(`/activity-packages/${id}`, data).then((r) => r.data)
+  return api.put(`/activity-packages/${id}`, data).then((r) => normalizePackage(r.data?.content ?? r.data))
 }
 
 export function deletePackage(id) {
   return api.delete(`/activity-packages/${id}`)
+}
+
+export function downloadPackageReport(id) {
+  return api.get(`/activity-packages/${id}/report`, { responseType: 'blob' }).then((r) => r.data)
 }
 
 export async function fetchAllUsers() {

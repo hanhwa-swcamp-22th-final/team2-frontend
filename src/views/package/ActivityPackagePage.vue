@@ -101,8 +101,8 @@ async function loadPackageForEdit() {
     dateTo.value = pkg.dateTo || ''
     selectedActivityIds.value = [...(pkg.activityIds || [])]
     selectedViewerIds.value = [...(pkg.viewerIds || [])]
-  } catch {
-    error('패키지 정보를 불러오지 못했습니다.')
+  } catch (e) {
+    error(e?.response?.data?.message || '패키지 정보를 불러오지 못했습니다.')
   }
 }
 
@@ -155,7 +155,7 @@ const packageDescription = ref('')
 const keyword     = ref('')
 const poDisplay   = ref('')
 const dateFrom    = ref('')
-const dateTo      = ref(todayKr())
+const dateTo      = ref('')
 
 // ── 열람 권한 ──────────────────────────────────────────────
 const selectedViewerIds = ref([])
@@ -276,39 +276,57 @@ const activeTypeTab = ref('전체')
 
 const typeTabs = [
   { key: '전체',     label: '전체'     },
-  { key: '미팅/협의', label: '미팅/협의' },
-  { key: '이슈',     label: '이슈'     },
-  { key: '메모/노트', label: '메모/노트' },
-  { key: '일정',     label: '일정'     },
+  { key: 'meeting',  label: '미팅/협의' },
+  { key: 'issue',    label: '이슈'     },
+  { key: 'memo',     label: '메모/노트' },
+  { key: 'schedule', label: '일정'     },
 ]
 
 const selectedActivityIds = ref([])
 
+function normalizeDate(value) {
+  return value ? String(value).slice(0, 10).replaceAll('/', '-') : ''
+}
+
+function activityRowId(activity) {
+  return activity?.id ?? activity?.activityId
+}
+
+function activityTypeOf(activity) {
+  return activity?.type ?? activity?.activityType
+}
+
+function isActivitySelected(id) {
+  return selectedActivityIds.value.some((selectedId) => String(selectedId) === String(id))
+}
+
 // 탭/필터와 무관하게 실제 선택된 활동기록 전체
-const selectedActivities = computed(() =>
-  activities.value.filter((a) => selectedActivityIds.value.includes(a.id)),
-)
+const selectedActivities = computed(() => {
+  const ids = new Set(selectedActivityIds.value.map((id) => String(id)))
+  return activities.value.filter((a) => ids.has(String(activityRowId(a))))
+})
 
 const includedTypes = computed(() =>
-  [...new Set(selectedActivities.value.map((a) => a.type))],
+  [...new Set(selectedActivities.value.map(activityTypeOf).filter(Boolean))],
 )
 
 const filteredActivities = computed(() => {
   if (!selectedPoId.value) return []
   let list = activities.value.filter((a) => a.poId === selectedPoId.value)
   if (activeTypeTab.value !== '전체') {
-    list = list.filter((a) => a.type === activeTypeTab.value)
+    list = list.filter((a) => activityTypeOf(a) === activeTypeTab.value)
   }
   if (keyword.value.trim()) {
     const q = keyword.value.trim().toLowerCase()
     list = list.filter((a) =>
-      a.title.toLowerCase().includes(q) || (a.content ?? '').toLowerCase().includes(q),
+      (a.title ?? a.activityTitle ?? '').toLowerCase().includes(q) ||
+      (a.content ?? a.activityContent ?? '').toLowerCase().includes(q),
     )
   }
-  const aFrom = actDateFrom.value.replaceAll('-', '/')
-  const aTo   = actDateTo.value.replaceAll('-', '/')
-  if (aFrom) list = list.filter((a) => a.date >= aFrom)
-  if (aTo)   list = list.filter((a) => a.date <= aTo)
+  const aFrom = normalizeDate(actDateFrom.value)
+  const aTo   = normalizeDate(actDateTo.value)
+  if (aFrom) list = list.filter((a) => normalizeDate(a.date ?? a.activityDate) >= aFrom)
+  if (aTo)   list = list.filter((a) => normalizeDate(a.date ?? a.activityDate) <= aTo)
   return list
 })
 
@@ -321,7 +339,7 @@ watch([actDateFrom, actDateTo], async () => {
     return
   }
   await nextTick()
-  selectedActivityIds.value = filteredActivities.value.map((a) => a.id)
+  selectedActivityIds.value = filteredActivities.value.map(activityRowId).filter((id) => id != null)
 })
 
 // PO 변경 시 전체 선택으로 리셋 (편집 모드 초기 로드 제외)
@@ -333,26 +351,27 @@ watch(selectedPoId, async () => {
     return
   }
   await nextTick()
-  selectedActivityIds.value = filteredActivities.value.map((a) => a.id)
+  selectedActivityIds.value = filteredActivities.value.map(activityRowId).filter((id) => id != null)
 })
 
 const isAllSelected = computed(() =>
   filteredActivities.value.length > 0 &&
-  filteredActivities.value.every((a) => selectedActivityIds.value.includes(a.id)),
+  filteredActivities.value.every((a) => isActivitySelected(activityRowId(a))),
 )
 
 function toggleAll(checked) {
-  const ids = filteredActivities.value.map((a) => a.id)
+  const ids = filteredActivities.value.map(activityRowId).filter((id) => id != null)
   if (checked) {
     selectedActivityIds.value = [...new Set([...selectedActivityIds.value, ...ids])]
   } else {
-    selectedActivityIds.value = selectedActivityIds.value.filter((id) => !ids.includes(id))
+    const visibleIds = new Set(ids.map((id) => String(id)))
+    selectedActivityIds.value = selectedActivityIds.value.filter((id) => !visibleIds.has(String(id)))
   }
 }
 
 function toggleActivity(id) {
-  if (selectedActivityIds.value.includes(id)) {
-    selectedActivityIds.value = selectedActivityIds.value.filter((v) => v !== id)
+  if (isActivitySelected(id)) {
+    selectedActivityIds.value = selectedActivityIds.value.filter((v) => String(v) !== String(id))
   } else {
     selectedActivityIds.value = [...selectedActivityIds.value, id]
   }
@@ -362,7 +381,9 @@ function toggleActivity(id) {
 const summaryText = computed(() => {
   if (selectedActivities.value.length === 0) return '활동기록 목록에서 항목을 선택하면 포함 건수가 표시됩니다.'
   const countByType = selectedActivities.value.reduce((acc, a) => {
-    acc[a.type] = (acc[a.type] ?? 0) + 1
+    const type = activityTypeOf(a)
+    if (!type) return acc
+    acc[type] = (acc[type] ?? 0) + 1
     return acc
   }, {})
   const parts = Object.entries(countByType).map(([type, count]) => `${type} ${count}건`)
@@ -390,10 +411,10 @@ async function savePackage() {
     packageTitle: packageTitle.value.trim(),
     packageDescription: packageDescription.value.trim(),
     poId: selectedPoId.value,
-    dateFrom: dateFrom.value,
-    dateTo: dateTo.value,
-    activityIds: [...selectedActivityIds.value],
-    viewerIds: [...selectedViewerIds.value],
+    dateFrom: dateFrom.value || null,
+    dateTo: dateTo.value || null,
+    activityIds: selectedActivityIds.value.map(Number).filter(Number.isFinite),
+    viewerIds: selectedViewerIds.value.map(Number).filter(Number.isFinite),
   }
 
   try {
@@ -681,21 +702,21 @@ async function savePackage() {
             </div>
             <div
               v-for="activity in filteredActivities"
-              :key="activity.id"
+              :key="activityRowId(activity)"
               class="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 transition hover:bg-slate-100"
             >
               <input
                 type="checkbox"
                 class="rounded border-slate-300 text-brand-500"
-                :checked="selectedActivityIds.includes(activity.id)"
-                @change="toggleActivity(activity.id)"
+                :checked="isActivitySelected(activityRowId(activity))"
+                @change="toggleActivity(activityRowId(activity))"
               />
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2">
-                  <ActivityTypeBadge :value="activity.type" />
-                  <span class="truncate text-sm font-medium text-slate-700">{{ activity.title }}</span>
+                  <ActivityTypeBadge :value="activityTypeOf(activity)" />
+                  <span class="truncate text-sm font-medium text-slate-700">{{ activity.title ?? activity.activityTitle }}</span>
                 </div>
-                <p class="mt-0.5 text-xs text-slate-400">{{ activity.date }} · {{ activity.author }}</p>
+                <p class="mt-0.5 text-xs text-slate-400">{{ activity.date ?? activity.activityDate }} · {{ activity.author ?? activity.authorName }}</p>
               </div>
             </div>
           </div>
@@ -730,7 +751,7 @@ async function savePackage() {
             <DateField v-model="dateTo" />
           </div>
           <div class="flex justify-end">
-            <BaseButton variant="secondary" size="sm" @click="dateFrom = ''; dateTo = todayKr()">기간 초기화</BaseButton>
+            <BaseButton variant="secondary" size="sm" @click="dateFrom = ''; dateTo = ''">기간 초기화</BaseButton>
           </div>
         </div>
       </template>

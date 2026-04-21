@@ -143,8 +143,8 @@ async function loadData() {
 
     allClients.value = clientsData
     buyers.value = buyersData
-  } catch {
-    error('데이터를 불러오는 중 오류가 발생했습니다.')
+  } catch (e) {
+    error(e?.response?.data?.message || '데이터를 불러오는 중 오류가 발생했습니다.')
   } finally {
     loading.value = false
   }
@@ -153,8 +153,8 @@ async function loadData() {
 async function reloadBuyers() {
   try {
     buyers.value = await fetchBuyersByClient(route.params.id)
-  } catch {
-    error('바이어 목록을 다시 불러오지 못했습니다.')
+  } catch (e) {
+    error(e?.response?.data?.message || '바이어 목록을 다시 불러오지 못했습니다.')
   }
 }
 
@@ -172,8 +172,8 @@ async function handleSave(formData) {
     success('거래처 정보가 수정되었습니다.')
     showFormModal.value = false
     await loadData()
-  } catch {
-    error('수정 중 오류가 발생했습니다.')
+  } catch (e) {
+    error(e?.response?.data?.message || '수정 중 오류가 발생했습니다.')
   } finally {
     saving.value = false
   }
@@ -189,8 +189,8 @@ async function handleDelete() {
     await changeClientStatus(client.value.id ?? client.value.clientId, 'inactive')
     success(`${name} 거래처가 비활성화되었습니다.`)
     router.push({ name: 'client-list' })
-  } catch {
-    error('삭제 중 오류가 발생했습니다.')
+  } catch (e) {
+    error(e?.response?.data?.message || '삭제 중 오류가 발생했습니다.')
   } finally {
     showConfirmModal.value = false
     deleting.value = false
@@ -276,8 +276,8 @@ async function handleBuyerDelete() {
     showBuyerDeleteModal.value = false
     buyerToDelete.value = null
     await reloadBuyers()
-  } catch {
-    error('삭제 중 오류가 발생했습니다.')
+  } catch (e) {
+    error(e?.response?.data?.message || '삭제 중 오류가 발생했습니다.')
   }
 }
 

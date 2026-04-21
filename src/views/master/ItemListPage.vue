@@ -154,8 +154,8 @@ async function loadData() {
   loading.value = true
   try {
     items.value = await fetchItems()
-  } catch {
-    error('데이터를 불러오는 중 오류가 발생했습니다.')
+  } catch (e) {
+    error(e?.response?.data?.message || '데이터를 불러오는 중 오류가 발생했습니다.')
   } finally {
     loading.value = false
   }
@@ -182,13 +182,18 @@ function confirmDelete(item) {
 
 async function handleDelete() {
   if (!itemToDelete.value || deleting.value) return
+  const id = itemToDelete.value.itemId ?? itemToDelete.value.id
+  if (!id) {
+    error('품목 ID가 없습니다.')
+    return
+  }
   deleting.value = true
   try {
-    await changeItemStatus(itemToDelete.value.id, 'inactive')
+    await changeItemStatus(id, 'inactive')
     success(`${itemToDelete.value.itemName} 품목이 비활성화되었습니다.`)
     await loadData()
-  } catch {
-    error('삭제 중 오류가 발생했습니다.')
+  } catch (e) {
+    error(e?.response?.data?.message || '삭제 중 오류가 발생했습니다.')
   } finally {
     showConfirmModal.value = false
     itemToDelete.value = null
@@ -208,23 +213,24 @@ async function handleSave(formData) {
       // PUT 의 UpdateItemRequest DTO 에는 itemStatus 필드가 없어 포함시켜도 무시된다.
       // 따라서 상태가 변경된 경우에는 PATCH 를 별도로 호출해야 실제 반영됨.
       const statusChanged = formData.itemStatus !== selectedItem.value.itemStatus
-      await updateItem(selectedItem.value.id, formData)
+      const id = selectedItem.value.itemId ?? selectedItem.value.id
+      await updateItem(id, formData)
       if (statusChanged) {
-        await changeItemStatus(selectedItem.value.id, formData.itemStatus)
+        await changeItemStatus(id, formData.itemStatus)
       }
       success('품목 정보가 수정되었습니다.')
     }
     showFormModal.value = false
     await loadData()
-  } catch {
-    error('저장 중 오류가 발생했습니다.')
+  } catch (e) {
+    error(e?.response?.data?.message || '저장 중 오류가 발생했습니다.')
   } finally {
     saving.value = false
   }
 }
 
 function goToDetail(row) {
-  router.push({ name: 'item-detail', params: { id: row.id } })
+  router.push({ name: 'item-detail', params: { id: row.itemId ?? row.id } })
 }
 </script>
 

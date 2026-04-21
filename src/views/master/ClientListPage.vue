@@ -193,8 +193,8 @@ async function loadData() {
     clients.value = clientsData ?? []
     departments.value = deptsData ?? []
     teams.value = teamsData ?? []
-  } catch {
-    error('데이터를 불러오는 중 오류가 발생했습니다.')
+  } catch (e) {
+    error(e?.response?.data?.message || '데이터를 불러오는 중 오류가 발생했습니다.')
   } finally {
     loading.value = false
   }
@@ -233,7 +233,7 @@ async function handleDelete() {
     await loadData()
   } catch (e) {
     console.error('거래처 삭제 실패', e)
-    error('삭제 중 오류가 발생했습니다.')
+    error(e?.response?.data?.message || '삭제 중 오류가 발생했습니다.')
   } finally {
     showConfirmModal.value = false
     clientToDelete.value = null
@@ -255,8 +255,8 @@ async function handleSave(formData) {
     }
     showFormModal.value = false
     await loadData()
-  } catch {
-    error('저장 중 오류가 발생했습니다.')
+  } catch (e) {
+    error(e?.response?.data?.message || '저장 중 오류가 발생했습니다.')
   } finally {
     saving.value = false
   }

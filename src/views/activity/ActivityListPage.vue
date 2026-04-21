@@ -104,18 +104,23 @@ const clientMap = computed(() =>
   Object.fromEntries(clients.value.map((c) => [c.clientId, c])),
 )
 
+function normalizeDate(value) {
+  return value ? String(value).slice(0, 10).replaceAll('/', '-') : ''
+}
+
 const filteredActivities = computed(() => {
   return activities.value.filter((a) => {
     const client = clientMap.value[a.clientId]
     const matchType   = !applied.value.type   || a.type === applied.value.type
-    const matchTitle  = !applied.value.title  || a.title.includes(applied.value.title)
-      || client?.clientName.includes(applied.value.title) || client?.clientNameKr.includes(applied.value.title)
+    const matchTitle  = !applied.value.title  || (a.title ?? '').includes(applied.value.title)
+      || (client?.clientName ?? '').includes(applied.value.title) || (client?.clientNameKr ?? '').includes(applied.value.title)
     const matchAuthor = !applied.value.author || a.author === applied.value.author
     const matchPo     = !applied.value.po     || (a.poId ?? '').includes(applied.value.po)
-    const dateFrom = applied.value.dateFrom.replaceAll('-', '/')
-    const dateTo   = applied.value.dateTo.replaceAll('-', '/')
-    const matchFrom   = !dateFrom || a.date >= dateFrom
-    const matchTo     = !dateTo   || a.date <= dateTo
+    const dateFrom = normalizeDate(applied.value.dateFrom)
+    const dateTo   = normalizeDate(applied.value.dateTo)
+    const activityDate = normalizeDate(a.date ?? a.activityDate)
+    const matchFrom   = !dateFrom || activityDate >= dateFrom
+    const matchTo     = !dateTo   || activityDate <= dateTo
     return matchType && matchTitle && matchAuthor && matchPo && matchFrom && matchTo
   })
 })

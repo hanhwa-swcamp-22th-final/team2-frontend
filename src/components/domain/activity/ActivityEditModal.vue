@@ -25,7 +25,7 @@ const emit = defineEmits(['close', 'save'])
 const { warning } = useToast()
 
 const priorityOptions = [
-  { label: '보통', value: 'medium' },
+  { label: '보통', value: 'normal' },
   { label: '높음', value: 'high' },
 ]
 
@@ -126,7 +126,7 @@ function initForm(val) {
   formDate.value         = (val?.date         ?? '').replaceAll('/', '-')
   formTitle.value        = val?.title        ?? ''
   formContent.value      = val?.content      ?? ''
-  formPriority.value     = val?.priority     ?? val?.activityPriority ?? 'medium'
+  formPriority.value     = val?.priority     ?? val?.activityPriority ?? 'normal'
   formScheduleFrom.value = (val?.scheduleFrom ?? val?.activityScheduleFrom ?? '').replaceAll('/', '-')
   formScheduleTo.value   = (val?.scheduleTo   ?? val?.activityScheduleTo   ?? '').replaceAll('/', '-')
   errors.value           = {}
