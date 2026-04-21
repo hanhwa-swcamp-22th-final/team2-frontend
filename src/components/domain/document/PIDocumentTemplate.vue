@@ -6,8 +6,10 @@
  * 구조: From(수출자) / To(수입자) + 문서 메타 + 배송조건 + 품목 테이블 + 합계
  */
 import DocumentPrintLayout from './DocumentPrintLayout.vue'
+import { computed } from 'vue'
 import { resolveConsigneeAddress } from '@/utils/ciplTemplate'
 import { normalizeIncoterms } from '@/utils/incoterms'
+import { useCompany } from '@/stores/company'
 
 defineProps({
   // 문서 전체 데이터 객체
@@ -16,6 +18,9 @@ defineProps({
     required: true,
   },
 })
+
+const company = useCompany()
+const companySealUrl = computed(() => company.value?.companySealImageUrl || '')
 
 function extractIncotermCode(value, namedPlace) {
   return normalizeIncoterms(value, namedPlace).code || '-'
@@ -139,6 +144,13 @@ function resolveItemQuantity(item) {
         <div class="signature-box">
           <div class="signature-line"></div>
           <p>Authorized Signature</p>
+          <img
+            v-if="companySealUrl"
+            :src="companySealUrl"
+            alt="Company Seal"
+            class="company-seal"
+            crossorigin="anonymous"
+          />
         </div>
       </div>
     </template>
@@ -252,6 +264,7 @@ function resolveItemQuantity(item) {
 .signature-box {
   text-align: center;
   width: 220px;
+  position: relative;
 }
 .signature-line {
   border-bottom: 1px solid #0f172a;
@@ -263,5 +276,16 @@ function resolveItemQuantity(item) {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #64748b;
+}
+.company-seal {
+  position: absolute;
+  right: 10px;
+  top: 4px;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  opacity: 0.7;
+  mix-blend-mode: multiply;
+  pointer-events: none;
 }
 </style>

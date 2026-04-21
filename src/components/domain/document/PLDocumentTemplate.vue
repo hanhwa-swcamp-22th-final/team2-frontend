@@ -8,6 +8,7 @@ import {
   resolveShipperAddress,
   resolveShipperName,
 } from '@/utils/ciplTemplate'
+import { useCompany } from '@/stores/company'
 
 const props = defineProps({
   document: {
@@ -19,6 +20,9 @@ const props = defineProps({
 const packingItems = computed(() => normalizePLItems(props.document?.items))
 const itemCount = computed(() => packingItems.value.length)
 const consigneeAttention = computed(() => resolveConsigneeAttention(props.document))
+
+const company = useCompany()
+const companySealUrl = computed(() => company.value?.companySealImageUrl || '')
 </script>
 
 <template>
@@ -161,6 +165,13 @@ const consigneeAttention = computed(() => resolveConsigneeAttention(props.docume
       <div class="signature-line-row">
         <span class="signed-label">Signed by</span>
         <span class="signed-line"></span>
+        <img
+          v-if="companySealUrl"
+          :src="companySealUrl"
+          alt="Company Seal"
+          class="company-seal"
+          crossorigin="anonymous"
+        />
       </div>
     </div>
   </div>
@@ -383,6 +394,17 @@ const consigneeAttention = computed(() => resolveConsigneeAttention(props.docume
   display: inline-block;
   width: 230px;
   border-bottom: 1px solid #000;
+}
+
+.company-seal {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  object-fit: contain;
+  margin-left: -80px;
+  margin-bottom: -10px;
+  opacity: 0.7;
+  mix-blend-mode: multiply;
 }
 
 .accent-red,

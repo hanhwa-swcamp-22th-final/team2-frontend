@@ -8,6 +8,7 @@ import {
   resolveShipperAddress,
   resolveShipperName,
 } from '@/utils/ciplTemplate'
+import { useCompany } from '@/stores/company'
 
 const props = defineProps({
   document: {
@@ -20,6 +21,11 @@ const invoiceItems = computed(() => normalizeCIItems(props.document?.items))
 const itemCount = computed(() => invoiceItems.value.length)
 const consigneeAttention = computed(() => resolveConsigneeAttention(props.document))
 const currencyCode = computed(() => props.document?.currency || 'USD')
+
+// 자사 도장 이미지 — 발행 문서의 서명란 우측에 합성. 자사정보 탭에서 업로드된
+// companySealImageUrl 을 그대로 사용 (CloudFront cdn URL).
+const company = useCompany()
+const companySealUrl = computed(() => company.value?.companySealImageUrl || '')
 </script>
 
 <template>
@@ -159,6 +165,13 @@ const currencyCode = computed(() => props.document?.currency || 'USD')
       <div class="signature-line-row">
         <span class="signed-label">Signed by</span>
         <span class="signed-line"></span>
+        <img
+          v-if="companySealUrl"
+          :src="companySealUrl"
+          alt="Company Seal"
+          class="company-seal"
+          crossorigin="anonymous"
+        />
       </div>
     </div>
   </div>
@@ -380,6 +393,18 @@ const currencyCode = computed(() => props.document?.currency || 'USD')
   display: inline-block;
   width: 230px;
   border-bottom: 1px solid #000;
+}
+
+/* 자사 도장 — 서명란 우측 상단에 겹쳐 반투명 합성. 40% opacity 로 실인장 느낌. */
+.company-seal {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  object-fit: contain;
+  margin-left: -80px;
+  margin-bottom: -10px;
+  opacity: 0.7;
+  mix-blend-mode: multiply;
 }
 
 .accent-red,

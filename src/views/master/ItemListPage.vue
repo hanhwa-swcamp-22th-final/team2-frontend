@@ -94,7 +94,7 @@ const columns = computed(() => {
     { key: 'itemUnitPrice', label: '단가 (KRW)', width: '140px', align: 'right' },
     { key: 'itemWeight', label: '중량 (kg)', width: '110px', align: 'right' },
     { key: 'itemHsCode', label: 'HS Code', width: '100px', align: 'center' },
-    { key: 'itemStatus', label: '상태', width: '80px', align: 'center' },
+    // 상태 컬럼 숨김 — 삭제=비활성화 soft-delete, 비활성 품목은 filteredItems 에서 자동 제외.
   ]
   if (isItemAdmin.value) {
     base.push({ key: 'actions', label: '', width: '120px', align: 'center', sortable: false })
@@ -103,7 +103,10 @@ const columns = computed(() => {
 })
 
 const filteredItems = computed(() => {
-  let result = items.value
+  // 비활성 품목은 자동 제외 (삭제=soft delete 패턴).
+  let result = items.value.filter(
+    (i) => String(i.itemStatus ?? 'active').toLowerCase() !== 'inactive',
+  )
   const f = appliedFilters.value
 
   if (f.keyword) {
@@ -267,13 +270,6 @@ function goToDetail(row) {
             />
           </FormField>
 
-          <FormField label="상태">
-            <SearchableCombobox
-              v-model="filters.status"
-              :options="statusOptions"
-              placeholder="상태 선택..."
-            />
-          </FormField>
         </div>
 
         <div class="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
@@ -326,10 +322,6 @@ function goToDetail(row) {
 
       <template #cell-itemWeight="{ row }">
         {{ row.itemWeight?.toLocaleString() ?? '-' }}
-      </template>
-
-      <template #cell-itemStatus="{ row }">
-        <StatusBadge :value="label(ITEM_STATUS_LABEL, row.itemStatus)" />
       </template>
 
       <template #cell-actions="{ row }">
