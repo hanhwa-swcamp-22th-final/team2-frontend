@@ -616,7 +616,7 @@ export function buildCIOutputHtml(doc) {
 
 // ════════════════════════════════════════════
 // PL 빌더 — CIPL_COOLSAY+FORM.pdf 원본 구조
-// CI와 동일한 헤더, Remarks에 BOOKING NO 추가
+// CI와 동일한 헤더와 Remarks 영역 사용
 // 품목 컬럼: Description, Quantity, Net/Gross Weight, Volume(CBM)
 // ════════════════════════════════════════════
 export function buildPLOutputHtml(doc) {
@@ -716,7 +716,7 @@ export function buildPLOutputHtml(doc) {
         </div>
         <div class="remarks-box">
           <div class="cell-label">⑩ Remarks</div>
-          <div class="cell-value accent-red">BOOKING NO. : ${esc(doc.bookingNo || 'T.B.A.')}</div>
+          <div class="cell-value accent-red">${esc(doc.remarks || '')}</div>
         </div>
       </td>
     </tr>

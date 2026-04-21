@@ -1,8 +1,15 @@
 import { useAuthStore } from './auth'
 import { ref } from 'vue'
 import { fetchCommercialInvoicesPaged } from '@/api/documents'
+import { fetchClients } from '@/api/master'
 import { formatCurrencyAmount, getCurrencyDecimals } from '@/utils/currencyFormat'
 import { formatKstSlashDate } from '@/utils/dateTime'
+import {
+  buildClientLookup,
+  resolveCarrier,
+  resolvePaymentTerms,
+  resolvePortOfDischarge,
+} from '@/utils/ciplEnrichment'
 
 function formatDate(value) {
   return formatKstSlashDate(value)
@@ -41,7 +48,10 @@ function normalizeDocStatus(raw, fallback = '발행대기') {
   return DOC_STATUS_LABEL[String(raw).toLowerCase()] ?? DOC_STATUS_LABEL[raw] ?? String(raw)
 }
 
-function mapCiResponse(row) {
+function mapCiResponse(row, clientLookup = new Map()) {
+  const client = clientLookup.get(String(row.clientId ?? row.client_id))
+  const paymentTerms = resolvePaymentTerms(row, client)
+  const portOfDischarge = resolvePortOfDischarge(row, client)
   const rawItems = row.items?.length ? row.items : parseJsonSafe(row.itemsSnapshot)
   // F4 — 품목 라인 셀의 소수 자릿수를 통화별로 결정. KRW/JPY=0, 그 외=2.
   // 이전엔 2자리 고정이라 CI260011(KRW) 도 "12,000.00" 처럼 찍혀 이상했음.
@@ -57,6 +67,7 @@ function mapCiResponse(row) {
 
   return {
     id: row.ciId,
+    poInternalId: row.poId ?? null,
     status: normalizeDocStatus(row.status),
     issueDate: formatDate(row.invoiceDate ?? row.issueDate),
     clientId: row.clientId ?? row.client_id ?? null,
@@ -82,13 +93,13 @@ function mapCiResponse(row) {
     incotermCode: row.incotermsCode ?? '',
     incoterms: row.incotermsCode ? `${row.incotermsCode}${row.namedPlace ? ` ${row.namedPlace}` : ''}` : '-',
     namedPlace: row.namedPlace ?? '',
-    paymentTermsId: row.paymentTermsId ?? null,
-    paymentTerms: row.paymentTerms ?? '-',
+    paymentTermsId: row.paymentTermsId ?? client?.paymentTermId ?? client?.paymentTermsId ?? null,
+    paymentTerms,
     deliveryDate: formatDate(row.deliveryDate),
     portOfDischargeCode: row.portOfDischargeCode ?? '',
-    portOfDischargeFallback: row.portOfDischarge ?? '-',
-    portOfDischarge: row.portOfDischarge ?? '-',
-    carrier: row.carrier ?? '-',
+    portOfDischargeFallback: portOfDischarge,
+    portOfDischarge,
+    carrier: resolveCarrier(row),
     poId: row.poId ?? '',
     shipmentOrderId: row.shipmentOrderId ?? '',
     remarks: row.remarks ?? '-',
@@ -104,8 +115,12 @@ let loading = null
 
 export async function loadCiDocuments({ page = 0, size = 1000 } = {}) {
   try {
-    const { content, page: pageInfo } = await fetchCommercialInvoicesPaged({ page, size })
-    ciDocuments.value = (Array.isArray(content) ? content : []).map(mapCiResponse)
+    const [{ content, page: pageInfo }, clients] = await Promise.all([
+      fetchCommercialInvoicesPaged({ page, size }),
+      fetchClients().catch(() => []),
+    ])
+    const clientLookup = buildClientLookup(clients)
+    ciDocuments.value = (Array.isArray(content) ? content : []).map((row) => mapCiResponse(row, clientLookup))
     ciPageInfo.value = pageInfo
   } catch (e) {
     console.error('Failed to load CI documents:', e)

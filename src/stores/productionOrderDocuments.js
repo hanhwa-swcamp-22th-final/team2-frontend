@@ -3,8 +3,21 @@ import { ref } from 'vue'
 import { fetchProductionOrdersPaged } from '@/api/documents'
 import { formatKstSlashDate } from '@/utils/dateTime'
 
+const PRODUCTION_STATUS_LABEL = {
+  in_progress: '진행중',
+  completed: '생산완료',
+  '진행중': '진행중',
+  '생산완료': '생산완료',
+}
+
 function formatDate(value) {
   return formatKstSlashDate(value)
+}
+
+function normalizeStatus(raw) {
+  if (raw == null || raw === '') return '진행중'
+  const key = String(raw).trim()
+  return PRODUCTION_STATUS_LABEL[key.toLowerCase()] ?? PRODUCTION_STATUS_LABEL[key] ?? key
 }
 
 function parseLinkedDocuments(value) {
@@ -45,7 +58,7 @@ function mapProductionOrderResponse(row) {
 
   return {
     id: row.productionOrderId,
-    status: row.status ?? '진행중',
+    status: normalizeStatus(row.status),
     issueDate: formatDate(row.orderDate ?? row.issueDate),
     poId: row.poId ?? '',
     country: row.country ?? '-',

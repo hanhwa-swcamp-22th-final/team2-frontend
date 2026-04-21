@@ -37,12 +37,11 @@ const filters = ref({
   keyword: '',
   code: '',
   name: '',
-  category: '',
   unit: '',
   status: '',
 })
 
-const appliedFilters = ref({ keyword: '', code: '', name: '', category: '', unit: '', status: '' })
+const appliedFilters = ref({ keyword: '', code: '', name: '', unit: '', status: '' })
 
 const statusOptions = [
   { label: '전체', value: '' },
@@ -52,14 +51,14 @@ const statusOptions = [
 
 const DEFAULT_UNITS = ['EA', 'KG', 'MT', 'SET']
 const unitOptions = computed(() => {
-  const fromItems = items.value.map((i) => i.itemUnit).filter(Boolean)
+  const fromItems = items.value.map((i) => i.itemUnit ?? i.unit).filter(Boolean)
   const units = [...new Set([...DEFAULT_UNITS, ...fromItems])]
   return [{ label: '전체', value: '' }, ...units.map((u) => ({ label: u, value: u }))]
 })
 
 function resetFilters() {
-  filters.value = { keyword: '', code: '', name: '', category: '', unit: '', status: '' }
-  appliedFilters.value = { keyword: '', code: '', name: '', category: '', unit: '', status: '' }
+  filters.value = { keyword: '', code: '', name: '', unit: '', status: '' }
+  appliedFilters.value = { keyword: '', code: '', name: '', unit: '', status: '' }
   currentPage.value = 1
 }
 
@@ -77,13 +76,6 @@ const selectedItem = ref(null)
 
 const showConfirmModal = ref(false)
 const itemToDelete = ref(null)
-
-const DEFAULT_CATEGORIES = ['Steel', 'Pipe', 'Oil', 'Machinery']
-const categoryOptions = computed(() => {
-  const fromItems = items.value.map((i) => i.itemCategory).filter(Boolean)
-  const cats = [...new Set([...DEFAULT_CATEGORIES, ...fromItems])]
-  return [{ label: '전체', value: '' }, ...cats.map((c) => ({ label: c, value: c }))]
-})
 
 const columns = computed(() => {
   const base = [
@@ -129,12 +121,8 @@ const filteredItems = computed(() => {
     result = result.filter((item) => item.itemName.toLowerCase().includes(kw) || (item.itemNameKr && item.itemNameKr.includes(kw)))
   }
 
-  if (f.category) {
-    result = result.filter((item) => item.itemCategory === f.category)
-  }
-
   if (f.unit) {
-    result = result.filter((item) => item.itemUnit === f.unit)
+    result = result.filter((item) => (item.itemUnit ?? item.unit) === f.unit)
   }
 
   if (f.status) {
@@ -261,14 +249,6 @@ function goToDetail(row) {
             <BaseTextField v-model="filters.name" placeholder="영문 또는 한글명..." />
           </FormField>
 
-          <FormField label="카테고리">
-            <SearchableCombobox
-              v-model="filters.category"
-              :options="categoryOptions"
-              placeholder="카테고리 선택..."
-            />
-          </FormField>
-
           <FormField label="단위">
             <SearchableCombobox
               v-model="filters.unit"
@@ -302,7 +282,7 @@ function goToDetail(row) {
     </div>
 
     <BaseTable v-else :columns="columns" :rows="paginatedItems" row-key="id"
-      :empty-text="appliedFilters.keyword || appliedFilters.code || appliedFilters.name || appliedFilters.category || appliedFilters.unit || appliedFilters.status ? '검색 결과가 없습니다.' : '등록된 품목이 없습니다.'"
+      :empty-text="appliedFilters.keyword || appliedFilters.code || appliedFilters.name || appliedFilters.unit || appliedFilters.status ? '검색 결과가 없습니다.' : '등록된 품목이 없습니다.'"
       clickable-rows
       :footer-text="`총 ${filteredItems.length}건`"
       @row-click="goToDetail"

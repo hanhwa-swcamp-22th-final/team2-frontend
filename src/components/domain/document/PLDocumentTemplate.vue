@@ -68,9 +68,7 @@ const companySealUrl = computed(() => company.value?.companySealImageUrl || '')
             </div>
             <div class="remarks-box">
               <div class="cell-label">⑩ Remarks</div>
-              <div class="cell-value accent-red">
-                BOOKING NO. : {{ document.bookingNo || 'T.B.A.' }}
-              </div>
+              <div class="cell-value accent-red">{{ document.remarks || '' }}</div>
             </div>
           </td>
         </tr>

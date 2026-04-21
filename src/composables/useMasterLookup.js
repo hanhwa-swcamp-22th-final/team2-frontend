@@ -8,16 +8,16 @@ export function useMasterLookup() {
   const paymentTerms = ref([])
 
   async function loadReferenceData() {
-    const [countriesData, portsData, currenciesData, paymentTermsData] = await Promise.all([
+    const [countriesData, portsData, currenciesData, paymentTermsData] = await Promise.allSettled([
       fetchCountries(),
       fetchPorts(),
       fetchCurrencies(),
       fetchPaymentTerms(),
     ])
-    countries.value = countriesData
-    ports.value = portsData
-    currencies.value = currenciesData
-    paymentTerms.value = paymentTermsData
+    countries.value = countriesData.status === 'fulfilled' ? countriesData.value : []
+    ports.value = portsData.status === 'fulfilled' ? portsData.value : []
+    currencies.value = currenciesData.status === 'fulfilled' ? currenciesData.value : []
+    paymentTerms.value = paymentTermsData.status === 'fulfilled' ? paymentTermsData.value : []
   }
 
   function getCountryName(countryId, { detailed = false } = {}) {

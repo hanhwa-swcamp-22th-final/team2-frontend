@@ -62,6 +62,7 @@ import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalCo
 import { buildSelectOptionsFromRows } from '@/utils/selectOptions'
 import { formatCurrencyAmount } from '@/utils/currencyFormat'
 import { formatKstDateTime, formatKstSlashDate } from '@/utils/dateTime'
+import { PI_PO_STATUS_LABEL } from '@/utils/enumLabels'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -180,7 +181,7 @@ const createHelperText = computed(() => (
 
 const managerOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'manager'))
 const countryOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'country'))
-const statusOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'status'))
+const statusOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'status', PI_PO_STATUS_LABEL))
 
 const shipmentLockInfoByPoId = computed(() => (
   new Map(

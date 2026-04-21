@@ -9,6 +9,8 @@ import CollapsibleFilterCard from '@/components/common/CollapsibleFilterCard.vue
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import FilterToolbarCard from '@/components/common/FilterToolbarCard.vue'
 import FormField from '@/components/common/FormField.vue'
+import SearchModal from '@/components/common/SearchModal.vue'
+import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import TableActions from '@/components/common/TableActions.vue'
@@ -26,6 +28,7 @@ import { useMasterLookup } from '@/composables/useMasterLookup'
 import { useToast } from '@/composables/useToast'
 import { label, CLIENT_STATUS_LABEL } from '@/utils/enumLabels'
 import { formatKstDateInput } from '@/utils/dateTime'
+import { clientSearchColumns } from '@/utils/searchModalColumns'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -49,6 +52,9 @@ const saving = ref(false)
 const deleting = ref(false)
 
 const isAdvancedOpen = ref(false)
+const clientLookupOpen = ref(false)
+const clientLookupKeyword = ref('')
+const clientLookupContext = ref('name')
 
 const filters = ref({
   keyword: '',
@@ -106,10 +112,51 @@ const enrichedClients = computed(() =>
 
 // 전체 countries 마스터에서 국가 옵션 (거래처에 없는 국가도 선택 가능)
 const countryOptions = computed(() => {
-  const fromMaster = countries.value.map((c) => c.countryName).filter(Boolean)
-  const fromClients = enrichedClients.value.map((c) => c.countryName).filter(Boolean)
-  const countrySet = [...new Set([...fromMaster, ...fromClients])]
-  return [{ label: '전체', value: '' }, ...countrySet.map((name) => ({ label: name, value: name }))]
+  const optionMap = new Map()
+  countries.value.forEach((country) => {
+    if (!country.countryName) return
+    optionMap.set(country.countryName, {
+      label: country.countryNameKr ? `${country.countryNameKr} (${country.countryName})` : country.countryName,
+      value: country.countryName,
+    })
+  })
+  enrichedClients.value.forEach((client) => {
+    if (!client.countryName || optionMap.has(client.countryName)) return
+    optionMap.set(client.countryName, {
+      label: client.countryNameKr ? `${client.countryNameKr} (${client.countryName})` : client.countryName,
+      value: client.countryName,
+    })
+  })
+  return [{ label: '전체', value: '' }, ...optionMap.values()]
+})
+
+const clientLookupRows = computed(() => {
+  const keyword = clientLookupKeyword.value.trim().toLowerCase()
+  const rows = enrichedClients.value.map((client) => ({
+    id: client.clientId ?? client.id,
+    code: client.clientCode ?? '',
+    name: client.clientNameKr ? `${client.clientName} / ${client.clientNameKr}` : client.clientName,
+    country: client.countryNameKr ? `${client.countryNameKr} (${client.countryName})` : client.countryName,
+    city: client.clientCity ?? '',
+    currency: client.currencyCode ?? '',
+    manager: client.clientManager ?? '',
+    tel: client.clientTel ?? '',
+    status: label(CLIENT_STATUS_LABEL, client.clientStatus ?? 'active'),
+    rawName: client.clientName ?? '',
+    rawManager: client.clientManager ?? '',
+  }))
+
+  if (!keyword) return rows
+  return rows.filter((row) => [
+    row.code,
+    row.name,
+    row.country,
+    row.city,
+    row.currency,
+    row.manager,
+    row.tel,
+    row.status,
+  ].some((value) => String(value ?? '').toLowerCase().includes(keyword)))
 })
 
 function resetFilters() {
@@ -121,6 +168,22 @@ function resetFilters() {
 function searchRows() {
   appliedFilters.value = { ...filters.value }
   currentPage.value = 1
+}
+
+function openClientLookup(context) {
+  clientLookupContext.value = context
+  clientLookupKeyword.value = ''
+  clientLookupOpen.value = true
+}
+
+function handleClientLookupSelect(row) {
+  if (clientLookupContext.value === 'manager') {
+    filters.value.manager = row.rawManager || row.manager || ''
+  } else {
+    filters.value.name = row.rawName || row.name || ''
+  }
+  clientLookupOpen.value = false
+  clientLookupKeyword.value = ''
 }
 
 const filteredClients = computed(() => {
@@ -291,7 +354,12 @@ function goToDetail(row) {
           </FormField>
 
           <FormField label="거래처명">
-            <BaseTextField v-model="filters.name" placeholder="영문 또는 한글명..." />
+            <SearchTriggerField
+              v-model="filters.name"
+              placeholder="거래처 검색..."
+              title="거래처 검색"
+              @trigger="openClientLookup('name')"
+            />
           </FormField>
 
           <FormField label="국가">
@@ -303,7 +371,12 @@ function goToDetail(row) {
           </FormField>
 
           <FormField label="담당자">
-            <BaseTextField v-model="filters.manager" placeholder="담당자명..." />
+            <SearchTriggerField
+              v-model="filters.manager"
+              placeholder="담당자 검색..."
+              title="담당자 검색"
+              @trigger="openClientLookup('manager')"
+            />
           </FormField>
         </div>
 
@@ -399,6 +472,17 @@ function goToDetail(row) {
       confirm-variant="danger"
       @confirm="handleDelete"
       @cancel="showConfirmModal = false"
+    />
+
+    <SearchModal
+      :open="clientLookupOpen"
+      :title="clientLookupContext === 'manager' ? '담당자 검색' : '거래처 검색'"
+      :columns="clientSearchColumns"
+      :rows="clientLookupRows"
+      row-key="id"
+      v-model:search-keyword="clientLookupKeyword"
+      @select="handleClientLookupSelect"
+      @close="clientLookupOpen = false"
     />
   </div>
 </template>

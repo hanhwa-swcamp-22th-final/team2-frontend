@@ -1,4 +1,15 @@
-export function buildSelectOptions(values = []) {
+function resolveOptionLabel(value, labelResolver) {
+  if (!labelResolver) return value
+  if (typeof labelResolver === 'function') return labelResolver(value)
+
+  const raw = String(value ?? '')
+  return labelResolver[raw]
+    ?? labelResolver[raw.toLowerCase()]
+    ?? labelResolver[raw.toUpperCase()]
+    ?? value
+}
+
+export function buildSelectOptions(values = [], labelResolver = null) {
   const seen = new Set()
 
   return values
@@ -9,9 +20,9 @@ export function buildSelectOptions(values = []) {
       seen.add(value)
       return true
     })
-    .map((value) => ({ value, label: value }))
+    .map((value) => ({ value, label: resolveOptionLabel(value, labelResolver) }))
 }
 
-export function buildSelectOptionsFromRows(rows = [], field) {
-  return buildSelectOptions(rows.map((row) => row?.[field]))
+export function buildSelectOptionsFromRows(rows = [], field, labelResolver = null) {
+  return buildSelectOptions(rows.map((row) => row?.[field]), labelResolver)
 }
