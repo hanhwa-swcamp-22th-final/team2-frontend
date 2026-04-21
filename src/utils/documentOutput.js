@@ -29,6 +29,33 @@ import {
 } from '@/utils/ciplTemplate'
 import { normalizeIncoterms } from '@/utils/incoterms'
 import { buildInstructionSheetDocument } from '@/utils/instructionSheetTemplate'
+import { useCompany } from '@/stores/company'
+
+// 발행 시점에 자사 직인 이미지 URL 해석. Vue 템플릿과 달리 여긴 string-concat 이라
+// async 를 못 돌리고 store 가 이미 로드된 값을 그대로 꺼내 쓴다. 사용자가 문서 상세
+// 화면을 한 번이라도 봤다면 CompanyInfoTab 이나 미리보기 컴포넌트에서 useCompany()
+// 가 이미 fetch 를 트리거해 값이 채워져 있다. 만약 비어있으면 빈 문자열 반환 → <img>
+// 삽입 생략.
+function resolveCompanySealUrl() {
+  try {
+    const company = useCompany()
+    return company.value?.companySealImageUrl || ''
+  } catch (e) {
+    return ''
+  }
+}
+
+// 공통 직인 CSS. signature-area / signature 블록에 겹쳐 반투명 합성.
+const sealStyles = `
+  .doc-seal { width: 72px; height: 72px; object-fit: contain; opacity: 0.72; mix-blend-mode: multiply; pointer-events: none; }
+  .doc-seal.inline { display: inline-block; vertical-align: middle; margin-left: -84px; margin-bottom: -10px; }
+  .doc-seal.abs { position: absolute; right: 12px; top: 4px; }
+`
+
+function sealMarkup(url, { inline = true } = {}) {
+  if (!url) return ''
+  return `<img class="doc-seal ${inline ? 'inline' : 'abs'}" src="${url}" alt="Company Seal" />`
+}
 
 // ────────────────────────────────────────────
 // 공통 스타일 — 모든 문서 양식에 적용
@@ -56,9 +83,10 @@ const commonStyles = `
   .font-bold { font-weight: 700; }
   .font-semibold { font-weight: 600; }
   .signature { margin-top: 42px; padding-top: 12px; border-top: 1px solid #cbd5e1; display: flex; justify-content: flex-end; }
-  .sig-box { text-align: center; width: 220px; }
+  .sig-box { text-align: center; width: 220px; position: relative; }
   .sig-line { border-bottom: 1px solid #0f172a; height: 58px; }
   .sig-label { margin: 8px 0 0; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #64748b; }
+  ${sealStyles}
   .approval { margin-top: 40px; display: flex; justify-content: flex-end; }
   .approval-table { border-collapse: collapse; width: 240px; }
   .approval-table th { border: 1px solid #94a3b8; background: #f1f5f9; padding: 6px 12px; font-size: 11px; font-weight: 700; text-align: center; }
@@ -361,7 +389,7 @@ export function buildPIOutputHtml(doc) {
       <tbody>${itemRows}${emptyRows(5 - doc.items.length, 5)}</tbody>
       <tfoot><tr><td colspan="4" class="text-right font-bold">Grand Total</td><td class="text-right font-bold">${esc(doc.totalAmount)}</td></tr></tfoot>
     </table>
-    <div class="signature"><div class="sig-box"><div class="sig-line"></div><p class="sig-label">Authorized Signature</p></div></div>`
+    <div class="signature"><div class="sig-box"><div class="sig-line"></div><p class="sig-label">Authorized Signature</p>${sealMarkup(resolveCompanySealUrl(), { inline: false })}</div></div>`
 
   return wrapHtml('PROFORMA INVOICE', doc.id, body)
 }
@@ -411,7 +439,8 @@ export function buildPOOutputHtml(doc) {
       <tfoot>
         <tr><td colspan="5" class="text-right font-bold">Order Total</td><td class="text-right font-bold">${esc(doc.totalAmount)}</td></tr>
       </tfoot>
-    </table>`
+    </table>
+    <div class="signature"><div class="sig-box"><div class="sig-line"></div><p class="sig-label">Authorized Signature</p>${sealMarkup(resolveCompanySealUrl(), { inline: false })}</div></div>`
 
   return wrapHtml('PURCHASE ORDER', doc.id, body)
 }
@@ -476,6 +505,7 @@ export function buildCIOutputHtml(doc) {
     .accent-blue { font-weight: 700; }
     .italic { font-style: italic; }
     .text-right { text-align: right; }
+    ${sealStyles}
     @media print { body { margin: 24px 28px; } }
   `
 
@@ -577,6 +607,7 @@ export function buildCIOutputHtml(doc) {
     <div class="signature-line-row">
       <span class="signed-label">Signed by</span>
       <span class="signed-line"></span>
+      ${sealMarkup(resolveCompanySealUrl(), { inline: true })}
     </div>
   </div>
 </body>
@@ -642,6 +673,7 @@ export function buildPLOutputHtml(doc) {
     .accent-blue { font-weight: 700; }
     .italic { font-style: italic; }
     .text-right { text-align: right; }
+    ${sealStyles}
     @media print { body { margin: 24px 28px; } }
   `
 
@@ -744,6 +776,7 @@ export function buildPLOutputHtml(doc) {
     <div class="signature-line-row">
       <span class="signed-label">Signed by</span>
       <span class="signed-line"></span>
+      ${sealMarkup(resolveCompanySealUrl(), { inline: true })}
     </div>
   </div>
 </body>
