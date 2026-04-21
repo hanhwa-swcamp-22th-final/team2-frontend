@@ -17,10 +17,16 @@ const props = defineProps({
 
 defineEmits(['close'])
 
+const isScheduleActivity = computed(() =>
+  ['schedule', '일정'].includes(props.activity.type ?? props.activity.activityType),
+)
+const scheduleFrom = computed(() => props.activity.scheduleFrom ?? props.activity.activityScheduleFrom)
+const scheduleTo = computed(() => props.activity.scheduleTo ?? props.activity.activityScheduleTo)
+
 const modalTitle = computed(() => {
-  const title = props.activity.title || '활동 상세'
-  if (props.activity.type === '일정' && props.activity.scheduleFrom && props.activity.scheduleTo) {
-    return `${title}(${props.activity.scheduleFrom}~${props.activity.scheduleTo})`
+  const title = props.activity.title ?? props.activity.activityTitle ?? '활동 상세'
+  if (isScheduleActivity.value && scheduleFrom.value && scheduleTo.value) {
+    return `${title}(${scheduleFrom.value}~${scheduleTo.value})`
   }
   return title
 })
@@ -62,11 +68,11 @@ const modalTitle = computed(() => {
         <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">내용</p>
         <div class="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
           <p class="whitespace-pre-wrap text-sm text-slate-700">
-            {{ activity.type === '일정'
-              ? (activity.scheduleFrom && activity.scheduleTo
-                  ? `${activity.scheduleFrom} ~ ${activity.scheduleTo} ${activity.title || ''}`.trim()
-                  : (activity.title || '-'))
-              : (activity.content || '-') }}
+            {{ isScheduleActivity
+              ? (scheduleFrom && scheduleTo
+                  ? `${scheduleFrom} ~ ${scheduleTo} ${activity.title ?? activity.activityTitle ?? ''}`.trim()
+                  : (activity.title ?? activity.activityTitle ?? '-'))
+              : (activity.content ?? activity.activityContent ?? '-') }}
           </p>
         </div>
       </div>

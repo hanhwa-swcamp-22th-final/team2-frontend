@@ -20,6 +20,7 @@ const authStore = useAuthStore()
 const isItemAdmin = computed(() => canManageItems(authStore.currentUser?.role))
 
 const item = ref(null)
+const itemId = computed(() => item.value?.itemId ?? item.value?.id)
 const allItems = ref([]) // used for code uniqueness check in edit modal
 const loading = ref(false)
 const saving = ref(false)
@@ -81,8 +82,8 @@ async function loadData() {
     }
     item.value = itemData
     allItems.value = itemsData
-  } catch {
-    error('데이터를 불러오는 중 오류가 발생했습니다.')
+  } catch (e) {
+    error(e?.response?.data?.message || '데이터를 불러오는 중 오류가 발생했습니다.')
   } finally {
     loading.value = false
   }
@@ -98,12 +99,12 @@ async function handleSave(formData) {
   if (saving.value) return
   saving.value = true
   try {
-    await updateItem(item.value.id, formData)
+    await updateItem(itemId.value, formData)
     success('품목 정보가 수정되었습니다.')
     showFormModal.value = false
     await loadData()
-  } catch {
-    error('수정 중 오류가 발생했습니다.')
+  } catch (e) {
+    error(e?.response?.data?.message || '수정 중 오류가 발생했습니다.')
   } finally {
     saving.value = false
   }
@@ -116,11 +117,11 @@ async function handleDelete() {
   deleting.value = true
   const name = item.value.itemName
   try {
-    await changeItemStatus(item.value.id, 'inactive')
+    await changeItemStatus(itemId.value, 'inactive')
     success(`${name} 품목이 비활성화되었습니다.`)
     router.push({ name: 'item-list' })
-  } catch {
-    error('삭제 중 오류가 발생했습니다.')
+  } catch (e) {
+    error(e?.response?.data?.message || '삭제 중 오류가 발생했습니다.')
   } finally {
     showConfirmModal.value = false
     deleting.value = false
@@ -164,13 +165,13 @@ function goBack() {
       <!-- 관련 문서 링크 -->
       <BaseCard title="관련 문서 바로가기" subtitle="이 품목의 관련 문서를 조회합니다.">
         <div class="flex flex-wrap gap-2">
-          <DocumentLinkButton :to="{ path: '/po', query: { itemId: item.id } }">
+          <DocumentLinkButton :to="{ path: '/po', query: { itemId } }">
             PO 조회
           </DocumentLinkButton>
-          <DocumentLinkButton :to="{ path: '/pi', query: { itemId: item.id } }">
+          <DocumentLinkButton :to="{ path: '/pi', query: { itemId } }">
             PI 조회
           </DocumentLinkButton>
-          <DocumentLinkButton :to="{ path: '/production', query: { itemId: item.id } }">
+          <DocumentLinkButton :to="{ path: '/production', query: { itemId } }">
             생산 조회
           </DocumentLinkButton>
         </div>

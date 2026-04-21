@@ -207,12 +207,20 @@ const shipmentItems = computed(() => {
     }))
 })
 
-const clientNameById = computed(() => new Map(clientsData.value.map((client) => [Number(client.id), client.name])))
+const clientNameById = computed(() => new Map(
+  clientsData.value
+    .map((client) => [
+      Number(client.clientId ?? client.id),
+      client.clientName ?? client.name ?? '-',
+    ])
+    .filter(([id]) => Number.isFinite(id)),
+))
 
 function resolveActivityIcon(type) {
-  if (type === '미팅/협의') return 'fa-users'
-  if (type === '이슈') return 'fa-flag'
-  if (type === '메모/노트') return 'fa-sticky-note'
+  if (type === 'meeting' || type === '미팅/협의') return 'fa-users'
+  if (type === 'issue' || type === '이슈') return 'fa-flag'
+  if (type === 'memo' || type === '메모/노트') return 'fa-sticky-note'
+  if (type === 'schedule' || type === '일정') return 'fa-calendar'
   return 'fa-comment'
 }
 
@@ -547,7 +555,9 @@ function closePackageDetail() {
 
 function handlePackageEdit() {
   if (!selectedPackage.value) return
-  router.push({ path: '/package', query: { edit: selectedPackage.value.id } })
+  const packageId = selectedPackage.value.packageId ?? selectedPackage.value.id
+  if (!packageId) return
+  router.push({ path: '/package', query: { edit: packageId } })
   closePackageDetail()
 }
 
@@ -561,9 +571,11 @@ function closeDeleteConfirm() {
 
 async function confirmPackageDelete() {
   if (!selectedPackage.value) return
+  const packageId = selectedPackage.value.packageId ?? selectedPackage.value.id
+  if (!packageId) return
   try {
-    await deletePackageApi(selectedPackage.value.id)
-    packagesData.value = packagesData.value.filter((p) => p.id !== selectedPackage.value.id)
+    await deletePackageApi(packageId)
+    packagesData.value = packagesData.value.filter((p) => (p.packageId ?? p.id) !== packageId)
     success('패키지가 삭제되었습니다.')
     closeDeleteConfirm()
     closePackageDetail()

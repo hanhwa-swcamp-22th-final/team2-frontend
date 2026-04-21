@@ -27,7 +27,7 @@ const formType = ref('')
 const formPoDisplay = ref('')
 const formPoId = ref('')
 const formDate = ref(new Date().toISOString().slice(0, 10))
-const formPriority = ref('medium')
+const formPriority = ref('normal')
 const formTitle = ref('')
 const formContent = ref('')
 const formAuthor = ref(authStore.currentUser?.userName ?? '')
@@ -72,7 +72,7 @@ const typeOptions = [
 ]
 
 const priorityOptions = [
-  { label: '보통', value: 'medium' },
+  { label: '보통', value: 'normal' },
   { label: '높음', value: 'high' },
 ]
 

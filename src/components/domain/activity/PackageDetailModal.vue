@@ -1,10 +1,11 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { jsPDF } from 'jspdf'
+import { downloadPackageReport } from '@/api/package'
 import ActivityDetailModal from '@/components/domain/activity/ActivityDetailModal.vue'
 import ActivityTypeBadge from '@/components/domain/activity/ActivityTypeBadge.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
+import { useToast } from '@/composables/useToast'
 
 const props = defineProps({
   open: {
@@ -26,8 +27,10 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'edit', 'delete'])
+const { error } = useToast()
 
 const selectedActivity = ref(null)
+const downloading = ref(false)
 
 function openActivityDetail(act) {
   selectedActivity.value = act
@@ -39,7 +42,8 @@ function closeActivityDetail() {
 
 const packageActivities = computed(() => {
   if (!props.pkg?.activityIds?.length) return []
-  return props.activities.filter((a) => props.pkg.activityIds.includes(String(a.id)) || props.pkg.activityIds.includes(a.id))
+  const ids = new Set(props.pkg.activityIds.map((id) => String(id)))
+  return props.activities.filter((a) => ids.has(String(a.id ?? a.activityId)))
 })
 
 const infoRows = computed(() => {
@@ -53,134 +57,20 @@ const infoRows = computed(() => {
   ]
 })
 
-function generatePdf() {
-  if (!props.pkg) return
-
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-  const pageW = doc.internal.pageSize.getWidth()
-  const margin = 20
-  let y = 20
-
-  // ── 헤더
-  doc.setFontSize(20)
-  doc.setFont('helvetica', 'bold')
-  doc.text('Activity Record Package', pageW / 2, y, { align: 'center' })
-  y += 8
-
-  doc.setFontSize(10)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(100)
-  doc.text(`Generated: ${new Date().toLocaleDateString('ko-KR')}`, pageW / 2, y, { align: 'center' })
-  y += 4
-
-  if (props.pkg.poId) {
-    doc.text(`PO: ${props.pkg.poId}`, pageW / 2, y, { align: 'center' })
-    y += 4
+async function generatePdf() {
+  const packageId = props.pkg?.packageId ?? props.pkg?.id
+  if (!packageId || downloading.value) return
+  downloading.value = true
+  try {
+    const blob = await downloadPackageReport(packageId)
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank')
+    setTimeout(() => URL.revokeObjectURL(url), 10000)
+  } catch (e) {
+    error(e?.response?.data?.message || 'PDF 생성에 실패했습니다.')
+  } finally {
+    downloading.value = false
   }
-  doc.text(`Period: ${props.pkg.dateFrom || '-'} ~ ${props.pkg.dateTo || '-'}`, pageW / 2, y, { align: 'center' })
-  y += 8
-
-  // 구분선
-  doc.setDrawColor(200)
-  doc.line(margin, y, pageW - margin, y)
-  y += 8
-
-  // ── 선택된 활동기록 목록
-  const selected = packageActivities.value
-
-  doc.setFontSize(13)
-  doc.setFont('helvetica', 'bold')
-  doc.setTextColor(0)
-  doc.text(`Activity Records (${selected.length})`, margin, y)
-  y += 7
-
-  if (selected.length === 0) {
-    doc.setFontSize(10)
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(150)
-    doc.text('No records selected.', margin, y)
-    y += 6
-  } else {
-    const cols = [
-      { label: 'No',     x: margin,      w: 12  },
-      { label: 'Date',   x: margin + 12, w: 25  },
-      { label: 'Type',   x: margin + 37, w: 28  },
-      { label: 'Title',  x: margin + 65, w: 70  },
-      { label: 'Author', x: margin + 135, w: 30 },
-    ]
-
-    doc.setFillColor(240, 244, 255)
-    doc.rect(margin, y - 4, pageW - margin * 2, 7, 'F')
-    doc.setFontSize(9)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(50)
-    cols.forEach((c) => doc.text(c.label, c.x + 1, y))
-    y += 5
-
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(30)
-
-    selected.forEach((a, i) => {
-      if (y > 270) {
-        doc.addPage()
-        y = 20
-      }
-      const bg = i % 2 === 0 ? [255, 255, 255] : [248, 250, 252]
-      doc.setFillColor(...bg)
-      doc.rect(margin, y - 4, pageW - margin * 2, 6, 'F')
-
-      doc.setFontSize(8.5)
-      doc.text(String(i + 1), cols[0].x + 1, y)
-      doc.text(a.date ?? '-',  cols[1].x + 1, y)
-      doc.text(a.type ?? '-',  cols[2].x + 1, y)
-
-      const title = doc.splitTextToSize(a.title ?? '-', cols[3].w - 2)[0]
-      doc.text(title, cols[3].x + 1, y)
-      doc.text(a.author ?? '-', cols[4].x + 1, y)
-      y += 6
-    })
-  }
-
-  y += 6
-  doc.setDrawColor(200)
-  doc.line(margin, y, pageW - margin, y)
-  y += 6
-
-  // ── 포함 항목 요약
-  const includedTypes = [...new Set(selected.map((a) => a.type))]
-  doc.setFontSize(13)
-  doc.setFont('helvetica', 'bold')
-  doc.setTextColor(0)
-  doc.text('Include Options', margin, y)
-  y += 7
-
-  doc.setFontSize(9)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(60)
-  if (includedTypes.length === 0) {
-    doc.text('No items selected', margin + 4, y)
-    y += 5
-  } else {
-    includedTypes.forEach((type) => {
-      doc.text(`- ${type}`, margin + 4, y)
-      y += 5
-    })
-  }
-
-  // ── 푸터
-  const totalPages = doc.internal.pages.length - 1
-  for (let p = 1; p <= totalPages; p++) {
-    doc.setPage(p)
-    doc.setFontSize(8)
-    doc.setTextColor(160)
-    doc.text(`Page ${p} / ${totalPages}`, pageW / 2, 290, { align: 'center' })
-    doc.text('SalesBoost - Activity Package', margin, 290)
-  }
-
-  const blob = doc.output('blob')
-  const url = URL.createObjectURL(blob)
-  window.open(url, '_blank')
-  setTimeout(() => URL.revokeObjectURL(url), 10000)
 }
 </script>
 
@@ -262,11 +152,11 @@ function generatePdf() {
 
     <template #footer>
       <template v-if="isOwner">
-        <BaseButton variant="secondary" @click="generatePdf">
+        <BaseButton variant="secondary" :disabled="downloading" @click="generatePdf">
           <template #leading>
             <i class="fas fa-file-pdf text-xs" />
           </template>
-          PDF 다운로드
+          {{ downloading ? 'PDF 생성 중...' : 'PDF 다운로드' }}
         </BaseButton>
         <BaseButton variant="secondary" @click="emit('edit')">
           <template #leading>
@@ -282,11 +172,11 @@ function generatePdf() {
         </BaseButton>
       </template>
       <template v-else>
-        <BaseButton variant="secondary" @click="generatePdf">
+        <BaseButton variant="secondary" :disabled="downloading" @click="generatePdf">
           <template #leading>
             <i class="fas fa-file-pdf text-xs" />
           </template>
-          PDF 다운로드
+          {{ downloading ? 'PDF 생성 중...' : 'PDF 다운로드' }}
         </BaseButton>
         <BaseButton variant="secondary" @click="emit('close')">닫기</BaseButton>
       </template>
