@@ -3,8 +3,21 @@ import { ref } from 'vue'
 import { fetchShipmentOrdersPaged } from '@/api/documents'
 import { formatKstSlashDate } from '@/utils/dateTime'
 
+const SHIPMENT_STATUS_LABEL = {
+  preparing: '출하준비',
+  completed: '출하완료',
+  '출하준비': '출하준비',
+  '출하완료': '출하완료',
+}
+
 function formatDate(value) {
   return formatKstSlashDate(value)
+}
+
+function normalizeStatus(raw) {
+  if (raw == null || raw === '') return '출하준비'
+  const key = String(raw).trim()
+  return SHIPMENT_STATUS_LABEL[key.toLowerCase()] ?? SHIPMENT_STATUS_LABEL[key] ?? key
 }
 
 function parseLinkedDocuments(value) {
@@ -31,7 +44,7 @@ function mapShipmentOrderResponse(row) {
 
   return {
     id: row.shipmentOrderId,
-    status: row.status ?? '출하준비',
+    status: normalizeStatus(row.status),
     issueDate: formatDate(row.issueDate),
     poId: row.poId ?? '',
     clientName: row.clientName ?? '-',

@@ -93,8 +93,12 @@ function attachApprovalInfo(row) {
   return {
     ...row,
     approvalRequestId: req.approvalRequestId ?? row.approvalRequestId ?? null,
+    requestStatus: row.requestStatus ?? req.requestType ?? null,
+    requestType: req.requestType ?? row.requestType ?? null,
+    approvalStatus: row.approvalStatus ?? req.status ?? null,
     approverId: req.approverId ?? row.approverId ?? null,
     approverName: req.approverName ?? row.approverName ?? null,
+    approvalRequestedAt: row.approvalRequestedAt ?? req.requestedAt ?? null,
     approvalReview: req.approvalReview ?? req.reviewSnapshot ?? row.approvalReview ?? null,
     approvalRejectReason:
       statusLower === 'rejected' ? (req.reason ?? row.approvalRejectReason ?? null) : (row.approvalRejectReason ?? null),

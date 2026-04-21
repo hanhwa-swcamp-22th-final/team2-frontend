@@ -74,7 +74,7 @@ function resolveCompositeStatus(document) {
   const normalize = (v) => String(v ?? '').trim().toLowerCase()
   const statusNorm = normalize(document.status)
   const approvalNorm = normalize(document.approvalStatus)
-  const request = document.requestStatus || ''
+  const request = resolveRequestStatus(document)
 
   const isPendingApproval =
       statusNorm === '결재대기' || statusNorm === 'approval_pending' || statusNorm === 'pending_approval'
@@ -87,8 +87,49 @@ function resolveCompositeStatus(document) {
   return document.status || '-'
 }
 
+function resolveRequestStatus(document) {
+  const raw = document?.requestStatus ?? document?.requestType ?? ''
+  const normalized = String(raw).trim().toLowerCase()
+  const requestMap = {
+    registration: '등록요청',
+    registration_requested: '등록요청',
+    modification: '수정요청',
+    modification_requested: '수정요청',
+    update: '수정요청',
+    update_requested: '수정요청',
+    deletion: '삭제요청',
+    deletion_requested: '삭제요청',
+  }
+  if (requestMap[normalized]) return requestMap[normalized]
+  if (raw) return raw
+
+  const action = String(document?.approvalAction ?? '').trim().toLowerCase()
+  const actionMap = {
+    등록: '등록요청',
+    create: '등록요청',
+    registration: '등록요청',
+    수정: '수정요청',
+    edit: '수정요청',
+    update: '수정요청',
+    modification: '수정요청',
+    삭제: '삭제요청',
+    delete: '삭제요청',
+    deletion: '삭제요청',
+  }
+  return actionMap[action] ?? ''
+}
+
 export function buildApprovalInfoRows(document) {
-  if (!document?.requestStatus) {
+  const requestStatus = resolveRequestStatus(document)
+  const hasApprovalInfo = requestStatus
+    || document?.approvalStatus
+    || document?.approvalRequestedBy
+    || document?.approvalRequestedAt
+    || document?.approverName
+    || document?.approver
+    || document?.approvalReview
+    || document?.approvalRejectReason
+  if (!hasApprovalInfo) {
     return []
   }
 
@@ -98,6 +139,7 @@ export function buildApprovalInfoRows(document) {
     // 채워지던 document.approver 는 백업 fallback.
     { label: '결재자', value: document.approverName || document.approver || '미지정' },
     { label: '요청자', value: document.approvalRequestedBy || '미지정' },
+    { label: '요청 유형', value: requestStatus || '-' },
     { label: '요청 시각', value: document.approvalRequestedAt || '-' },
   ]
 

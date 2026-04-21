@@ -26,8 +26,26 @@ const poDocuments = usePoDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 
 const detail = computed(() => ciDocuments.value.find((row) => row.id === route.params.id) ?? null)
-const linkedPo = computed(() => poDocuments.value.find((row) => row.id === detail.value?.poId))
-const linkedShipmentOrder = computed(() => shipmentOrderDocuments.value.find((row) => row.id === detail.value?.shipmentOrderId))
+const linkedPo = computed(() => poDocuments.value.find((row) => (
+  row.id === detail.value?.poId
+  || String(row.purchaseOrderId ?? '') === String(detail.value?.poInternalId ?? detail.value?.poId ?? '')
+)))
+
+function findLinkedDocumentId(type) {
+  const links = [
+    ...(detail.value?.linkedDocuments ?? []),
+    ...(linkedPo.value?.linkedDocuments ?? []),
+  ]
+  return links.find((link) => link?.type === type)?.id ?? ''
+}
+
+const linkedShipmentOrder = computed(() => {
+  const linkedSoId = detail.value?.shipmentOrderId || findLinkedDocumentId('SO')
+  return shipmentOrderDocuments.value.find((row) => (
+    row.id === linkedSoId
+    || (linkedPo.value?.id && row.poId === linkedPo.value.id)
+  ))
+})
 
 function parseNumericValue(value) {
   const numeric = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))

@@ -55,7 +55,7 @@ const infoGroups = computed(() => {
         { label: '단가 (KRW)', value: item.value.itemUnitPrice?.toLocaleString() ?? '-' },
         { label: '중량 (kg)', value: item.value.itemWeight?.toLocaleString() ?? '-' },
         { label: 'HS Code', value: item.value.itemHsCode },
-        { label: '등록일', value: item.value.regDate },
+        { label: '등록일', value: item.value.itemRegDate ?? item.value.regDate ?? item.value.createdAt },
       ],
     },
   ]

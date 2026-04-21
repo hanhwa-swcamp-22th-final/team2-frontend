@@ -1,7 +1,14 @@
 import { useAuthStore } from './auth'
 import { ref } from 'vue'
 import { fetchPackingListsPaged } from '@/api/documents'
+import { fetchClients } from '@/api/master'
 import { formatKstSlashDate } from '@/utils/dateTime'
+import {
+  buildClientLookup,
+  resolveCarrier,
+  resolvePaymentTerms,
+  resolvePortOfDischarge,
+} from '@/utils/ciplEnrichment'
 
 function formatDate(value) {
   return formatKstSlashDate(value)
@@ -40,7 +47,10 @@ function normalizeDocStatus(raw, fallback = '발행대기') {
   return DOC_STATUS_LABEL[String(raw).toLowerCase()] ?? DOC_STATUS_LABEL[raw] ?? String(raw)
 }
 
-function mapPlResponse(row) {
+function mapPlResponse(row, clientLookup = new Map()) {
+  const client = clientLookup.get(String(row.clientId ?? row.client_id))
+  const paymentTerms = resolvePaymentTerms(row, client)
+  const portOfDischarge = resolvePortOfDischarge(row, client)
   const rawItems = row.items?.length ? row.items : parseJsonSafe(row.itemsSnapshot)
   // Issue D 후속 — 라인 Gross Weight = 개당 item_weight(kg) × 수량. po_items_snapshot
   // JSON 은 itemWeight 키로 개당 중량 담음 (PurchaseOrderCreationService.serializeItemsSnapshot).
@@ -72,6 +82,7 @@ function mapPlResponse(row) {
 
   return {
     id: row.plId,
+    poInternalId: row.poId ?? null,
     status: normalizeDocStatus(row.status),
     issueDate: formatDate(row.invoiceDate ?? row.issueDate),
     clientId: row.clientId ?? row.client_id ?? null,
@@ -88,17 +99,16 @@ function mapPlResponse(row) {
       ?? row.plItemName
       ?? '-',
     grossWeight: formatNumber(Number(row.grossWeight ?? totalGrossWeight), 2),
-    bookingNo: row.bookingNo ?? '-',
     incotermCode: row.incotermsCode ?? '',
     incoterms: row.incotermsCode ? `${row.incotermsCode}${row.namedPlace ? ` ${row.namedPlace}` : ''}` : '-',
     namedPlace: row.namedPlace ?? '',
-    paymentTermsId: row.paymentTermsId ?? null,
-    paymentTerms: row.paymentTerms ?? '-',
+    paymentTermsId: row.paymentTermsId ?? client?.paymentTermId ?? client?.paymentTermsId ?? null,
+    paymentTerms,
     deliveryDate: formatDate(row.deliveryDate),
     portOfDischargeCode: row.portOfDischargeCode ?? '',
-    portOfDischargeFallback: row.portOfDischarge ?? '-',
-    portOfDischarge: row.portOfDischarge ?? '-',
-    carrier: row.carrier ?? '-',
+    portOfDischargeFallback: portOfDischarge,
+    portOfDischarge,
+    carrier: resolveCarrier(row),
     poId: row.poId ?? '',
     shipmentOrderId: row.shipmentOrderId ?? '',
     remarks: row.remarks ?? '-',
@@ -118,8 +128,12 @@ let loading = null
 
 export async function loadPlDocuments({ page = 0, size = 1000 } = {}) {
   try {
-    const { content, page: pageInfo } = await fetchPackingListsPaged({ page, size })
-    plDocuments.value = (Array.isArray(content) ? content : []).map(mapPlResponse)
+    const [{ content, page: pageInfo }, clients] = await Promise.all([
+      fetchPackingListsPaged({ page, size }),
+      fetchClients().catch(() => []),
+    ])
+    const clientLookup = buildClientLookup(clients)
+    plDocuments.value = (Array.isArray(content) ? content : []).map((row) => mapPlResponse(row, clientLookup))
     plPageInfo.value = pageInfo
   } catch (e) {
     console.error('Failed to load PL documents:', e)

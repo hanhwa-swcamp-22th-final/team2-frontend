@@ -26,8 +26,26 @@ const poDocuments = usePoDocuments()
 const shipmentOrderDocuments = useShipmentOrderDocuments()
 
 const detail = computed(() => plDocuments.value.find((row) => row.id === route.params.id) ?? null)
-const linkedPo = computed(() => poDocuments.value.find((row) => row.id === detail.value?.poId))
-const linkedShipmentOrder = computed(() => shipmentOrderDocuments.value.find((row) => row.id === detail.value?.shipmentOrderId))
+const linkedPo = computed(() => poDocuments.value.find((row) => (
+  row.id === detail.value?.poId
+  || String(row.purchaseOrderId ?? '') === String(detail.value?.poInternalId ?? detail.value?.poId ?? '')
+)))
+
+function findLinkedDocumentId(type) {
+  const links = [
+    ...(detail.value?.linkedDocuments ?? []),
+    ...(linkedPo.value?.linkedDocuments ?? []),
+  ]
+  return links.find((link) => link?.type === type)?.id ?? ''
+}
+
+const linkedShipmentOrder = computed(() => {
+  const linkedSoId = detail.value?.shipmentOrderId || findLinkedDocumentId('SO')
+  return shipmentOrderDocuments.value.find((row) => (
+    row.id === linkedSoId
+    || (linkedPo.value?.id && row.poId === linkedPo.value.id)
+  ))
+})
 
 function parseNumericValue(value) {
   const numeric = Number.parseFloat(String(value ?? '').replace(/[^0-9.]/g, ''))
@@ -196,7 +214,6 @@ function goToLinkedDocument(document) {
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 class="mb-4 font-bold text-slate-800">포장 정보</h3>
           <div class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
-            <div><span class="text-slate-500">Booking No.</span><div class="mt-0.5">{{ detail.bookingNo || '-' }}</div></div>
             <div><span class="text-slate-500">Carrier</span><div class="mt-0.5">{{ detail.carrier || '-' }}</div></div>
             <div><span class="text-slate-500">인코텀즈</span><div class="mt-0.5">{{ detail.incoterms || '-' }}</div></div>
             <div><span class="text-slate-500">결제조건</span><div class="mt-0.5">{{ detail.paymentTerms || '-' }}</div></div>

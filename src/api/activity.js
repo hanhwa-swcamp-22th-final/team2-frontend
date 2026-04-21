@@ -14,6 +14,7 @@ function normalizeActivity(row) {
   return {
     ...activity,
     id: activity.id ?? activity.activityId,
+    poId: activity.poId ?? activity.poNo ?? activity.purchaseOrderId ?? '',
     type: activity.type ?? activity.activityType,
     title: activity.title ?? activity.activityTitle,
     date: activity.date ?? activity.activityDate,

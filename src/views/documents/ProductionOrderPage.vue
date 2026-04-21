@@ -26,6 +26,7 @@ import { openDocumentOutputByType } from '@/utils/documentOutput'
 import { canAccessRouteByRole } from '@/utils/roleAccess'
 import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
 import { buildSelectOptionsFromRows } from '@/utils/selectOptions'
+import { PRODUCTION_STATUS_LABEL } from '@/utils/enumLabels'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -64,7 +65,7 @@ const { createClientRows, createProductRows } = useSearchModalLookups()
 
 const managerOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'manager'))
 const countryOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'country'))
-const statusOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'status'))
+const statusOptions = computed(() => buildSelectOptionsFromRows(rowsData.value, 'status', PRODUCTION_STATUS_LABEL))
 
 const previewFields = computed(() => {
   if (!previewTarget.value) {

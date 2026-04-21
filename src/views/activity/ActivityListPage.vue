@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { fetchActivity, fetchActivities, deleteActivity, updateActivity } from '@/api/activity'
+import { fetchActivity, fetchActivities, fetchAllActivityPOs, deleteActivity, updateActivity } from '@/api/activity'
 import { fetchClients } from '@/api/master'
 import { useToast } from '@/composables/useToast'
 import ActivityDetailModal from '@/components/domain/activity/ActivityDetailModal.vue'
@@ -18,7 +18,9 @@ import FormField from '@/components/common/FormField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import TableActions from '@/components/common/TableActions.vue'
+import SearchModal from '@/components/common/SearchModal.vue'
 import SearchTriggerField from '@/components/common/SearchTriggerField.vue'
+import { label, PI_PO_STATUS_LABEL } from '@/utils/enumLabels'
 
 const router = useRouter()
 const route = useRoute()
@@ -32,6 +34,8 @@ const filterAuthor = ref('')
 const filterPo = ref('')
 const filterType = ref('')
 const filterTitle = ref('')
+const poSearchOpen = ref(false)
+const poSearchKeyword = ref('')
 
 const typeOptions = [
   { label: '미팅/협의', value: 'meeting' },
@@ -51,6 +55,12 @@ const clientOptions = computed(() => {
 
 // 실제 적용된 필터 (검색 버튼 클릭 시에만 반영)
 const applied = ref({ title: '', dateFrom: '', dateTo: '', author: '', po: '', type: '' })
+const poSearchColumns = [
+  { key: 'id', label: 'PO 번호', align: 'center', width: '140px' },
+  { key: 'clientName', label: '거래처', align: 'left', width: '220px' },
+  { key: 'issueDate', label: '발행일', align: 'center', width: '130px' },
+  { key: 'status', label: '상태', align: 'center', width: '110px' },
+]
 
 function applySearch() {
   applied.value = {
@@ -76,6 +86,7 @@ function resetFilters() {
 // ── 데이터 ─────────────────────────────────────────────────
 const activities = ref([])
 const clients = ref([])
+const purchaseOrders = ref([])
 
 function activityIdOf(activity) {
   return activity?.id ?? activity?.activityId
@@ -120,18 +131,49 @@ async function loadActivities() {
 
 onMounted(async () => {
   try {
-    const [activityData, clientData] = await Promise.all([
+    const [activityData, clientData, poData] = await Promise.all([
       fetchActivities(),
       fetchClients(),
+      fetchAllActivityPOs().catch(() => []),
     ])
     activities.value = activityData
     clients.value = clientData
+    purchaseOrders.value = poData
     await ensureCreatedActivityVisible()
   } catch (e) {
     console.error('데이터 로드 실패', e)
     error('데이터를 불러오지 못했습니다. 페이지를 새로고침해주세요.')
   }
 })
+
+const poRows = computed(() => {
+  const rows = purchaseOrders.value.map((po) => ({
+    id: po.poId ?? po.id ?? po.poCode ?? '',
+    clientName: po.clientName ?? '-',
+    issueDate: po.issueDate ?? '-',
+    status: label(PI_PO_STATUS_LABEL, String(po.status ?? '').toLowerCase()),
+  })).filter((po) => po.id)
+
+  const keyword = poSearchKeyword.value.trim().toLowerCase()
+  if (!keyword) return rows
+  return rows.filter((row) => [
+    row.id,
+    row.clientName,
+    row.issueDate,
+    row.status,
+  ].some((value) => String(value ?? '').toLowerCase().includes(keyword)))
+})
+
+function openPoSearch() {
+  poSearchKeyword.value = ''
+  poSearchOpen.value = true
+}
+
+function handlePoSelect(row) {
+  filterPo.value = row.id
+  poSearchKeyword.value = ''
+  poSearchOpen.value = false
+}
 
 // ── 필터 computed (applied 기준) ───────────────────────────
 const clientMap = computed(() =>
@@ -322,6 +364,7 @@ const columns = [
             v-model="filterPo"
             placeholder="PO 검색..."
             title="PO 검색"
+            @trigger="openPoSearch"
           />
         </FormField>
 
@@ -370,14 +413,9 @@ const columns = [
           <span class="font-medium text-slate-800">{{ row.title }}</span>
         </template>
 
-        <!-- PO — poId 없으면 거래처명으로 대체 (미연결 활동 기록) -->
+        <!-- PO -->
         <template #cell-poId="{ row }">
           <span v-if="row.poId" class="text-slate-800">{{ row.poId }}</span>
-          <span
-            v-else-if="clientMap[row.clientId]"
-            class="text-xs text-slate-500"
-            :title="`${clientMap[row.clientId].clientName} — PO 미연결 기록`"
-          >{{ clientMap[row.clientId].clientName }}</span>
           <span v-else class="text-slate-400">-</span>
         </template>
 
@@ -424,6 +462,17 @@ const columns = [
       :loading="isDeleting"
       @confirm="handleDelete"
       @cancel="closeDelete"
+    />
+
+    <SearchModal
+      :open="poSearchOpen"
+      title="PO 검색"
+      :columns="poSearchColumns"
+      :rows="poRows"
+      row-key="id"
+      v-model:search-keyword="poSearchKeyword"
+      @select="handlePoSelect"
+      @close="poSearchOpen = false"
     />
   </div>
 </template>
