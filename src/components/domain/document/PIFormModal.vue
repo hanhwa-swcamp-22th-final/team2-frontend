@@ -856,6 +856,7 @@ watch(
 // 덮어써지는 데이터 손실이 있어 발동하지 않는다. 수정 시 통화/발행일 변경은 기존 watcher 가 처리.
 watch(exchangeRatesLoaded, (ready) => {
   if (!ready) return
+  exchangeRateHint.value = createExchangeRateHint(form.value.currency || 'USD')
   if (props.mode === 'edit') return
   refreshAutoPricedItems()
 })
