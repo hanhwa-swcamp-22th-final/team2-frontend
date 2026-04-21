@@ -2,9 +2,10 @@ import { useAuthStore } from './auth'
 import { ref } from 'vue'
 import { fetchCommercialInvoicesPaged } from '@/api/documents'
 import { formatCurrencyAmount, getCurrencyDecimals } from '@/utils/currencyFormat'
+import { formatKstSlashDate } from '@/utils/dateTime'
 
 function formatDate(value) {
-  return String(value ?? '').replace(/-/g, '/')
+  return formatKstSlashDate(value)
 }
 
 function formatNumber(value, maximumFractionDigits = 0) {

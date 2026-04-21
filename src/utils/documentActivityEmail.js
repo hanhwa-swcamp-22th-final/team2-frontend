@@ -2,6 +2,7 @@ import { fetchBuyersByClient, fetchClients, fetchCurrencies, fetchItems, fetchPo
 import { api } from '@/lib/api'
 import { resolveMasterCurrency, resolvePaymentTermLabel, resolvePortLabel } from '@/utils/ciplMaster'
 import { formatCurrencyAmount } from '@/utils/currencyFormat'
+import { formatKstSlashDate } from '@/utils/dateTime'
 import { resolveIncotermState } from '@/utils/incoterms'
 
 const clientsByName = new Map()
@@ -48,14 +49,7 @@ function parseNumericValue(value) {
 }
 
 function formatDateSlash(value = new Date()) {
-  if (value instanceof Date) {
-    const year = value.getFullYear()
-    const month = String(value.getMonth() + 1).padStart(2, '0')
-    const day = String(value.getDate()).padStart(2, '0')
-    return `${year}/${month}/${day}`
-  }
-
-  return String(value ?? '').replace(/-/g, '/')
+  return formatKstSlashDate(value)
 }
 
 function formatNumber(value, maximumFractionDigits = 0) {

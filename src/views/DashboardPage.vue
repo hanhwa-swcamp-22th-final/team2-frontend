@@ -20,6 +20,7 @@ import { loadApprovalRequests } from '@/stores/approvalRequests'
 import { label as enumLabel, PI_PO_STATUS_LABEL } from '@/utils/enumLabels'
 import { useToast } from '@/composables/useToast'
 import PackageDetailModal from '@/components/domain/activity/PackageDetailModal.vue'
+import { formatKstDateTime, parseKstDateTimeValue, parseKstDateValue } from '@/utils/dateTime'
 
 const router = useRouter()
 const route = useRoute()
@@ -88,8 +89,7 @@ const requestSectionTitle = computed(() => {
 })
 
 function parseSlashDate(value) {
-  if (!value) return 0
-  return new Date(String(value).replace(/\./g, '-').replace(/\//g, '-')).getTime() || 0
+  return parseKstDateValue(value)
 }
 
 function packageIdOf(pkg) {
@@ -281,9 +281,7 @@ const recentActivities = computed(() => {
 })
 
 function parseRequestedAt(value) {
-  const normalized = String(value ?? '').trim()
-  if (!normalized) return 0
-  return new Date(normalized.replace(/\./g, '-')).getTime() || 0
+  return parseKstDateTimeValue(value)
 }
 
 function buildFallbackReview(docType, row) {
@@ -448,13 +446,7 @@ function closeDecisionConfirm() {
 }
 
 function getReviewedAt() {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  const hours = String(now.getHours()).padStart(2, '0')
-  const minutes = String(now.getMinutes()).padStart(2, '0')
-  return `${year}/${month}/${day} ${hours}:${minutes}`
+  return formatKstDateTime()
 }
 
 const decisionConfirmTitle = computed(() => (

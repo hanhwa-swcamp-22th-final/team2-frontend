@@ -19,6 +19,7 @@ import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 import { canManageItems } from '@/utils/roleAccess'
 import { label, ITEM_STATUS_LABEL } from '@/utils/enumLabels'
+import { formatKstDateInput } from '@/utils/dateTime'
 
 const router = useRouter()
 const { success, error } = useToast()
@@ -206,7 +207,7 @@ async function handleSave(formData) {
   saving.value = true
   try {
     if (formMode.value === 'create') {
-      await createItem({ ...formData, itemRegDate: new Date().toISOString().slice(0, 10) })
+      await createItem({ ...formData, itemRegDate: formatKstDateInput() })
       success('품목이 등록되었습니다.')
     } else {
       // 백엔드는 상태 변경을 PATCH /api/items/{id}/status 로 분리해 둠.

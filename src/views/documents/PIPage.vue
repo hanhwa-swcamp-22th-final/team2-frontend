@@ -61,6 +61,7 @@ import { formatIncotermsLabel, resolveIncotermState } from '@/utils/incoterms'
 import { clientSearchColumns, productSearchColumns } from '@/utils/searchModalColumns'
 import { buildSelectOptionsFromRows } from '@/utils/selectOptions'
 import { formatCurrencyAmount } from '@/utils/currencyFormat'
+import { formatKstDateTime } from '@/utils/dateTime'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -530,13 +531,7 @@ function isPendingApproval(row) {
 }
 
 function getRequestedAt() {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  const hours = String(now.getHours()).padStart(2, '0')
-  const minutes = String(now.getMinutes()).padStart(2, '0')
-  return `${year}/${month}/${day} ${hours}:${minutes}`
+  return formatKstDateTime()
 }
 
 function buildNextPiId() {
@@ -698,7 +693,7 @@ const createApprovalItemRows = computed(() => {
   return (nextRow.items ?? []).map((item, index) => ({
     id: `${item.name || 'item'}-${index}`,
     name: item.name || '-',
-    qty: parseAmount(item.qty) > 0 ? parseAmount(item.qty).toLocaleString() : '-',
+    qty: parseAmount(item.quantity ?? item.qty) > 0 ? parseAmount(item.quantity ?? item.qty).toLocaleString() : '-',
     unit: item.unit || '-',
     unitPrice: formatAmount(currency, parseAmount(item.unitPrice)),
     amount: formatAmount(currency, parseAmount(item.amount)),

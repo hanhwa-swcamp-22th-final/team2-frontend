@@ -3,7 +3,7 @@ import { startLoading, stopLoading } from '@/stores/loading'
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
-  timeout: 8000,
+  timeout: 20000,
   withCredentials: true, // HttpOnly 쿠키 자동 송수신 (RT)
 })
 

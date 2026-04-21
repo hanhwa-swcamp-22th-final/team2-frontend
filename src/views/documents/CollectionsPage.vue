@@ -21,6 +21,7 @@ import { useSalesCollectionDocuments, loadSalesCollectionDocuments, normalizeSal
 import { loadExchangeRates, clearExchangeRates } from '@/stores/exchangeRates'
 import { openTableOutput } from '@/utils/documentOutput'
 import { convertCurrencyAmountToKrw } from '@/utils/exchangeRate'
+import { formatKstSlashDate } from '@/utils/dateTime'
 import { clientSearchColumns } from '@/utils/searchModalColumns'
 import { buildSelectOptionsFromRows } from '@/utils/selectOptions'
 
@@ -224,11 +225,7 @@ function formatCollectionDate(value) {
 }
 
 function getTodaySlashDate() {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-  return `${year}/${month}/${day}`
+  return formatKstSlashDate()
 }
 
 function resolveNextCollectionDate(row, nextStatusValue) {

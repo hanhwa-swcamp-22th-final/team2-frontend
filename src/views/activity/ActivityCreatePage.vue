@@ -15,6 +15,7 @@ import DateField from '@/components/common/DateField.vue'
 import DocumentPageHeader from '@/components/common/DocumentPageHeader.vue'
 import SearchableCombobox from '@/components/common/SearchableCombobox.vue'
 import SearchModal from '@/components/common/SearchModal.vue'
+import { formatKstDateInput } from '@/utils/dateTime'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -26,7 +27,7 @@ const formClient = ref('')
 const formType = ref('')
 const formPoDisplay = ref('')
 const formPoId = ref('')
-const formDate = ref(new Date().toISOString().slice(0, 10))
+const formDate = ref(formatKstDateInput())
 const formPriority = ref('normal')
 const formTitle = ref('')
 const formContent = ref('')
@@ -129,7 +130,7 @@ function nextMonth() {
   else calMonth.value++
 }
 
-const today = toDateStr(new Date())
+const today = formatKstDateInput()
 
 function clickDay(str) {
   if (!str) return
