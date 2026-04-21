@@ -100,6 +100,7 @@ function attachApprovalInfo(row) {
     approvalRequestId: req.approvalRequestId ?? row.approvalRequestId ?? null,
     approverId: req.approverId ?? row.approverId ?? null,
     approverName: req.approverName ?? row.approverName ?? null,
+    approvalReview: req.approvalReview ?? req.reviewSnapshot ?? row.approvalReview ?? null,
     approvalRejectReason:
       statusLower === 'rejected' ? (req.reason ?? row.approvalRejectReason ?? null) : (row.approvalRejectReason ?? null),
   }

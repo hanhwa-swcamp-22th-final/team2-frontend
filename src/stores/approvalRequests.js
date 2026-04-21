@@ -5,6 +5,20 @@ import { useAuthStore } from './auth'
 const approvalRequests = ref([])
 let loading = null
 
+function parseJsonSafe(value, fallback = null) {
+  if (typeof value !== 'string') return value ?? fallback
+  try { return JSON.parse(value) } catch { return fallback }
+}
+
+function normalizeApprovalRequest(row) {
+  const reviewSnapshot = parseJsonSafe(row?.reviewSnapshot ?? row?.approvalReview, null)
+  return {
+    ...row,
+    reviewSnapshot,
+    approvalReview: reviewSnapshot,
+  }
+}
+
 /**
  * 결재 요청 원본 리스트 로드.
  * piDocuments/poDocuments 가 각 문서에 결재자/반려사유를 병합할 때 참조하고,
@@ -13,7 +27,7 @@ let loading = null
 export async function loadApprovalRequests() {
   try {
     const list = await fetchApprovalRequests()
-    approvalRequests.value = Array.isArray(list) ? list : []
+    approvalRequests.value = Array.isArray(list) ? list.map(normalizeApprovalRequest) : []
   } catch (e) {
     console.error('Failed to load approval requests:', e)
     approvalRequests.value = []
