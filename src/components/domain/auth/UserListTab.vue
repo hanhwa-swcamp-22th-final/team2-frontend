@@ -19,6 +19,7 @@ import {
   updateUser,
 } from '@/api/auth'
 import { label, USER_STATUS_LABEL } from '@/utils/enumLabels'
+import { resolveUserRole, toBackendRole } from '@/utils/userRole'
 
 const { success, error } = useToast()
 
@@ -196,15 +197,30 @@ function openDeleteModal(user) {
   showDeleteModal.value = true
 }
 
+function getErrorMessage(e, fallback) {
+  return e?.response?.data?.message ?? e?.message ?? fallback
+}
+
 async function handleSave(formData) {
   saving.value = true
   try {
     if (formMode.value === 'create') {
+      const role = resolveUserRole({
+        role: formData.role,
+        departmentId: formData.departmentId,
+        teamId: formData.teamId,
+        departments: departments.value,
+        teams: teams.value,
+      })
+      if (!role) {
+        throw new Error('부서 권한 매핑을 확인해주세요.')
+      }
+
       const newUser = {
-        name: formData.name,
-        email: formData.email,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
         password: 'password123',
-        role: String(formData.role).toUpperCase(),
+        role: toBackendRole(role),
         teamId: formData.teamId ? Number(formData.teamId) : undefined,
         positionId: formData.positionId ? Number(formData.positionId) : undefined,
       }
@@ -224,7 +240,7 @@ async function handleSave(formData) {
     await loadData()
     showFormModal.value = false
   } catch (e) {
-    error('저장 중 오류가 발생했습니다.')
+    error(getErrorMessage(e, '저장 중 오류가 발생했습니다.'))
   } finally {
     saving.value = false
   }
