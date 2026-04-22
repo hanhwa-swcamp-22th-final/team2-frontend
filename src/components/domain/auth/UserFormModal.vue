@@ -9,6 +9,7 @@ import FileUploadField from '@/components/common/FileUploadField.vue'
 import FormField from '@/components/common/FormField.vue'
 import { useToast } from '@/composables/useToast'
 import { resetPassword } from '@/api/auth'
+import { inferRoleFromOrg } from '@/utils/userRole'
 import { isValidEmail } from '@/utils/validators'
 
 const props = defineProps({
@@ -29,18 +30,13 @@ const form = ref(getInitialForm())
 const errors = ref({})
 const showResetConfirm = ref(false)
 
-// 부서 → role 자동 매핑 (부서명 기준)
-const DEPT_ROLE_MAP = {
-  '영업부': 'sales',
-  '생산부': 'production',
-  '출하부': 'shipping',
-  '경영지원부': 'admin',
-}
-
 function derivedRole(deptId) {
-  const dept = props.departments.find((d) => String(d.departmentId ?? d.id) === String(deptId))
-  const name = dept?.departmentName ?? dept?.name ?? ''
-  return DEPT_ROLE_MAP[name] ?? 'sales'
+  return inferRoleFromOrg({
+    departmentId: deptId,
+    teamId: form.value.teamId,
+    departments: props.departments,
+    teams: props.teams,
+  })
 }
 
 const statusOptions = [
@@ -89,6 +85,9 @@ watch(
         transferReason: '',
         sealImage: null,
       }
+      if (!form.value.role) {
+        form.value.role = derivedRole(form.value.departmentId)
+      }
     } else if (isOpen && props.mode === 'create') {
       form.value = getInitialForm()
     }
@@ -97,12 +96,21 @@ watch(
 
 // 부서 변경 시 팀 초기화 + role 자동 파생
 watch(() => form.value.departmentId, (deptId) => {
-  const team = props.teams.find((t) => String(t.teamId) === String(form.value.teamId))
+  const team = props.teams.find((t) => String(t.teamId ?? t.id) === String(form.value.teamId))
   if (team && String(team.departmentId) !== String(deptId)) {
     form.value.teamId = ''
   }
   form.value.role = derivedRole(deptId)
 })
+
+watch(
+  () => [form.value.teamId, props.departments.length, props.teams.length],
+  () => {
+    if (props.mode === 'create' || !form.value.role) {
+      form.value.role = derivedRole(form.value.departmentId)
+    }
+  },
+)
 
 const teamOptions = computed(() => {
   const filtered = form.value.departmentId
@@ -121,9 +129,10 @@ function validate() {
   } else if (!isValidEmail(form.value.email)) {
     e.email = '올바른 이메일 형식을 입력해주세요.'
   } else {
+    const email = form.value.email.trim().toLowerCase()
     const duplicate = props.allUsers.find(
       (u) =>
-        (u.userEmail ?? u.email) === form.value.email.trim() &&
+        String(u.userEmail ?? u.email ?? '').trim().toLowerCase() === email &&
         (props.mode === 'create' || (u.userId ?? u.id) !== (props.user?.userId ?? props.user?.id)),
     )
     if (duplicate) e.email = '이미 사용 중인 이메일 주소입니다.'
@@ -132,6 +141,9 @@ function validate() {
   if (!form.value.positionId) e.positionId = '직급을 선택해주세요.'
   if (!form.value.departmentId) e.departmentId = '부서를 선택해주세요.'
   if (!form.value.teamId) e.teamId = '팀을 선택해주세요.'
+  if (form.value.departmentId && form.value.teamId && !derivedRole(form.value.departmentId)) {
+    e.departmentId = '부서 권한 매핑을 확인해주세요.'
+  }
 
   errors.value = e
   return Object.keys(e).length === 0
