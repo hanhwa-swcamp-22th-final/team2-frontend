@@ -1,6 +1,18 @@
 import { api } from '@/lib/api'
 import { unwrapCollection } from '@/utils/apiResponse'
 
+const FIXED_POSITION_ORDER = ['팀장', '팀원']
+
+function normalizePositions(positions) {
+  const byName = new Map()
+  for (const position of positions ?? []) {
+    const name = position.positionName ?? position.name ?? ''
+    if (!FIXED_POSITION_ORDER.includes(name) || byName.has(name)) continue
+    byName.set(name, position)
+  }
+  return FIXED_POSITION_ORDER.map((name) => byName.get(name)).filter(Boolean)
+}
+
 export async function login(email, password) {
   const { data } = await api.post('/auth/login', { email, password })
   return data
@@ -37,7 +49,7 @@ export async function updateUser(id, user) {
 
 export async function fetchPositions() {
   const { data } = await api.get('/positions')
-  return unwrapCollection(data)
+  return normalizePositions(unwrapCollection(data))
 }
 
 export async function fetchDepartments() {
